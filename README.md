@@ -4,6 +4,8 @@
   <img src="capy.png" alt="CAPY" width="300" />
 </p>
 
+**NOTE**: I only had a few days to finish this project.
+
 CAPY Appointment Bot is a take-home implementation of a clinic appointment assistant.
 It lets a patient verify identity, list appointments, confirm an appointment,
 and cancel an appointment in the same chat session.
