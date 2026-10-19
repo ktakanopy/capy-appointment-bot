@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Protocol
+from typing import Protocol
 
-from app.llm.schemas import IntentPrediction
+from app.llm.schemas import SchedulingExtraction
 
 
-class LLMProvider(Protocol):
-    def interpret(self, message: str, state: dict[str, Any]) -> IntentPrediction: ...
+class Interpreter(Protocol):
+    def interpret(self, message: str, context: dict) -> SchedulingExtraction: ...

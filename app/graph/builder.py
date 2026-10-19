@@ -1,60 +1,28 @@
 from __future__ import annotations
 
-import logging
-from typing import Any
-
 from langgraph.graph import END, START, StateGraph
 
-from app.graph.nodes import (
-    make_cancel_node,
-    make_confirm_node,
-    make_execute_action_node,
-    make_help_node,
-    make_interpret_node,
-    make_list_node,
-    make_verification_node,
-)
-from app.graph.state import ConversationGraphInput, ConversationGraphState
+from app.graph.state import SchedulingGraphState
+from app.llm.provider import Interpreter
 
 
-def build_graph(
-    *,
-    logger: logging.Logger,
-    provider,
-    verification_service,
-    appointment_service,
-    max_verification_attempts: int,
-    checkpointer: Any,
-):
-    list_node = make_list_node(appointment_service, logger)
-    confirm_node = make_confirm_node(appointment_service, logger)
-    cancel_node = make_cancel_node(appointment_service, logger)
-    help_node = make_help_node(logger)
+def build_graph(interpreter: Interpreter, checkpointer):
+    """Build a one-turn interpretation graph; all policy and writes stay in services."""
 
-    # The graph is intentionally small: every turn is interpreted,
-    # optionally verified, and then dispatched to exactly one business action.
-    builder = StateGraph(ConversationGraphState, input_schema=ConversationGraphInput)
-    builder.add_node("interpret", make_interpret_node(logger, provider=provider))
-    builder.add_node(
-        "verify",
-        make_verification_node(
-            verification_service,
-            logger,
-            max_verification_attempts,
-        ),
-    )
-    builder.add_node(
-        "execute_action",
-        make_execute_action_node(
-            logger,
-            list_node=list_node,
-            confirm_node=confirm_node,
-            cancel_node=cancel_node,
-            help_node=help_node,
-        ),
-    )
+    def interpret(state: SchedulingGraphState) -> dict:
+        extraction = interpreter.interpret(
+            state.get("message", ""),
+            {
+                "service_names": state.get("service_names", []),
+                "professional_names": state.get("professional_names", []),
+                "today": state.get("today"),
+                "has_slots": state.get("has_slots", False),
+            },
+        )
+        return {"extraction": extraction.model_dump(mode="json")}
 
-    builder.add_edge(START, "interpret")
-    builder.add_edge("execute_action", END)
-
-    return builder.compile(checkpointer=checkpointer)
+    graph = StateGraph(SchedulingGraphState)
+    graph.add_node("interpret", interpret)
+    graph.add_edge(START, "interpret")
+    graph.add_edge("interpret", END)
+    return graph.compile(checkpointer=checkpointer)

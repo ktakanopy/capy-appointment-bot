@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "appointment-bot"
 version = "0.1.0"
-description = "Conversational appointment management service"
+description = "General service scheduling product MVP"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -16,7 +16,9 @@ dependencies = [
   "openai>=1.30,<2.0",
   "langfuse>=2.0,<3.0",
   "streamlit>=1.35,<2.0",
-  "langgraph-checkpoint-sqlite>=3.0.3",
+  "sqlalchemy>=2.0,<3.0",
+  "alembic>=1.13,<2.0",
+  "psycopg[binary]>=3.2,<4.0",
 ]
 
 [project.optional-dependencies]

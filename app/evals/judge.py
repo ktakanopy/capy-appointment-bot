@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from app.evals.models import EvaluationScenario
-from app.llm.schemas import JudgeResult
+from app.llm.schemas import SchedulingExtraction
 
 
-def run_judge(provider, scenario: EvaluationScenario, transcript: list[dict], observed_outcomes: dict) -> JudgeResult:
-    try:
-        return provider.judge(scenario.model_dump(), transcript, observed_outcomes)
-    except Exception as error:
-        return JudgeResult(status="error", summary=str(error), score=None)
+def evaluate_extraction(scenario: EvaluationScenario, extraction: SchedulingExtraction) -> list[str]:
+    observed = extraction.model_dump(mode="json")
+    return [
+        f"{field}: expected {expected!r}, observed {observed.get(field)!r}"
+        for field, expected in scenario.expected.items()
+        if observed.get(field) != expected
+    ]

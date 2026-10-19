@@ -1,128 +1,26 @@
-# Evaluation framework
+# Evaluation
 
-The repo includes a small eval runner for multi-turn scenarios.
+`app.evals.runner` replays a small, deterministic extraction benchmark without requiring PostgreSQL or model credentials. The scenarios cover service/date discovery, professional and local-time extraction, ordinal slot selection, customer contact extraction, cancellation intent, and rescheduling language.
 
-I like this part because it checks something normal unit tests miss: whether the
-assistant still behaves correctly across a whole conversation, not just inside
-one function call.
-
-## What it does
-
-For each scenario, the runner:
-
-1. creates a fresh runtime
-2. creates a fresh session
-3. replays the user turns through the real workflow
-4. captures the assistant outputs and observed outcomes
-5. sends the whole transcript to the judge model
-6. prints a readable result block and saves JSON results under `.eval_runs/`
-
-## Main pieces
-
-### `EvaluationScenario`
-
-Defined in `app/evals/models.py`.
-
-Fields:
-
-- `scenario_id`
-- `title`
-- `input_turns`
-- `expected_outcomes`
-- `judge_rubric`
-- `category`
-
-`expected_outcomes` is intentionally small. It mirrors the fields the runner
-extracts from the final `ChatTurnResponse`, not the full response object.
-
-In practice that usually means:
-
-- `verified`
-- `current_operation`
-- `issue`
-- `last_action_result`
-
-Those fields exist because the runtime exposes a small structured summary of the
-turn through `ChatTurnResponse`. That gives evals something stable to assert
-against without depending on exact wording in the assistant message.
-
-In particular:
-
-- `issue` explains what kind of problem occurred
-- `last_action_result` explains what business action actually happened
-
-That is why the graph keeps fields like `turn.issue` and
-`turn.operation_result` even though the user also receives a natural-language
-response.
-
-### `EvaluationResult`
-
-Also defined in `app/evals/models.py`.
-
-It stores:
-
-- scenario metadata
-- pass/fail/error status
-- judge summary and score
-- observed outcomes
-- input turns
-- assistant outputs
-
-### Runner
-
-Implemented in `app/evals/runner.py`.
-
-The runner creates a fresh `RuntimeContext` per scenario, replays the turns, and
-prints a readable block for each case. It also prints a final summary and writes
-JSON results to `.eval_runs/<timestamp>/results.json`.
-
-### Judge
-
-Implemented in `app/evals/judge.py`.
-
-The judge path uses the configured provider in eval mode only. It receives:
-
-- the scenario
-- the full transcript
-- observed outcomes extracted from the actual run
-
-If the judge call fails, the result is marked as `error`.
-
-## Core scenarios
-
-The default scenarios live in `app/evals/scenarios/core_scenarios.py` and cover
-the cases I cared most about for this submission:
-
-- verification before listing appointments
-- ambiguous references
-- idempotent confirm behavior
-- retry after failed verification
-- switching intent during verification
-- verification lockout
-- invalid field recovery
-- protected request before verification
-- list, mutate, list again
-- prompt-injection-style bypass attempts
-- conversational rerouting between actions
-
-## Running evals
-
-CLI:
+Run it with:
 
 ```bash
 uv run python -m app.evals.runner
 ```
 
-Pytest wrapper:
+The runner prints pass/fail per scenario and writes JSON results under `.eval_runs/`. When `LLM_PROVIDER=openai` is configured, the same scenarios exercise model extraction; provider failures fall back to the deterministic interpreter.
 
-```bash
-uv run --extra dev pytest tests/evals
-```
+## Product behavior to review manually
 
-## Why keep this in the repo?
+The extractor benchmark does not establish booking correctness. A local product review should also cover:
 
-Because it keeps the workflow honest.
+1. Search an actual seeded service and confirm every offered slot falls within business hours.
+2. Book a slot and verify the owner agenda shows the same time and status.
+3. Retry a create request with the same idempotency key and confirm it returns the same booking and token.
+4. Attempt to use a stale or conflicting slot and confirm the write is rejected without an overlapping booking.
+5. Reschedule to a blocked/conflicting time and verify the original booking and reminder remain unchanged.
+6. Cancel a booking and verify its pending reminder is canceled.
+7. Wait for a due reminder, send a reply as a new `/chat` turn with the token separate, and reschedule.
+8. Verify raw management tokens and customer contact data do not appear in logs, traces, graph input, or checkpoints.
 
-It is easy to break a multi-turn assistant in ways that unit tests do not catch.
-This runner gave me a much better feel for whether the product still behaved the
-way a patient would expect.
+The repository's pre-existing clinic pytest suite has not been migrated to this feature and was not run for this implementation. Do not treat that suite as current evidence for the scheduling product.
