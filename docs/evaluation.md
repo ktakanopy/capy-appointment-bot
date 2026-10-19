@@ -12,7 +12,7 @@ The runner prints pass/fail per scenario and writes JSON results under `.eval_ru
 
 ## Product behavior to review manually
 
-The extractor benchmark does not establish booking correctness. A local product review should also cover:
+The extractor benchmark does not establish booking correctness. The automated pytest suite covers domain/API contracts and deterministic availability, but PostgreSQL transaction behavior still needs a local database runtime. A full local product review should also cover:
 
 1. Search an actual seeded service and confirm every offered slot falls within business hours.
 2. Book a slot and verify the owner agenda shows the same time and status.
@@ -23,4 +23,4 @@ The extractor benchmark does not establish booking correctness. A local product 
 7. Wait for a due reminder, send a reply as a new `/chat` turn with the token separate, and reschedule.
 8. Verify raw management tokens and customer contact data do not appear in logs, traces, graph input, or checkpoints.
 
-The repository's pre-existing clinic pytest suite has not been migrated to this feature and was not run for this implementation. Do not treat that suite as current evidence for the scheduling product.
+Run the automated checks with `uv run --extra dev pytest -q`. The suite currently verifies token signing/redaction, request validation, slot filtering and selection, DST behavior, deterministic extraction, and frontend request boundaries. It does not replace PostgreSQL concurrency tests or the Compose reminder-to-reschedule walkthrough.

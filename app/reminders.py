@@ -19,7 +19,7 @@ class ReminderWorker:
             rows = connection.execute(
                 """WITH due AS (
                        SELECT id FROM reminders WHERE status='pending' AND send_at <= now()
-                       ORDER BY send_at FOR UPDATE SKIP LOCKED LIMIT %s
+                       ORDER BY send_at LIMIT %s FOR UPDATE SKIP LOCKED
                    )
                    UPDATE reminders r SET status='processing',attempts=r.attempts+1,claimed_at=now()
                    FROM due WHERE r.id=due.id RETURNING r.id,r.business_id,r.booking_id,r.attempts""",

@@ -22,7 +22,8 @@ docs/
 ## Commands
 
 - `uv run python -m app.evals.runner` runs the structured intent extraction scenarios.
-- The original clinic pytest suite has not been migrated to the scheduling domain. Do not treat it as current coverage.
+- `uv run --extra dev pytest -q` runs the general scheduling contract and unit suite.
+- PostgreSQL transaction and full Compose walkthrough checks require a local database runtime.
 
 ## Code Style
 

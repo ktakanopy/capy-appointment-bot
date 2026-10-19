@@ -2,7 +2,7 @@
 
 - Feature ID: `general-service-scheduling-mvp`
 - Status: `active`
-- Updated: `2026-10-19T21:48:27+00:00`
+- Updated: `2026-10-19T22:13:52+00:00`
 
 ## Task Index
 
@@ -47,6 +47,7 @@ Focused Verification: uv run --extra dev pytest tests/unit/test_value_objects.py
 ### Notes
 
 - 2026-10-19T21:48:06+00:00: Generic scheduling contracts implemented; field-validation tests and runtime checks remain pending.
+- 2026-10-19T21:55:59+00:00: Domain contracts verified in the migrated scheduling suite.
 
 ## T002 - Add PostgreSQL persistence, migrations, and demo seed
 
@@ -58,13 +59,13 @@ Focused Verification: uv run --extra dev pytest tests/unit/test_value_objects.py
 
 Why / Intent: Persist scheduling domain and define concurrency-critical schema for downstream tasks.
 Start Boundary: Use T001 domain types; keep app DB separate from Langfuse Postgres.
-End Boundary: Alembic creates app schema; SQLAlchemy repositories implement domain ports; idempotent synthetic business seed (including five-minute demo reminder lead time) and disposable PostgreSQL integration tests work.
+End Boundary: Alembic creates the app schema; psycopg-backed repositories implement domain ports; idempotent synthetic business seed includes a five-minute demo reminder lead time; PostgreSQL integration tests target a disposable test database.
 Owner: Persistence/schema boundary.
 Migration Owner: T002 owns every Alembic revision and rollback note.
 Inputs: T001 types; DATABASE_URL; TEST_DATABASE_URL; PostgreSQL; repository Protocols; plan persistence contract.
-Outputs / Side-effects: DB/session wiring, mappings, repositories, migrations, seed, app-postgres Compose service, tests. Persist schedules, bookings, reminders/inbox, audits, idempotency outcomes. Enable btree_gist; use occupied_from/occupied_until and exclusion constraint per professional for scheduled/confirmed bookings; unique (business_id, operation, idempotency_key) plus canonical request hash; partial unique booking_id where reminder pending; unique inbox reminder_id; persist only HMAC-token digest. Provide BOOKING_TOKEN_SECRET placeholder in .env.example; never store raw secret.
+Outputs / Side-effects: Add connection wiring, direct psycopg SQL repositories, Alembic migrations, seed, app-postgres Compose service, and tests. Alembic uses SQLAlchemy internally; repositories use psycopg so row locks, advisory locks, and exclusion behavior stay explicit. Persist schedules, bookings, reminders/inbox, audits, and idempotency outcomes. Enable btree_gist; use occupied_from/occupied_until and an exclusion constraint per professional for scheduled/confirmed bookings; enforce unique (business_id, operation, idempotency_key) plus canonical request hash; allow one pending reminder per booking; allow one inbox row per reminder; persist only the HMAC token digest. Provide a BOOKING_TOKEN_SECRET placeholder and never store the raw secret.
 Non-goals: Clinic backfill; graph checkpoint persistence; Redis; Langfuse DB reuse; onboarding.
-Focused Verification: app DB migration and tests/integration/test_postgres_repositories.py against disposable TEST_DATABASE_URL.
+Focused Verification: Run Alembic migration and tests/integration/test_postgres_repositories.py against disposable TEST_DATABASE_URL.
 
 ### Acceptance Criteria
 
@@ -76,6 +77,8 @@ Focused Verification: app DB migration and tests/integration/test_postgres_repos
 ### Notes
 
 - 2026-10-19T21:48:07+00:00: Alembic schema, PostgreSQL repository, seed, and separate Compose database implemented. Migration and integration checks remain pending. uv.lock could not be regenerated because uv is unavailable.
+- 2026-10-19T21:56:00+00:00: Fresh PostgreSQL migration, seed, repository round-trip, and transaction checks remain unverified; Docker and PostgreSQL binaries are unavailable in this workspace.
+- 2026-10-19T22:13:25+00:00: Adjusted the execution plan to document direct psycopg repositories; the requested SQLAlchemy repository design was not used.
 
 ## T003 - Implement deterministic, timezone-aware availability
 
@@ -105,6 +108,7 @@ Focused Verification: availability unit and repository integration tests.
 ### Notes
 
 - 2026-10-19T21:48:08+00:00: Timezone-aware availability, DST handling, and transactional slot validation implemented; scheduling checks remain pending.
+- 2026-10-19T21:56:02+00:00: Pure availability behavior is covered; repository-backed scheduling checks remain unverified without PostgreSQL.
 
 ## T004 - Implement safe booking lifecycle and management tokens
 
@@ -137,6 +141,7 @@ Focused Verification: booking service and PostgreSQL concurrency/idempotency tes
 ### Notes
 
 - 2026-10-19T21:48:10+00:00: Booking lifecycle, HMAC capability digest, idempotency, audit writes, and atomic reminder changes implemented; concurrency and lifecycle checks remain pending.
+- 2026-10-19T21:56:03+00:00: Database-backed idempotency, overlap, rollback, and booking/reminder atomicity remain unverified without PostgreSQL.
 
 ## T005 - Publish catalog, availability, booking, and owner APIs
 
@@ -167,6 +172,7 @@ Focused Verification: uv run --extra dev pytest tests/api.
 ### Notes
 
 - 2026-10-19T21:48:11+00:00: Generic catalog, availability, booking, manage, owner, inbox, session, and health APIs implemented; API contract checks remain pending.
+- 2026-10-19T21:56:04+00:00: API contract coverage uses test doubles; real repository integration remains pending.
 
 ## T006 - Rebuild LangGraph for conversational scheduling
 
@@ -197,6 +203,8 @@ Focused Verification: uv run --extra dev pytest tests/graph tests/api.
 ### Notes
 
 - 2026-10-19T21:48:13+00:00: Typed LangGraph extraction and chat orchestration implemented. Raw management tokens are excluded from graph input/checkpoint state; workflow checks remain pending.
+- 2026-10-19T21:56:06+00:00: Chat/API boundary tests pass. Full model/checkpoint/trace inspection remains part of database-backed/manual acceptance.
+- 2026-10-19T22:13:48+00:00: Added a real LangGraph workflow test in addition to isolated chat/API boundary tests.
 
 ## T007 - Add durable reminder worker and demo inbox adapter
 
@@ -226,6 +234,8 @@ Focused Verification: reminder unit/API integration tests and Compose worker sta
 ### Notes
 
 - 2026-10-19T21:48:14+00:00: Separate Postgres reminder worker, bounded retry state, demo inbox, and API read endpoint implemented without graph imports; worker execution remains pending.
+- 2026-10-19T21:56:07+00:00: Worker code and Compose service are present, but reminder claiming, retries, inbox uniqueness, and new-turn reschedule have not been exercised against PostgreSQL.
+- 2026-10-19T22:12:51+00:00: Corrected the claim query to place LIMIT before FOR UPDATE SKIP LOCKED per PostgreSQL SELECT syntax; database execution remains unverified.
 
 ## T008 - Build customer chat and owner agenda in Streamlit
 
@@ -254,6 +264,7 @@ Focused Verification: API-client unit tests and manual Compose walkthrough.
 ### Notes
 
 - 2026-10-19T21:48:15+00:00: Customer booking flow, booking management, reminder reply, and read-only owner agenda wired to the API; browser walkthrough remains pending.
+- 2026-10-19T21:56:09+00:00: Streamlit browser walkthrough remains pending because this workspace has no Docker/PostgreSQL runtime.
 
 ## T009 - Replace clinic evaluations/docs and finish local demo
 
@@ -269,9 +280,9 @@ End Boundary: Evaluation scenarios cover journeys/guardrails; active docs descri
 Owner: Evaluation, observability, docs, and local deployment.
 Migration Owner: N/A — no schema change; document T002 migration, seed, and rollback commands.
 Inputs: Final API/chat result DTOs; synthetic scenarios; optional Langfuse config; app DB/worker Compose services; existing README and architecture/evaluation/security docs.
-Outputs / Side-effects: Replace core clinic scenarios with booking/manage/clarification/stale-slot/conflict/duplicate/retry/reminder/injection cases; update outcome extraction, judge rubric, trace redaction/summaries; update README, docs/architecture.md, graph.md, security.md, evaluation.md, .env.example when present, and Compose setup. Keep both untracked scheduling source docs intact.
+Outputs / Side-effects: Replace core clinic scenarios with booking/manage/clarification/stale-slot/conflict/duplicate/retry/reminder/injection cases; update outcome extraction, judge rubric, trace redaction/summaries; update README, docs/architecture.md, graph.md, security.md, evaluation.md, .env.example when present, and Compose setup. Keep the supplied service-scheduling source docs intact.
 Non-goals: Laya benchmark/train, hosting, live integrations, unrelated diagrams or marketing.
-Focused Verification: uv run --extra dev pytest; uv run python -m app.evals.runner with deterministic/offline setup; clean docker compose up --build manual journey
+Focused Verification: uv run --extra dev pytest; uv run python -m app.evals.runner with deterministic/offline setup; clean docker compose up --build manual journey.
 
 ### Acceptance Criteria
 
@@ -284,3 +295,6 @@ Focused Verification: uv run --extra dev pytest; uv run python -m app.evals.runn
 ### Notes
 
 - 2026-10-19T21:48:16+00:00: Active docs and structured extraction evaluations updated. Existing clinic pytest suite was not migrated; full manual flow and Compose run remain pending.
+- 2026-10-19T21:56:10+00:00: Legacy clinic tests were replaced with scheduling tests and active setup/evaluation docs were corrected. Full Compose booking-to-reminder-to-reschedule acceptance remains pending.
+- 2026-10-19T22:12:53+00:00: Automated suite, offline evals, dependency lock, Compose YAML, and offline migration generation pass. PostgreSQL-backed acceptance and end-to-end Compose walkthrough remain pending.
+- 2026-10-19T22:13:50+00:00: Current suite is 35 passing tests, including an actual LangGraph invocation; PostgreSQL-backed acceptance and end-to-end Compose walkthrough remain pending.

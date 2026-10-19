@@ -168,6 +168,8 @@ class CustomerInput(Contract):
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, value: str) -> str:
+        if any(not (ch.isdigit() or ch in "+(). -") for ch in value):
+            raise ValueError("phone may contain digits and standard phone punctuation only")
         normalized = "".join(ch for ch in value if ch.isdigit() or ch == "+")
         if normalized.count("+") > 1 or ("+" in normalized and not normalized.startswith("+")):
             raise ValueError("phone must be an international phone number")

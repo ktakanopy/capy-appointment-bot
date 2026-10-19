@@ -78,7 +78,7 @@ Run the structured intent evaluation scenarios with:
 uv run python -m app.evals.runner
 ```
 
-The original clinic test suite has not yet been migrated to the scheduling product. It was not run as part of this implementation.
+Run the automated scheduling checks with `uv run --extra dev pytest -q`. The suite covers domain validation, timezone-aware availability, chat/API contracts, token redaction, the frontend client, and extraction evaluations. PostgreSQL transaction and end to end Compose checks still require a local database runtime.
 
 ## Project map
 
