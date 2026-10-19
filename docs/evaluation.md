@@ -1,26 +1,28 @@
 # Evaluation
 
-`app.evals.runner` replays a small, deterministic extraction benchmark without requiring PostgreSQL or model credentials. The scenarios cover service/date discovery, professional and local-time extraction, ordinal slot selection, customer contact extraction, cancellation intent, and rescheduling language.
+The project uses two evaluation layers. `app.evals.runner` checks deterministic language extraction without PostgreSQL or model credentials. PostgreSQL integration tests check product outcomes through the real API, booking services, repositories, and reminder worker.
 
-Run it with:
+## Extraction benchmark
+
+Run the offline benchmark with:
 
 ```bash
 uv run python -m app.evals.runner
 ```
 
-The runner prints pass/fail per scenario and writes JSON results under `.eval_runs/`. When `LLM_PROVIDER=openai` is configured, the same scenarios exercise model extraction; provider failures fall back to the deterministic interpreter.
+It prints pass/fail per scenario and writes JSON results under `.eval_runs/`. Scenarios cover service/date discovery, professional and local-time extraction, ordinal slot selection, customer contact extraction, cancellation intent, and rescheduling language. If `LLM_PROVIDER=openai` is configured, they exercise model extraction with deterministic fallback on provider errors.
 
-## Product behavior to review manually
+## Product outcome evaluations
 
-The extractor benchmark does not establish booking correctness. The automated pytest suite covers domain/API contracts and deterministic availability, but PostgreSQL transaction behavior still needs a local database runtime. A full local product review should also cover:
+Integration tests require `TEST_DATABASE_URL` to point to a disposable PostgreSQL database whose name ends in `_test`; each test migrates, seeds, and clears it. Run them with:
 
-1. Search an actual seeded service and confirm every offered slot falls within business hours.
-2. Book a slot and verify the owner agenda shows the same time and status.
-3. Retry a create request with the same idempotency key and confirm it returns the same booking and token.
-4. Attempt to use a stale or conflicting slot and confirm the write is rejected without an overlapping booking.
-5. Reschedule to a blocked/conflicting time and verify the original booking and reminder remain unchanged.
-6. Cancel a booking and verify its pending reminder is canceled.
-7. Wait for a due reminder, send a reply as a new `/chat` turn with the token separate, and reschedule.
-8. Verify raw management tokens and customer contact data do not appear in logs, traces, graph input, or checkpoints.
+```bash
+TEST_DATABASE_URL=postgresql://user:password@localhost:5433/scheduling_test \
+  uv run --extra dev pytest -q tests/integration
+```
 
-Run the automated checks with `uv run --extra dev pytest -q`. The suite currently verifies token signing/redaction, request validation, slot filtering and selection, DST behavior, deterministic extraction, and frontend request boundaries. It does not replace PostgreSQL concurrency tests or the Compose reminder-to-reschedule walkthrough.
+The API and persistence scenarios assert structured outcomes for date clarification, service-backed slots, idempotent replay, stale-slot rejection, prompt-injection resistance, booking conflicts, transaction rollback, concurrent creates, reminder retries, and reminder-reply rescheduling. The API reminder journey also checks the owner agenda and that the management token stays out of graph state and logs.
+
+The browser walkthrough was exercised locally with PostgreSQL, FastAPI, Streamlit, and a reminder-worker delivery: search, book, confirm, inspect the owner agenda, receive a simulated reminder reply, and move the booking. Docker Compose startup could not be exercised because Docker was unavailable in the implementation environment.
+
+Run the complete unit, API, evaluation, and integration suite with `uv run --extra dev pytest -q` after setting `TEST_DATABASE_URL`. Without it, PostgreSQL integration cases skip; unit and API contract checks still run.

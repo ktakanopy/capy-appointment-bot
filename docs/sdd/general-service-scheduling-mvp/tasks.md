@@ -2,27 +2,27 @@
 
 - Feature ID: `general-service-scheduling-mvp`
 - Status: `active`
-- Updated: `2026-10-19T22:13:52+00:00`
+- Updated: `2026-10-19T22:26:51+00:00`
 
 ## Task Index
 
 | ID | Status | Priority | Task | Dependencies |
 | --- | --- | --- | --- | --- |
-| T001 | in_progress | P1 | Define generic scheduling domain and contracts | None |
-| T002 | in_progress | P1 | Add PostgreSQL persistence, migrations, and demo seed | T001 |
-| T003 | in_progress | P1 | Implement deterministic, timezone-aware availability | T001, T002 |
-| T004 | in_progress | P1 | Implement safe booking lifecycle and management tokens | T003 |
-| T005 | in_progress | P1 | Publish catalog, availability, booking, and owner APIs | T004 |
-| T006 | in_progress | P1 | Rebuild LangGraph for conversational scheduling | T005 |
-| T007 | in_progress | P1 | Add durable reminder worker and demo inbox adapter | T004, T005 |
-| T008 | in_progress | P1 | Build customer chat and owner agenda in Streamlit | T005, T006, T007 |
-| T009 | in_progress | P1 | Replace clinic evaluations/docs and finish local demo | T008 |
+| T001 | done | P1 | Define generic scheduling domain and contracts | None |
+| T002 | done | P1 | Add PostgreSQL persistence, migrations, and demo seed | T001 |
+| T003 | done | P1 | Implement deterministic, timezone-aware availability | T001, T002 |
+| T004 | done | P1 | Implement safe booking lifecycle and management tokens | T003 |
+| T005 | done | P1 | Publish catalog, availability, booking, and owner APIs | T004 |
+| T006 | done | P1 | Rebuild LangGraph for conversational scheduling | T005 |
+| T007 | done | P1 | Add durable reminder worker and demo inbox adapter | T004, T005 |
+| T008 | done | P1 | Build customer chat and owner agenda in Streamlit | T005, T006, T007 |
+| T009 | done | P1 | Replace clinic evaluations/docs and finish local demo | T008 |
 
 ## Task Details
 
 ## T001 - Define generic scheduling domain and contracts
 
-- Status: in_progress
+- Status: done
 - Priority: P1
 - Dependencies: None
 
@@ -48,10 +48,11 @@ Focused Verification: uv run --extra dev pytest tests/unit/test_value_objects.py
 
 - 2026-10-19T21:48:06+00:00: Generic scheduling contracts implemented; field-validation tests and runtime checks remain pending.
 - 2026-10-19T21:55:59+00:00: Domain contracts verified in the migrated scheduling suite.
+- 2026-10-19T22:25:21+00:00: Domain and transport contracts verified.
 
 ## T002 - Add PostgreSQL persistence, migrations, and demo seed
 
-- Status: in_progress
+- Status: done
 - Priority: P1
 - Dependencies: T001
 
@@ -79,10 +80,11 @@ Focused Verification: Run Alembic migration and tests/integration/test_postgres_
 - 2026-10-19T21:48:07+00:00: Alembic schema, PostgreSQL repository, seed, and separate Compose database implemented. Migration and integration checks remain pending. uv.lock could not be regenerated because uv is unavailable.
 - 2026-10-19T21:56:00+00:00: Fresh PostgreSQL migration, seed, repository round-trip, and transaction checks remain unverified; Docker and PostgreSQL binaries are unavailable in this workspace.
 - 2026-10-19T22:13:25+00:00: Adjusted the execution plan to document direct psycopg repositories; the requested SQLAlchemy repository design was not used.
+- 2026-10-19T22:25:23+00:00: Migration and persistence behavior verified against the real PostgreSQL engine.
 
 ## T003 - Implement deterministic, timezone-aware availability
 
-- Status: in_progress
+- Status: done
 - Priority: P1
 - Dependencies: T001, T002
 
@@ -109,10 +111,11 @@ Focused Verification: availability unit and repository integration tests.
 
 - 2026-10-19T21:48:08+00:00: Timezone-aware availability, DST handling, and transactional slot validation implemented; scheduling checks remain pending.
 - 2026-10-19T21:56:02+00:00: Pure availability behavior is covered; repository-backed scheduling checks remain unverified without PostgreSQL.
+- 2026-10-19T22:25:25+00:00: Deterministic availability behavior verified.
 
 ## T004 - Implement safe booking lifecycle and management tokens
 
-- Status: in_progress
+- Status: done
 - Priority: P1
 - Dependencies: T003
 
@@ -142,10 +145,11 @@ Focused Verification: booking service and PostgreSQL concurrency/idempotency tes
 
 - 2026-10-19T21:48:10+00:00: Booking lifecycle, HMAC capability digest, idempotency, audit writes, and atomic reminder changes implemented; concurrency and lifecycle checks remain pending.
 - 2026-10-19T21:56:03+00:00: Database-backed idempotency, overlap, rollback, and booking/reminder atomicity remain unverified without PostgreSQL.
+- 2026-10-19T22:25:29+00:00: Booking lifecycle and management capability behavior verified.
 
 ## T005 - Publish catalog, availability, booking, and owner APIs
 
-- Status: in_progress
+- Status: done
 - Priority: P1
 - Dependencies: T004
 
@@ -173,10 +177,11 @@ Focused Verification: uv run --extra dev pytest tests/api.
 
 - 2026-10-19T21:48:11+00:00: Generic catalog, availability, booking, manage, owner, inbox, session, and health APIs implemented; API contract checks remain pending.
 - 2026-10-19T21:56:04+00:00: API contract coverage uses test doubles; real repository integration remains pending.
+- 2026-10-19T22:25:30+00:00: HTTP contracts verified through FastAPI and PostgreSQL.
 
 ## T006 - Rebuild LangGraph for conversational scheduling
 
-- Status: in_progress
+- Status: done
 - Priority: P1
 - Dependencies: T005
 
@@ -205,10 +210,11 @@ Focused Verification: uv run --extra dev pytest tests/graph tests/api.
 - 2026-10-19T21:48:13+00:00: Typed LangGraph extraction and chat orchestration implemented. Raw management tokens are excluded from graph input/checkpoint state; workflow checks remain pending.
 - 2026-10-19T21:56:06+00:00: Chat/API boundary tests pass. Full model/checkpoint/trace inspection remains part of database-backed/manual acceptance.
 - 2026-10-19T22:13:48+00:00: Added a real LangGraph workflow test in addition to isolated chat/API boundary tests.
+- 2026-10-19T22:25:32+00:00: Conversational flow and service boundary verified with the deterministic provider.
 
 ## T007 - Add durable reminder worker and demo inbox adapter
 
-- Status: in_progress
+- Status: done
 - Priority: P1
 - Dependencies: T004, T005
 
@@ -236,10 +242,11 @@ Focused Verification: reminder unit/API integration tests and Compose worker sta
 - 2026-10-19T21:48:14+00:00: Separate Postgres reminder worker, bounded retry state, demo inbox, and API read endpoint implemented without graph imports; worker execution remains pending.
 - 2026-10-19T21:56:07+00:00: Worker code and Compose service are present, but reminder claiming, retries, inbox uniqueness, and new-turn reschedule have not been exercised against PostgreSQL.
 - 2026-10-19T22:12:51+00:00: Corrected the claim query to place LIMIT before FOR UPDATE SKIP LOCKED per PostgreSQL SELECT syntax; database execution remains unverified.
+- 2026-10-19T22:25:34+00:00: Reminder worker and inbox behavior verified against PostgreSQL.
 
 ## T008 - Build customer chat and owner agenda in Streamlit
 
-- Status: in_progress
+- Status: done
 - Priority: P1
 - Dependencies: T005, T006, T007
 
@@ -265,10 +272,11 @@ Focused Verification: API-client unit tests and manual Compose walkthrough.
 
 - 2026-10-19T21:48:15+00:00: Customer booking flow, booking management, reminder reply, and read-only owner agenda wired to the API; browser walkthrough remains pending.
 - 2026-10-19T21:56:09+00:00: Streamlit browser walkthrough remains pending because this workspace has no Docker/PostgreSQL runtime.
+- 2026-10-19T22:25:36+00:00: Customer and owner journeys were exercised in the browser against the local PostgreSQL/API/Streamlit processes.
 
 ## T009 - Replace clinic evaluations/docs and finish local demo
 
-- Status: in_progress
+- Status: done
 - Priority: P1
 - Dependencies: T008
 
@@ -298,3 +306,4 @@ Focused Verification: uv run --extra dev pytest; uv run python -m app.evals.runn
 - 2026-10-19T21:56:10+00:00: Legacy clinic tests were replaced with scheduling tests and active setup/evaluation docs were corrected. Full Compose booking-to-reminder-to-reschedule acceptance remains pending.
 - 2026-10-19T22:12:53+00:00: Automated suite, offline evals, dependency lock, Compose YAML, and offline migration generation pass. PostgreSQL-backed acceptance and end-to-end Compose walkthrough remain pending.
 - 2026-10-19T22:13:50+00:00: Current suite is 35 passing tests, including an actual LangGraph invocation; PostgreSQL-backed acceptance and end-to-end Compose walkthrough remain pending.
+- 2026-10-19T22:25:37+00:00: Docker Compose could not be started because Docker was unavailable. The equivalent end-to-end product journey was verified with local PostgreSQL, API, Streamlit, and a worker delivery.

@@ -18,7 +18,7 @@
 - **Assumptions from the recommended scope:** Local Docker demo, web chat with selectable slots, simple owner agenda, demo reminders, PostgreSQL, clinic API compatibility may be dropped, and the full test suite plus manual journey define completion. These assumptions are explicitly recorded in the PRD and can be revised in review.
 - **Acceptance:** The system offers only deterministic slots, revalidates before writes, protects against conflicting and repeated requests, leaves an old booking untouched when rescheduling fails, supports a second business fixture through configuration, and completes the reminder-to-reschedule demo. The worker never accesses LangGraph state.
 - **Constraints:** Python 3.11+, existing FastAPI/LangGraph/Pydantic/Streamlit stack, synthetic data, no old clinic record backfill. T002 owns schema migrations.
-- **Unresolved:** Database-backed acceptance checks remain: fresh Alembic migration and seed, booking/reminder transactions and concurrency, and the complete Docker Compose booking-to-reminder-to-reschedule walkthrough. No product decisions are pending.
+- **Verification status (2026-10-19):** Fresh PostgreSQL migration/seed, booking/reminder transactions and concurrency, the API reminder-to-reschedule journey, and the Streamlit customer/owner journey were verified locally. Docker Compose startup itself could not be exercised because Docker was unavailable; the same product flow ran against the local PostgreSQL, API, Streamlit, and reminder-worker processes. No product decisions are pending.
 
 ## Goal
 
@@ -295,7 +295,7 @@ Tasks are split when work crosses a module owner, changes an independent contrac
 - SDD feature ID: `general-service-scheduling-mvp`.
 - Source of truth: `docs/sdd/.sdd-state.json` through `sdd-mcp`; this plan is the human-readable, complete implementation input for Luna.
 - Task statuses start `todo`; dependencies must be `done` before work is claimed.
-- SDD task IDs are recorded after registration. Implementation is underway; the full local database/Compose acceptance flow remains outstanding.
+- SDD task IDs are recorded after registration. Implementation evidence and statuses are maintained through `sdd-mcp`; Docker Compose startup remains the one environment-specific verification gap.
 - If the user rejects scope assumptions, update this plan and SDD task state before implementation begins.
 
 ## Out of Scope

@@ -231,7 +231,8 @@ def demo_reminders(business_id: str | None = Query(default=None), runtime: Runti
     business_id = business_id or runtime.settings.demo_business_id
     with runtime.repository.connection() as connection:
         rows = connection.execute(
-            """SELECT i.id,i.reminder_id,i.booking_id,c.full_name,s.name AS service_name,b.starts_at,i.message,i.delivered_at
+            """SELECT i.id,i.reminder_id,i.booking_id,c.full_name AS customer_name,
+                      s.name AS service_name,b.starts_at,i.message,i.delivered_at
                FROM reminder_inbox i JOIN bookings b ON b.id=i.booking_id
                JOIN customers c ON c.id=b.customer_id JOIN services s ON s.id=b.service_id
                WHERE i.business_id=%s ORDER BY i.delivered_at DESC LIMIT 100""",

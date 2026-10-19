@@ -72,13 +72,13 @@ In another terminal:
 uv run streamlit run frontend/streamlit_app.py
 ```
 
-Run the structured intent evaluation scenarios with:
+Run the offline extraction benchmark with:
 
 ```bash
 uv run python -m app.evals.runner
 ```
 
-Run the automated scheduling checks with `uv run --extra dev pytest -q`. The suite covers domain validation, timezone-aware availability, chat/API contracts, token redaction, the frontend client, and extraction evaluations. PostgreSQL transaction and end to end Compose checks still require a local database runtime.
+Run the automated scheduling checks with `uv run --extra dev pytest -q`. Set `TEST_DATABASE_URL` to a disposable PostgreSQL database whose name ends in `_test` to include migration, transaction, concurrency, reminder, and API integration coverage. Without it, the PostgreSQL integration tests skip.
 
 ## Project map
 

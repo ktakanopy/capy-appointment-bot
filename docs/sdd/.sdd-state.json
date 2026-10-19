@@ -11,7 +11,7 @@
       "notes": [],
       "status": "active",
       "title": "General Service Scheduling MVP",
-      "updated_at": "2026-10-19T22:13:52+00:00"
+      "updated_at": "2026-10-19T22:26:51+00:00"
     }
   },
   "reviews": [],
@@ -32,7 +32,8 @@
       "dependencies": [],
       "description": "Why / Intent: Establish business-neutral types and API/model vocabulary so persistence, scheduling, API, and graph tasks share one contract.\nStart Boundary: Existing app/models.py, app/llm/schemas.py, and response DTOs; do not add persistence or route behavior.\nEnd Boundary: Pydantic models/enums cover Business, Professional, Service, WeeklyAvailabilityRule, BlockedPeriod, Customer, Booking, Reminder, AuditEvent, availability slots, management, and chat input/output. Remove Patient/DOB types from active contracts.\nOwner: Domain/API contract boundary.\nMigration Owner: N/A \u2014 no persisted records change.\nInputs: PRD FR-001/FR-016; Python 3.11; Pydantic v2; existing strict extra-forbid DTO pattern; price, duration, timezone, contact and operation fields.\nOutputs / Side-effects: Update app/models.py and app/llm/schemas.py; add validation tests in tests/unit/test_value_objects.py and tests/unit/test_state_coercion.py. Use decimal-safe price, integer duration minutes, timezone-aware datetimes, and explicit operation/status/outcome enums.\nNon-goals: SQLAlchemy, Alembic, scheduling algorithm, route/UI behavior, clinic compatibility aliases.\nFocused Verification: uv run --extra dev pytest tests/unit/test_value_objects.py tests/unit/test_state_coercion.py",
       "evidence": [
-        "`python -m pytest -q`: Pydantic contracts and contact/time validation pass."
+        "`python -m pytest -q`: Pydantic contracts and contact/time validation pass.",
+        "`uv run --extra dev pytest -q` with TEST_DATABASE_URL: 46 passed; generic DTO validation and OpenAPI clinic-field exclusion are covered by unit/API tests."
       ],
       "feature_id": "general-service-scheduling-mvp",
       "id": "T001",
@@ -44,12 +45,16 @@
         {
           "created_at": "2026-10-19T21:55:59+00:00",
           "text": "Domain contracts verified in the migrated scheduling suite."
+        },
+        {
+          "created_at": "2026-10-19T22:25:21+00:00",
+          "text": "Domain and transport contracts verified."
         }
       ],
       "priority": "P1",
-      "status": "in_progress",
+      "status": "done",
       "title": "Define generic scheduling domain and contracts",
-      "updated_at": "2026-10-19T21:55:59+00:00"
+      "updated_at": "2026-10-19T22:25:21+00:00"
     },
     "T002": {
       "acceptance_criteria": [
@@ -80,7 +85,9 @@
         "T001"
       ],
       "description": "Why / Intent: Persist scheduling domain and define concurrency-critical schema for downstream tasks.\nStart Boundary: Use T001 domain types; keep app DB separate from Langfuse Postgres.\nEnd Boundary: Alembic creates the app schema; psycopg-backed repositories implement domain ports; idempotent synthetic business seed includes a five-minute demo reminder lead time; PostgreSQL integration tests target a disposable test database.\nOwner: Persistence/schema boundary.\nMigration Owner: T002 owns every Alembic revision and rollback note.\nInputs: T001 types; DATABASE_URL; TEST_DATABASE_URL; PostgreSQL; repository Protocols; plan persistence contract.\nOutputs / Side-effects: Add connection wiring, direct psycopg SQL repositories, Alembic migrations, seed, app-postgres Compose service, and tests. Alembic uses SQLAlchemy internally; repositories use psycopg so row locks, advisory locks, and exclusion behavior stay explicit. Persist schedules, bookings, reminders/inbox, audits, and idempotency outcomes. Enable btree_gist; use occupied_from/occupied_until and an exclusion constraint per professional for scheduled/confirmed bookings; enforce unique (business_id, operation, idempotency_key) plus canonical request hash; allow one pending reminder per booking; allow one inbox row per reminder; persist only the HMAC token digest. Provide a BOOKING_TOKEN_SECRET placeholder and never store the raw secret.\nNon-goals: Clinic backfill; graph checkpoint persistence; Redis; Langfuse DB reuse; onboarding.\nFocused Verification: Run Alembic migration and tests/integration/test_postgres_repositories.py against disposable TEST_DATABASE_URL.",
-      "evidence": [],
+      "evidence": [
+        "PostgreSQL 17 disposable database: Alembic upgrade and seed succeeded; integration suite verifies repeatable seeding, second-business scope, durable writes, and rollback."
+      ],
       "feature_id": "general-service-scheduling-mvp",
       "id": "T002",
       "notes": [
@@ -95,12 +102,16 @@
         {
           "created_at": "2026-10-19T22:13:25+00:00",
           "text": "Adjusted the execution plan to document direct psycopg repositories; the requested SQLAlchemy repository design was not used."
+        },
+        {
+          "created_at": "2026-10-19T22:25:23+00:00",
+          "text": "Migration and persistence behavior verified against the real PostgreSQL engine."
         }
       ],
       "priority": "P1",
-      "status": "in_progress",
+      "status": "done",
       "title": "Add PostgreSQL persistence, migrations, and demo seed",
-      "updated_at": "2026-10-19T22:13:25+00:00"
+      "updated_at": "2026-10-19T22:25:23+00:00"
     },
     "T003": {
       "acceptance_criteria": [
@@ -123,7 +134,8 @@
       ],
       "description": "Why / Intent: Compute every offered slot from persisted scheduling rules, never from model generation.\nStart Boundary: T001 availability DTOs and T002 repository queries; no graph code.\nEnd Boundary: AvailabilityService.find_slots accepts business/service, optional professional, local date/time constraints and returns ordered slots with professional, offset-aware start/end, local display label, and service/price summary.\nOwner: Scheduling service.\nMigration Owner: T002 owns schedule schema.\nInputs: Business zoneinfo timezone; service/professional assignments; weekly rules; blocks; active bookings; buffers; min notice/horizon; local query; 15-minute candidate increment.\nOutputs / Side-effects: Pure/read-only scheduling module and tests. Calculate in business timezone and compare aware UTC. Skip nonexistent local wall times during spring DST change; repeated fall-back times become distinct slot results with distinct offsets. Include full duration plus buffers in overlap.\nNon-goals: Reservation/create, LLM, policy changes, travel/multi-location.\nFocused Verification: availability unit and repository integration tests.",
       "evidence": [
-        "`python -m pytest -q tests/unit/test_scheduling.py`: buffer, blocked-period, existing-occupancy, and DST unit cases pass."
+        "`python -m pytest -q tests/unit/test_scheduling.py`: buffer, blocked-period, existing-occupancy, and DST unit cases pass.",
+        "Full suite passes timezone/DST, boundaries, assignment, buffer, block, and occupancy checks; database integration tests exercise slot validation against persisted bookings."
       ],
       "feature_id": "general-service-scheduling-mvp",
       "id": "T003",
@@ -135,12 +147,16 @@
         {
           "created_at": "2026-10-19T21:56:02+00:00",
           "text": "Pure availability behavior is covered; repository-backed scheduling checks remain unverified without PostgreSQL."
+        },
+        {
+          "created_at": "2026-10-19T22:25:25+00:00",
+          "text": "Deterministic availability behavior verified."
         }
       ],
       "priority": "P1",
-      "status": "in_progress",
+      "status": "done",
       "title": "Implement deterministic, timezone-aware availability",
-      "updated_at": "2026-10-19T21:56:02+00:00"
+      "updated_at": "2026-10-19T22:25:25+00:00"
     },
     "T004": {
       "acceptance_criteria": [
@@ -166,7 +182,8 @@
       ],
       "description": "Why / Intent: Commit selected slots safely without conflicts or losing a booking on failed reschedule.\nStart Boundary: T003 availability and T002 schema/transaction/repository interfaces.\nEnd Boundary: Booking service supports create, token-authorized read, confirm, cancel, and reschedule with audit, idempotency, and transactional reminder scheduling.\nOwner: Booking application service.\nMigration Owner: T002 owns all schema; no migration here.\nInputs: Exact candidate slot and IDs; customer contact; idempotency key and canonical request hash; required BOOKING_TOKEN_SECRET; action policy; reminder lead time.\nOutputs / Side-effects: HMAC-SHA-256 per-booking manage token derived from secret, booking ID, token version; store only digest and re-derive for same-key create retry. Create plus pending reminder is atomic. Cancel cancels pending reminder atomically. Reschedule updates pending reminder or creates a replacement if prior reminder delivered, atomically with booking. Typed outcomes.\nNon-goals: Chat routing; delivery retries; payments; production login; public raw ID lookup; schema migration.\nFocused Verification: booking service and PostgreSQL concurrency/idempotency tests.",
       "evidence": [
-        "`python -m pytest -q tests/unit/test_booking_tokens.py`: token signature, tamper rejection, secret validation, and canonical request hashing pass."
+        "`python -m pytest -q tests/unit/test_booking_tokens.py`: token signature, tamper rejection, secret validation, and canonical request hashing pass.",
+        "PostgreSQL integration tests verify idempotency replay and mismatch, token digest storage, overlap exclusion/concurrency, atomic reminder changes, cancel, and rollback-safe reschedule."
       ],
       "feature_id": "general-service-scheduling-mvp",
       "id": "T004",
@@ -178,12 +195,16 @@
         {
           "created_at": "2026-10-19T21:56:03+00:00",
           "text": "Database-backed idempotency, overlap, rollback, and booking/reminder atomicity remain unverified without PostgreSQL."
+        },
+        {
+          "created_at": "2026-10-19T22:25:29+00:00",
+          "text": "Booking lifecycle and management capability behavior verified."
         }
       ],
       "priority": "P1",
-      "status": "in_progress",
+      "status": "done",
       "title": "Implement safe booking lifecycle and management tokens",
-      "updated_at": "2026-10-19T21:56:03+00:00"
+      "updated_at": "2026-10-19T22:25:29+00:00"
     },
     "T005": {
       "acceptance_criteria": [
@@ -206,7 +227,9 @@
       ],
       "description": "Why / Intent: Give clients typed HTTP contracts while keeping scheduling policy in services.\nStart Boundary: T001 DTOs and T003/T004 services/repositories.\nEnd Boundary: OpenAPI defines generic catalog, availability, create, manage, owner, health routes and POST /sessions/new plus /chat DTOs. T005 defines /chat transport contract only; T006 implements its handler and graph call. T007 adds GET /demo/reminders.\nOwner: FastAPI API/composition root.\nMigration Owner: N/A.\nInputs: T001 DTOs; T003 availability; T004 booking; DATABASE_URL; demo business ID; error mapping.\nOutputs / Side-effects: Replace clinic payloads; implement catalog/availability/booking/manage/owner/health routes and tests. Booking create receives slot reference, exact IDs/start fields, contact and Idempotency-Key then revalidates. Customer read uses X-Booking-Token; mutations use X-Booking-Token and Idempotency-Key. Never put token in URL. Invalid and unknown booking response shapes match. Owner API is synthetic local-demo-only.\nNon-goals: Chat workflow handler (T006), UI, identity provider, clinic compatibility, ORM response objects.\nFocused Verification: uv run --extra dev pytest tests/api.",
       "evidence": [
-        "`python -m pytest -q tests/api/test_chat_contract.py`: request shape, session errors, offered-slot filtering, and create path pass using isolated service fakes."
+        "`python -m pytest -q tests/api/test_chat_contract.py`: request shape, session errors, offered-slot filtering, and create path pass using isolated service fakes.",
+        "API contract suite and database-backed API outcome tests verify catalog, availability, create, manage, owner agenda, idempotency, stale-slot conflicts, and stable errors.",
+        "Real `/demo/reminders` API integration exposed and fixed the customer-name SQL alias; response validation now passes."
       ],
       "feature_id": "general-service-scheduling-mvp",
       "id": "T005",
@@ -218,12 +241,16 @@
         {
           "created_at": "2026-10-19T21:56:04+00:00",
           "text": "API contract coverage uses test doubles; real repository integration remains pending."
+        },
+        {
+          "created_at": "2026-10-19T22:25:30+00:00",
+          "text": "HTTP contracts verified through FastAPI and PostgreSQL."
         }
       ],
       "priority": "P1",
-      "status": "in_progress",
+      "status": "done",
       "title": "Publish catalog, availability, booking, and owner APIs",
-      "updated_at": "2026-10-19T21:56:04+00:00"
+      "updated_at": "2026-10-19T22:26:48+00:00"
     },
     "T006": {
       "acceptance_criteria": [
@@ -251,7 +278,8 @@
       "description": "Why / Intent: Let customers express intent naturally while deterministic services own slots and writes.\nStart Boundary: Replace clinic graph using T001 DTOs and T005 contracts.\nEnd Boundary: Chat clarifies missing/ambiguous values, presents deterministic slots, requires explicit current slot selection, creates/manages bookings through services, and handles reminder replies as new API chat turns.\nOwner: LLM boundary and LangGraph workflow.\nMigration Owner: N/A; no schema migration.\nInputs: Session/thread ID; incoming message; bounded history; latest deterministic slots; optional raw manage_token supplied separately by API; API-validated booking ID/summary/action context for this turn; LLMProvider.\nOutputs / Side-effects: New extraction schema/prompt, graph state/nodes/builder/workflow/response, runtime and deterministic provider fixtures. API validates raw token before graph call. Only safe authorized booking context may enter graph. Never pass or persist raw token in graph/checkpoint/history/model context/logs/traces/URLs/errors.\nNon-goals: Model-computed slots; arbitrary tools/SQL; model-generated tokens; Laya fine-tuning; multiple commits per turn.\nFocused Verification: uv run --extra dev pytest tests/graph tests/api.",
       "evidence": [
         "`python -m pytest -q tests/api/test_chat_contract.py`: token-like message text is redacted before workflow interpretation; management without a token cannot mutate.",
-        "`python -m pytest -q tests/unit/test_graph_workflow.py`: the real LangGraph builder and wrapper return typed scheduling extraction."
+        "`python -m pytest -q tests/unit/test_graph_workflow.py`: the real LangGraph builder and wrapper return typed scheduling extraction.",
+        "Graph/API suite verifies clarification, offered-slot selection, stale-slot rejection, token isolation, and injection resistance; reminder reply is processed as a separate chat turn."
       ],
       "feature_id": "general-service-scheduling-mvp",
       "id": "T006",
@@ -267,12 +295,16 @@
         {
           "created_at": "2026-10-19T22:13:48+00:00",
           "text": "Added a real LangGraph workflow test in addition to isolated chat/API boundary tests."
+        },
+        {
+          "created_at": "2026-10-19T22:25:32+00:00",
+          "text": "Conversational flow and service boundary verified with the deterministic provider."
         }
       ],
       "priority": "P1",
-      "status": "in_progress",
+      "status": "done",
       "title": "Rebuild LangGraph for conversational scheduling",
-      "updated_at": "2026-10-19T22:13:48+00:00"
+      "updated_at": "2026-10-19T22:25:32+00:00"
     },
     "T007": {
       "acceptance_criteria": [
@@ -298,7 +330,8 @@
       ],
       "description": "Why / Intent: Demonstrate asynchronous reminder behavior without real channels or cross-process graph coupling.\nStart Boundary: Pending reminder rows from T004 and demo read API contract.\nEnd Boundary: Separate Compose worker claims due reminders with PostgreSQL row locking, writes one durable local demo inbox message, and records attempts/outcome. Client reads inbox and submits a reply as new /chat API request using its active session or a fresh session; worker never calls LangGraph or reads API memory checkpoint.\nOwner: Reminder/background-work boundary.\nMigration Owner: T002 owns reminder/inbox schema; no migration here.\nInputs: Pending reminder ID, booking ID, due time, poll interval and demo adapter. Reminder is linked by booking ID; no graph session ID is stored or required.\nOutputs / Side-effects: Worker/service/adapter, Compose command, GET /demo/reminders, fake-clock tests. Claim via FOR UPDATE SKIP LOCKED; inbox row has unique reminder ID; inbox write and delivered state update are transactional/idempotent. No reply processor or graph dependency.\nNon-goals: Live messaging, unbounded retries, Redis/Celery, channel marketing.\nFocused Verification: reminder unit/API integration tests and Compose worker startup.",
       "evidence": [
-        "`python -m pytest -q tests/unit/test_reminders.py`: reminder-claim SQL contract passes."
+        "`python -m pytest -q tests/unit/test_reminders.py`: reminder-claim SQL contract passes.",
+        "PostgreSQL integration tests verify exactly-once inbox delivery, bounded retries, terminal failure behavior, and delivery after recovery; API reminder reply reschedules the booking."
       ],
       "feature_id": "general-service-scheduling-mvp",
       "id": "T007",
@@ -314,12 +347,16 @@
         {
           "created_at": "2026-10-19T22:12:51+00:00",
           "text": "Corrected the claim query to place LIMIT before FOR UPDATE SKIP LOCKED per PostgreSQL SELECT syntax; database execution remains unverified."
+        },
+        {
+          "created_at": "2026-10-19T22:25:34+00:00",
+          "text": "Reminder worker and inbox behavior verified against PostgreSQL."
         }
       ],
       "priority": "P1",
-      "status": "in_progress",
+      "status": "done",
       "title": "Add durable reminder worker and demo inbox adapter",
-      "updated_at": "2026-10-19T22:12:51+00:00"
+      "updated_at": "2026-10-19T22:25:34+00:00"
     },
     "T008": {
       "acceptance_criteria": [
@@ -341,7 +378,8 @@
       ],
       "description": "Why / Intent: Make the portfolio demo understandable without API docs or DB inspection.\nStart Boundary: T005/T006 API and chat contracts plus T007 demo inbox endpoint.\nEnd Boundary: Streamlit has customer chat, clickable slots, booking/manage token, confirm/cancel/reschedule, owner agenda and reminder inbox.\nOwner: Frontend.\nMigration Owner: N/A.\nInputs: API URL, seeded business, session, slot DTOs, token returned from create, owner date filters.\nOutputs / Side-effects: Adapt Streamlit and API client; keep customer token in protected Streamlit session state, send only in protected request field/header, never append to chat text or URL; show typed recoverable errors.\nNon-goals: Rewrite framework, add authentication, hosting, onboarding, direct DB access.\nFocused Verification: API-client unit tests and manual Compose walkthrough.",
       "evidence": [
-        "`python -m pytest -q tests/unit/test_frontend_api_client.py`: token is sent in a dedicated field/header and outside chat text."
+        "`python -m pytest -q tests/unit/test_frontend_api_client.py`: token is sent in a dedicated field/header and outside chat text.",
+        "Manual Streamlit walkthrough: search a seeded service, choose a slot, create and confirm a synthetic booking, inspect the owner agenda, receive a worker-delivered demo reminder, submit a separate chat reply, and move the booking."
       ],
       "feature_id": "general-service-scheduling-mvp",
       "id": "T008",
@@ -353,12 +391,16 @@
         {
           "created_at": "2026-10-19T21:56:09+00:00",
           "text": "Streamlit browser walkthrough remains pending because this workspace has no Docker/PostgreSQL runtime."
+        },
+        {
+          "created_at": "2026-10-19T22:25:36+00:00",
+          "text": "Customer and owner journeys were exercised in the browser against the local PostgreSQL/API/Streamlit processes."
         }
       ],
       "priority": "P1",
-      "status": "in_progress",
+      "status": "done",
       "title": "Build customer chat and owner agenda in Streamlit",
-      "updated_at": "2026-10-19T21:56:09+00:00"
+      "updated_at": "2026-10-19T22:25:36+00:00"
     },
     "T009": {
       "acceptance_criteria": [
@@ -377,8 +419,10 @@
         "docs/architecture.md",
         "docs/evaluation.md",
         "docs/graph.md",
+        "docs/sdd/plan-general-service-scheduling-mvp.md",
         "docs/security.md",
-        "tests/evals/"
+        "tests/evals/",
+        "tests/integration/test_api_scheduling_evaluations.py"
       ],
       "created_at": "2026-10-19T21:20:38+00:00",
       "dependencies": [
@@ -390,7 +434,9 @@
         "`uv run python -m app.evals.runner`: 6/6 deterministic extraction scenarios passed.",
         "`uv lock --check`: passed.",
         "`alembic upgrade head --sql` and `alembic downgrade 0001_general_scheduling:base --sql`: offline migration SQL generation passed.",
-        "Docker Compose YAML parsed successfully."
+        "Docker Compose YAML parsed successfully.",
+        "`uv run python -m app.evals.runner`: all 6 extraction scenarios pass; full pytest suite: 46 passed; product outcome integration tests and active project docs updated. Docker Compose YAML parses.",
+        "Added database-backed API outcome evaluations for date clarification, replay, stale selection, and injection resistance."
       ],
       "feature_id": "general-service-scheduling-mvp",
       "id": "T009",
@@ -410,12 +456,16 @@
         {
           "created_at": "2026-10-19T22:13:50+00:00",
           "text": "Current suite is 35 passing tests, including an actual LangGraph invocation; PostgreSQL-backed acceptance and end-to-end Compose walkthrough remain pending."
+        },
+        {
+          "created_at": "2026-10-19T22:25:37+00:00",
+          "text": "Docker Compose could not be started because Docker was unavailable. The equivalent end-to-end product journey was verified with local PostgreSQL, API, Streamlit, and a worker delivery."
         }
       ],
       "priority": "P1",
-      "status": "in_progress",
+      "status": "done",
       "title": "Replace clinic evaluations/docs and finish local demo",
-      "updated_at": "2026-10-19T22:13:50+00:00"
+      "updated_at": "2026-10-19T22:26:50+00:00"
     }
   },
   "version": 1
