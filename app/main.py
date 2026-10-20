@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import re
 from contextlib import asynccontextmanager
 from datetime import date, datetime, time, timedelta
@@ -10,12 +9,26 @@ from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.chat_helpers import (
+    _chat_management_response,
+    _chat_search_slots,
+    _choose_professional,
+    _choose_service,
+    _customer_from_request_or_extraction,
+    _handle_chat_clarification,
+    _handle_chat_help,
+    _handle_chat_management_fallback,
+    _interpret_chat_message,
+    _request_key,
+    _slot_choice,
+    _slot_message,
+)
 from app.database import database_is_ready
 from app.llm.schemas import SchedulingExtraction
 from app.models import (
     AvailabilityResponse,
-    AvailabilitySlot,
     AvailabilitySearchRequest,
+    AvailabilitySlot,
     BookingCreateRequest,
     BookingRescheduleRequest,
     BookingSummary,
@@ -31,8 +44,14 @@ from app.models import (
     SessionResponse,
 )
 from app.observability import log_event, trace_event
-from app.runtime import RuntimeContext, close_runtime, create_runtime, reset_runtime as reset_runtime_context
-
+from app.runtime import (
+    RuntimeContext,
+    close_runtime,
+    create_runtime,
+)
+from app.runtime import (
+    reset_runtime as reset_runtime_context,
+)
 
 _TOKEN_PATTERN = re.compile(r"\bbk1\.[0-9a-fA-F-]{36}\.\d+\.[0-9a-f]{64}\b")
 
@@ -44,7 +63,9 @@ async def lifespan(app: FastAPI):
     close_runtime(getattr(app.state, "runtime", None))
 
 
-app = FastAPI(title="General Service Scheduling API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="General Service Scheduling API", version="1.0.0", lifespan=lifespan
+)
 
 
 def get_runtime(request: Request) -> RuntimeContext:
@@ -68,141 +89,9 @@ def _catalog(runtime: RuntimeContext, business_id: str) -> CatalogResponse:
     return result
 
 
-def _request_key(header_key: str | None, seed: str) -> str:
-    return header_key or "chat-" + hashlib.sha256(seed.encode()).hexdigest()[:48]
-
-
-def _choose_service(catalog: CatalogResponse, phrase: str | None):
-    if not phrase:
-        return catalog.services[0] if len(catalog.services) == 1 else None
-    folded = phrase.casefold()
-    return next((service for service in catalog.services if folded in service.name.casefold() or service.name.casefold() in folded), None)
-
-
-def _choose_professional(catalog: CatalogResponse, phrase: str | None):
-    if not phrase:
-        return None
-    folded = phrase.casefold()
-    return next((person for person in catalog.professionals if folded in person.name.casefold()), None)
-
-
 def _local_today(catalog: CatalogResponse) -> date:
+    """Get today's date in the business timezone for interpreting relative dates."""
     return datetime.now(ZoneInfo(catalog.business.timezone)).date()
-
-
-def _slots_response(slots, intent: str, message: str, session_id: str) -> ChatResponse:
-    return ChatResponse(session_id=session_id, response=message, intent=intent, slots=slots)
-
-
-def _customer_from_request_or_extraction(request: ChatRequest, extraction) -> CustomerInput | None:
-    if request.customer:
-        return request.customer
-    if extraction.customer_name and extraction.phone:
-        try:
-            return CustomerInput(full_name=extraction.customer_name, phone=extraction.phone)
-        except ValueError:
-            return None
-    return None
-
-
-def _slot_choice(runtime: RuntimeContext, session_id: str, selected_slot_id: str | None, index: int | None):
-    slots = runtime.session_slots.get(session_id, [])
-    if selected_slot_id:
-        return next((slot for slot in slots if slot.slot_id == selected_slot_id), None)
-    if index is not None and 1 <= index <= len(slots):
-        return slots[index - 1]
-    return None
-
-
-def _slot_message(slots) -> str:
-    if not slots:
-        return "I couldn't find an available time for that date. Try another date or professional."
-    lines = [f"{index}. {slot.local_label} with {slot.professional_name}" for index, slot in enumerate(slots[:10], 1)]
-    return "Here are the available times. Choose a time below or reply with its number:\n" + "\n".join(lines)
-
-
-def _interpret_chat_message(
-    runtime: RuntimeContext,
-    session_id: str,
-    catalog: CatalogResponse,
-    local_today: date,
-    safe_message: str,
-) -> SchedulingExtraction:
-    previous_slots = runtime.session_slots.get(session_id, [])
-    return runtime.workflow.interpret(
-        session_id,
-        safe_message,
-        service_names=[service.name for service in catalog.services],
-        professional_names=[professional.name for professional in catalog.professionals],
-        today=local_today.isoformat(),
-        has_slots=bool(previous_slots),
-    )
-
-
-def _chat_search_slots(
-    runtime: RuntimeContext,
-    request: ChatRequest,
-    extraction: SchedulingExtraction,
-    *,
-    service_id: str,
-    professional_id: str | None,
-    requested_date: date,
-) -> list[AvailabilitySlot]:
-    return runtime.availability.search(
-        AvailabilitySearchRequest(
-            business_id=request.business_id,
-            service_id=service_id,
-            professional_id=professional_id,
-            start_date=requested_date,
-            end_date=requested_date,
-            earliest_local_time=time.fromisoformat(extraction.local_time) if extraction.local_time else None,
-        )
-    )
-
-
-def _handle_chat_management(
-    runtime: RuntimeContext,
-    request: ChatRequest,
-    extraction: SchedulingExtraction,
-    idempotency_key: str | None,
-    safe_message: str,
-) -> ChatResponse | None:
-    manage_token = request.manage_token
-    if manage_token and extraction.intent in {"confirm", "cancel"}:
-        booking = runtime.bookings.read(manage_token)
-        key = _request_key(idempotency_key, f"{request.session_id}:{booking.id}:{extraction.intent}:{safe_message}")
-        updated, outcome = getattr(runtime.bookings, extraction.intent)(manage_token, key)
-        response_by_outcome = {
-            "confirmed": "Your booking is confirmed.",
-            "already_confirmed": "Your booking was already confirmed.",
-            "canceled": "Your booking is canceled.",
-        }
-        response = response_by_outcome.get(outcome, "Your booking was already canceled.")
-        log_event(runtime.logger, "chat.manage", session_id=request.session_id, intent=extraction.intent, outcome=outcome)
-        trace_event(runtime.tracer, request.session_id, "chat.manage", {"intent": extraction.intent, "outcome": outcome})
-        return ChatResponse(session_id=request.session_id, response=response, intent=extraction.intent, booking=updated)
-
-    if manage_token and extraction.intent == "reschedule" and not request.selected_slot_id:
-        current = runtime.bookings.read(manage_token)
-        requested_date = date.fromisoformat(extraction.local_date) if extraction.local_date else None
-        if not requested_date:
-            return ChatResponse(
-                session_id=request.session_id,
-                response="What date would you like to move the booking to?",
-                intent="reschedule",
-            )
-        slots = _chat_search_slots(
-            runtime,
-            request,
-            extraction,
-            service_id=current.service_id,
-            professional_id=None,
-            requested_date=requested_date,
-        )
-        runtime.session_slots[request.session_id] = slots
-        return _slots_response(slots, "reschedule", _slot_message(slots), request.session_id)
-
-    return None
 
 
 def _handle_chat_search(
@@ -211,6 +100,12 @@ def _handle_chat_search(
     catalog: CatalogResponse,
     extraction: SchedulingExtraction,
 ) -> ChatResponse:
+    """Handle a new-booking search intent by resolving catalog names and finding times.
+
+    If the service, date, or requested professional is missing or unrecognized,
+    ask the customer to clarify. Otherwise save the matching slots in the session
+    and return them as choices for a later selection message.
+    """
     service = _choose_service(catalog, extraction.service_name)
     if service is None:
         names = ", ".join(item.name for item in catalog.services)
@@ -220,7 +115,9 @@ def _handle_chat_search(
             intent="clarify_service",
         )
 
-    requested_date = date.fromisoformat(extraction.local_date) if extraction.local_date else None
+    requested_date = (
+        date.fromisoformat(extraction.local_date) if extraction.local_date else None
+    )
     if not requested_date:
         return ChatResponse(
             session_id=request.session_id,
@@ -247,9 +144,26 @@ def _handle_chat_search(
     )
     runtime.session_slots[request.session_id] = slots
     runtime.pending_slots.pop(request.session_id, None)
-    log_event(runtime.logger, "chat.search", session_id=request.session_id, intent="search", slot_count=len(slots), service_id=service.id)
-    trace_event(runtime.tracer, request.session_id, "chat.search", {"intent": "search", "slot_count": len(slots), "service_id": service.id})
-    return _slots_response(slots, "search", _slot_message(slots), request.session_id)
+    log_event(
+        runtime.logger,
+        "chat.search",
+        session_id=request.session_id,
+        intent="search",
+        slot_count=len(slots),
+        service_id=service.id,
+    )
+    trace_event(
+        runtime.tracer,
+        request.session_id,
+        "chat.search",
+        {"intent": "search", "slot_count": len(slots), "service_id": service.id},
+    )
+    return ChatResponse(
+        session_id=request.session_id,
+        response=_slot_message(slots),
+        intent="search",
+        slots=slots,
+    )
 
 
 def _handle_chat_slot_selection(
@@ -259,6 +173,16 @@ def _handle_chat_slot_selection(
     customer: CustomerInput | None,
     idempotency_key: str | None,
 ) -> ChatResponse:
+    """Process a selected slot as a reschedule or a new booking.
+
+    Use this when the customer selects a search result, or when they provide
+    customer details after a slot was saved as pending. With a management token,
+    move the existing booking to this slot and clear the pending slot. Without a
+    token, save the slot and ask for details when they are missing; once details
+    are available, create the booking, clear the pending slot, and return its
+    management token. Saving a pending slot remembers the choice but does not
+    reserve the time.
+    """
     if request.manage_token:
         # The management token is only used for this booking service call.
         reschedule_request = BookingRescheduleRequest(
@@ -268,8 +192,12 @@ def _handle_chat_slot_selection(
             slot_id=slot.slot_id,
             starts_at=slot.starts_at,
         )
-        key = _request_key(idempotency_key, f"{request.session_id}:{slot.slot_id}:reschedule")
-        updated, _outcome = runtime.bookings.reschedule(request.manage_token, reschedule_request, key)
+        key = _request_key(
+            idempotency_key, f"{request.session_id}:{slot.slot_id}:reschedule"
+        )
+        updated, _outcome = runtime.bookings.reschedule(
+            request.manage_token, reschedule_request, key
+        )
         runtime.pending_slots.pop(request.session_id, None)
         return ChatResponse(
             session_id=request.session_id,
@@ -294,11 +222,24 @@ def _handle_chat_slot_selection(
         starts_at=slot.starts_at,
         customer=customer,
     )
-    key = _request_key(idempotency_key, f"{request.session_id}:{slot.slot_id}:{customer.phone}")
+    key = _request_key(
+        idempotency_key, f"{request.session_id}:{slot.slot_id}:{customer.phone}"
+    )
     result = runtime.bookings.create(booking_request, key)
     runtime.pending_slots.pop(request.session_id, None)
-    log_event(runtime.logger, "chat.booking", session_id=request.session_id, intent="create", booking_id=result.booking.id)
-    trace_event(runtime.tracer, request.session_id, "chat.booking", {"intent": "create", "booking_id": result.booking.id})
+    log_event(
+        runtime.logger,
+        "chat.booking",
+        session_id=request.session_id,
+        intent="create",
+        booking_id=result.booking.id,
+    )
+    trace_event(
+        runtime.tracer,
+        request.session_id,
+        "chat.booking",
+        {"intent": "create", "booking_id": result.booking.id},
+    )
     return ChatResponse(
         session_id=request.session_id,
         response=f"You're booked for {slot.local_label} with {slot.professional_name}. Your private management token is shown in the booking details.",
@@ -308,45 +249,157 @@ def _handle_chat_slot_selection(
     )
 
 
-def _chat_fallback_response(request: ChatRequest, catalog: CatalogResponse, extraction: SchedulingExtraction) -> ChatResponse:
-    if extraction.intent in {"confirm", "cancel", "reschedule"}:
-        if not request.manage_token:
-            return ChatResponse(
-                session_id=request.session_id,
-                response="To manage a booking, provide its private management token in the booking controls.",
-                intent="manage_booking",
-            )
+def _handle_chat_confirm(
+    runtime: RuntimeContext,
+    request: ChatRequest,
+    manage_token: str,
+    idempotency_key: str | None,
+    safe_message: str,
+) -> ChatResponse:
+    """Confirm a booking using the customer's management token and an idempotent key."""
+    booking = runtime.bookings.read(manage_token)
+    key = _request_key(
+        idempotency_key, f"{request.session_id}:{booking.id}:confirm:{safe_message}"
+    )
+    updated_booking, action_outcome = runtime.bookings.confirm(manage_token, key)
+    return _chat_management_response(
+        runtime, request, "confirm", updated_booking, action_outcome
+    )
+
+
+def _handle_chat_cancel(
+    runtime: RuntimeContext,
+    request: ChatRequest,
+    manage_token: str,
+    idempotency_key: str | None,
+    safe_message: str,
+) -> ChatResponse:
+    """Cancel a booking using the customer's management token and an idempotent key."""
+    booking = runtime.bookings.read(manage_token)
+    key = _request_key(
+        idempotency_key, f"{request.session_id}:{booking.id}:cancel:{safe_message}"
+    )
+    updated_booking, action_outcome = runtime.bookings.cancel(manage_token, key)
+    return _chat_management_response(
+        runtime, request, "cancel", updated_booking, action_outcome
+    )
+
+
+def _handle_chat_reschedule(
+    runtime: RuntimeContext,
+    request: ChatRequest,
+    extraction: SchedulingExtraction,
+    manage_token: str,
+) -> ChatResponse:
+    """Start rescheduling an existing booking when no replacement slot is selected.
+
+    Ask for a target date if the customer has not provided one; otherwise search
+    that date for the existing service and save the results for slot selection.
+    """
+    current_booking = runtime.bookings.read(manage_token)
+    requested_date = (
+        date.fromisoformat(extraction.local_date) if extraction.local_date else None
+    )
+    if not requested_date:
         return ChatResponse(
             session_id=request.session_id,
-            response="I couldn't identify the requested change. Please choose a booking action.",
-            intent="clarify_management",
+            response="What date would you like to move the booking to?",
+            intent="reschedule",
         )
-
-    if extraction.intent == "help":
-        service_names = ", ".join(item.name for item in catalog.services)
-        return ChatResponse(
-            session_id=request.session_id,
-            response=f"I can help you find a time, book a service, or manage an existing booking. Services here: {service_names}.",
-            intent="help",
-        )
-
+    slots = _chat_search_slots(
+        runtime,
+        request,
+        extraction,
+        service_id=current_booking.service_id,
+        professional_id=None,
+        requested_date=requested_date,
+    )
+    runtime.session_slots[request.session_id] = slots
     return ChatResponse(
         session_id=request.session_id,
-        response="Tell me which service you'd like and the date, or choose an action in the booking controls.",
-        intent="clarify",
+        response=_slot_message(slots),
+        intent="reschedule",
+        slots=slots,
     )
+
+
+def _handle_chat_intent(
+    runtime: RuntimeContext,
+    request: ChatRequest,
+    catalog: CatalogResponse,
+    extraction: SchedulingExtraction,
+    chosen_slot: AvailabilitySlot | None,
+    customer: CustomerInput | None,
+    idempotency_key: str | None,
+    safe_message: str,
+) -> ChatResponse:
+    """Dispatch each chat intent to its specific booking, search, or reply handler.
+
+    Management actions take precedence, followed by new availability searches
+    and selected-slot processing. If no action applies, handle management prompts,
+    help requests, or general clarification here.
+    """
+    manage_token = request.manage_token
+    if manage_token and extraction.intent == "confirm":
+        return _handle_chat_confirm(
+            runtime,
+            request,
+            manage_token,
+            idempotency_key,
+            safe_message,
+        )
+    if manage_token and extraction.intent == "cancel":
+        return _handle_chat_cancel(
+            runtime,
+            request,
+            manage_token,
+            idempotency_key,
+            safe_message,
+        )
+    if (
+        manage_token
+        and extraction.intent == "reschedule"
+        and not request.selected_slot_id
+    ):
+        return _handle_chat_reschedule(runtime, request, extraction, manage_token)
+
+    if extraction.intent == "search":
+        return _handle_chat_search(runtime, request, catalog, extraction)
+
+    if chosen_slot or (runtime.pending_slots.get(request.session_id) and customer):
+        slot = chosen_slot or runtime.pending_slots[request.session_id]
+        return _handle_chat_slot_selection(
+            runtime,
+            request,
+            slot,
+            customer,
+            idempotency_key,
+        )
+
+    if extraction.intent in {"confirm", "cancel", "reschedule"}:
+        return _handle_chat_management_fallback(request)
+    if extraction.intent == "help":
+        return _handle_chat_help(request, catalog)
+    return _handle_chat_clarification(request)
 
 
 @app.get("/health", response_model=HealthResponse)
 def health(runtime: RuntimeContext = Depends(get_runtime)):
     database_ok = database_is_ready(runtime.settings.database_url)
-    return HealthResponse(status="ok" if database_ok else "degraded", database="ok" if database_ok else "unavailable")
+    return HealthResponse(
+        status="ok" if database_ok else "degraded",
+        database="ok" if database_ok else "unavailable",
+    )
 
 
 @app.post("/sessions/new", response_model=SessionResponse)
 def create_session(runtime: RuntimeContext = Depends(get_runtime)):
     session_id, thread_id = runtime.create_session()
-    return SessionResponse(session_id=session_id, thread_id=thread_id, response="Welcome. Tell me which service you'd like to book.")
+    return SessionResponse(
+        session_id=session_id,
+        thread_id=thread_id,
+        response="Welcome. Tell me which service you'd like to book.",
+    )
 
 
 @app.get("/businesses/{business_id}/catalog", response_model=CatalogResponse)
@@ -355,7 +408,9 @@ def get_catalog(business_id: str, runtime: RuntimeContext = Depends(get_runtime)
 
 
 @app.post("/availability/search", response_model=AvailabilityResponse)
-def search_availability(request: AvailabilitySearchRequest, runtime: RuntimeContext = Depends(get_runtime)):
+def search_availability(
+    request: AvailabilitySearchRequest, runtime: RuntimeContext = Depends(get_runtime)
+):
     return AvailabilityResponse(slots=runtime.availability.search(request))
 
 
@@ -366,7 +421,9 @@ def create_booking(
     runtime: RuntimeContext = Depends(get_runtime),
 ):
     if not idempotency_key:
-        raise DomainError("idempotency_key_required", "Idempotency-Key header is required.", 422)
+        raise DomainError(
+            "idempotency_key_required", "Idempotency-Key header is required.", 422
+        )
     return runtime.bookings.create(request, idempotency_key)
 
 
@@ -398,11 +455,15 @@ def cancel_booking(
     return _manage_status(runtime, x_booking_token, idempotency_key, "cancel")
 
 
-def _manage_status(runtime: RuntimeContext, token: str | None, key: str | None, operation: str):
+def _manage_status(
+    runtime: RuntimeContext, token: str | None, key: str | None, operation: str
+):
     if not token:
         raise DomainError("booking_not_found", "Booking not found.", 404)
     if not key:
-        raise DomainError("idempotency_key_required", "Idempotency-Key header is required.", 422)
+        raise DomainError(
+            "idempotency_key_required", "Idempotency-Key header is required.", 422
+        )
     booking, outcome = getattr(runtime.bookings, operation)(token, key)
     return {"booking": booking, "outcome": outcome}
 
@@ -417,8 +478,12 @@ def reschedule_booking(
     if not x_booking_token:
         raise DomainError("booking_not_found", "Booking not found.", 404)
     if not idempotency_key:
-        raise DomainError("idempotency_key_required", "Idempotency-Key header is required.", 422)
-    booking, outcome = runtime.bookings.reschedule(x_booking_token, request, idempotency_key)
+        raise DomainError(
+            "idempotency_key_required", "Idempotency-Key header is required.", 422
+        )
+    booking, outcome = runtime.bookings.reschedule(
+        x_booking_token, request, idempotency_key
+    )
     return {"booking": booking, "outcome": outcome}
 
 
@@ -434,7 +499,9 @@ def owner_bookings(
     start = start_date or _local_today(catalog)
     end = end_date or (start + timedelta(days=7))
     if end < start or (end - start).days > 60:
-        raise DomainError("invalid_date_range", "Date range must be within 60 days.", 422)
+        raise DomainError(
+            "invalid_date_range", "Date range must be within 60 days.", 422
+        )
     zone = ZoneInfo(catalog.business.timezone)
     start_at = datetime.combine(start, time.min, zone)
     end_at = datetime.combine(end + timedelta(days=1), time.min, zone)
@@ -445,7 +512,10 @@ def owner_bookings(
 
 
 @app.get("/demo/reminders", response_model=DemoRemindersResponse)
-def demo_reminders(business_id: str | None = Query(default=None), runtime: RuntimeContext = Depends(get_runtime)):
+def demo_reminders(
+    business_id: str | None = Query(default=None),
+    runtime: RuntimeContext = Depends(get_runtime),
+):
     business_id = business_id or runtime.settings.demo_business_id
     with runtime.repository.connection() as connection:
         rows = connection.execute(
@@ -484,40 +554,37 @@ def chat(
     )
     customer = _customer_from_request_or_extraction(request, extraction)
 
-    management_response = _handle_chat_management(
+    return _handle_chat_intent(
         runtime,
         request,
+        catalog,
         extraction,
+        chosen_slot,
+        customer,
         idempotency_key,
         safe_message,
     )
-    if management_response is not None:
-        return management_response
-
-    if extraction.intent == "search":
-        return _handle_chat_search(runtime, request, catalog, extraction)
-
-    if chosen_slot or (runtime.pending_slots.get(request.session_id) and customer):
-        slot = chosen_slot or runtime.pending_slots[request.session_id]
-        return _handle_chat_slot_selection(
-            runtime,
-            request,
-            slot,
-            customer,
-            idempotency_key,
-        )
-
-    return _chat_fallback_response(request, catalog, extraction)
 
 
 @app.exception_handler(DomainError)
 async def domain_error_handler(request: Request, exc: DomainError):
     _ = request
-    return JSONResponse(status_code=exc.status_code, content={"detail": {"code": exc.code, "message": exc.message}})
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": {"code": exc.code, "message": exc.message}},
+    )
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     _ = request
     _ = exc
-    return JSONResponse(status_code=422, content={"detail": {"code": "invalid_request", "message": "The request did not match the API contract."}})
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": {
+                "code": "invalid_request",
+                "message": "The request did not match the API contract.",
+            }
+        },
+    )
