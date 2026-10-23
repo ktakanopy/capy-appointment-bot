@@ -9,36 +9,20 @@ docs/graph.md with the generated output.  Everything outside that block is
 left untouched.
 """
 
-import logging
 import re
 import sys
 from pathlib import Path
 
-from langgraph.checkpoint.memory import MemorySaver
-
 from app.graph.builder import build_graph
+from app.graph.decision import DeterministicDecision
+from app.llm.provider import DeterministicInterpreter
 
 DOCS_PATH = Path(__file__).parent.parent / "docs" / "graph.md"
 MERMAID_BLOCK = re.compile(r"```mermaid\n.*?```", re.DOTALL)
 
 
-class _Stub:
-    def interpret(self, *a, **kw): ...
-    def verify_identity(self, *a, **kw): ...
-    def list_appointments(self, *a, **kw): return []
-    def confirm_appointment(self, *a, **kw): ...
-    def cancel_appointment(self, *a, **kw): ...
-
-
 def main() -> None:
-    graph = build_graph(
-        logger=logging.getLogger("generate_graph_diagram"),
-        provider=_Stub(),
-        verification_service=_Stub(),
-        appointment_service=_Stub(),
-        max_verification_attempts=3,
-        checkpointer=MemorySaver(),
-    )
+    graph = build_graph(DeterministicInterpreter(), DeterministicDecision())
 
     mermaid = graph.get_graph().draw_mermaid()
     new_block = f"```mermaid\n{mermaid}```"

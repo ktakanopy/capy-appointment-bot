@@ -1,278 +1,53 @@
 # Architecture
 
-This project is small enough to follow without a giant diagram, which is a good
-thing for a take-home. The code is split into a few clear layers:
-
-- FastAPI for the HTTP API
-- LangGraph for the conversation workflow
-- services and repositories for business logic and demo data
-- a small OpenAI provider for intent extraction and eval judging
-- Streamlit for the optional frontend
-
-## System layout
+## Runtime components
 
 ```mermaid
 flowchart LR
-    subgraph client [Client]
-        streamlit[Streamlit frontend]
-    end
-
-    subgraph apiLayer [API]
-        api[FastAPI app]
-        runtime[Runtime wiring]
-    end
-
-    subgraph workflow [Workflow]
-        lgraph[LangGraph workflow]
-        parsing[Parsing helpers]
-    end
-
-    subgraph core [Core]
-        services[Services]
-        repos[Repositories]
-        responses[Response builder]
-        models[Shared models]
-    end
-
-    subgraph llm [LLM]
-        provider[OpenAI provider]
-    end
-
-    streamlit --> api
-    api --> runtime
-    api --> responses
-    runtime --> lgraph
-    runtime --> services
-    runtime --> repos
-    runtime --> provider
-    lgraph --> parsing
-    lgraph --> services
-    lgraph --> models
-    responses --> models
+  Customer[Customer browser] --> UI[Streamlit customer flow]
+  Owner[Business owner] --> UI
+  UI --> API[FastAPI]
+  API --> Graph[LangGraph intent extraction]
+  API --> Availability[Availability service]
+  API --> Booking[Booking application service]
+  Availability --> DB[(Scheduling PostgreSQL)]
+  Booking --> DB
+  Worker[Reminder poller] --> DB
+  Worker --> Inbox[Demo reminder inbox]
+  API --> Inbox
+  API -. optional .-> LLM[OpenAI interpreter]
+  API -. optional .-> Trace[Langfuse]
 ```
 
-## Main modules
+The default local runtime uses the deterministic interpreter, so the product can be explored without model credentials. OpenAI is an optional interpretation adapter. PostgreSQL stores business configuration, schedules, customers, bookings, reminder state, idempotency records, audit events, and the demo inbox.
 
-### `app/main.py`
+## Request boundaries
 
-FastAPI entrypoint. It exposes:
-
-- `POST /sessions/new`
-- `POST /chat`
-- `GET /health`
-
-It also maps app-level failures to HTTP responses. The main example is provider
-failure: if the LLM call fails during interpretation, the API returns HTTP 503.
-
-### `app/runtime.py`
-
-This is the composition root. It wires together:
-
-- settings
-- logger and optional tracer
-- in-memory LangGraph checkpointer
-- in-memory repositories
-- services
-- OpenAI provider
-- compiled workflow
-
-There is no extra dependency-injection layer hiding things. For a project this
-size, that would just add ceremony.
-
-### `app/models.py`
-
-Shared domain and API models live here:
-
-- value objects such as `FullName`, `Phone`, and `DateOfBirth`
-- domain entities such as `Patient` and `Appointment`
-- enums such as `ConversationOperation`, `TurnIssue`, and `VerificationStatus`
-- request and response DTOs
-- domain and application errors
-
-### `app/repositories.py`
-
-The project uses seeded in-memory adapters:
-
-- `InMemoryPatientRepository`
-- `InMemoryAppointmentRepository`
-- `InMemorySessionStore`
-
-That is intentional. The goal here is to make the workflow easy to review, not
-to spend the take-home on persistence plumbing.
-
-### `app/services.py`
-
-The services layer is narrow:
-
-- `VerificationService`
-- `AppointmentService`
-- `SessionService`
-
-These classes keep the graph focused on workflow decisions while the services do
-the domain work.
-
-### `app/graph/`
-
-This is the center of the project.
-
-- `builder.py` compiles the graph
-- `state.py` defines workflow state
-- `nodes.py` contains the graph nodes
-- `parsing.py` contains extraction helpers
-- `workflow.py` wraps the compiled graph for runtime use
-
-### `app/llm/`
-
-The LLM boundary stays small:
-
-- `provider.py` talks to OpenAI
-- `schemas.py` defines typed structured outputs
-- `prompt.py` contains the intent prompt
-
-## Request flow
-
-### `POST /sessions/new`
-
-```mermaid
-sequenceDiagram
-    participant client as Client
-    participant api as FastAPI
-    participant sessions as SessionService
-
-    client->>api: POST /sessions/new
-    api->>sessions: cleanup_expired()
-    api->>sessions: create_session()
-    api-->>client: session_id + thread_id
-```
-
-### `POST /chat`
-
-```mermaid
-sequenceDiagram
-    participant client as Client
-    participant api as FastAPI
-    participant sessions as SessionService
-    participant workflow as LangGraphWorkflow
-    participant responses as responses.py
-
-    client->>api: POST /chat
-    api->>sessions: cleanup_expired()
-    api->>sessions: require_session(session_id)
-    api->>workflow: run(thread_id, message)
-    api->>responses: build_response_text(state)
-    api->>responses: build_chat_response(...)
-    api-->>client: ChatTurnResponse
-```
-
-## State and persistence
-
-- session registry is in `InMemorySessionStore`
-- conversation workflow state uses LangGraph `InMemorySaver`
-- patient and appointment data are seeded in memory
-
-That mix is a little unusual, but it fits the exercise well. The workflow needs
-real conversation state across turns inside a running process, while the domain
-data only needs to be good enough to demonstrate the flows.
+1. FastAPI validates transport input and, for management actions, validates the capability token before acting.
+2. LangGraph extracts a typed scheduling intent from the sanitized current message. Its checkpoint contains no raw management token.
+3. Application code resolves service and date references, calls the deterministic availability or booking service, and formats a response.
+4. Booking writes recheck the slot in the same transaction, lock the selected professional, update reminder state atomically, and rely on a PostgreSQL exclusion constraint as the final overlap guard.
+5. Logs and trace events record intent, counts, stable IDs, and outcomes without names, contact details, or tokens.
 
 ## Data model
 
-The domain model is intentionally small.
+- A **business** sets its IANA timezone, booking horizon, minimum notice, and reminder lead time.
+- A **service** defines duration, before/after buffers, price, and currency.
+- A **professional** has weekly local-time rules, blocked periods, and service assignments.
+- A **customer** is scoped to a business and keyed by phone for the demo.
+- A **booking** stores its real start/end and the occupied interval including buffers. Its status is scheduled, confirmed, or canceled.
+- A **reminder** has a durable state and a unique pending reminder constraint per booking. A delivered reminder creates one demo inbox entry.
+- **Idempotency records** are scoped by business, operation, and key, and store the canonical request hash.
+- **Audit events** retain the operation and non-sensitive metadata.
 
-There are two kinds of state in the project:
+All appointment instants are stored as timezone-aware PostgreSQL timestamps. Weekly schedules are interpreted in each business's IANA timezone. Availability uses a 15-minute candidate grid, respects configured work rules and buffer time, and returns repeated fall-back wall times with different offsets. Nonexistent spring-forward times are skipped.
 
-- domain data: patients and appointments
-- workflow data: verification progress, turn output, and appointment-list context
+## Persistence and runtime
 
-### Entities
+`alembic/versions/0001_general_scheduling.py` owns schema creation, including `btree_gist` and the professional overlap exclusion constraint. The default Docker Compose stack has a separate `app-postgres` service; Langfuse's database is optional and isolated under the `observability` profile.
 
-```mermaid
-erDiagram
-    Patient ||--o{ Appointment : has
-    Patient {
-        string id PK
-        string full_name
-        string phone
-        date date_of_birth
-    }
-    Appointment {
-        string id PK
-        string patient_id FK
-        date date
-        string time
-        string doctor
-        string status
-    }
-    ConversationOperationResult {
-        string operation
-        string outcome
-        string appointment_id
-    }
-```
+The API keeps short-lived chat session IDs and slot presentation results in memory for the local demo. Durable business and booking state lives in PostgreSQL. The reminder worker is a separate process that claims due rows with `FOR UPDATE SKIP LOCKED`, records inbox delivery once, and never imports or calls LangGraph.
 
-`ConversationOperationResult` is workflow output, not persisted domain data.
+## Deliberate limits
 
-### Appointment status transitions
-
-```mermaid
-stateDiagram-v2
-    [*] --> scheduled
-    scheduled --> confirmed : confirm_appointment
-    scheduled --> canceled : cancel_appointment
-    confirmed --> confirmed : confirm_appointment\n(already_confirmed)
-    confirmed --> canceled : cancel_appointment
-    canceled --> canceled : cancel_appointment\n(already_canceled)
-```
-
-Repeated confirm and cancel are idempotent. That matters in chat because users
-retry and repeat themselves.
-
-## LLM boundary
-
-The model is intentionally boxed in.
-
-The live chat path uses the model for one thing:
-
-- intent and entity extraction
-
-The provider returns a structured prediction with:
-
-- `requested_operation`
-- `full_name`
-- `phone`
-- `dob`
-- `selected_index`
-
-The model does not:
-
-- decide whether the patient is verified
-- decide whether an appointment belongs to the patient
-- confirm or cancel appointments directly
-- choose final patient-facing wording
-- control the workflow once interpretation is done
-
-Those decisions stay in deterministic Python. The eval system also uses the
-provider as a judge, but only in eval mode.
-
-If `interpret()` fails after retries, the workflow raises
-`DependencyUnavailableError` and the API returns HTTP 503. I intentionally left
-out a heuristic fallback parser for this exercise.
-
-## Observability
-
-The app logs structured JSON events to stdout and can optionally send traces to
-Langfuse. Tracing is optional and failures are isolated from the request path.
-
-Each turn produces one Langfuse trace (keyed by `thread_id`) with spans for
-node transitions, routing decisions, and LLM calls. All payloads redact PII
-before logging or tracing (names, phone numbers, and dates of birth).
-
-## Key decisions
-
-The main architecture decisions for this project are:
-
-- FastAPI for a small, reviewable API surface
-- LangGraph for deterministic multi-turn workflow control
-- LLM used only for interpretation, never for authorization or mutation
-- deterministic final responses from `app/responses.py`
-- in-memory workflow checkpoints and in-memory business repositories
-- one main appointment action per user turn
+This release uses one configured demo business, local owner access without authentication, and a simulated reminder inbox. It has no live messaging, external calendar sync, payment handling, onboarding, multi-location routing, distributed queue, or production deployment configuration.

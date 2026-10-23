@@ -1,189 +1,194 @@
 from __future__ import annotations
 
-import json
-import time
-from typing import Any, TypeVar
+import re
+from datetime import date, timedelta
+from typing import Protocol
 
-from openai import OpenAI
-from pydantic import BaseModel
-
-from app.config import ProviderSettings
-from app.llm.prompt import INTENT_PROMPT
-from app.llm.schemas import IntentPrediction, JudgeResult
-from app.observability import record_provider_event, trace_generation
-
-T = TypeVar("T", bound=BaseModel)
-
-MAX_PARSE_ATTEMPTS = 3
-BASE_RETRY_SECONDS = 0.1
+from app.llm.schemas import SchedulingExtraction, SchedulingLLMExtraction
+from app.observability import log_event
 
 
-class OpenAIProvider:
-    name = "openai"
+class Interpreter(Protocol):
+    def interpret(self, message: str, context: dict) -> SchedulingExtraction: ...
 
-    def __init__(self, settings: ProviderSettings, logger, tracer=None, client: Any | None = None):
-        self.settings = settings
-        self.logger = logger
-        self.tracer = tracer
-        self.client = client or OpenAI(api_key=settings.api_key, timeout=settings.timeout_seconds)
 
-    def interpret(self, message: str, state: dict[str, Any]) -> IntentPrediction:
-        verification = state.get("verification", {})
-        turn = state.get("turn", {})
-        payload = {
-            "message": message,
-            "state": {
-                "verified": verification.get("verified", False),
-                "requested_operation": turn.get("requested_operation"),
-                "missing_verification_fields": state.get("missing_verification_fields", []),
-                "messages": state.get("messages", []),
-            },
-        }
-        return self._complete_model(
-            event_name="interpret",
-            response_model=IntentPrediction,
-            system_message=INTENT_PROMPT,
-            payload=payload,
-            thread_id=state.get("thread_id"),
+class DeterministicInterpreter:
+    """Small, predictable local interpreter used for the demo and as a safe fallback."""
+
+    def interpret(self, message: str, context: dict) -> SchedulingExtraction:
+        text = " ".join(message.strip().split())
+        lowered = text.lower()
+        intent = "unknown"
+        if re.search(r"\b(reschedule|reschedul|move|change|mudar|remarcar|trocar)\b", lowered):
+            intent = "reschedule"
+        elif re.search(r"\b(cancel|cancelar|cancela)\b", lowered):
+            intent = "cancel"
+        elif re.search(r"\b(confirm|confirmar|confirmo)\b", lowered):
+            intent = "confirm"
+        elif re.search(r"\b(available|availability|book|booking|schedule|appointment|agendar|marcar|hor[aá]rio|dispon[ií]vel)\b", lowered):
+            intent = "search"
+        elif re.search(r"\b(help|ajuda|options|services|servi[cç]os)\b", lowered):
+            intent = "help"
+        elif context.get("has_slots") and re.search(r"\b(\d+|first|second|third|1st|2nd|3rd|primeiro|primeira|segundo|segunda)\b", lowered):
+            intent = "select_slot"
+
+        service_name = None
+        for candidate in sorted(context.get("service_names", []), key=len, reverse=True):
+            if candidate.lower() in lowered:
+                service_name = candidate
+                break
+        professional_name = None
+        for candidate in context.get("professional_names", []):
+            if candidate.lower() in lowered:
+                professional_name = candidate
+                break
+        local_date = self._date(text, context.get("today"))
+        local_time = self._time(text)
+        slot_index = self._index(lowered) if intent == "select_slot" else None
+        phone_match = re.search(r"(?<!\w)(\+?\d[\d\s().-]{5,22}\d)(?!\w)", text)
+        phone = re.sub(r"[\s().-]", "", phone_match.group(1)) if phone_match else None
+        customer_name = None
+        if phone_match:
+            possible_name = text[:phone_match.start()].strip(" ,;:-")
+            possible_name = re.sub(r"^(my name is|i am|i'm|name|nome)\s*:?\s+", "", possible_name, flags=re.I)
+            possible_name = re.sub(r"\b(my )?(phone|number|contact|telefone|celular)\b.*$", "", possible_name, flags=re.I).strip(" ,;:-")
+            if len(possible_name.split()) >= 2 and not self._looks_like_request(possible_name):
+                customer_name = possible_name
+        return SchedulingExtraction(
+            intent=intent,
+            service_name=service_name,
+            professional_name=professional_name,
+            local_date=local_date,
+            local_time=local_time,
+            slot_index=slot_index,
+            customer_name=customer_name,
+            phone=phone,
         )
 
-    def judge(self, scenario: dict[str, Any], transcript: list[dict[str, Any]], observed_outcomes: dict[str, Any]) -> JudgeResult:
-        payload = {
-            "scenario": scenario,
-            "transcript": transcript,
-            "observed_outcomes": observed_outcomes,
-        }
-        return self._complete_model(
-            event_name="judge",
-            response_model=JudgeResult,
-            system_message=(
-                "Return strict JSON with keys status, summary, and score. "
-                "Use status values pass, fail, or error. Score should be between 0 and 1 when present."
-            ),
-            payload=payload,
-            thread_id=scenario.get("scenario_id"),
-        )
+    @staticmethod
+    def _looks_like_request(value: str) -> bool:
+        return bool(re.search(r"\b(book|schedule|appointment|available|cancel|confirm|reschedule|agendar|hor[aá]rio)\b", value, re.I))
 
-    def _complete_model(
-        self,
-        *,
-        event_name: str,
-        response_model: type[T],
-        system_message: str,
-        payload: dict[str, Any],
-        thread_id: str | None,
-    ) -> T:
-        generation_input = {
-            "system_message": system_message,
-            "payload": payload,
-            "response_model": response_model.__name__,
-        }
-        try:
-            with trace_generation(
-                self.logger,
-                self.tracer,
-                thread_id=thread_id,
-                name=f"provider.{event_name}",
-                model=self.settings.model_name,
-                input_payload=generation_input,
-                metadata={
-                    "provider": self.name,
-                    "response_model": response_model.__name__,
-                    "timeout_seconds": self.settings.timeout_seconds,
-                },
-            ) as generation:
-                result = self._complete_with_retries(
-                    response_model=response_model,
-                    system_message=system_message,
-                    user_message=json.dumps(payload, ensure_ascii=True, default=str),
-                    event_name=event_name,
-                    thread_id=thread_id,
-                )
-                if generation is not None:
-                    generation.update(output=result.model_dump(mode="json"))
-        except Exception as exc:
-            record_provider_event(
-                self.logger,
-                self.tracer,
-                event_name,
-                {
-                    "provider": self.name,
-                    "status": "error",
-                    "error_type": type(exc).__name__,
-                    "thread_id": thread_id,
-                    "response_model": response_model.__name__,
-                },
-            )
-            raise
-        record_provider_event(
-            self.logger,
-            self.tracer,
-            event_name,
-            {
-                "provider": self.name,
-                "status": "ok",
-                "thread_id": thread_id,
-                "response_model": response_model.__name__,
-            },
-        )
-        return result
-
-    def _complete_with_retries(
-        self,
-        *,
-        response_model: type[T],
-        system_message: str,
-        user_message: str,
-        event_name: str,
-        thread_id: str | None,
-    ) -> T:
-        last_error: Exception | None = None
-        for attempt in range(MAX_PARSE_ATTEMPTS):
+    @staticmethod
+    def _date(text: str, today: date | None) -> str | None:
+        match = re.search(r"\b(20\d{2}-\d{2}-\d{2})\b", text)
+        if match:
             try:
-                return self._complete(
-                    response_model=response_model,
-                    system_message=system_message,
-                    user_message=user_message,
-                )
-            except Exception as error:
-                last_error = error
-                record_provider_event(
-                    self.logger,
-                    self.tracer,
-                    f"{event_name}.retry",
-                    {
-                        "provider": self.name,
-                        "status": "retry",
-                        "thread_id": thread_id,
-                        "attempt": attempt + 1,
-                        "max_attempts": MAX_PARSE_ATTEMPTS,
-                        "error_type": type(error).__name__,
-                    },
-                )
-                if attempt == MAX_PARSE_ATTEMPTS - 1:
-                    raise
-                time.sleep(BASE_RETRY_SECONDS * (2**attempt))
+                return date.fromisoformat(match.group(1)).isoformat()
+            except ValueError:
+                return None
+        match = re.search(r"\b(\d{1,2})/(\d{1,2})/(20\d{2})\b", text)
+        if match:
+            try:
+                return date(int(match.group(3)), int(match.group(2)), int(match.group(1))).isoformat()
+            except ValueError:
+                return None
+        if isinstance(today, str):
+            try:
+                today = date.fromisoformat(today)
+            except ValueError:
+                today = None
+        if today:
+            if re.search(r"\b(tomorrow|amanh[ãa])\b", text, re.I):
+                return (today + timedelta(days=1)).isoformat()
+            if re.search(r"\b(today|hoje)\b", text, re.I):
+                return today.isoformat()
+        return None
 
-    def _complete(
-        self,
-        *,
-        response_model: type[T],
-        system_message: str,
-        user_message: str,
-    ) -> T:
-        response = self.client.beta.chat.completions.parse(
-            model=self.settings.model_name,
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message},
-            ],
-            response_format=response_model,
+    @staticmethod
+    def _time(text: str) -> str | None:
+        match = re.search(r"\b(\d{1,2}):(\d{2})\b", text)
+        if match:
+            hour, minute = int(match.group(1)), int(match.group(2))
+            if hour < 24 and minute < 60:
+                return f"{hour:02}:{minute:02}"
+        match = re.search(r"\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b", text, re.I)
+        if match:
+            hour = int(match.group(1)) % 12
+            if match.group(3).lower() == "pm":
+                hour += 12
+            minute = int(match.group(2) or "0")
+            return f"{hour:02}:{minute:02}"
+        return None
+
+    @staticmethod
+    def _index(text: str) -> int | None:
+        numeric = re.search(r"\b(\d{1,2})\b", text)
+        if numeric:
+            return int(numeric.group(1))
+        for index, terms in enumerate((
+            ("first", "1st", "primeiro", "primeira"),
+            ("second", "2nd", "segundo", "segunda"),
+            ("third", "3rd", "terceiro", "terceira"),
+        ), 1):
+            if any(term in text for term in terms):
+                return index
+        return None
+
+
+class OpenAIInterpreter:
+    def __init__(self, api_key: str, model: str):
+        from openai import OpenAI
+
+        self.client = OpenAI(api_key=api_key)
+        self.model = model
+
+    def interpret(self, message: str, context: dict) -> SchedulingExtraction:
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "Interpret the latest user message using the conversation history for context. "
+                    "Extract scheduling intent and fields only; do not authorize, claim availability, or perform actions. "
+                    "Use only listed services and professionals. Return a local_date in YYYY-MM-DD when explicit "
+                    "and a 24-hour local_time in HH:MM when explicit. Use null for absent information. "
+                    "Intent is one of search, select_slot, create, confirm, cancel, reschedule, help, unknown.\n"
+                    f"Available services: {context.get('service_names', [])}\n"
+                    f"Available professionals: {context.get('professional_names', [])}\n"
+                    f"Today's business-local date: {context.get('today')}"
+                ),
+            }
+        ]
+        for history_message in context.get("history", []):
+            role = history_message.get("role")
+            content = history_message.get("content")
+            if role in {"user", "assistant"} and isinstance(content, str):
+                messages.append({"role": role, "content": content})
+        messages.append({"role": "user", "content": message})
+
+        completion = self.client.chat.completions.parse(
+            model=self.model,
+            temperature=0,
+            response_format=SchedulingLLMExtraction,
+            messages=messages,
         )
-        message = response.choices[0].message
-        parsed = getattr(message, "parsed", None)
-        if parsed is not None:
-            return response_model.model_validate(parsed)
-        refusal = getattr(message, "refusal", None)
-        if refusal:
-            raise ValueError(f"OpenAI refused structured output: {refusal}")
-        raise ValueError("OpenAI returned no parsed content")
+        parsed = completion.choices[0].message.parsed
+        if parsed is None:
+            raise ValueError("OpenAI returned no structured scheduling extraction")
+        return SchedulingExtraction.model_validate(parsed.model_dump())
+
+
+class FallbackInterpreter:
+    def __init__(self, primary: Interpreter, fallback: Interpreter, logger=None):
+        self.primary = primary
+        self.fallback = fallback
+        self.logger = logger
+
+    def interpret(self, message: str, context: dict) -> SchedulingExtraction:
+        try:
+            return self.primary.interpret(message, context)
+        except Exception as error:
+            if self.logger is not None:
+                log_event(
+                    self.logger,
+                    "llm.interpreter.fallback",
+                    failure_type=type(error).__name__,
+                )
+            return self.fallback.interpret(message, context)
+
+
+def build_interpreter(provider: str, api_key: str | None, model: str, logger=None) -> Interpreter:
+    deterministic = DeterministicInterpreter()
+    if provider == "openai" and api_key:
+        return FallbackInterpreter(OpenAIInterpreter(api_key, model), deterministic, logger)
+    return deterministic

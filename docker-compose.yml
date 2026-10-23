@@ -29,24 +29,86 @@ x-langfuse-env: &langfuse-env
   REDIS_TLS_ENABLED: "false"
 
 services:
+  app-postgres:
+    image: docker.io/postgres:17
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${APP_POSTGRES_USER:-scheduling} -d ${APP_POSTGRES_DB:-scheduling}"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+    environment:
+      POSTGRES_USER: ${APP_POSTGRES_USER:-scheduling}
+      POSTGRES_PASSWORD: ${APP_POSTGRES_PASSWORD:-scheduling}
+      POSTGRES_DB: ${APP_POSTGRES_DB:-scheduling}
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - app_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  chat-redis:
+    image: docker.io/redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - app_redis_data:/data
+    ports:
+      - "127.0.0.1:6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
   api:
+    restart: unless-stopped
     build:
       context: .
-    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+    command: sh -c "alembic upgrade head && python -m app.seed && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
     environment:
+      DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
+      BOOKING_TOKEN_SECRET: ${BOOKING_TOKEN_SECRET:-local-demo-booking-token-secret-change-this}
+      DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
+      LLM_PROVIDER: ${LLM_PROVIDER:-deterministic}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
-      TRACING_ENABLED: ${TRACING_ENABLED:-true}
+      CHAT_REDIS_URL: redis://chat-redis:6379/0
+      TRACING_ENABLED: ${TRACING_ENABLED:-false}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-lf_pk_local_dev_key}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-lf_sk_local_dev_key}
-      LANGFUSE_HOST: http://langfuse-web:3000
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse-web:3000}
       SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-60}
-      MAX_VERIFICATION_ATTEMPTS: ${MAX_VERIFICATION_ATTEMPTS:-3}
       FRONTEND_API_BASE_URL: http://api:8000
+      OWNER_API_TOKEN: ${OWNER_API_TOKEN:-}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
     depends_on:
-      - langfuse-web
+      app-postgres:
+        condition: service_healthy
+      chat-redis:
+        condition: service_healthy
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+
+  reminder-worker:
+    restart: unless-stopped
+    build:
+      context: .
+    command: python -m app.reminders --poll-seconds 2
+    environment:
+      DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
+    depends_on:
+      api:
+        condition: service_healthy
 
   frontend:
     build:
@@ -54,12 +116,15 @@ services:
     command: streamlit run frontend/streamlit_app.py --server.address 0.0.0.0 --server.port 8501
     environment:
       FRONTEND_API_BASE_URL: http://api:8000
+      DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - "8501:8501"
 
   langfuse-web:
+    profiles: ["observability"]
     image: docker.io/langfuse/langfuse:3
     restart: unless-stopped
     depends_on:
@@ -89,6 +154,7 @@ services:
       - "3000:3000"
 
   langfuse-worker:
+    profiles: ["observability"]
     image: docker.io/langfuse/langfuse-worker:3
     restart: unless-stopped
     depends_on:
@@ -104,6 +170,7 @@ services:
       <<: *langfuse-env
 
   langfuse-postgres:
+    profiles: ["observability"]
     image: docker.io/postgres:17
     restart: unless-stopped
     healthcheck:
@@ -121,6 +188,7 @@ services:
       - langfuse_postgres_data:/var/lib/postgresql/data
 
   langfuse-clickhouse:
+    profiles: ["observability"]
     image: docker.io/clickhouse/clickhouse-server
     restart: unless-stopped
     user: "101:101"
@@ -139,6 +207,7 @@ services:
       start_period: 1s
 
   langfuse-minio:
+    profiles: ["observability"]
     image: cgr.dev/chainguard/minio
     restart: unless-stopped
     entrypoint: sh
@@ -156,6 +225,7 @@ services:
       start_period: 1s
 
   langfuse-redis:
+    profiles: ["observability"]
     image: docker.io/redis:7
     restart: unless-stopped
     command: --requirepass ${LANGFUSE_REDIS_AUTH:-myredissecret} --maxmemory-policy noeviction
@@ -168,6 +238,8 @@ services:
       retries: 10
 
 volumes:
+  app_postgres_data:
+  app_redis_data:
   langfuse_postgres_data:
   langfuse_clickhouse_data:
   langfuse_clickhouse_logs:

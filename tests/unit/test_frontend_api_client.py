@@ -1,55 +1,41 @@
-from __future__ import annotations
+import json
 
 import httpx
 
 from frontend.lib.api_client import BackendClient
 
 
-def test_frontend_client_posts_new_session_payload():
-    def handler(request: httpx.Request) -> httpx.Response:
-        assert request.url.path == "/sessions/new"
-        assert request.read() == b""
-        return httpx.Response(
-            200,
-            json={
-                "session_id": "s1",
-                "thread_id": "s1",
-                "response": "Hello, I'm CAPY. I can help you with your appointments.",
-            },
-        )
+def test_chat_client_keeps_token_out_of_message_and_uses_idempotency_header():
+    captured = {}
 
-    client = BackendClient(
-        "http://example.test",
-        client=httpx.Client(transport=httpx.MockTransport(handler), base_url="http://example.test"),
-    )
+    def handler(request):
+        captured["payload"] = json.loads(request.content)
+        captured["headers"] = request.headers
+        return httpx.Response(200, json={"session_id": "s1", "intent": "confirm"})
 
-    response = client.create_session()
+    client = BackendClient("http://api.test", client=httpx.Client(transport=httpx.MockTransport(handler), base_url="http://api.test"))
+    token = "bk1.123e4567-e89b-12d3-a456-426614174000.1." + "b" * 64
 
-    assert response["session_id"] == "s1"
+    result = client.send_message("s1", "confirm this", manage_token=token, idempotency_key="key-1")
+
+    assert result["intent"] == "confirm"
+    assert captured["payload"]["message"] == "confirm this"
+    assert captured["payload"]["manage_token"] == token
+    assert token not in captured["payload"]["message"]
+    assert captured["headers"]["Idempotency-Key"] == "key-1"
 
 
-def test_frontend_client_posts_chat_message():
-    def handler(request: httpx.Request) -> httpx.Response:
-        assert request.url.path == "/chat"
-        assert request.read().decode("utf-8") == '{"session_id":"s1","message":"hello"}'
-        return httpx.Response(
-            200,
-            json={
-                "response": "Hello",
-                "verified": False,
-                "current_operation": "help",
-                "thread_id": "s1",
-                "appointments": None,
-                "last_action_result": None,
-                "issue": None,
-            },
-        )
+def test_manage_api_client_sends_capability_in_header():
+    captured = {}
 
-    client = BackendClient(
-        "http://example.test",
-        client=httpx.Client(transport=httpx.MockTransport(handler), base_url="http://example.test"),
-    )
+    def handler(request):
+        captured["request"] = request
+        return httpx.Response(200, json={"outcome": "canceled"})
 
-    response = client.send_message("s1", "hello")
+    client = BackendClient("http://api.test", client=httpx.Client(transport=httpx.MockTransport(handler), base_url="http://api.test"))
+    token = "private-capability"
 
-    assert response["response"] == "Hello"
+    client.manage("cancel", token, idempotency_key="cancel-1")
+
+    assert captured["request"].headers["X-Booking-Token"] == token
+    assert captured["request"].content == b""

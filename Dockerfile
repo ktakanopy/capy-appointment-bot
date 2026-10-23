@@ -10,6 +10,8 @@ COPY pyproject.toml README.md ./
 COPY capy.png ./capy.png
 COPY app ./app
 COPY frontend ./frontend
+COPY alembic.ini ./alembic.ini
+COPY alembic ./alembic
 
 RUN pip install --no-cache-dir .
 
