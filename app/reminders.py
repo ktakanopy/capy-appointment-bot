@@ -8,11 +8,21 @@ from app.config import load_settings
 from app.database import connect
 
 
-class ReminderWorker:
-    """Postgres poller for the local demo inbox; intentionally has no graph dependency."""
+class DemoInboxSender:
+    def send(self, connection, reminder, booking, message: str) -> None:
+        connection.execute(
+            """INSERT INTO reminder_inbox (id,reminder_id,booking_id,business_id,message)
+               VALUES (%s,%s,%s,%s,%s) ON CONFLICT (reminder_id) DO NOTHING""",
+            (str(uuid.uuid4()), reminder["id"], reminder["booking_id"], reminder["business_id"], message),
+        )
 
-    def __init__(self, database_url: str):
+
+class ReminderWorker:
+    """Postgres poller for reminder delivery; intentionally has no graph dependency."""
+
+    def __init__(self, database_url: str, sender=None):
         self.database_url = database_url
+        self.sender = sender or DemoInboxSender()
 
     def deliver_due(self, limit: int = 25) -> int:
         with connect(self.database_url) as connection:
@@ -41,11 +51,7 @@ class ReminderWorker:
                             f"Reminder: {booking['service_name']} is scheduled for "
                             f"{booking['starts_at'].isoformat()}. Reply here if you need to reschedule."
                         )
-                        connection.execute(
-                            """INSERT INTO reminder_inbox (id,reminder_id,booking_id,business_id,message)
-                               VALUES (%s,%s,%s,%s,%s) ON CONFLICT (reminder_id) DO NOTHING""",
-                            (str(uuid.uuid4()), reminder["id"], reminder["booking_id"], reminder["business_id"], message),
-                        )
+                        self.sender.send(connection, reminder, booking, message)
                         connection.execute(
                             "UPDATE reminders SET status='delivered',delivered_at=now(),claimed_at=NULL,last_error=NULL WHERE id=%s",
                             (reminder["id"],),

@@ -26,9 +26,20 @@ The Compose stack runs the API, Streamlit UI, a dedicated scheduling PostgreSQL 
 
 The seeded business is a wellness studio with two professionals and one massage service. It is only fixture data; the domain model supports multiple businesses, services, professionals, and service assignments. Pass `--include-second-business` to the seed command to add a second synthetic business.
 
+### What the bot can do
+
+In the customer conversation, the bot can:
+
+- Find available times for a service and date, optionally with a requested professional.
+- Help complete a booking after the customer chooses a time and provides their name and phone number.
+- Confirm, cancel, or reschedule an existing booking when given its private management token.
+- Explain how to get started and list the services available in the business catalog.
+
+The local demo uses synthetic business data: one studio, one massage service, and two professionals. The bot does not answer general business questions or use a RAG knowledge base. It does not send messages through WhatsApp or SMS; reminders are simulated in the demo inbox.
+
 ## AI interpretation
 
-`LLM_PROVIDER=deterministic` is the default so the local demo works offline. To use model-assisted extraction, set `LLM_PROVIDER=openai` and `OPENAI_API_KEY` in a local `.env` file before starting Compose. The OpenAI interpreter falls back to the deterministic interpreter on provider failure. Neither interpreter can authorize a booking or claim a time is free.
+`LLM_PROVIDER=deterministic` is the default so the local demo works offline. To use model-assisted extraction, set `LLM_PROVIDER=openai` and `OPENAI_API_KEY` in a local `.env` file before starting Compose. The OpenAI interpreter uses the SDK's Pydantic structured-output parser and falls back to the deterministic interpreter on provider failure. Neither interpreter can authorize a booking or claim a time is free. Chat sessions, offered slots, and the recent redacted message history are stored in Redis and expire after `SESSION_TTL_MINUTES`.
 
 The optional Langfuse stack is separate from the default demo:
 
@@ -59,7 +70,9 @@ Python 3.11+ is required. The API expects PostgreSQL, and migrations are managed
 
 ```bash
 uv sync --extra dev
+docker compose up -d app-postgres chat-redis
 export DATABASE_URL=postgresql://scheduling:scheduling@localhost:5433/scheduling
+export CHAT_REDIS_URL=redis://localhost:6380/0
 export BOOKING_TOKEN_SECRET='use-at-least-32-random-bytes-here'
 uv run alembic upgrade head
 uv run python -m app.seed

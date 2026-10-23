@@ -48,6 +48,20 @@ services:
     ports:
       - "5433:5432"
 
+  chat-redis:
+    image: docker.io/redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - app_redis_data:/data
+    ports:
+      - "127.0.0.1:6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
   api:
     restart: unless-stopped
     build:
@@ -60,14 +74,21 @@ services:
       LLM_PROVIDER: ${LLM_PROVIDER:-deterministic}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      CHAT_REDIS_URL: redis://chat-redis:6379/0
       TRACING_ENABLED: ${TRACING_ENABLED:-false}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-lf_pk_local_dev_key}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-lf_sk_local_dev_key}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse-web:3000}
       SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-60}
       FRONTEND_API_BASE_URL: http://api:8000
+      OWNER_API_TOKEN: ${OWNER_API_TOKEN:-}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
     depends_on:
       app-postgres:
+        condition: service_healthy
+      chat-redis:
         condition: service_healthy
     ports:
       - "8000:8000"
@@ -218,6 +239,7 @@ services:
 
 volumes:
   app_postgres_data:
+  app_redis_data:
   langfuse_postgres_data:
   langfuse_clickhouse_data:
   langfuse_clickhouse_logs:

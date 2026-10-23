@@ -1,41 +1,27 @@
 from __future__ import annotations
 
-import re
+import os
+import secrets
 from contextlib import asynccontextmanager
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 
-from app.chat_helpers import (
-    _chat_management_response,
-    _chat_search_slots,
-    _choose_professional,
-    _choose_service,
-    _customer_from_request_or_extraction,
-    _handle_chat_clarification,
-    _handle_chat_help,
-    _handle_chat_management_fallback,
-    _interpret_chat_message,
-    _request_key,
-    _slot_choice,
-    _slot_message,
-)
+from app.channels.whatsapp import process_inbound, verify_subscription
+from app.chat_adapter import handle_chat
 from app.database import database_is_ready
-from app.llm.schemas import SchedulingExtraction
 from app.models import (
     AvailabilityResponse,
     AvailabilitySearchRequest,
-    AvailabilitySlot,
     BookingCreateRequest,
     BookingRescheduleRequest,
     BookingSummary,
     CatalogResponse,
     ChatRequest,
     ChatResponse,
-    CustomerInput,
     DemoReminder,
     DemoRemindersResponse,
     DomainError,
@@ -43,7 +29,6 @@ from app.models import (
     OwnerBookingsResponse,
     SessionResponse,
 )
-from app.observability import log_event, trace_event
 from app.runtime import (
     RuntimeContext,
     close_runtime,
@@ -53,12 +38,11 @@ from app.runtime import (
     reset_runtime as reset_runtime_context,
 )
 
-_TOKEN_PATTERN = re.compile(r"\bbk1\.[0-9a-fA-F-]{36}\.\d+\.[0-9a-f]{64}\b")
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.runtime = create_runtime()
+    if os.getenv("SKIP_RUNTIME_STARTUP") != "1":
+        app.state.runtime = create_runtime()
     yield
     close_runtime(getattr(app.state, "runtime", None))
 
@@ -94,301 +78,17 @@ def _local_today(catalog: CatalogResponse) -> date:
     return datetime.now(ZoneInfo(catalog.business.timezone)).date()
 
 
-def _handle_chat_search(
-    runtime: RuntimeContext,
-    request: ChatRequest,
-    catalog: CatalogResponse,
-    extraction: SchedulingExtraction,
-) -> ChatResponse:
-    """Handle a new-booking search intent by resolving catalog names and finding times.
-
-    If the service, date, or requested professional is missing or unrecognized,
-    ask the customer to clarify. Otherwise save the matching slots in the session
-    and return them as choices for a later selection message.
-    """
-    service = _choose_service(catalog, extraction.service_name)
-    if service is None:
-        names = ", ".join(item.name for item in catalog.services)
-        return ChatResponse(
-            session_id=request.session_id,
-            response=f"Which service would you like? Available services: {names}.",
-            intent="clarify_service",
-        )
-
-    requested_date = (
-        date.fromisoformat(extraction.local_date) if extraction.local_date else None
-    )
-    if not requested_date:
-        return ChatResponse(
-            session_id=request.session_id,
-            response=f"What date would you like to book {service.name}? You can say today, tomorrow, or give a date.",
-            intent="clarify_date",
-        )
-
-    professional = _choose_professional(catalog, extraction.professional_name)
-    if extraction.professional_name and professional is None:
-        names = ", ".join(item.name for item in catalog.professionals)
-        return ChatResponse(
-            session_id=request.session_id,
-            response=f"I couldn't find that professional. Choose from: {names}.",
-            intent="clarify_professional",
-        )
-
-    slots = _chat_search_slots(
-        runtime,
-        request,
-        extraction,
-        service_id=service.id,
-        professional_id=professional.id if professional else None,
-        requested_date=requested_date,
-    )
-    runtime.session_slots[request.session_id] = slots
-    runtime.pending_slots.pop(request.session_id, None)
-    log_event(
-        runtime.logger,
-        "chat.search",
-        session_id=request.session_id,
-        intent="search",
-        slot_count=len(slots),
-        service_id=service.id,
-    )
-    trace_event(
-        runtime.tracer,
-        request.session_id,
-        "chat.search",
-        {"intent": "search", "slot_count": len(slots), "service_id": service.id},
-    )
-    return ChatResponse(
-        session_id=request.session_id,
-        response=_slot_message(slots),
-        intent="search",
-        slots=slots,
-    )
-
-
-def _handle_chat_slot_selection(
-    runtime: RuntimeContext,
-    request: ChatRequest,
-    slot: AvailabilitySlot,
-    customer: CustomerInput | None,
-    idempotency_key: str | None,
-) -> ChatResponse:
-    """Process a selected slot as a reschedule or a new booking.
-
-    Use this when the customer selects a search result, or when they provide
-    customer details after a slot was saved as pending. With a management token,
-    move the existing booking to this slot and clear the pending slot. Without a
-    token, save the slot and ask for details when they are missing; once details
-    are available, create the booking, clear the pending slot, and return its
-    management token. Saving a pending slot remembers the choice but does not
-    reserve the time.
-    """
-    if request.manage_token:
-        # The management token is only used for this booking service call.
-        reschedule_request = BookingRescheduleRequest(
-            business_id=slot.business_id,
-            service_id=slot.service_id,
-            professional_id=slot.professional_id,
-            slot_id=slot.slot_id,
-            starts_at=slot.starts_at,
-        )
-        key = _request_key(
-            idempotency_key, f"{request.session_id}:{slot.slot_id}:reschedule"
-        )
-        updated, _outcome = runtime.bookings.reschedule(
-            request.manage_token, reschedule_request, key
-        )
-        runtime.pending_slots.pop(request.session_id, None)
-        return ChatResponse(
-            session_id=request.session_id,
-            response="Your booking has been moved.",
-            intent="reschedule",
-            booking=updated,
-        )
-
-    if not customer:
-        runtime.pending_slots[request.session_id] = slot
-        return ChatResponse(
-            session_id=request.session_id,
-            response=f"I can hold this choice while we finish the demo flow. Please share your full name and phone number for {slot.local_label}.",
-            intent="collect_customer",
-        )
-
-    booking_request = BookingCreateRequest(
-        business_id=slot.business_id,
-        service_id=slot.service_id,
-        professional_id=slot.professional_id,
-        slot_id=slot.slot_id,
-        starts_at=slot.starts_at,
-        customer=customer,
-    )
-    key = _request_key(
-        idempotency_key, f"{request.session_id}:{slot.slot_id}:{customer.phone}"
-    )
-    result = runtime.bookings.create(booking_request, key)
-    runtime.pending_slots.pop(request.session_id, None)
-    log_event(
-        runtime.logger,
-        "chat.booking",
-        session_id=request.session_id,
-        intent="create",
-        booking_id=result.booking.id,
-    )
-    trace_event(
-        runtime.tracer,
-        request.session_id,
-        "chat.booking",
-        {"intent": "create", "booking_id": result.booking.id},
-    )
-    return ChatResponse(
-        session_id=request.session_id,
-        response=f"You're booked for {slot.local_label} with {slot.professional_name}. Your private management token is shown in the booking details.",
-        intent="create",
-        booking=result.booking,
-        manage_token=result.manage_token,
-    )
-
-
-def _handle_chat_confirm(
-    runtime: RuntimeContext,
-    request: ChatRequest,
-    manage_token: str,
-    idempotency_key: str | None,
-    safe_message: str,
-) -> ChatResponse:
-    """Confirm a booking using the customer's management token and an idempotent key."""
-    booking = runtime.bookings.read(manage_token)
-    key = _request_key(
-        idempotency_key, f"{request.session_id}:{booking.id}:confirm:{safe_message}"
-    )
-    updated_booking, action_outcome = runtime.bookings.confirm(manage_token, key)
-    return _chat_management_response(
-        runtime, request, "confirm", updated_booking, action_outcome
-    )
-
-
-def _handle_chat_cancel(
-    runtime: RuntimeContext,
-    request: ChatRequest,
-    manage_token: str,
-    idempotency_key: str | None,
-    safe_message: str,
-) -> ChatResponse:
-    """Cancel a booking using the customer's management token and an idempotent key."""
-    booking = runtime.bookings.read(manage_token)
-    key = _request_key(
-        idempotency_key, f"{request.session_id}:{booking.id}:cancel:{safe_message}"
-    )
-    updated_booking, action_outcome = runtime.bookings.cancel(manage_token, key)
-    return _chat_management_response(
-        runtime, request, "cancel", updated_booking, action_outcome
-    )
-
-
-def _handle_chat_reschedule(
-    runtime: RuntimeContext,
-    request: ChatRequest,
-    extraction: SchedulingExtraction,
-    manage_token: str,
-) -> ChatResponse:
-    """Start rescheduling an existing booking when no replacement slot is selected.
-
-    Ask for a target date if the customer has not provided one; otherwise search
-    that date for the existing service and save the results for slot selection.
-    """
-    current_booking = runtime.bookings.read(manage_token)
-    requested_date = (
-        date.fromisoformat(extraction.local_date) if extraction.local_date else None
-    )
-    if not requested_date:
-        return ChatResponse(
-            session_id=request.session_id,
-            response="What date would you like to move the booking to?",
-            intent="reschedule",
-        )
-    slots = _chat_search_slots(
-        runtime,
-        request,
-        extraction,
-        service_id=current_booking.service_id,
-        professional_id=None,
-        requested_date=requested_date,
-    )
-    runtime.session_slots[request.session_id] = slots
-    return ChatResponse(
-        session_id=request.session_id,
-        response=_slot_message(slots),
-        intent="reschedule",
-        slots=slots,
-    )
-
-
-def _handle_chat_intent(
-    runtime: RuntimeContext,
-    request: ChatRequest,
-    catalog: CatalogResponse,
-    extraction: SchedulingExtraction,
-    chosen_slot: AvailabilitySlot | None,
-    customer: CustomerInput | None,
-    idempotency_key: str | None,
-    safe_message: str,
-) -> ChatResponse:
-    """Dispatch each chat intent to its specific booking, search, or reply handler.
-
-    Management actions take precedence, followed by new availability searches
-    and selected-slot processing. If no action applies, handle management prompts,
-    help requests, or general clarification here.
-    """
-    manage_token = request.manage_token
-    if manage_token and extraction.intent == "confirm":
-        return _handle_chat_confirm(
-            runtime,
-            request,
-            manage_token,
-            idempotency_key,
-            safe_message,
-        )
-    if manage_token and extraction.intent == "cancel":
-        return _handle_chat_cancel(
-            runtime,
-            request,
-            manage_token,
-            idempotency_key,
-            safe_message,
-        )
-    if (
-        manage_token
-        and extraction.intent == "reschedule"
-        and not request.selected_slot_id
-    ):
-        return _handle_chat_reschedule(runtime, request, extraction, manage_token)
-
-    if extraction.intent == "search":
-        return _handle_chat_search(runtime, request, catalog, extraction)
-
-    if chosen_slot or (runtime.pending_slots.get(request.session_id) and customer):
-        slot = chosen_slot or runtime.pending_slots[request.session_id]
-        return _handle_chat_slot_selection(
-            runtime,
-            request,
-            slot,
-            customer,
-            idempotency_key,
-        )
-
-    if extraction.intent in {"confirm", "cancel", "reschedule"}:
-        return _handle_chat_management_fallback(request)
-    if extraction.intent == "help":
-        return _handle_chat_help(request, catalog)
-    return _handle_chat_clarification(request)
-
-
 @app.get("/health", response_model=HealthResponse)
 def health(runtime: RuntimeContext = Depends(get_runtime)):
     database_ok = database_is_ready(runtime.settings.database_url)
+    try:
+        chat_history_ok = runtime.chat_store.ping()
+    except Exception:
+        chat_history_ok = False
     return HealthResponse(
-        status="ok" if database_ok else "degraded",
+        status="ok" if database_ok and chat_history_ok else "degraded",
         database="ok" if database_ok else "unavailable",
+        chat_history="ok" if chat_history_ok else "unavailable",
     )
 
 
@@ -487,12 +187,24 @@ def reschedule_booking(
     return {"booking": booking, "outcome": outcome}
 
 
+def require_owner(
+    x_owner_token: str | None = Header(default=None, alias="X-Owner-Token"),
+    runtime: RuntimeContext = Depends(get_runtime),
+) -> None:
+    expected = getattr(runtime.settings, "owner_api_token", None)
+    if not expected:
+        return
+    if not x_owner_token or not secrets.compare_digest(x_owner_token, expected):
+        raise DomainError("unauthorized", "Owner authorization is required.", 401)
+
+
 @app.get("/owner/bookings", response_model=OwnerBookingsResponse)
 def owner_bookings(
     business_id: str | None = Query(default=None),
     start_date: date | None = None,
     end_date: date | None = None,
     runtime: RuntimeContext = Depends(get_runtime),
+    _owner: None = Depends(require_owner),
 ):
     business_id = business_id or runtime.settings.demo_business_id
     catalog = _catalog(runtime, business_id)
@@ -515,6 +227,7 @@ def owner_bookings(
 def demo_reminders(
     business_id: str | None = Query(default=None),
     runtime: RuntimeContext = Depends(get_runtime),
+    _owner: None = Depends(require_owner),
 ):
     business_id = business_id or runtime.settings.demo_business_id
     with runtime.repository.connection() as connection:
@@ -529,41 +242,53 @@ def demo_reminders(
     return DemoRemindersResponse(reminders=[DemoReminder(**row) for row in rows])
 
 
+@app.get("/webhooks/whatsapp")
+def whatsapp_verify(
+    hub_mode: str | None = Query(default=None, alias="hub.mode"),
+    hub_verify_token: str | None = Query(default=None, alias="hub.verify_token"),
+    hub_challenge: str | None = Query(default=None, alias="hub.challenge"),
+    runtime: RuntimeContext = Depends(get_runtime),
+):
+    challenge = verify_subscription(
+        hub_mode,
+        hub_verify_token,
+        hub_challenge,
+        getattr(runtime.settings, "whatsapp_verify_token", None),
+    )
+    if challenge is None:
+        raise DomainError("invalid_subscription", "Webhook verification failed.", 403)
+    return PlainTextResponse(challenge)
+
+
+@app.post("/webhooks/whatsapp")
+async def whatsapp_inbound(request: Request, runtime: RuntimeContext = Depends(get_runtime)):
+    status, payload = process_inbound(runtime, await request.body(), request.headers.get("x-hub-signature-256"))
+    return JSONResponse(status_code=status, content=payload if isinstance(payload, dict) else {"received": payload})
+
+
+@app.patch("/owner/settings")
+def update_owner_settings(
+    reminder_lead_minutes: int = Query(ge=0, le=10080),
+    business_id: str | None = Query(default=None),
+    runtime: RuntimeContext = Depends(get_runtime),
+    _owner: None = Depends(require_owner),
+):
+    business_id = business_id or runtime.settings.demo_business_id
+    if not hasattr(runtime.repository, "update_reminder_lead"):
+        raise DomainError("not_supported", "Reminder settings cannot be updated.", 501)
+    updated = runtime.repository.update_reminder_lead(business_id, reminder_lead_minutes)
+    if updated is None:
+        raise DomainError("business_not_found", "Business not found.", 404)
+    return updated
+
+
 @app.post("/chat", response_model=ChatResponse)
 def chat(
     request: ChatRequest,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     runtime: RuntimeContext = Depends(get_runtime),
 ):
-    runtime.require_session(request.session_id)
-    catalog = _catalog(runtime, request.business_id)
-    local_today = _local_today(catalog)
-    safe_message = _TOKEN_PATTERN.sub("[redacted-token]", request.message)
-    extraction = _interpret_chat_message(
-        runtime,
-        request.session_id,
-        catalog,
-        local_today,
-        safe_message,
-    )
-    chosen_slot = _slot_choice(
-        runtime,
-        request.session_id,
-        request.selected_slot_id,
-        extraction.slot_index,
-    )
-    customer = _customer_from_request_or_extraction(request, extraction)
-
-    return _handle_chat_intent(
-        runtime,
-        request,
-        catalog,
-        extraction,
-        chosen_slot,
-        customer,
-        idempotency_key,
-        safe_message,
-    )
+    return handle_chat(runtime, request, idempotency_key)
 
 
 @app.exception_handler(DomainError)

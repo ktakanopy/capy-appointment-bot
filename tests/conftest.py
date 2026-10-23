@@ -32,9 +32,17 @@ class FakeWorkflow:
         self.extraction = SchedulingExtraction(intent="unknown")
         self.messages: list[str] = []
 
-    def interpret(self, session_id, message, **_context):
-        self.messages.append(message)
+    def interpret(self, message, context):
+        _ = context
         return self.extraction
+
+    def handle_turn(self, turn, ports):
+        from app.graph.builder import build_graph
+        from app.graph.decision import DeterministicDecision
+        from app.graph.workflow import LangGraphWorkflow
+
+        graph = build_graph(self, DeterministicDecision())
+        return LangGraphWorkflow(graph).handle_turn(turn, ports)
 
 
 class FakeAvailability:
@@ -162,11 +170,12 @@ def api_runtime():
 
 
 @pytest.fixture
-def client(api_runtime):
+def client(api_runtime, monkeypatch):
     from fastapi.testclient import TestClient
 
     from app.main import app, get_runtime
 
+    monkeypatch.setenv("SKIP_RUNTIME_STARTUP", "1")
     app.dependency_overrides[get_runtime] = lambda: api_runtime
     with TestClient(app) as test_client:
         yield test_client

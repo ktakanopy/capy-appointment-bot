@@ -1,25 +1,29 @@
 # Conversation and LangGraph
 
-LangGraph handles one bounded responsibility per `/chat` turn: extract a scheduling intent and optional service, professional, date, time, ordinal, or customer fields from the sanitized current message. The output is validated against `SchedulingExtraction`.
+LangGraph owns one inbound turn. It loads the scheduling draft, interprets the sanitized message, chooses the next step, and calls a domain port only when a write is allowed. Understanding does not choose the node. A management token or verified customer authorizes the caller; it does not choose create versus reschedule.
 
 ```mermaid
 flowchart TD
-  Start([Chat request]) --> Sanitize[Redact token-shaped text]
-  Sanitize --> Interpret[LangGraph typed extraction]
-  Interpret --> Resolve{Intent and required fields}
-  Resolve -->|Need service or date| Clarify[Ask one clarification]
-  Resolve -->|Search| Availability[Deterministic availability]
-  Availability --> Slots[Offer current slot references]
-  Resolve -->|Choose slot| Revalidate[Transactional slot recheck]
-  Revalidate -->|Available| Create[Create booking and reminder]
-  Revalidate -->|Stale| Alternatives[Return conflict and search again]
-  Resolve -->|Manage with token| Authorize[Validate HMAC capability]
-  Authorize --> Action[Confirm, cancel, or reschedule service]
-  Slots --> End([Response])
-  Clarify --> End
-  Create --> End
-  Alternatives --> End
-  Action --> End
+  Start([Inbound turn]) --> Load[Load draft]
+  Load --> Interpret[Interpret text or audio]
+  Interpret --> Merge[Merge scheduling draft]
+  Merge --> Decide{Constrain decision}
+  Decide -->|Missing field| Clarify[Ask one question]
+  Decide -->|Availability| Search[Deterministic search]
+  Decide -->|Offered slot| Select[Resolve offered slot]
+  Decide -->|FAQ| Help[Answer from catalog]
+  Decide -->|Lookup| Lookup[List verified bookings]
+  Decide -->|Unsupported| Escalate[Record escalation]
+  Decide -->|Authorized action| Prepare[Check operation and authorization]
+  Select --> Prepare
+  Prepare --> Execute[Domain service]
+  Clarify --> Persist[Save draft]
+  Search --> Persist
+  Help --> Persist
+  Lookup --> Persist
+  Escalate --> Persist
+  Execute --> Persist
+  Persist --> End([Channel-neutral result])
 ```
 
 The graph does not authorize a customer, decide that a slot is free, mutate a booking, or generate a management token. Those operations belong to deterministic application services. A provider failure falls back to the deterministic interpreter for the narrow extraction fields.

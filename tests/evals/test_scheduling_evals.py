@@ -29,3 +29,10 @@ def test_evaluation_reports_each_structured_mismatch():
     observed = DeterministicInterpreter().interpret(scenario.utterance, scenario.context)
 
     assert evaluate_extraction(scenario, observed) == ["local_date: expected '2026-10-21', observed '2026-10-20'"]
+
+
+def test_route_eval_keeps_decision_separate_from_workflow():
+    from app.evals.routing import ROUTE_SCENARIOS, evaluate_route
+
+    for _scenario_id, transcript, intent, expected in ROUTE_SCENARIOS:
+        evaluate_route(intent, transcript, expected)

@@ -51,6 +51,11 @@ def main() -> None:
         for mismatch in item.mismatches:
             print(f"  - {mismatch}")
     print(f"Saved {len(results)} scenario results to {output_path}")
+    from app.evals.routing import ROUTE_SCENARIOS, evaluate_route
+
+    for scenario_id, transcript, intent, expected in ROUTE_SCENARIOS:
+        evaluate_route(intent, transcript, expected)
+        print(f"PASS  {scenario_id}: route {expected}")
 
 
 if __name__ == "__main__":

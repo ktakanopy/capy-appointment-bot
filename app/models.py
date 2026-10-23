@@ -279,6 +279,7 @@ class ChatResponse(Contract):
 class HealthResponse(Contract):
     status: str
     database: str = "ok"
+    chat_history: str = "ok"
 
 
 class DomainError(Exception):

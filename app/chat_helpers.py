@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from datetime import date, time
+from typing import TYPE_CHECKING
 
 from app.llm.schemas import SchedulingExtraction
 from app.models import (
@@ -14,7 +15,9 @@ from app.models import (
     CustomerInput,
 )
 from app.observability import log_event, trace_event
-from app.runtime import RuntimeContext
+
+if TYPE_CHECKING:
+    from app.runtime import RuntimeContext
 
 
 def _request_key(header_key: str | None, seed: str) -> str:
@@ -23,29 +26,54 @@ def _request_key(header_key: str | None, seed: str) -> str:
 
 
 def _choose_service(catalog: CatalogResponse, phrase: str | None):
-    """Match a service phrase against this business's catalog for a chat search."""
+    """Resolve an exact service name from this business's catalog."""
     if not phrase:
         return catalog.services[0] if len(catalog.services) == 1 else None
-    folded = phrase.casefold()
+    folded = " ".join(phrase.split()).casefold()
     return next(
         (
             service
             for service in catalog.services
-            if folded in service.name.casefold() or service.name.casefold() in folded
+            if " ".join(service.name.split()).casefold() == folded
         ),
         None,
     )
 
 
 def _choose_professional(catalog: CatalogResponse, phrase: str | None):
-    """Match a professional phrase, returning ``None`` if it is missing or unknown."""
+    """Resolve an exact professional name, returning ``None`` if it is unknown."""
     if not phrase:
         return None
-    folded = phrase.casefold()
+    folded = " ".join(phrase.split()).casefold()
     return next(
-        (person for person in catalog.professionals if folded in person.name.casefold()),
+        (
+            person
+            for person in catalog.professionals
+            if " ".join(person.name.split()).casefold() == folded
+        ),
         None,
     )
+
+
+def _canonicalize_catalog_entities(
+    catalog: CatalogResponse,
+    extraction: SchedulingExtraction,
+) -> SchedulingExtraction:
+    """Replace recognized service and professional phrases with catalog names.
+
+    Unknown phrases stay intact so intent handlers can ask the customer to clarify
+    instead of silently choosing another service or professional.
+    """
+    values = extraction.model_dump()
+    if extraction.service_name:
+        service = _choose_service(catalog, extraction.service_name)
+        if service is not None:
+            values["service_name"] = service.name
+    if extraction.professional_name:
+        professional = _choose_professional(catalog, extraction.professional_name)
+        if professional is not None:
+            values["professional_name"] = professional.name
+    return SchedulingExtraction.model_validate(values)
 
 
 def _customer_from_request_or_extraction(

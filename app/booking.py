@@ -172,6 +172,24 @@ class BookingService:
             raise DomainError("booking_not_found", "Booking not found.", 404)
         return booking_from_row(row)
 
+    def confirm_for_customer(self, business_id: str, customer_id: str | None, booking_id: str, idempotency_key: str) -> tuple[Booking, str]:
+        return self.confirm(self._token_for_owner(business_id, customer_id, booking_id), idempotency_key)
+
+    def cancel_for_customer(self, business_id: str, customer_id: str | None, booking_id: str, idempotency_key: str) -> tuple[Booking, str]:
+        return self.cancel(self._token_for_owner(business_id, customer_id, booking_id), idempotency_key)
+
+    def reschedule_for_customer(self, business_id: str, customer_id: str | None, booking_id: str, request: BookingRescheduleRequest, idempotency_key: str) -> tuple[Booking, str]:
+        return self.reschedule(self._token_for_owner(business_id, customer_id, booking_id), request, idempotency_key)
+
+    def _token_for_owner(self, business_id: str, customer_id: str | None, booking_id: str) -> str:
+        if not customer_id:
+            raise DomainError("booking_not_found", "Booking not found.", 404)
+        with connect(self.database_url) as connection:
+            row = self._row(connection, booking_id)
+        if row is None or row["business_id"] != business_id or row["customer_id"] != customer_id:
+            raise DomainError("booking_not_found", "Booking not found.", 404)
+        return self._token(booking_id, row["token_version"])
+
     def confirm(self, token: str, idempotency_key: str) -> tuple[Booking, str]:
         return self._mutate_status(token, "confirm", idempotency_key)
 

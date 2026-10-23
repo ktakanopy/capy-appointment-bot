@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import time
 import uuid
-from dataclasses import dataclass, field
-
-from langgraph.checkpoint.memory import InMemorySaver
+from dataclasses import dataclass
 
 from app.booking import BookingService
+from app.chat_history import RedisChatStore
 from app.config import Settings, load_settings
 from app.graph.builder import build_graph
+from app.graph.decision import DeterministicDecision
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import build_interpreter
-from app.models import AvailabilitySlot, DomainError
 from app.observability import build_tracer, get_logger
 from app.repositories import PostgresRepository
 from app.scheduling import AvailabilityService
@@ -27,29 +25,26 @@ class RuntimeContext:
     bookings: BookingService
     graph: object
     workflow: LangGraphWorkflow
-    sessions: dict[str, float] = field(default_factory=dict)
-    session_slots: dict[str, list[AvailabilitySlot]] = field(default_factory=dict)
-    pending_slots: dict[str, AvailabilitySlot] = field(default_factory=dict)
+    chat_store: RedisChatStore
 
-    def cleanup_sessions(self) -> None:
-        cutoff = time.time() - self.settings.session_ttl_minutes * 60
-        expired = [session_id for session_id, last_seen in self.sessions.items() if last_seen < cutoff]
-        for session_id in expired:
-            self.sessions.pop(session_id, None)
-            self.session_slots.pop(session_id, None)
-            self.pending_slots.pop(session_id, None)
+    @property
+    def session_slots(self):
+        return self.chat_store.session_slots
+
+    @property
+    def pending_slots(self):
+        return self.chat_store.pending_slots
 
     def create_session(self) -> tuple[str, str]:
-        self.cleanup_sessions()
         session_id = str(uuid.uuid4())
-        self.sessions[session_id] = time.time()
+        self.chat_store.create_session(
+            session_id,
+            "Welcome. Tell me which service you'd like to book.",
+        )
         return session_id, session_id
 
     def require_session(self, session_id: str) -> None:
-        self.cleanup_sessions()
-        if session_id not in self.sessions:
-            raise DomainError("session_not_found", "Session not found. Start a new session.", 404)
-        self.sessions[session_id] = time.time()
+        self.chat_store.require_session(session_id)
 
 
 def create_runtime(settings: Settings | None = None) -> RuntimeContext:
@@ -59,8 +54,17 @@ def create_runtime(settings: Settings | None = None) -> RuntimeContext:
     repository = PostgresRepository(settings.database_url)
     availability = AvailabilityService(repository)
     bookings = BookingService(repository, settings.booking_token_secret)
-    interpreter = build_interpreter(settings.llm_provider, settings.openai_api_key, settings.openai_model)
-    graph = build_graph(interpreter, checkpointer=InMemorySaver())
+    chat_store = RedisChatStore(
+        settings.chat_redis_url,
+        ttl_seconds=settings.session_ttl_minutes * 60,
+    )
+    interpreter = build_interpreter(
+        settings.llm_provider,
+        settings.openai_api_key,
+        settings.openai_model,
+        logger=logger,
+    )
+    graph = build_graph(interpreter, DeterministicDecision())
     return RuntimeContext(
         settings=settings,
         logger=logger,
@@ -70,6 +74,7 @@ def create_runtime(settings: Settings | None = None) -> RuntimeContext:
         bookings=bookings,
         graph=graph,
         workflow=LangGraphWorkflow(graph),
+        chat_store=chat_store,
     )
 
 
@@ -77,6 +82,11 @@ def close_runtime(runtime: RuntimeContext | None) -> None:
     if runtime and runtime.tracer is not None:
         try:
             runtime.tracer.flush()
+        except Exception:
+            pass
+    if runtime is not None and hasattr(runtime, "chat_store"):
+        try:
+            runtime.chat_store.close()
         except Exception:
             pass
 

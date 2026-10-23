@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import json
 import re
 from datetime import date, timedelta
 from typing import Protocol
 
-from app.llm.schemas import SchedulingExtraction
+from app.llm.schemas import SchedulingExtraction, SchedulingLLMExtraction
+from app.observability import log_event
 
 
 class Interpreter(Protocol):
@@ -134,46 +134,61 @@ class OpenAIInterpreter:
         self.model = model
 
     def interpret(self, message: str, context: dict) -> SchedulingExtraction:
-        schema = SchedulingExtraction.model_json_schema()
-        response = self.client.chat.completions.create(
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "Interpret the latest user message using the conversation history for context. "
+                    "Extract scheduling intent and fields only; do not authorize, claim availability, or perform actions. "
+                    "Use only listed services and professionals. Return a local_date in YYYY-MM-DD when explicit "
+                    "and a 24-hour local_time in HH:MM when explicit. Use null for absent information. "
+                    "Intent is one of search, select_slot, create, confirm, cancel, reschedule, help, unknown.\n"
+                    f"Available services: {context.get('service_names', [])}\n"
+                    f"Available professionals: {context.get('professional_names', [])}\n"
+                    f"Today's business-local date: {context.get('today')}"
+                ),
+            }
+        ]
+        for history_message in context.get("history", []):
+            role = history_message.get("role")
+            content = history_message.get("content")
+            if role in {"user", "assistant"} and isinstance(content, str):
+                messages.append({"role": role, "content": content})
+        messages.append({"role": "user", "content": message})
+
+        completion = self.client.chat.completions.parse(
             model=self.model,
             temperature=0,
-            response_format={"type": "json_object"},
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Extract scheduling intent and fields as JSON matching the supplied schema. "
-                        "Do not authorize, claim availability, or perform actions. Use only listed services and professionals. "
-                        "Return a local_date in YYYY-MM-DD when explicit, and a 24-hour local_time when explicit. "
-                        "If information is absent, use null. Intent is one of search, select_slot, create, confirm, cancel, reschedule, help, unknown.\n"
-                        f"Schema: {json.dumps(schema)}\n"
-                        f"Available services: {context.get('service_names', [])}\n"
-                        f"Available professionals: {context.get('professional_names', [])}\n"
-                        f"Today's business-local date: {context.get('today')}"
-                    ),
-                },
-                {"role": "user", "content": message},
-            ],
+            response_format=SchedulingLLMExtraction,
+            messages=messages,
         )
-        content = response.choices[0].message.content or "{}"
-        return SchedulingExtraction.model_validate_json(content)
+        parsed = completion.choices[0].message.parsed
+        if parsed is None:
+            raise ValueError("OpenAI returned no structured scheduling extraction")
+        return SchedulingExtraction.model_validate(parsed.model_dump())
 
 
 class FallbackInterpreter:
-    def __init__(self, primary: Interpreter, fallback: Interpreter):
+    def __init__(self, primary: Interpreter, fallback: Interpreter, logger=None):
         self.primary = primary
         self.fallback = fallback
+        self.logger = logger
 
     def interpret(self, message: str, context: dict) -> SchedulingExtraction:
         try:
             return self.primary.interpret(message, context)
-        except Exception:
+        except Exception as error:
+            if self.logger is not None:
+                log_event(
+                    self.logger,
+                    "llm.interpreter.fallback",
+                    failure_type=type(error).__name__,
+                )
             return self.fallback.interpret(message, context)
 
 
-def build_interpreter(provider: str, api_key: str | None, model: str) -> Interpreter:
+def build_interpreter(provider: str, api_key: str | None, model: str, logger=None) -> Interpreter:
     deterministic = DeterministicInterpreter()
     if provider == "openai" and api_key:
-        return FallbackInterpreter(OpenAIInterpreter(api_key, model), deterministic)
+        return FallbackInterpreter(OpenAIInterpreter(api_key, model), deterministic, logger)
     return deterministic

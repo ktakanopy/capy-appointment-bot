@@ -14,10 +14,15 @@ class Settings:
     llm_provider: str
     openai_api_key: str | None
     openai_model: str
+    chat_redis_url: str
     tracing_enabled: bool
     langfuse_public_key: str | None
     langfuse_secret_key: str | None
     langfuse_host: str | None
+    whatsapp_app_secret: str | None = None
+    whatsapp_verify_token: str | None = None
+    whatsapp_phone_number_id: str | None = None
+    owner_api_token: str | None = None
 
 
 def _flag(name: str, default: bool = False) -> bool:
@@ -42,8 +47,13 @@ def load_settings() -> Settings:
         llm_provider=os.getenv("LLM_PROVIDER", "deterministic").lower(),
         openai_api_key=os.getenv("OPENAI_API_KEY"),
         openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        chat_redis_url=os.getenv("CHAT_REDIS_URL", "redis://localhost:6380/0"),
         tracing_enabled=_flag("TRACING_ENABLED", bool(public_key and secret_key)),
         langfuse_public_key=public_key,
         langfuse_secret_key=secret_key,
         langfuse_host=os.getenv("LANGFUSE_HOST"),
+        whatsapp_app_secret=os.getenv("WHATSAPP_APP_SECRET"),
+        whatsapp_verify_token=os.getenv("WHATSAPP_VERIFY_TOKEN"),
+        whatsapp_phone_number_id=os.getenv("WHATSAPP_PHONE_NUMBER_ID"),
+        owner_api_token=os.getenv("OWNER_API_TOKEN"),
     )

@@ -156,6 +156,32 @@ class PostgresRepository:
                 schedule.append({"professional": professional, "rules": rules, "blocks": blocks, "bookings": bookings})
         return _business(business_row), _service(service_row), schedule
 
+    def customer_by_phone(self, business_id: str, phone: str) -> Customer | None:
+        with self.connection() as connection:
+            row = connection.execute(
+                "SELECT * FROM customers WHERE business_id=%s AND phone=%s",
+                (business_id, phone),
+            ).fetchone()
+        if row is None:
+            return None
+        return Customer.model_validate(row)
+
+    def list_customer_bookings(self, business_id: str, customer_id: str) -> list[Booking]:
+        with self.connection() as connection:
+            rows = connection.execute(
+                BOOKING_SELECT + " WHERE b.business_id=%s AND b.customer_id=%s AND b.status IN ('scheduled','confirmed') AND b.starts_at > now() ORDER BY b.starts_at",
+                (business_id, customer_id),
+            ).fetchall()
+        return [booking_from_row(row) for row in rows]
+
+    def update_reminder_lead(self, business_id: str, minutes: int) -> Business | None:
+        with self.connection() as connection:
+            row = connection.execute(
+                "UPDATE businesses SET reminder_lead_minutes=%s WHERE id=%s RETURNING *",
+                (minutes, business_id),
+            ).fetchone()
+        return _business(row) if row else None
+
     def booking(self, booking_id: str) -> Booking | None:
         with self.connection() as connection:
             row = connection.execute(BOOKING_SELECT + " WHERE b.id=%s", (booking_id,)).fetchone()
