@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import secrets
@@ -11,6 +12,7 @@ from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from app.channels.sms import process_sms
 from app.channels.whatsapp import process_inbound, verify_subscription
 from app.chat_adapter import handle_chat
 from app.database import database_is_ready
@@ -282,13 +284,21 @@ def whatsapp_verify(
     return PlainTextResponse(challenge)
 
 
+@app.post("/webhooks/sms")
+async def sms_inbound(request: Request, runtime: RuntimeContext = Depends(get_runtime)):
+    body = await request.body()
+    signature = request.headers.get("x-sms-signature")
+    status, payload = await asyncio.to_thread(process_sms, runtime, body, signature)
+    return JSONResponse(status_code=status, content=payload)
+
+
 @app.post("/webhooks/whatsapp")
 async def whatsapp_inbound(
     request: Request, runtime: RuntimeContext = Depends(get_runtime)
 ):
-    status, payload = process_inbound(
-        runtime, await request.body(), request.headers.get("x-hub-signature-256")
-    )
+    body = await request.body()
+    signature = request.headers.get("x-hub-signature-256")
+    status, payload = await asyncio.to_thread(process_inbound, runtime, body, signature)
     return JSONResponse(
         status_code=status,
         content=payload if isinstance(payload, dict) else {"received": payload},

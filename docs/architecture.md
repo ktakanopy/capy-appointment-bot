@@ -35,6 +35,63 @@ PostgreSQL is appointment truth. Redis is short-lived conversation state. The mo
 
 The direct endpoints `POST /availability/search` and `POST /bookings` do not enter the graph. The Streamlit forms use them. Chat and a future channel must not be the only way to book.
 
+## Compiled conversation graph
+
+Generated from `app/graph/builder.py` by `python scripts/generate_graph_diagram.py`. Solid arrows always run. Dotted arrows are choices made by the draft.
+
+<!-- compiled-graph:start -->
+```mermaid
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	load_context(load_context)
+	interpret(interpret)
+	merge_draft(merge_draft)
+	decide(decide)
+	clarify(clarify)
+	search(search)
+	select(select)
+	prepare_action(prepare_action)
+	execute(execute)
+	help(help)
+	lookup(lookup)
+	escalate(escalate)
+	persist(persist)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> load_context;
+	clarify --> persist;
+	decide -.-> clarify;
+	decide -.-> escalate;
+	decide -.-> help;
+	decide -.-> lookup;
+	decide -.-> prepare_action;
+	decide -.-> search;
+	decide -.-> select;
+	escalate --> persist;
+	execute --> persist;
+	help --> persist;
+	interpret --> merge_draft;
+	load_context --> interpret;
+	lookup --> persist;
+	merge_draft --> decide;
+	prepare_action -.-> clarify;
+	prepare_action -.-> execute;
+	prepare_action -.-> persist;
+	search --> persist;
+	select -.-> clarify;
+	select -.-> persist;
+	select -.-> prepare_action;
+	persist --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
+```
+<!-- compiled-graph:end -->
+
 ## Who owns what
 
 | Code | Owns | Does not own |
@@ -144,4 +201,4 @@ flowchart LR
 
 ## What is not built
 
-WhatsApp signature verification and dedupe exist, but there is no live Meta send. Audio is a fixture port, not Gemma. The decision port is deterministic, not a trained Laya model. Reminders still land in the demo inbox unless a different sender is injected. Owner routes stay open unless `OWNER_API_TOKEN` is set. There is no calendar, payment, location, or deposit adapter.
+WhatsApp signature verification and dedupe exist, but there is no live Meta send. Gemma and Laya are the default understanding and routing adapters. They call local servers and fall back to deterministic parsing when those servers are down. The model weights are not bundled here. Reminders still land in the demo inbox unless a different sender is injected. Owner routes stay open unless `OWNER_API_TOKEN` is set. There is no calendar, payment, location, or deposit adapter. Telegram delivery is not connected.

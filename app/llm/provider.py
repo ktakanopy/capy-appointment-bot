@@ -181,14 +181,21 @@ class FallbackInterpreter:
             if self.logger is not None:
                 log_event(
                     self.logger,
-                    "llm.interpreter.fallback",
+                    "understanding.fallback",
                     failure_type=type(error).__name__,
                 )
             return self.fallback.interpret(message, context)
+
+    def understand_audio(self, audio: bytes, context: dict):
+        return self.primary.understand_audio(audio, context)
 
 
 def build_interpreter(provider: str, api_key: str | None, model: str, logger=None) -> Interpreter:
     deterministic = DeterministicInterpreter()
     if provider == "openai" and api_key:
         return FallbackInterpreter(OpenAIInterpreter(api_key, model), deterministic, logger)
-    return deterministic
+    if provider == "deterministic":
+        return deterministic
+    from app.llm.gemma import GemmaUnderstanding
+
+    return FallbackInterpreter(GemmaUnderstanding(model), deterministic, logger)

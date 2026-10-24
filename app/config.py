@@ -23,6 +23,11 @@ class Settings:
     whatsapp_verify_token: str | None = None
     whatsapp_phone_number_id: str | None = None
     owner_api_token: str | None = None
+    understanding_provider: str = "gemma"
+    decision_provider: str = "laya"
+    gemma_base_url: str = "http://localhost:8081"
+    laya_base_url: str = "http://localhost:8082"
+    sms_webhook_secret: str | None = None
 
 
 def _flag(name: str, default: bool = False) -> bool:
@@ -56,4 +61,9 @@ def load_settings() -> Settings:
         whatsapp_verify_token=os.getenv("WHATSAPP_VERIFY_TOKEN"),
         whatsapp_phone_number_id=os.getenv("WHATSAPP_PHONE_NUMBER_ID"),
         owner_api_token=os.getenv("OWNER_API_TOKEN"),
+        understanding_provider=os.getenv("UNDERSTANDING_PROVIDER", "gemma").lower(),
+        decision_provider=os.getenv("DECISION_PROVIDER", "laya").lower(),
+        gemma_base_url=os.getenv("GEMMA_BASE_URL", "http://localhost:8081"),
+        laya_base_url=os.getenv("LAYA_BASE_URL", "http://localhost:8082"),
+        sms_webhook_secret=os.getenv("SMS_WEBHOOK_SECRET"),
     )

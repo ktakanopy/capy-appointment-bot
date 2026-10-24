@@ -71,7 +71,12 @@ services:
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       BOOKING_TOKEN_SECRET: ${BOOKING_TOKEN_SECRET:-local-demo-booking-token-secret-change-this}
       DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
+      UNDERSTANDING_PROVIDER: ${UNDERSTANDING_PROVIDER:-gemma}
+      DECISION_PROVIDER: ${DECISION_PROVIDER:-laya}
+      GEMMA_BASE_URL: ${GEMMA_BASE_URL:-http://host.docker.internal:8081}
+      LAYA_BASE_URL: ${LAYA_BASE_URL:-http://host.docker.internal:8082}
       LLM_PROVIDER: ${LLM_PROVIDER:-deterministic}
+      SMS_WEBHOOK_SECRET: ${SMS_WEBHOOK_SECRET:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       CHAT_REDIS_URL: redis://chat-redis:6379/0

@@ -8,6 +8,7 @@ from app.chat_history import RedisChatStore
 from app.config import Settings, load_settings
 from app.graph.builder import build_graph
 from app.graph.decision import DeterministicDecision
+from app.graph.laya import FallbackDecision, LayaDecision
 from app.graph.redis_checkpoint import RedisCheckpointSaver
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import build_interpreter
@@ -48,6 +49,15 @@ class RuntimeContext:
         self.chat_store.require_session(session_id)
 
 
+def understanding_choice(settings: Settings) -> str:
+    """Keep an explicit OpenAI configuration ahead of the Gemma default."""
+    if settings.llm_provider == "openai" and settings.openai_api_key:
+        return "openai"
+    if settings.understanding_provider == "deterministic":
+        return "deterministic"
+    return "gemma"
+
+
 def create_runtime(settings: Settings | None = None) -> RuntimeContext:
     settings = settings or load_settings()
     logger = get_logger()
@@ -59,15 +69,19 @@ def create_runtime(settings: Settings | None = None) -> RuntimeContext:
         settings.chat_redis_url,
         ttl_seconds=settings.session_ttl_minutes * 60,
     )
-    interpreter = build_interpreter(
-        settings.llm_provider,
-        settings.openai_api_key,
-        settings.openai_model,
-        logger=logger,
-    )
+    choice = understanding_choice(settings)
+    if choice == "openai":
+        interpreter = build_interpreter("openai", settings.openai_api_key, settings.openai_model, logger=logger)
+    elif choice == "deterministic":
+        interpreter = build_interpreter("deterministic", None, settings.openai_model, logger=logger)
+    else:
+        interpreter = build_interpreter("gemma", None, settings.gemma_base_url, logger=logger)
+    decision = DeterministicDecision()
+    if settings.decision_provider != "deterministic":
+        decision = FallbackDecision(LayaDecision(settings.laya_base_url), decision, logger)
     graph = build_graph(
         interpreter,
-        DeterministicDecision(),
+        decision,
         checkpointer=RedisCheckpointSaver(
             chat_store.client,
             ttl_seconds=settings.session_ttl_minutes * 60,

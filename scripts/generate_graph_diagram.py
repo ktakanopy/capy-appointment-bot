@@ -1,12 +1,7 @@
-"""Generate the Mermaid diagram in docs/graph.md from the live compiled graph.
+"""Generate the compiled-graph diagram in docs/architecture.md.
 
 Usage:
-    uv run python scripts/generate_graph_diagram.py
-
-The script compiles the LangGraph graph with stub dependencies, calls
-draw_mermaid(), and replaces the first ```mermaid ... ``` block in
-docs/graph.md with the generated output.  Everything outside that block is
-left untouched.
+    python scripts/generate_graph_diagram.py
 """
 
 import re
@@ -17,23 +12,22 @@ from app.graph.builder import build_graph
 from app.graph.decision import DeterministicDecision
 from app.llm.provider import DeterministicInterpreter
 
-DOCS_PATH = Path(__file__).parent.parent / "docs" / "graph.md"
-MERMAID_BLOCK = re.compile(r"```mermaid\n.*?```", re.DOTALL)
+DOCS_PATH = Path(__file__).parent.parent / "docs" / "architecture.md"
+MARKED_BLOCK = re.compile(
+    r"<!-- compiled-graph:start -->.*?<!-- compiled-graph:end -->",
+    re.DOTALL,
+)
 
 
 def main() -> None:
     graph = build_graph(DeterministicInterpreter(), DeterministicDecision())
-
     mermaid = graph.get_graph().draw_mermaid()
-    new_block = f"```mermaid\n{mermaid}```"
-
+    new_block = f"<!-- compiled-graph:start -->\n```mermaid\n{mermaid}```\n<!-- compiled-graph:end -->"
     original = DOCS_PATH.read_text()
-    if not MERMAID_BLOCK.search(original):
-        print(f"error: no mermaid block found in {DOCS_PATH}", file=sys.stderr)
+    if not MARKED_BLOCK.search(original):
+        print(f"error: compiled-graph markers not found in {DOCS_PATH}", file=sys.stderr)
         sys.exit(1)
-
-    updated = MERMAID_BLOCK.sub(new_block, original, count=1)
-    DOCS_PATH.write_text(updated)
+    DOCS_PATH.write_text(MARKED_BLOCK.sub(new_block, original, count=1))
     print(f"updated {DOCS_PATH}")
 
 

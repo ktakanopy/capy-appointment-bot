@@ -5,7 +5,7 @@ import hmac
 import json
 from dataclasses import dataclass
 
-from app.chat_adapter import conversation_id_for_sender
+from app.chat_adapter import conversation_id_for_sender, redact_token
 from app.graph.contracts import TurnContext
 from app.models import CustomerInput, DomainError
 
@@ -125,7 +125,8 @@ def _handle_message(runtime, business_id: str, message: InboundText, outbox: Mem
             store.require_session(conversation_id)
         except DomainError:
             store.create_session(conversation_id, "")
-    request = ChatRequest(session_id=conversation_id, business_id=business_id, message=message.text)
+    safe_text = redact_token(message.text)
+    request = ChatRequest(session_id=conversation_id, business_id=business_id, message=safe_text)
     ports = ChatPorts(runtime, request, None, customer, customer_id)
     catalog = ports.catalog(business_id)
     from app.chat_adapter import local_today
@@ -134,7 +135,7 @@ def _handle_message(runtime, business_id: str, message: InboundText, outbox: Mem
         TurnContext(
             conversation_id=conversation_id,
             business_id=business_id,
-            message=message.text,
+            message=safe_text,
             today=local_today(catalog).isoformat(),
             auth_kind="customer" if customer_id else "anonymous",
             customer_id=customer_id,
