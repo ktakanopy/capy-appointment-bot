@@ -69,56 +69,78 @@ If the bot asked for a date and the reply contains a date, the draft continues e
 
 Restarting the API does not delete a booking. It can drop an in-progress Redis draft after the TTL. The web demo can still manage the booking with the saved token.
 
-## WhatsApp user interaction
+## Messaging channels
 
-A WhatsApp customer never sees or sends a management token. The verified sender number is the identity. The web demo still uses the token because the browser cannot prove it owns a phone number.
+The customer channels are WhatsApp and Telegram. Streamlit is only a local demo surface. A customer authorizes themself by messaging from a verified account. They do not paste a token into the chat.
+
+Telegram is not connected yet. The WhatsApp webhook is the channel that exists in code. Both channels should call the same graph.
+
+`BookingService` creates the booking token. The graph and the channel do not. It happens only after the customer picks an offered slot and the create write is allowed. The service signs `booking-manage:v1:{booking_id}:1` with `BOOKING_TOKEN_SECRET`, saves the SHA-256 digest on the new booking row, and keeps the raw token out of the reply.
 
 ```mermaid
 flowchart TD
-  User[WhatsApp user] -->|text message| Webhook[POST /webhooks/whatsapp]
-  Webhook --> Signature{Signature valid?}
-  Signature -->|no| Reject[401 and no reply]
-  Signature -->|yes| Business[Map receiving phone_number_id to the business]
-  Business --> Dedupe{Provider message id already seen?}
-  Dedupe -->|yes| Ack[200 and do nothing]
-  Dedupe -->|no| Identity[Normalize sender number]
-  Identity --> Thread[Hash business plus sender into a conversation id]
-  Thread --> Lookup{Customer already in PostgreSQL?}
-  Lookup -->|yes| Known[Pass customer_id and no token]
-  Lookup -->|no| Unknown[Anonymous turn and no token]
-  Known --> Graph[Same LangGraph turn as web chat]
-  Unknown --> Graph
-  Graph --> Checkpoint[(Redis checkpoint for that conversation)]
+  User[Customer on WhatsApp or Telegram] -->|text| Adapter[Channel adapter]
+  Adapter --> Verify{Provider proof valid?}
+  Verify -->|no| Reject[Reject and do not reply]
+  Verify -->|yes| Dedupe{Provider message id already seen?}
+  Dedupe -->|yes| Ack[Acknowledge and stop]
+  Dedupe -->|no| Identity[Resolve sender to customer_id]
+  Identity --> Graph[LangGraph turn]
+  Graph --> Checkpoint[(Redis checkpoint)]
   Graph --> Choice{Draft operation}
-  Choice -->|create| Search[Search slots from PostgreSQL]
-  Search --> Offer[Reply with offered times]
-  Offer --> Pick[User picks one offered slot]
-  Pick --> Book[Create booking if the slot is still free]
-  Choice -->|lookup| Appointments[List this customer's bookings]
-  Choice -->|reschedule or cancel| Owned{How many upcoming bookings?}
-  Owned -->|none| OfferNew[Offer to create a new booking]
-  Owned -->|one| Change[Change that booking]
-  Owned -->|several| Ask[Ask which booking and write nothing]
-  Book --> Reply[Put the reply on the outbox]
-  Appointments --> Reply
-  Change --> Reply
-  Ask --> Reply
+  Choice -->|create and date missing| AskDate[Ask for a date and write nothing]
+  Choice -->|create and date present| Search[AvailabilityService returns slots]
+  Search --> Offer[Reply with those times only]
+  Offer --> Pick[Customer picks one offered slot]
+  Pick --> Recheck[BookingService rechecks the slot in the write transaction]
+  Recheck -->|taken| Conflict[Reply that the time is gone]
+  Recheck -->|free| Insert[Insert the booking row]
+  Insert --> Mint["BookingService._token creates bk1.booking_id.1.signature"]
+  Mint --> Digest[(Save SHA-256 digest on the booking)]
+  Mint --> Hide[Drop the raw token before the channel reply]
+  Choice -->|lookup| List[List this customer's bookings]
+  Choice -->|cancel or reschedule| Count{How many upcoming bookings?}
+  Count -->|none| OfferNew[Offer to create one]
+  Count -->|one| Mutate[BookingService rebuilds the same token from id and version]
+  Count -->|several| Ask[Ask which one and write nothing]
+  Mutate --> Apply[Confirm, cancel, or reschedule that booking]
+  Hide --> Reply[Channel reply with no token]
+  Conflict --> Reply
+  AskDate --> Reply
+  List --> Reply
   OfferNew --> Reply
+  Ask --> Reply
+  Apply --> Reply
   Reply --> User
 ```
 
-What each side holds:
+## Tokens the application creates
 
-| Thing | WhatsApp user | Web demo user | Stored by the app |
+A booking still gets a management token. The chat does not show it. The token is an internal capability for that booking, not the customer's login.
+
+```mermaid
+flowchart LR
+  Secret[BOOKING_TOKEN_SECRET] --> Mint[BookingService._token]
+  Create[Booking created] --> Mint
+  Mint --> Raw[Raw token bk1.booking_id.version.signature]
+  Raw --> Digest[SHA-256 digest saved on the booking]
+  Raw --> Internal[Used only inside BookingService for confirm, cancel, and reschedule]
+  Digest --> DB[(PostgreSQL)]
+  Raw -. never .-> Chat[WhatsApp or Telegram reply]
+  Raw -. never .-> Graph[Graph state, logs, or model prompt]
+```
+
+| Token | Created when | Who sees it | What it authorizes |
 |---|---|---|---|
-| Message text | Types it in WhatsApp | Types it in Streamlit | Redacted copy in the Redis checkpoint |
-| Sender identity | Their WhatsApp number, proven by the signed webhook | None | `customer_id` after a phone lookup, never the raw number in graph state |
-| Management token | Never shown and not accepted as proof | Kept by the page and sent as `manage_token` | Digest only, in PostgreSQL |
-| Offered times | Buttons or a numbered reply later | Slot choice in the page or chat | Slot ids in the checkpoint, recomputed before commit |
-| Existing appointment | Asks "when is my appointment?" | Must present the token | PostgreSQL booking, not the chat transcript |
-| Reply | WhatsApp message | `ChatResponse` | Outbox record today; live Meta send is not connected |
+| Booking management token | Every successful `BookingService.create`, and again on an idempotent replay of that create | No customer. The service rebuilds it from the booking id, version, and `BOOKING_TOKEN_SECRET` when a verified sender changes that booking. | One booking. Stored as a digest. |
+| Idempotency key | One per create, confirm, cancel, or reschedule call | The channel adapter, not the customer | Replaying the same write does not create a second booking |
+| Conversation id | First message from a sender on a channel | Nobody. It is a hash of business, channel, and sender. | Redis checkpoint for that thread |
+| Provider message id | Assigned by WhatsApp or Telegram | The adapter uses it once | Deduplicate the webhook |
+| Webhook verify token | Configured in `WHATSAPP_VERIFY_TOKEN`, not created per user | Meta during webhook setup | Proves this server owns the callback URL |
+| App secret | Configured in `WHATSAPP_APP_SECRET` | Nobody. It checks `X-Hub-Signature-256`. | Proves the webhook body came from Meta |
+| Owner token | Configured in `OWNER_API_TOKEN` | The business owner, on owner routes only | Read the agenda and change reminder settings |
 
-A token pasted into a WhatsApp message is redacted and ignored. It does not authorize the sender, and it does not turn the next selected time into a reschedule.
+`BOOKING_TOKEN_SECRET` is not a customer token. It is the signing key. Rotating it invalidates every management token already issued. The booking rows remain. A verified WhatsApp or Telegram sender can still manage their own booking because the service checks `customer_id` before it rebuilds the internal token.
 
 ## What is not built
 
