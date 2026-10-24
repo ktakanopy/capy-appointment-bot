@@ -22,7 +22,7 @@ from app.graph.steps import (
 )
 
 
-def build_graph(interpreter, decision=None, threshold: float = 0.55):
+def build_graph(interpreter, decision=None, threshold: float = 0.55, checkpointer=None):
     decision_engine = decision or DeterministicDecision()
 
     def load_context_node(state: SchedulingGraphState) -> dict:
@@ -109,4 +109,4 @@ def build_graph(interpreter, decision=None, threshold: float = 0.55):
     graph.add_edge("escalate", "persist")
     graph.add_edge("execute", "persist")
     graph.add_edge("persist", END)
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)

@@ -52,4 +52,4 @@ The worker claims due reminder rows and sends through `DemoInboxSender` by defau
 
 ## Session behavior
 
-Redis stores the session, the scheduling draft, the offered slot ids, and the redacted message history. They expire after `SESSION_TTL_MINUTES`. Booking records remain in PostgreSQL. A new session can manage an existing web booking with the saved capability token.
+The graph checkpoint in Redis stores the scheduling draft, offered slots, and redacted messages for the session id. It expires after `SESSION_TTL_MINUTES`. This is not LangGraph's in-memory saver, and it is not appointment truth. Booking records remain in PostgreSQL. A new session can manage an existing web booking with the saved capability token.

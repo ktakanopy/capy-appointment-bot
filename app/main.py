@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import secrets
 from contextlib import asynccontextmanager
@@ -39,8 +40,29 @@ from app.runtime import (
 )
 
 
+class _SuppressHealthAccess(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        if (
+            isinstance(record.args, tuple)
+            and len(record.args) >= 3
+            and str(record.args[2]).split("?", 1)[0] == "/health"
+        ):
+            return False
+        return '"GET /health ' not in record.getMessage()
+
+
+def _silence_health_access_logs() -> None:
+    logger = logging.getLogger("uvicorn.access")
+    if not any(isinstance(item, _SuppressHealthAccess) for item in logger.filters):
+        logger.addFilter(_SuppressHealthAccess())
+
+
+_silence_health_access_logs()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _silence_health_access_logs()
     if os.getenv("SKIP_RUNTIME_STARTUP") != "1":
         app.state.runtime = create_runtime()
     yield
@@ -261,9 +283,16 @@ def whatsapp_verify(
 
 
 @app.post("/webhooks/whatsapp")
-async def whatsapp_inbound(request: Request, runtime: RuntimeContext = Depends(get_runtime)):
-    status, payload = process_inbound(runtime, await request.body(), request.headers.get("x-hub-signature-256"))
-    return JSONResponse(status_code=status, content=payload if isinstance(payload, dict) else {"received": payload})
+async def whatsapp_inbound(
+    request: Request, runtime: RuntimeContext = Depends(get_runtime)
+):
+    status, payload = process_inbound(
+        runtime, await request.body(), request.headers.get("x-hub-signature-256")
+    )
+    return JSONResponse(
+        status_code=status,
+        content=payload if isinstance(payload, dict) else {"received": payload},
+    )
 
 
 @app.patch("/owner/settings")
@@ -276,7 +305,9 @@ def update_owner_settings(
     business_id = business_id or runtime.settings.demo_business_id
     if not hasattr(runtime.repository, "update_reminder_lead"):
         raise DomainError("not_supported", "Reminder settings cannot be updated.", 501)
-    updated = runtime.repository.update_reminder_lead(business_id, reminder_lead_minutes)
+    updated = runtime.repository.update_reminder_lead(
+        business_id, reminder_lead_minutes
+    )
     if updated is None:
         raise DomainError("business_not_found", "Business not found.", 404)
     return updated

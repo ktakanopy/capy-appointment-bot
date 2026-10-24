@@ -56,7 +56,7 @@ def _result(text: str, intent: str, **extra) -> dict:
 
 
 def load_context(state: dict, ports: WorkflowPorts) -> dict:
-    draft = ports.load_draft(state["conversation_id"])
+    draft = WorkflowDraft.model_validate(state["draft"]) if state.get("draft") else WorkflowDraft()
     catalog = ports.catalog(state["business_id"])
     return {
         "draft": draft.model_dump(mode="json"),
@@ -85,15 +85,17 @@ def interpret(state: dict, ports: WorkflowPorts, interpreter) -> dict:
             "extraction": extraction.model_dump(mode="json"),
             "customer_ready": bool(state.get("customer_ready") or ports.customer_ready()),
         }
-    previous = ports.load_slots(state["conversation_id"])
+    history = list(state.get("messages") or [])
+    if history and history[-1].get("content") == state.get("message"):
+        history = history[:-1]
     extraction = interpreter.interpret(
         state.get("message", ""),
         {
             "service_names": state.get("service_names", []),
             "professional_names": state.get("professional_names", []),
             "today": state.get("today"),
-            "has_slots": bool(previous),
-            "history": ports.messages(state["conversation_id"]),
+            "has_slots": bool(_offered_slots(state, ports)),
+            "history": history,
         },
     )
     ports.remember_extraction(extraction)
@@ -297,18 +299,20 @@ def search(state: dict, ports: WorkflowPorts) -> dict:
         draft.operation = "create"
     draft.missing = "slot" if slots else "date"
     intent = "reschedule" if draft.operation == "reschedule" else "search"
-    return _result(
+    update = _result(
         _slot_message(slots),
         intent,
         route="persist",
         draft=draft.model_dump(mode="json"),
     )
+    update["offered_slots"] = [slot.model_dump(mode="json") for slot in slots]
+    return update
 
 
 def select(state: dict, ports: WorkflowPorts) -> dict:
     draft = _draft(state)
     extraction = _extraction(state)
-    slots = ports.load_slots(state["conversation_id"])
+    slots = _offered_slots(state, ports)
     chosen = _chosen_slot(slots, state.get("selected_slot_id"), extraction.slot_index)
     if chosen is None and draft.pending_slot_id and state.get("customer_ready"):
         chosen = next((slot for slot in slots if slot.slot_id == draft.pending_slot_id), None)
@@ -423,7 +427,7 @@ def prepare_action(state: dict, ports: WorkflowPorts) -> dict:
 def execute(state: dict, ports: WorkflowPorts) -> dict:
     draft = _draft(state)
     key = _request_key(state.get("idempotency_key"), f"{state['conversation_id']}:{draft.operation}:{draft.pending_slot_id or draft.active_booking_id}")
-    slots = ports.load_slots(state["conversation_id"])
+    slots = _offered_slots(state, ports)
     chosen = _chosen_slot(slots, draft.pending_slot_id or state.get("selected_slot_id"), None)
     booking_id = state.get("booking_id") or draft.active_booking_id
     if draft.operation == "create":
@@ -507,16 +511,26 @@ def escalate(state: dict, ports: WorkflowPorts) -> dict:
 
 
 def persist(state: dict, ports: WorkflowPorts) -> dict:
+    _ = ports
     draft = _draft(state)
-    ports.save_draft(state["conversation_id"], draft)
     result = dict(state.get("result") or _result("Tell me which service you'd like and the date.", "clarify")["result"])
-    return {"result": result, "draft": draft.model_dump(mode="json")}
+    update = {"result": result, "draft": draft.model_dump(mode="json")}
+    if result.get("text"):
+        update["messages"] = [{"role": "assistant", "content": result["text"]}]
+    return update
 
 
 def _service(catalog: CatalogResponse, service_id: str | None) -> Service | None:
     if not service_id:
         return None
     return next((item for item in catalog.services if item.id == service_id), None)
+
+
+def _offered_slots(state: dict, ports: WorkflowPorts) -> list[AvailabilitySlot]:
+    raw = state.get("offered_slots")
+    if raw:
+        return [AvailabilitySlot.model_validate(item) for item in raw]
+    return ports.load_slots(state["conversation_id"])
 
 
 def _chosen_slot(slots: list[AvailabilitySlot], slot_id: str | None, index: int | None) -> AvailabilitySlot | None:

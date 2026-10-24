@@ -8,6 +8,7 @@ from app.chat_history import RedisChatStore
 from app.config import Settings, load_settings
 from app.graph.builder import build_graph
 from app.graph.decision import DeterministicDecision
+from app.graph.redis_checkpoint import RedisCheckpointSaver
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import build_interpreter
 from app.observability import build_tracer, get_logger
@@ -64,7 +65,14 @@ def create_runtime(settings: Settings | None = None) -> RuntimeContext:
         settings.openai_model,
         logger=logger,
     )
-    graph = build_graph(interpreter, DeterministicDecision())
+    graph = build_graph(
+        interpreter,
+        DeterministicDecision(),
+        checkpointer=RedisCheckpointSaver(
+            chat_store.client,
+            ttl_seconds=settings.session_ttl_minutes * 60,
+        ),
+    )
     return RuntimeContext(
         settings=settings,
         logger=logger,

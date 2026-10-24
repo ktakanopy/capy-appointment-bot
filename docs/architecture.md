@@ -64,11 +64,61 @@ If the bot asked for a date and the reply contains a date, the draft continues e
 | State | Where | Lifetime |
 |---|---|---|
 | Services, hours, bookings, reminders, audit | PostgreSQL | Durable |
-| Draft, offered slots, redacted history | Redis session | `SESSION_TTL_MINUTES` |
+| Scheduling draft, offered slots, and redacted messages | LangGraph checkpoint in Redis, keyed by the session id | `SESSION_TTL_MINUTES` |
 | Request-scoped customer details and raw token | `ChatPorts` object | One turn |
-| Graph checkpoint | Not used | `InMemorySaver` is not conversation memory |
 
 Restarting the API does not delete a booking. It can drop an in-progress Redis draft after the TTL. The web demo can still manage the booking with the saved token.
+
+## WhatsApp user interaction
+
+A WhatsApp customer never sees or sends a management token. The verified sender number is the identity. The web demo still uses the token because the browser cannot prove it owns a phone number.
+
+```mermaid
+flowchart TD
+  User[WhatsApp user] -->|text message| Webhook[POST /webhooks/whatsapp]
+  Webhook --> Signature{Signature valid?}
+  Signature -->|no| Reject[401 and no reply]
+  Signature -->|yes| Business[Map receiving phone_number_id to the business]
+  Business --> Dedupe{Provider message id already seen?}
+  Dedupe -->|yes| Ack[200 and do nothing]
+  Dedupe -->|no| Identity[Normalize sender number]
+  Identity --> Thread[Hash business plus sender into a conversation id]
+  Thread --> Lookup{Customer already in PostgreSQL?}
+  Lookup -->|yes| Known[Pass customer_id and no token]
+  Lookup -->|no| Unknown[Anonymous turn and no token]
+  Known --> Graph[Same LangGraph turn as web chat]
+  Unknown --> Graph
+  Graph --> Checkpoint[(Redis checkpoint for that conversation)]
+  Graph --> Choice{Draft operation}
+  Choice -->|create| Search[Search slots from PostgreSQL]
+  Search --> Offer[Reply with offered times]
+  Offer --> Pick[User picks one offered slot]
+  Pick --> Book[Create booking if the slot is still free]
+  Choice -->|lookup| Appointments[List this customer's bookings]
+  Choice -->|reschedule or cancel| Owned{How many upcoming bookings?}
+  Owned -->|none| OfferNew[Offer to create a new booking]
+  Owned -->|one| Change[Change that booking]
+  Owned -->|several| Ask[Ask which booking and write nothing]
+  Book --> Reply[Put the reply on the outbox]
+  Appointments --> Reply
+  Change --> Reply
+  Ask --> Reply
+  OfferNew --> Reply
+  Reply --> User
+```
+
+What each side holds:
+
+| Thing | WhatsApp user | Web demo user | Stored by the app |
+|---|---|---|---|
+| Message text | Types it in WhatsApp | Types it in Streamlit | Redacted copy in the Redis checkpoint |
+| Sender identity | Their WhatsApp number, proven by the signed webhook | None | `customer_id` after a phone lookup, never the raw number in graph state |
+| Management token | Never shown and not accepted as proof | Kept by the page and sent as `manage_token` | Digest only, in PostgreSQL |
+| Offered times | Buttons or a numbered reply later | Slot choice in the page or chat | Slot ids in the checkpoint, recomputed before commit |
+| Existing appointment | Asks "when is my appointment?" | Must present the token | PostgreSQL booking, not the chat transcript |
+| Reply | WhatsApp message | `ChatResponse` | Outbox record today; live Meta send is not connected |
+
+A token pasted into a WhatsApp message is redacted and ignored. It does not authorize the sender, and it does not turn the next selected time into a reschedule.
 
 ## What is not built
 

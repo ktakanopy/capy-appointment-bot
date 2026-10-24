@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date
 
 from app.graph.builder import build_graph
 from app.graph.contracts import BookingRef, NormalizedRequest, TurnContext, WorkflowDraft
@@ -119,7 +119,11 @@ def _turn(message, **kwargs):
 
 
 def _workflow(decision=None):
-    return LangGraphWorkflow(build_graph(DeterministicInterpreter(), decision or DeterministicDecision()))
+    from langgraph.checkpoint.memory import InMemorySaver
+
+    return LangGraphWorkflow(
+        build_graph(DeterministicInterpreter(), decision or DeterministicDecision(), checkpointer=InMemorySaver())
+    )
 
 
 def test_compiled_graph_has_routing_nodes():
@@ -129,11 +133,12 @@ def test_compiled_graph_has_routing_nodes():
 
 def test_search_offers_only_returned_slots():
     ports = Ports(slots=[sample_slot()])
-    result = _workflow().handle_turn(_turn("Book Massage on 2099-01-05"), ports)
+    workflow = _workflow()
+    result = workflow.handle_turn(_turn("Book Massage on 2099-01-05"), ports)
 
     assert result.intent == "search"
     assert [slot.slot_id for slot in result.slots] == ["slot-1"]
-    assert ports.draft.offered_slot_ids == ["slot-1"]
+    assert workflow.draft("session-1").offered_slot_ids == ["slot-1"]
     assert ports.created == []
 
 
@@ -163,15 +168,20 @@ def test_authorized_create_does_not_reschedule():
 
 def test_explicit_reschedule_uses_one_authorized_booking():
     ports = Ports(slots=[sample_slot()], refs=[BookingRef(id="booking-9", service_id="massage", label="later")])
-    ports.draft = WorkflowDraft(operation="reschedule", service_id="massage", service_name="Massage", local_date="2099-01-05")
-    result = _workflow().handle_turn(
-        _turn("move it to 2099-01-05", auth_kind="customer", customer_id="customer-1"),
+    workflow = _workflow()
+    result = workflow.handle_turn(
+        _turn(
+            "move it to 2099-01-05",
+            auth_kind="customer",
+            customer_id="customer-1",
+            draft=WorkflowDraft(operation="reschedule", service_id="massage", service_name="Massage", local_date="2099-01-05"),
+        ),
         ports,
     )
 
     assert result.intent == "reschedule"
     assert ports.rescheduled == []
-    assert ports.draft.offered_slot_ids == ["slot-1"]
+    assert workflow.draft("session-1").offered_slot_ids == ["slot-1"]
 
 
 def test_several_bookings_do_not_write():
@@ -179,17 +189,33 @@ def test_several_bookings_do_not_write():
         BookingRef(id="one", service_id="massage", label="one"),
         BookingRef(id="two", service_id="massage", label="two"),
     ])
-    result = _workflow().handle_turn(_turn("please reschedule", auth_kind="customer", customer_id="customer-1"), ports)
+    workflow = _workflow()
+    result = workflow.handle_turn(_turn("please reschedule", auth_kind="customer", customer_id="customer-1"), ports)
 
     assert result.intent == "clarify_booking"
     assert ports.rescheduled == []
-    assert ports.draft.candidate_booking_ids == ["one", "two"]
+    assert workflow.draft("session-1").candidate_booking_ids == ["one", "two"]
+
+
+def test_second_turn_reads_the_checkpoint_draft():
+    ports = Ports(slots=[sample_slot()])
+    workflow = _workflow()
+
+    first = workflow.handle_turn(_turn("Book Massage"), ports)
+    second = workflow.handle_turn(_turn("tomorrow"), ports)
+
+    assert first.intent == "clarify_date"
+    assert second.intent == "search"
+    assert all("bk1." not in item["content"] for item in workflow.messages("session-1"))
 
 
 def test_date_reply_continues_draft():
     ports = Ports(slots=[sample_slot()])
-    ports.draft = WorkflowDraft(operation="create", service_id="massage", service_name="Massage", missing="date")
-    result = _workflow().handle_turn(_turn("tomorrow"), ports)
+    workflow = _workflow()
+    result = workflow.handle_turn(
+        _turn("tomorrow", draft=WorkflowDraft(operation="create", service_id="massage", service_name="Massage", missing="date")),
+        ports,
+    )
 
     assert result.intent == "search"
     assert ports.requests[0].start_date == date(2026, 10, 20)

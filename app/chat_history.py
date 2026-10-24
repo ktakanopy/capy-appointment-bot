@@ -93,6 +93,10 @@ class RedisChatStore:
             ttl_seconds=ttl_seconds,
         )
 
+    @property
+    def client(self):
+        return self._redis
+
     @staticmethod
     def _state_key(session_id: str) -> str:
         return f"chat:session:{session_id}:state"

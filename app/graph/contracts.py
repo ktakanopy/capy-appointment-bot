@@ -99,6 +99,7 @@ class TurnContext(BaseModel):
     idempotency_key: str | None = None
     input_modality: Literal["text", "audio"] = "text"
     normalized: NormalizedRequest | None = None
+    draft: WorkflowDraft | None = None
 
 
 class TurnResult(BaseModel):
