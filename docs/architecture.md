@@ -1,53 +1,75 @@
 # Architecture
 
-## Runtime components
+This note describes the code that runs today. The target product shape is in `docs/Service Scheduling Agent — Architecture.md`. Where the two differ, this file is the one to trust for reading the repository.
+
+## What runs
 
 ```mermaid
 flowchart LR
-  Customer[Customer browser] --> UI[Streamlit customer flow]
-  Owner[Business owner] --> UI
-  UI --> API[FastAPI]
-  API --> Graph[LangGraph intent extraction]
-  API --> Availability[Availability service]
-  API --> Booking[Booking application service]
-  Availability --> DB[(Scheduling PostgreSQL)]
+  Browser[Streamlit] --> API[FastAPI adapters]
+  WhatsApp[WhatsApp webhook] --> API
+  API --> Graph[LangGraph turn]
+  Graph --> Decision[Deterministic decision]
+  Graph --> Interpreter[Text interpreter]
+  Graph --> Availability[Availability service]
+  Graph --> Booking[Booking service]
+  Availability --> DB[(PostgreSQL)]
   Booking --> DB
-  Worker[Reminder poller] --> DB
-  Worker --> Inbox[Demo reminder inbox]
-  API --> Inbox
-  API -. optional .-> LLM[OpenAI interpreter]
+  Graph --> Redis[(Redis draft and history)]
+  Worker[Reminder worker] --> DB
+  Worker --> Inbox[Demo inbox sender]
+  Interpreter -. optional .-> LLM[OpenAI]
   API -. optional .-> Trace[Langfuse]
 ```
 
-The default local runtime uses the deterministic interpreter, so the product can be explored without model credentials. OpenAI is an optional interpretation adapter. PostgreSQL stores business configuration, schedules, customers, bookings, reminder state, idempotency records, audit events, and the demo inbox.
+PostgreSQL is appointment truth. Redis is short-lived conversation state. The model never decides that a slot is free and never writes a booking.
 
-## Request boundaries
+## Where a chat message goes
 
-1. FastAPI validates transport input and, for management actions, validates the capability token before acting.
-2. LangGraph extracts a typed scheduling intent from the sanitized current message. Its checkpoint contains no raw management token.
-3. Application code resolves service and date references, calls the deterministic availability or booking service, and formats a response.
-4. Booking writes recheck the slot in the same transaction, lock the selected professional, update reminder state atomically, and rely on a PostgreSQL exclusion constraint as the final overlap guard.
-5. Logs and trace events record intent, counts, stable IDs, and outcomes without names, contact details, or tokens.
+1. `POST /chat` in `app/main.py` validates the HTTP request and calls `handle_chat` in `app/chat_adapter.py`.
+2. The adapter checks the session, redacts a token pasted into the message, and, if a management token was sent separately, resolves it to a `booking_id`. The raw token does not enter graph state.
+3. `LangGraphWorkflow.handle_turn` runs the graph in `app/graph/builder.py`.
+4. The graph loads the draft, interprets the text, merges fields, asks the decision port for a next action, and then constrains that action.
+5. A domain port is called only from the `execute` node. Availability and booking rules stay in `app/scheduling.py` and `app/booking.py`.
+6. The draft and offered slots are saved. The adapter maps the result back to `ChatResponse`.
 
-## Data model
+The direct endpoints `POST /availability/search` and `POST /bookings` do not enter the graph. The Streamlit forms use them. Chat and a future channel must not be the only way to book.
 
-- A **business** sets its IANA timezone, booking horizon, minimum notice, and reminder lead time.
-- A **service** defines duration, before/after buffers, price, and currency.
-- A **professional** has weekly local-time rules, blocked periods, and service assignments.
-- A **customer** is scoped to a business and keyed by phone for the demo.
-- A **booking** stores its real start/end and the occupied interval including buffers. Its status is scheduled, confirmed, or canceled.
-- A **reminder** has a durable state and a unique pending reminder constraint per booking. A delivered reminder creates one demo inbox entry.
-- **Idempotency records** are scoped by business, operation, and key, and store the canonical request hash.
-- **Audit events** retain the operation and non-sensitive metadata.
+## Who owns what
 
-All appointment instants are stored as timezone-aware PostgreSQL timestamps. Weekly schedules are interpreted in each business's IANA timezone. Availability uses a 15-minute candidate grid, respects configured work rules and buffer time, and returns repeated fall-back wall times with different offsets. Nonexistent spring-forward times are skipped.
+| Code | Owns | Does not own |
+|---|---|---|
+| `app/main.py` | HTTP routes, owner-token check, webhook entry | Which conversation step runs |
+| `app/chat_adapter.py` | Web chat translation, token resolution, ports for this request | Booking SQL |
+| `app/llm/` | Extract intent, service, date, time, and customer fields from text | Choosing a graph node or claiming a slot is free |
+| `app/graph/decision.py` | Propose `BOOK`, `RESCHEDULE`, `CANCEL`, `CHECK_AVAILABILITY`, `FAQ`, `CONFIRM`, `ESCALATE`, or `LOOKUP_BOOKING` | Forcing a transition the workflow does not allow |
+| `app/graph/steps.py` | Draft merge, clarification, search, selection, FAQ, lookup, escalation, and the execute call | Overlap policy and token generation |
+| `app/scheduling.py` | Which times are valid | Conversation copy |
+| `app/booking.py` | Create, confirm, cancel, reschedule, idempotency, audit, token digest | Reading the customer's sentence |
+| `app/channels/whatsapp.py` | Signature check, sender mapping, dedupe, same workflow call | A second copy of the booking flow |
+| `app/reminders.py` | Claim due reminders and send through a sender port | LangGraph |
 
-## Persistence and runtime
+## Conversation rules that matter
 
-`alembic/versions/0001_general_scheduling.py` owns schema creation, including `btree_gist` and the professional overlap exclusion constraint. The default Docker Compose stack has a separate `app-postgres` service; Langfuse's database is optional and isolated under the `observability` profile.
+The draft remembers the operation: `create`, `reschedule`, `confirm`, `cancel`, or `none`. It also remembers the service, date, offered slot ids, and the missing field.
 
-The API keeps short-lived chat session IDs and slot presentation results in memory for the local demo. Durable business and booking state lives in PostgreSQL. The reminder worker is a separate process that claims due rows with `FOR UPDATE SKIP LOCKED`, records inbox delivery once, and never imports or calls LangGraph.
+A management token authorizes the web caller. A verified WhatsApp sender authorizes that customer. Neither one changes the operation. Saying "book another" while a token is present creates a booking. Saying "move it" is what starts a reschedule.
 
-## Deliberate limits
+If the bot asked for a date and the reply contains a date, the draft continues even when the interpreter returns `unknown`. An invalid date asks again and writes nothing.
 
-This release uses one configured demo business, local owner access without authentication, and a simulated reminder inbox. It has no live messaging, external calendar sync, payment handling, onboarding, multi-location routing, distributed queue, or production deployment configuration.
+"When is my appointment?" uses the verified customer and PostgreSQL. A phone number typed in the message is not proof of identity. On the web demo, the page holds the management token and sends it outside the chat text.
+
+## State
+
+| State | Where | Lifetime |
+|---|---|---|
+| Services, hours, bookings, reminders, audit | PostgreSQL | Durable |
+| Draft, offered slots, redacted history | Redis session | `SESSION_TTL_MINUTES` |
+| Request-scoped customer details and raw token | `ChatPorts` object | One turn |
+| Graph checkpoint | Not used | `InMemorySaver` is not conversation memory |
+
+Restarting the API does not delete a booking. It can drop an in-progress Redis draft after the TTL. The web demo can still manage the booking with the saved token.
+
+## What is not built
+
+WhatsApp signature verification and dedupe exist, but there is no live Meta send. Audio is a fixture port, not Gemma. The decision port is deterministic, not a trained Laya model. Reminders still land in the demo inbox unless a different sender is injected. Owner routes stay open unless `OWNER_API_TOKEN` is set. There is no calendar, payment, location, or deposit adapter.

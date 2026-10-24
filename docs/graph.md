@@ -36,10 +36,20 @@ The graph does not authorize a customer, decide that a slot is free, mutate a bo
 4. The booking service persists the booking, token digest, audit event, and pending reminder atomically.
 5. The UI keeps the returned private management token outside conversation state and sends it separately when managing that booking.
 
+## Read the turn in this order
+
+1. `app/chat_adapter.py` builds the turn and the request-scoped ports.
+2. `app/graph/builder.py` shows the allowed edges.
+3. `app/graph/steps.py` contains the step behavior.
+4. `app/graph/decision.py` proposes an action. `route_turn` in `steps.py` rejects an action that the draft does not allow.
+5. `app/booking.py` performs the write. Search the called method, not the graph, for SQL and token handling.
+
+`app/graph/workflow.py` is the public entry, `handle_turn`. It binds the ports for that call and returns text, intent, slots, and, for the web caller only, a management token. The token is not stored in the draft.
+
 ## Reminder reply
 
-The worker only reads and updates PostgreSQL reminder/inbox rows. When the customer submits a simulated reply from the UI, the UI calls `/chat` again with the active session ID (or creates a fresh one) and the capability token in a separate request field. The API validates it and invokes the appropriate application service. No worker touches graph state or checkpointer data.
+The worker claims due reminder rows and sends through `DemoInboxSender` by default. It does not import LangGraph. A simulated reply in Streamlit is a new `/chat` request. The page sends the capability token in a separate field. The adapter resolves that token before the graph runs.
 
 ## Session behavior
 
-Session IDs and chat slot references are local demo state with a configurable TTL. Booking records and reminders remain durable. If the API restarts, a customer can start another session and continue managing the booking with the saved capability token.
+Redis stores the session, the scheduling draft, the offered slot ids, and the redacted message history. They expire after `SESSION_TTL_MINUTES`. Booking records remain in PostgreSQL. A new session can manage an existing web booking with the saved capability token.

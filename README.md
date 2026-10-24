@@ -32,10 +32,11 @@ In the customer conversation, the bot can:
 
 - Find available times for a service and date, optionally with a requested professional.
 - Help complete a booking after the customer chooses a time and provides their name and phone number.
-- Confirm, cancel, or reschedule an existing booking when given its private management token.
-- Explain how to get started and list the services available in the business catalog.
+- Confirm, cancel, or reschedule an existing booking. The web demo sends the private management token separately from the chat text. The token authorizes the caller; it does not by itself mean the next selected time is a reschedule.
+- Answer bounded catalog questions such as price, duration, and the demo cancellation rule.
+- Look up an existing appointment only for a verified channel identity. A phone number typed in chat is not enough.
 
-The local demo uses synthetic business data: one studio, one massage service, and two professionals. The bot does not answer general business questions or use a RAG knowledge base. It does not send messages through WhatsApp or SMS; reminders are simulated in the demo inbox.
+The local demo uses synthetic business data: one studio, one massage service, and two professionals. The bot does not answer general business questions or use a RAG knowledge base. WhatsApp webhook verification is present, but outbound WhatsApp delivery is not connected. Reminders are written to the demo inbox.
 
 ## AI interpretation
 
@@ -57,7 +58,8 @@ Set `TRACING_ENABLED=true` to enable traces. Logs and trace metadata omit names,
 - `GET /bookings/me` with `X-Booking-Token`
 - `POST /bookings/me/confirm`, `/cancel`, and `/reschedule` with the token and idempotency key
 - `POST /sessions/new` and `POST /chat`
-- `GET /owner/bookings` and `GET /demo/reminders`
+- `GET /owner/bookings`, `GET /demo/reminders`, and `PATCH /owner/settings`
+- `GET /webhooks/whatsapp` and `POST /webhooks/whatsapp`
 - `GET /health`
 
 Slot results are references, not reservations. Booking writes recalculate the selected slot in a transaction. PostgreSQL also rejects overlapping active bookings for the same professional. Rescheduling updates the booking and reminder in one transaction, so a rejected move leaves the original booking intact.
@@ -100,8 +102,10 @@ Run the automated scheduling checks with `uv run --extra dev pytest -q`. Set `TE
 - `app/scheduling.py`: timezone-aware deterministic availability and transactional slot validation
 - `app/booking.py`: idempotent booking lifecycle, HMAC capabilities, reminders, and audit events
 - `app/repositories.py`: PostgreSQL catalog, schedule, and booking reads
-- `app/graph/`: LangGraph extraction step; no booking authorization or raw token state
-- `app/reminders.py`: Postgres-backed demo reminder worker; no LangGraph dependency
+- `app/graph/`: one inbound conversation turn. The interpreter extracts fields, the decision port proposes an action, and the graph constrains the transition.
+- `app/chat_adapter.py`: web `/chat` adapter. It resolves a management token before calling the graph.
+- `app/channels/`: WhatsApp signature and dedupe, plus a fixture audio understanding port.
+- `app/reminders.py`: Postgres-backed reminder worker and a replaceable sender. The default sender writes the demo inbox.
 - `frontend/`: customer booking flow and read-only owner agenda
 - `alembic/`: versioned PostgreSQL schema, including the overlap exclusion constraint
 - `docs/sdd/`: product requirements and task contracts
@@ -110,4 +114,4 @@ The supplied [project specification](docs/Service%20Scheduling%20Agent%20%E2%80%
 
 ## Scope
 
-This is a local portfolio MVP with synthetic data. It does not connect to WhatsApp, SMS, email, calendars, payments, or healthcare systems. It does not include production owner authentication, onboarding, multi-location scheduling, or a distributed job queue. Laya benchmarking and training are planned after the working product MVP.
+This is a local portfolio MVP with synthetic data. It does not send live WhatsApp, SMS, or email, and it does not sync a calendar or take payment. Set `OWNER_API_TOKEN` to require a token on owner routes; when it is unset, those routes stay open for the local demo. Laya benchmarking and Gemma audio transcription are not implemented. The decision and audio ports are the seams for that later work.

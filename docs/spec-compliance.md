@@ -1,8 +1,8 @@
 # Spec compliance
 
-Checked: 2026-10-23, against the architecture and project specification in this directory. No application code was changed.
+Checked: 2026-10-24, after the workflow graph landed. Read `docs/architecture.md` for the code that runs. This file compares that code with the target specification.
 
-The project follows the scheduling-core idea. It does not yet follow the target product architecture. The current app is a local demo with deterministic booking rules, a Streamlit UI, and a one-node LangGraph extractor. The specifications describe a channel-independent product with separate understanding, decision, workflow, and domain layers.
+The scheduling core still matches the specification. The product architecture is now split in code, but several target pieces are ports or local adapters rather than live providers.
 
 ## Follows
 
@@ -25,14 +25,10 @@ The project follows the scheduling-core idea. It does not yet follow the target 
 
 | Requirement | Current gap |
 |---|---|
-| Four separate layers: understanding, Laya decision, workflow execution, domain validation. | Understanding is OpenAI or a deterministic parser. There is no Laya model, confidence score, or human-escalation decision. Routing is Python branching in `app/main.py`. The graph is `START → interpret → END`. |
-| LangGraph, or an equivalent state machine, owns allowed transitions. | The graph does not load a booking, collect missing fields, present slots, revalidate, or commit. |
-| Text and audio are separate understanding inputs. Gemma 3n E2B transcribes short audio and emits structured intent. | No audio input, transcription, or Gemma integration. |
-| WhatsApp is the first messaging channel, with text and short audio. | No webhook, signature check, outbound adapter, or delivery status. |
-| A customer can ask about an existing appointment without pasting a secret. | Management requires a capability token. Sessions are not bound to a verified customer. |
-| Reminder delivery and reminder-triggered reschedule. | The worker writes a demo inbox row. It does not send a message. A reply is a manual Streamlit action that still needs the token. |
-| Basic FAQ from business-owned duration, price, location, preparation, and cancellation rules. | Help text lists service names. It does not answer those questions from catalog data. |
-| Low-confidence or unsupported requests escalate to a human and preserve context. | Unsupported text becomes a generic clarification. There is no handoff state. |
+| A trained Laya model and a live Gemma audio model. | The decision port is deterministic and can be swapped. Audio understanding is a fixture, not Gemma. |
+| Live WhatsApp delivery and short audio messages. | The webhook verifies a signature, dedupes provider message ids, and calls the same workflow. It does not call the Meta send API. |
+| Reminder delivery to the customer's channel. | The worker uses a sender port. The default sender still writes the demo inbox. A reply in Streamlit is a new `/chat` turn. |
+| Locations, deposits, cancellation windows, and fees. | Not in the schema or booking policy. Cancellation is allowed until the booking starts. |
 | Locations, deposits, cancellation windows, and fees. | Not in the schema or booking policy. Cancellation is allowed until the booking starts. |
 | Data model includes Location, Conversation, Payment, and AgentDecision. | Those tables do not exist. Conversation state is Redis, not PostgreSQL. |
 | Calendar and payment adapters. | Not present. |
@@ -46,12 +42,12 @@ The project follows the scheduling-core idea. It does not yet follow the target 
 
 ## Partial
 
-- **Provider replacement:** the text interpreter can be deterministic or OpenAI, with fallback. Audio and decision providers cannot be swapped because they do not exist.
+- **Provider replacement:** the text interpreter can be deterministic or OpenAI, with fallback. The decision and audio ports can be swapped in tests. Neither is a live Laya or Gemma service.
 - **Confirmation:** a booking can be marked confirmed. The product does not send a reminder and then collect attendance confirmation on a channel.
-- **Business scoping:** rows are scoped by `business_id`, but owner and reminder endpoints are unauthenticated.
+- **Business scoping:** rows are scoped by `business_id`. Owner routes require `X-Owner-Token` only when `OWNER_API_TOKEN` is set.
 - **Privacy:** tokens and contact fields are redacted from logs. The owner endpoint still returns customer names and phone numbers to any local caller.
 - **Clean-room constraint:** the implementation uses generic scheduling concepts and synthetic demo data. This check did not audit prompts or history for copied employer material.
 
 ## Bottom line
 
-The repository is aligned with the specification's domain rule: the model may interpret language, and application code must compute availability and commit bookings. It is not aligned with the specification's product architecture. The largest missing pieces are decision routing, workflow ownership, WhatsApp and audio channels, customer identity, real reminder delivery, and the dashboard/configuration surface.
+The repository follows the domain rule: the model interprets language, and application code computes availability and commits bookings. The graph now owns the turn, and the decision port is separate from understanding. The largest remaining gaps are live WhatsApp delivery, Gemma audio, a trained Laya model, real reminder delivery, and the owner configuration dashboard.
