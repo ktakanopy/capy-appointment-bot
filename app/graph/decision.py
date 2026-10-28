@@ -76,6 +76,7 @@ def normalized_from_extraction(
         date_constraint=extraction.local_date,
         time_constraint=extraction.local_time,
         booking_reference=draft.active_booking_id,
+        slot_index=extraction.slot_index,
         missing_fields=missing,
         confidence=confidence,
     )

@@ -106,7 +106,7 @@ def process_inbound(runtime, body: bytes, signature: str | None) -> tuple[int, d
 
 
 def _handle_message(runtime, business_id: str, message: InboundText, outbox: MemoryOutbox) -> None:
-    from app.chat_adapter import ChatPorts
+    from app.chat_ports import ChatPorts
     from app.models import ChatRequest
 
     sender = canonical_phone(message.sender)

@@ -35,11 +35,13 @@ class LangGraphWorkflow:
                 "idempotency_key": turn.idempotency_key,
                 "input_modality": turn.input_modality,
                 "skip_interpret": turn.normalized is not None,
+                # Normalized input is per-turn; clear a previous request.
+                "normalized_request": (
+                    turn.normalized.model_dump(mode="json") if turn.normalized else None
+                ),
             }
             if turn.message:
                 state["messages"] = [{"role": "user", "content": turn.message}]
-            if turn.normalized is not None:
-                state["normalized_request"] = turn.normalized.model_dump(mode="json")
             if turn.draft is not None and not self._has_checkpoint(config):
                 state["draft"] = turn.draft.model_dump(mode="json")
             if self.graph.checkpointer is not None:
@@ -52,22 +54,33 @@ class LangGraphWorkflow:
         payload = result.get("result") or {}
         slots = list(getattr(ports, "last_slots", []) or [])
         return TurnResult(
-            text=payload.get("text") or "Tell me which service you'd like and the date.",
-            intent=payload.get("intent") or "clarify",
-            slots=[slot if isinstance(slot, AvailabilitySlot) else AvailabilitySlot.model_validate(slot) for slot in slots],
+            text=payload.get("text")
+            or "Tell me which service you'd like and the date.",  # TODO: do we really need this?
+            intent=payload.get("intent")
+            or "clarify",  # TODO: how this clarify could impact our agent?
+            slots=[
+                slot
+                if isinstance(slot, AvailabilitySlot)
+                else AvailabilitySlot.model_validate(slot)
+                for slot in slots
+            ],
             booking=getattr(ports, "last_booking", None),
             manage_token=getattr(ports, "last_manage_token", None),
         )
 
     def draft(self, conversation_id: str) -> WorkflowDraft:
         """Return the scheduling draft saved for this conversation thread."""
-        values = self._checkpoint_values(conversation_id) or self._last_state
+        values = self._checkpoint_values(conversation_id)
+        if self.graph.checkpointer is None:
+            values = values or self._last_state
         raw = values.get("draft") if values else None
         return WorkflowDraft.model_validate(raw) if raw else WorkflowDraft()
 
     def messages(self, conversation_id: str) -> list[dict[str, str]]:
         """Return the redacted transcript saved in the thread checkpoint."""
-        values = self._checkpoint_values(conversation_id) or self._last_state
+        values = self._checkpoint_values(conversation_id)
+        if self.graph.checkpointer is None:
+            values = values or self._last_state
         return list((values or {}).get("messages") or [])
 
     def _has_checkpoint(self, config: dict) -> bool:
@@ -76,5 +89,7 @@ class LangGraphWorkflow:
     def _checkpoint_values(self, conversation_id: str) -> dict | None:
         if self.graph.checkpointer is None:
             return None
-        snapshot = self.graph.get_state({"configurable": {"thread_id": conversation_id}})
+        snapshot = self.graph.get_state(
+            {"configurable": {"thread_id": conversation_id}}
+        )
         return snapshot.values or None

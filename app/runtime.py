@@ -4,6 +4,7 @@ import uuid
 from dataclasses import dataclass
 
 from app.booking import BookingService
+from app.channels.audio_chunks import AudioChunker
 from app.chat_history import RedisChatStore
 from app.config import Settings, load_settings
 from app.graph.builder import build_graph
@@ -12,6 +13,7 @@ from app.graph.laya import FallbackDecision, LayaDecision
 from app.graph.redis_checkpoint import RedisCheckpointSaver
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import build_interpreter
+from app.llm.gemma import GemmaUnderstanding
 from app.observability import build_tracer, get_logger
 from app.repositories import PostgresRepository
 from app.scheduling import AvailabilityService
@@ -28,6 +30,9 @@ class RuntimeContext:
     graph: object
     workflow: LangGraphWorkflow
     chat_store: RedisChatStore
+    interpreter: object
+    audio_understanding: GemmaUnderstanding
+    audio_chunker: AudioChunker
 
     @property
     def session_slots(self):
@@ -97,6 +102,16 @@ def create_runtime(settings: Settings | None = None) -> RuntimeContext:
         graph=graph,
         workflow=LangGraphWorkflow(graph),
         chat_store=chat_store,
+        interpreter=interpreter,
+        audio_understanding=GemmaUnderstanding(
+            settings.gemma_base_url,
+            timeout_seconds=settings.telegram_audio_chunk_timeout_seconds,
+        ),
+        audio_chunker=AudioChunker(
+            max_input_bytes=settings.telegram_audio_max_bytes,
+            max_decoded_bytes=settings.telegram_audio_max_decoded_bytes,
+            decode_timeout_seconds=settings.telegram_audio_decode_timeout_seconds,
+        ),
     )
 
 

@@ -50,7 +50,7 @@ def process_sms(runtime, body: bytes, signature: str | None) -> tuple[int, dict]
 
 
 def _handle_sms(runtime, sender: str, text: str, message_id: str, outbox: MemoryOutbox) -> None:
-    from app.chat_adapter import ChatPorts
+    from app.chat_ports import ChatPorts
 
     business_id = runtime.settings.demo_business_id
     conversation_id = conversation_id_for_sender(business_id, "sms", sender)

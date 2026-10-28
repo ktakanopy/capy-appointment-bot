@@ -50,6 +50,78 @@ docker compose --profile observability up --build
 
 Set `TRACING_ENABLED=true` to enable traces. Logs and trace metadata omit names, contact details, and management tokens.
 
+### Long voice recordings
+
+`GemmaUnderstanding.transcribe_recording(audio_bytes, context)` decodes a
+Telegram voice message or audio upload into mono 16 kHz WAV chunks before
+calling the configured Gemma `/understand` endpoint. The endpoint must already
+support mono 16 kHz WAV audio and return a nonempty `transcript`; this repository does not
+implement that server.
+
+The splitter looks for a pause of at least 300 ms between seconds 25 and 29,
+then cuts in the middle of the last suitable pause. Without a pause it cuts at
+30 seconds. Adjacent chunks overlap by one second to protect words near a cut.
+The transcription method joins matching boundary phrases of at least three
+words; without word timestamps, short or differently transcribed repetitions
+can remain and intentional boundary repetitions cannot always be distinguished.
+
+The method returns only the complete transcript. The Telegram worker interprets
+it once and runs one workflow turn, after all chunks succeed, so a late
+correction is not lost. Failed decoding, an empty chunk transcript, a provider
+failure, or a processing/size limit raises a sanitized error instead of
+returning a partial message.
+
+FFmpeg is included in the Docker image. For host development, install FFmpeg
+and put `ffmpeg` on `PATH`. Defaults allow a 20 MB upload, 512 MiB of decoded
+temporary PCM, 120 seconds for decoding, 900 seconds for the complete
+transcription, and 64,000 transcript characters. These are configurable resource
+budgets, not a 30-second recording limit or a guarantee about model context.
+Temporary audio is removed on completion or failure. The transcript is customer
+data: do not log it, and check the final interpreter's context limit before use.
+
+Telegram onboarding requires the user to share their own contact. Voice must
+finish transcription before the graph runs, so a failure in any chunk cannot
+trigger a booking. The update ledger saves a final reply before sending it and
+retries delivery without rerunning the graph. If the process stops while a turn
+is running, the worker does not rerun that ambiguous turn; it asks the customer
+to check their appointments first.
+
+### Telegram customer chat
+
+The Telegram channel is an optional polling worker. It needs the PostgreSQL
+migration applied (the Compose API service does this at startup), Redis,
+`TELEGRAM_BOT_TOKEN`, and the existing business/model configuration. It does
+not require the Streamlit service. For example, add the token to the ignored
+`.env` file and run:
+
+```bash
+docker compose --profile telegram up --build -d app-postgres chat-redis api telegram-worker
+```
+
+The worker rejects startup when Telegram reports an active webhook or another
+worker already holds its database lock; it never changes webhook settings.
+Users must share their own Telegram contact before chatting. A self-contact is
+verified by matching Telegram's contact user ID with the message sender. This
+may link an existing customer account by phone; a username or typed/spoken
+phone alone cannot link an account. The username is display metadata; the
+numeric Telegram user ID is the account key.
+
+If text messages work but voice messages fail, verify that the existing Gemma
+server accepts audio at `GEMMA_BASE_URL/understand` and returns a transcript.
+The worker will keep text available and ask the user to retry/type when audio
+processing fails. Adjust `TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS` and
+`TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS` only after measuring the target
+server's response time.
+
+The database retains only Telegram identity data and update receipts needed for
+deduplication. Raw update payloads are deleted once a reply is saved; delivered
+receipt IDs are retained for 30 days. A queued reply can contain customer data
+until delivery succeeds; replies that Telegram permanently rejects are cleared
+while their dedupe receipts remain. No audio bytes or Telegram file URL are persisted.
+External replies can be duplicated if Telegram accepted a send but its response
+was lost; booking writes remain protected by their update-derived idempotency
+key.
+
 ## API overview
 
 - `GET /businesses/{business_id}/catalog`
@@ -104,7 +176,8 @@ Run the automated scheduling checks with `uv run --extra dev pytest -q`. Set `TE
 - `app/repositories.py`: PostgreSQL catalog, schedule, and booking reads
 - `app/graph/`: one inbound conversation turn. The interpreter extracts fields, the decision port proposes an action, and the graph constrains the transition.
 - `app/chat_adapter.py`: web `/chat` adapter. It resolves a management token before calling the graph.
-- `app/channels/`: WhatsApp signature and dedupe, plus a fixture audio understanding port.
+- `app/channels/`: WhatsApp signature and dedupe, Telegram API/identity persistence, the audio understanding port, and pause-aware recording splitting.
+- `app/telegram_worker.py`: Telegram polling and per-user conversation orchestration.
 - `app/reminders.py`: Postgres-backed reminder worker and a replaceable sender. The default sender writes the demo inbox.
 - `frontend/`: customer booking flow and read-only owner agenda
 - `alembic/`: versioned PostgreSQL schema, including the overlap exclusion constraint
@@ -112,6 +185,8 @@ Run the automated scheduling checks with `uv run --extra dev pytest -q`. Set `TE
 
 The supplied [project specification](docs/Service%20Scheduling%20Agent%20%E2%80%94%20Project%20Specification.md) and [architecture source](docs/Service%20Scheduling%20Agent%20%E2%80%94%20Architecture.md) are retained as source material. The active implementation notes are [architecture](docs/architecture.md), [conversation flow](docs/graph.md), [security](docs/security.md), and [evaluation](docs/evaluation.md).
 
+The [AI Engineering portfolio roadmap](docs/ai-engineering-portfolio-roadmap.md) records proposed priorities, the reviewed baseline, and the evidence needed to demonstrate model quality, real channel integration, observability, and reliable operation.
+
 ## Scope
 
-This is a local portfolio MVP with synthetic data. It does not send live WhatsApp, SMS, or email, and it does not sync a calendar or take payment. Set `OWNER_API_TOKEN` to require a token on owner routes; when it is unset, those routes stay open for the local demo. Laya benchmarking and Gemma audio transcription are not implemented. The decision and audio ports are the seams for that later work.
+This is a local portfolio MVP with synthetic data. WhatsApp/SMS outbound delivery and email are not connected; it does not sync a calendar or take payment. Set `OWNER_API_TOKEN` to require a token on owner routes; when it is unset, those routes stay open for the local demo. Telegram polling and audio transcription require the configured Bot API and an existing compatible Gemma server; real voice behavior still needs end-to-end validation.

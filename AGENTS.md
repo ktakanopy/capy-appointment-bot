@@ -38,4 +38,5 @@ docs/
 - Laya benchmarking and training remain a follow-up after the working product MVP.
 
 <!-- MANUAL ADDITIONS START -->
+- Review and resolve outstanding `TODO` comments as follow-up work; keep them visible until handled.
 <!-- MANUAL ADDITIONS END -->

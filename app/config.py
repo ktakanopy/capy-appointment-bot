@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import os
 from dataclasses import dataclass
 
@@ -28,6 +29,26 @@ class Settings:
     gemma_base_url: str = "http://localhost:8081"
     laya_base_url: str = "http://localhost:8082"
     sms_webhook_secret: str | None = None
+    telegram_bot_token: str | None = None
+    telegram_poll_seconds: int = 20
+    telegram_audio_max_bytes: int = 20_000_000
+    telegram_audio_max_decoded_bytes: int = 512 * 1024 * 1024
+    telegram_audio_decode_timeout_seconds: float = 120
+    telegram_audio_chunk_timeout_seconds: float = 60
+    telegram_audio_processing_timeout_seconds: float = 900
+
+    def __post_init__(self):
+        if not 1 <= self.telegram_poll_seconds <= 50:
+            raise ValueError("TELEGRAM_POLL_SECONDS must be between 1 and 50")
+        if self.telegram_audio_max_bytes <= 0 or self.telegram_audio_max_decoded_bytes < 960_000:
+            raise ValueError("Telegram audio limits must allow one 30-second mono audio chunk")
+        timeouts = (
+            self.telegram_audio_decode_timeout_seconds,
+            self.telegram_audio_chunk_timeout_seconds,
+            self.telegram_audio_processing_timeout_seconds,
+        )
+        if any(not math.isfinite(value) or value <= 0 for value in timeouts):
+            raise ValueError("Telegram audio timeouts must be finite and positive")
 
 
 def _flag(name: str, default: bool = False) -> bool:
@@ -66,4 +87,19 @@ def load_settings() -> Settings:
         gemma_base_url=os.getenv("GEMMA_BASE_URL", "http://localhost:8081"),
         laya_base_url=os.getenv("LAYA_BASE_URL", "http://localhost:8082"),
         sms_webhook_secret=os.getenv("SMS_WEBHOOK_SECRET"),
+        telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN") or None,
+        telegram_poll_seconds=int(os.getenv("TELEGRAM_POLL_SECONDS", "20")),
+        telegram_audio_max_bytes=int(os.getenv("TELEGRAM_AUDIO_MAX_BYTES", "20000000")),
+        telegram_audio_max_decoded_bytes=int(
+            os.getenv("TELEGRAM_AUDIO_MAX_DECODED_BYTES", str(512 * 1024 * 1024))
+        ),
+        telegram_audio_decode_timeout_seconds=float(
+            os.getenv("TELEGRAM_AUDIO_DECODE_TIMEOUT_SECONDS", "120")
+        ),
+        telegram_audio_chunk_timeout_seconds=float(
+            os.getenv("TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS", "60")
+        ),
+        telegram_audio_processing_timeout_seconds=float(
+            os.getenv("TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS", "900")
+        ),
     )

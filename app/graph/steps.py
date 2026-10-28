@@ -67,45 +67,75 @@ def load_context(state: dict, ports: WorkflowPorts) -> dict:
 
 
 def interpret(state: dict, ports: WorkflowPorts, interpreter) -> dict:
+    """Extract scheduling details and report whether customer details are ready.
+
+    Already-normalized input skips the text interpreter. Otherwise, the
+    interpreter receives the message plus catalog, date, offered-slot, and
+    conversation context. Customer contact details are captured through the
+    ports, then removed from the extraction before it is saved in graph state.
+    """
     if state.get("skip_interpret"):
         from app.graph.contracts import NormalizedRequest
 
         normalized = NormalizedRequest.model_validate(state["normalized_request"])
-        intent = normalized.intent if normalized.intent in {
-            "search", "select_slot", "create", "confirm", "cancel", "reschedule", "help", "unknown"
-        } else "unknown"
+        supported_intents = {
+            "search",
+            "select_slot",
+            "create",
+            "confirm",
+            "cancel",
+            "reschedule",
+            "help",
+            "unknown",
+        }
+        intent = normalized.intent
+        if intent not in supported_intents:
+            intent = "unknown"
+
         extraction = SchedulingExtraction(
             intent=intent,
             service_name=normalized.service,
             professional_name=normalized.professional,
             local_date=normalized.date_constraint,
             local_time=normalized.time_constraint,
+            slot_index=normalized.slot_index,
         )
         return {
             "extraction": extraction.model_dump(mode="json"),
-            "customer_ready": bool(state.get("customer_ready") or ports.customer_ready()),
+            "customer_ready": bool(
+                state.get("customer_ready") or ports.customer_ready()
+            ),
         }
+
+    message = state.get("message", "")
     history = list(state.get("messages") or [])
-    if history and history[-1].get("content") == state.get("message"):
+    # The current message may already be present in the saved conversation history.
+    if history and history[-1].get("content") == message:
         history = history[:-1]
-    extraction = interpreter.interpret(
-        state.get("message", ""),
-        {
-            "service_names": state.get("service_names", []),
-            "professional_names": state.get("professional_names", []),
-            "today": state.get("today"),
-            "has_slots": bool(_offered_slots(state, ports)),
-            "history": history,
-        },
-    )
+
+    context = {
+        "service_names": state.get("service_names", []),
+        "professional_names": state.get("professional_names", []),
+        "today": state.get("today"),
+        "has_slots": bool(_offered_slots(state, ports)),
+        "history": history,
+    }
+    extraction = interpreter.interpret(message, context)
+
     ports.remember_extraction(extraction)
-    ready = ports.capture_customer(extraction.customer_name, extraction.phone)
-    safe = extraction.model_dump(mode="json")
-    safe["customer_name"] = None
-    safe["phone"] = None
+    customer_ready = ports.capture_customer(
+        extraction.customer_name,
+        extraction.phone,
+    )
+
+    safe_extraction = extraction.model_dump(mode="json")
+    safe_extraction["customer_name"] = None
+    safe_extraction["phone"] = None
     return {
-        "extraction": safe,
-        "customer_ready": bool(state.get("customer_ready") or ready or ports.customer_ready()),
+        "extraction": safe_extraction,
+        "customer_ready": bool(
+            state.get("customer_ready") or customer_ready or ports.customer_ready()
+        ),
     }
 
 

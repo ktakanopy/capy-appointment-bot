@@ -54,6 +54,7 @@ class NormalizedRequest(BaseModel):
     date_constraint: str | None = None
     time_constraint: str | None = None
     booking_reference: str | None = None
+    slot_index: int | None = Field(default=None, ge=1, le=100)
     missing_fields: list[str] = Field(default_factory=list)
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
 
