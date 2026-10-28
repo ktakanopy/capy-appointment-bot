@@ -1,4 +1,4 @@
-from app.ports.llm import LLMProvider
-from app.ports.repositories import AppointmentRepository, PatientRepository
+from app.ports.llm import Interpreter
+from app.ports.repositories import SchedulingRepository
 
-__all__ = ["AppointmentRepository", "LLMProvider", "PatientRepository"]
+__all__ = ["Interpreter", "SchedulingRepository"]

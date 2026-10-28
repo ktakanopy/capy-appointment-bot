@@ -1,36 +1,42 @@
-# appointment-bot Development Guidelines
+# General Service Scheduling Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-15
+Auto-generated from the general service scheduling MVP plan. Last updated: 2026-10-19
 
 ## Active Technologies
-- Python 3.11+ + FastAPI, LangGraph, Pydantic, pytest (001-build-appointment-service)
-- LangGraph `InMemorySaver` for thread-scoped checkpoints; in-memory patient and appointment repositories for v1 (001-build-appointment-service)
-- Python 3.11+ + FastAPI, LangGraph, Pydantic, Streamlit, OpenAI Python SDK, Langfuse Python SDK, pytest (002-frontend-llm-memory)
-- LangGraph `InMemorySaver` for thread-scoped session state; in-memory patient and appointment repositories for v1 domain data (002-frontend-llm-memory)
 
-- Python 3.11+ (document any justified deviation) + FastAPI, LangGraph, Pydantic, pytest, plus feature-specific additions (001-build-appointment-service)
+- Python 3.11+ with FastAPI, LangGraph, Pydantic v2, psycopg 3, Alembic, PostgreSQL, and Streamlit.
+- OpenAI Python SDK for optional structured intent extraction; deterministic extraction remains available for local/offline use.
+- Langfuse Python SDK for optional observability.
+- `InMemorySaver` for short-lived LangGraph checkpoints; PostgreSQL for business, schedule, booking, reminder, and audit data.
 
 ## Project Structure
 
 ```text
 app/
+alembic/
 frontend/
 tests/
+docs/
 ```
 
 ## Commands
 
-pytest
+- `uv run python -m app.evals.runner` runs the structured intent extraction scenarios.
+- `uv run --extra dev pytest -q` runs the general scheduling contract and unit suite.
+- PostgreSQL transaction and full Compose walkthrough checks require a local database runtime.
 
 ## Code Style
 
-Python 3.11+ (document any justified deviation): Follow standard conventions
+- Python 3.11+; follow standard conventions and keep booking policy in deterministic application services.
+- Keep raw booking management tokens out of graph state, model input, logs, traces, URLs, and errors.
+- Keep migrations in `alembic/`; update them when persistence contracts change.
 
 ## Recent Changes
-- 002-frontend-llm-memory: Added Python 3.11+ + FastAPI, LangGraph, Pydantic, Streamlit, OpenAI Python SDK, Langfuse Python SDK, pytest
-- 001-build-appointment-service: Added Python 3.11+ + FastAPI, LangGraph, Pydantic, pytest
 
-- 001-build-appointment-service: Added Python 3.11+ (document any justified deviation) + FastAPI, LangGraph, Pydantic, pytest, plus feature-specific additions
+- Generalized the clinic prototype into a service scheduling MVP with PostgreSQL, deterministic availability, token-protected booking management, and a demo reminder worker.
+- Added customer booking and owner agenda flows in Streamlit.
+- Laya benchmarking and training remain a follow-up after the working product MVP.
 
 <!-- MANUAL ADDITIONS START -->
+- Review and resolve outstanding `TODO` comments as follow-up work; keep them visible until handled.
 <!-- MANUAL ADDITIONS END -->

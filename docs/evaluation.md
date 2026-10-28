@@ -1,128 +1,28 @@
-# Evaluation framework
+# Evaluation
 
-The repo includes a small eval runner for multi-turn scenarios.
+The project uses two evaluation layers. `app.evals.runner` checks deterministic language extraction without PostgreSQL or model credentials. PostgreSQL integration tests check product outcomes through the real API, booking services, repositories, and reminder worker.
 
-I like this part because it checks something normal unit tests miss: whether the
-assistant still behaves correctly across a whole conversation, not just inside
-one function call.
+## Extraction benchmark
 
-## What it does
-
-For each scenario, the runner:
-
-1. creates a fresh runtime
-2. creates a fresh session
-3. replays the user turns through the real workflow
-4. captures the assistant outputs and observed outcomes
-5. sends the whole transcript to the judge model
-6. prints a readable result block and saves JSON results under `.eval_runs/`
-
-## Main pieces
-
-### `EvaluationScenario`
-
-Defined in `app/evals/models.py`.
-
-Fields:
-
-- `scenario_id`
-- `title`
-- `input_turns`
-- `expected_outcomes`
-- `judge_rubric`
-- `category`
-
-`expected_outcomes` is intentionally small. It mirrors the fields the runner
-extracts from the final `ChatTurnResponse`, not the full response object.
-
-In practice that usually means:
-
-- `verified`
-- `current_operation`
-- `issue`
-- `last_action_result`
-
-Those fields exist because the runtime exposes a small structured summary of the
-turn through `ChatTurnResponse`. That gives evals something stable to assert
-against without depending on exact wording in the assistant message.
-
-In particular:
-
-- `issue` explains what kind of problem occurred
-- `last_action_result` explains what business action actually happened
-
-That is why the graph keeps fields like `turn.issue` and
-`turn.operation_result` even though the user also receives a natural-language
-response.
-
-### `EvaluationResult`
-
-Also defined in `app/evals/models.py`.
-
-It stores:
-
-- scenario metadata
-- pass/fail/error status
-- judge summary and score
-- observed outcomes
-- input turns
-- assistant outputs
-
-### Runner
-
-Implemented in `app/evals/runner.py`.
-
-The runner creates a fresh `RuntimeContext` per scenario, replays the turns, and
-prints a readable block for each case. It also prints a final summary and writes
-JSON results to `.eval_runs/<timestamp>/results.json`.
-
-### Judge
-
-Implemented in `app/evals/judge.py`.
-
-The judge path uses the configured provider in eval mode only. It receives:
-
-- the scenario
-- the full transcript
-- observed outcomes extracted from the actual run
-
-If the judge call fails, the result is marked as `error`.
-
-## Core scenarios
-
-The default scenarios live in `app/evals/scenarios/core_scenarios.py` and cover
-the cases I cared most about for this submission:
-
-- verification before listing appointments
-- ambiguous references
-- idempotent confirm behavior
-- retry after failed verification
-- switching intent during verification
-- verification lockout
-- invalid field recovery
-- protected request before verification
-- list, mutate, list again
-- prompt-injection-style bypass attempts
-- conversational rerouting between actions
-
-## Running evals
-
-CLI:
+Run the offline benchmark with:
 
 ```bash
 uv run python -m app.evals.runner
 ```
 
-Pytest wrapper:
+It prints pass/fail per scenario and writes JSON results under `.eval_runs/`. Scenarios cover service/date discovery, professional and local-time extraction, ordinal slot selection, customer contact extraction, cancellation intent, and rescheduling language. If `LLM_PROVIDER=openai` is configured, they exercise model extraction with deterministic fallback on provider errors.
+
+## Product outcome evaluations
+
+Integration tests require `TEST_DATABASE_URL` to point to a disposable PostgreSQL database whose name ends in `_test`; each test migrates, seeds, and clears it. Run them with:
 
 ```bash
-uv run --extra dev pytest tests/evals
+TEST_DATABASE_URL=postgresql://user:password@localhost:5433/scheduling_test \
+  uv run --extra dev pytest -q tests/integration
 ```
 
-## Why keep this in the repo?
+The API and persistence scenarios assert structured outcomes for date clarification, service-backed slots, idempotent replay, stale-slot rejection, prompt-injection resistance, booking conflicts, transaction rollback, concurrent creates, reminder retries, and reminder-reply rescheduling. The API reminder journey also checks the owner agenda and that the management token stays out of graph state and logs.
 
-Because it keeps the workflow honest.
+The browser walkthrough was exercised locally with PostgreSQL, FastAPI, Streamlit, and a reminder-worker delivery: search, book, confirm, inspect the owner agenda, receive a simulated reminder reply, and move the booking. Docker Compose startup could not be exercised because Docker was unavailable in the implementation environment.
 
-It is easy to break a multi-turn assistant in ways that unit tests do not catch.
-This runner gave me a much better feel for whether the product still behaved the
-way a patient would expect.
+Run the complete unit, API, evaluation, and integration suite with `uv run --extra dev pytest -q` after setting `TEST_DATABASE_URL`. Without it, PostgreSQL integration cases skip; unit and API contract checks still run.

@@ -1,285 +1,192 @@
-# CAPY Appointment Bot
+# Service Scheduling MVP
 
-<p align="center">
-  <img src="capy.png" alt="CAPY" width="300" />
-</p>
+A portfolio MVP for appointment based service businesses. Customers can discover a service, choose a real available slot, book it, and manage it with a private capability token. A local owner view shows the agenda, and a small reminder worker simulates delivery into an inbox.
 
-**NOTE**: I only had a few days to finish this project.
+The project demonstrates a clear boundary: language interpretation can identify a service, date, or requested action; deterministic application code decides availability and commits booking changes.
 
-CAPY Appointment Bot is a take-home implementation of a clinic appointment assistant.
-It lets a patient verify identity, list appointments, confirm an appointment,
-and cancel an appointment in the same chat session.
+## Local demo
 
-I kept the workflow explicit on purpose. The hard part of this exercise is not
-writing a chatbot that sounds clever. It is making sure verification,
-appointment ownership, lockout behavior, and idempotent mutations stay
-predictable.
-
-Demo:
-
-<p align="center">
-  <img src="docs/demo-chat-flow.gif" alt="Chat flow demo" width="700" />
-</p>
-
-## What it does
-
-- verifies identity with full name, phone number, and date of birth
-- lists appointments after verification
-- confirms appointments
-- cancels appointments
-- lets the user move between those actions in one conversation
-- exposes the flow through a FastAPI backend and a small Streamlit frontend
-
-## Implemented features
-
-- session-based chat flow
-- identity verification with full name, phone, and date of birth
-- protected appointment access after verification
-- appointment listing
-- appointment confirmation
-- appointment cancellation
-- multi-turn conversation flow with rerouting between actions
-- bounded recent-message context to reduce context rot
-- verification retry handling with lockout after repeated failed identity attempts
-- Langfuse tracing and observability
-- Streamlit demo frontend
-- automated tests for core workflow and failure paths
-- eval scenarios for multi-turn behavior and quality assurance
-
-## Quickstart
-
-### Requirements
-
-- Python 3.11+
-- `uv`
-- `OPENAI_API_KEY`
-
-### Run locally
-
-This is the fastest way to review the project.
-
-```bash
-uv sync --extra dev
-export OPENAI_API_KEY=your_key_here
-export OPENAI_MODEL=gpt-4o-mini
-uv run uvicorn app.main:app --reload
-```
-
-Then open:
-
-- API docs: `http://localhost:8000/docs`
-- Health check: `http://localhost:8000/health`
-
-Optional frontend:
-
-```bash
-uv run streamlit run frontend/streamlit_app.py
-```
-
-### Run with Docker Compose
-
-If you want the full local stack, including Streamlit and Langfuse:
+Requirements: Docker Compose. The default demo uses a deterministic interpreter and does not need an LLM API key.
 
 ```bash
 docker compose up --build
 ```
 
-That starts:
+Open the Streamlit app at [http://localhost:8501](http://localhost:8501). The API and OpenAPI page are at [http://localhost:8000](http://localhost:8000) and [http://localhost:8000/docs](http://localhost:8000/docs).
 
-- API: `http://localhost:8000`
-- Streamlit: `http://localhost:8501`
-- Langfuse: `http://localhost:3000`
+The Compose stack runs the API, Streamlit UI, a dedicated scheduling PostgreSQL database, and the reminder worker. Startup applies the Alembic migration and loads the synthetic demo business. The app database is separate from the optional Langfuse database.
 
-Local Langfuse login defaults:
+### Demo journey
 
-- email: `admin@admin.com`
-- password: `admin1234`
+1. Choose a service, date, and optional professional, then find availability.
+2. Select a displayed slot and enter a name and phone number.
+3. Save the private management token shown with the booking.
+4. Confirm, cancel, or move the booking. The owner tab shows the agenda.
+5. The demo business schedules reminders five minutes before a booking. The worker places due reminders in the inbox; submitting a reply starts a new `/chat` request with the token sent separately.
 
-Tracing is already enabled by default in Docker Compose. If you run the API
-outside Docker, set:
+The seeded business is a wellness studio with two professionals and one massage service. It is only fixture data; the domain model supports multiple businesses, services, professionals, and service assignments. Pass `--include-second-business` to the seed command to add a second synthetic business.
 
-- `TRACING_ENABLED=true`
-- `LANGFUSE_PUBLIC_KEY=lf_pk_local_dev_key`
-- `LANGFUSE_SECRET_KEY=lf_sk_local_dev_key`
-- `LANGFUSE_HOST=http://localhost:3000`
+### What the bot can do
 
-Inside Docker Compose, the API talks to Langfuse through the internal service
-hostname `http://langfuse-web:3000`. Do not set `LANGFUSE_HOST=http://localhost:3000`
-for the API container, because inside the container `localhost` points back to
-the API container itself, not to Langfuse.
+In the customer conversation, the bot can:
 
-## Try it quickly
+- Find available times for a service and date, optionally with a requested professional.
+- Help complete a booking after the customer chooses a time and provides their name and phone number.
+- Confirm, cancel, or reschedule an existing booking. The web demo sends the private management token separately from the chat text. The token authorizes the caller; it does not by itself mean the next selected time is a reschedule.
+- Answer bounded catalog questions such as price, duration, and the demo cancellation rule.
+- Look up an existing appointment only for a verified channel identity. A phone number typed in chat is not enough.
 
-The project ships with seeded demo patients in `app/repositories.py`. These are
-the two valid identity sets:
+The local demo uses synthetic business data: one studio, one massage service, and two professionals. The bot does not answer general business questions or use a RAG knowledge base. WhatsApp webhook verification is present, but outbound WhatsApp delivery is not connected. Reminders are written to the demo inbox.
 
-- `Ana Silva` / `11999998888` / `1990-05-10`
-- `Carlos Souza` / `11911112222` / `1985-09-22`
+## AI interpretation
 
-A fast happy path looks like this:
+`LLM_PROVIDER=deterministic` is the default so the local demo works offline. To use model-assisted extraction, set `LLM_PROVIDER=openai` and `OPENAI_API_KEY` in a local `.env` file before starting Compose. The OpenAI interpreter uses the SDK's Pydantic structured-output parser and falls back to the deterministic interpreter on provider failure. Neither interpreter can authorize a booking or claim a time is free. Chat sessions, offered slots, and the recent redacted message history are stored in Redis and expire after `SESSION_TTL_MINUTES`.
 
-1. `show my appointments`
-2. `Ana Silva`
-3. `11999998888`
-4. `1990-05-10`
-5. `confirm the first one`
-
-After verification, the workflow shows the appointment list. From there the
-patient can continue with messages like:
-
-- `list my appointments`
-- `confirm the first one`
-- `cancel the first one`
-
-If the name, phone, and date of birth do not belong to the same patient, the
-bot returns `issue=invalid_identity` and restarts verification.
-
-## Run tests
-
-Full suite:
+The optional Langfuse stack is separate from the default demo:
 
 ```bash
-uv run --extra dev pytest
+docker compose --profile observability up --build
 ```
 
-By area:
+Set `TRACING_ENABLED=true` to enable traces. Logs and trace metadata omit names, contact details, and management tokens.
+
+### Long voice recordings
+
+`GemmaUnderstanding.transcribe_recording(audio_bytes, context)` decodes a
+Telegram voice message or audio upload into mono 16 kHz WAV chunks before
+calling the configured Gemma `/understand` endpoint. The endpoint must already
+support mono 16 kHz WAV audio and return a nonempty `transcript`; this repository does not
+implement that server.
+
+The splitter looks for a pause of at least 300 ms between seconds 25 and 29,
+then cuts in the middle of the last suitable pause. Without a pause it cuts at
+30 seconds. Adjacent chunks overlap by one second to protect words near a cut.
+The transcription method joins matching boundary phrases of at least three
+words; without word timestamps, short or differently transcribed repetitions
+can remain and intentional boundary repetitions cannot always be distinguished.
+
+The method returns only the complete transcript. The Telegram worker interprets
+it once and runs one workflow turn, after all chunks succeed, so a late
+correction is not lost. Failed decoding, an empty chunk transcript, a provider
+failure, or a processing/size limit raises a sanitized error instead of
+returning a partial message.
+
+FFmpeg is included in the Docker image. For host development, install FFmpeg
+and put `ffmpeg` on `PATH`. Defaults allow a 20 MB upload, 512 MiB of decoded
+temporary PCM, 120 seconds for decoding, 900 seconds for the complete
+transcription, and 64,000 transcript characters. These are configurable resource
+budgets, not a 30-second recording limit or a guarantee about model context.
+Temporary audio is removed on completion or failure. The transcript is customer
+data: do not log it, and check the final interpreter's context limit before use.
+
+Telegram onboarding requires the user to share their own contact. Voice must
+finish transcription before the graph runs, so a failure in any chunk cannot
+trigger a booking. The update ledger saves a final reply before sending it and
+retries delivery without rerunning the graph. If the process stops while a turn
+is running, the worker does not rerun that ambiguous turn; it asks the customer
+to check their appointments first.
+
+### Telegram customer chat
+
+The Telegram channel is an optional polling worker. It needs the PostgreSQL
+migration applied (the Compose API service does this at startup), Redis,
+`TELEGRAM_BOT_TOKEN`, and the existing business/model configuration. It does
+not require the Streamlit service. For example, add the token to the ignored
+`.env` file and run:
 
 ```bash
-uv run --extra dev pytest tests/unit
-uv run --extra dev pytest tests/graph
-uv run --extra dev pytest tests/api
-uv run --extra dev pytest tests/evals
+docker compose --profile telegram up --build -d app-postgres chat-redis api telegram-worker
 ```
 
-Offline eval runner:
+The worker rejects startup when Telegram reports an active webhook or another
+worker already holds its database lock; it never changes webhook settings.
+Users must share their own Telegram contact before chatting. A self-contact is
+verified by matching Telegram's contact user ID with the message sender. This
+may link an existing customer account by phone; a username or typed/spoken
+phone alone cannot link an account. The username is display metadata; the
+numeric Telegram user ID is the account key.
+
+If text messages work but voice messages fail, verify that the existing Gemma
+server accepts audio at `GEMMA_BASE_URL/understand` and returns a transcript.
+The worker will keep text available and ask the user to retry/type when audio
+processing fails. Adjust `TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS` and
+`TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS` only after measuring the target
+server's response time.
+
+The database retains only Telegram identity data and update receipts needed for
+deduplication. Raw update payloads are deleted once a reply is saved; delivered
+receipt IDs are retained for 30 days. A queued reply can contain customer data
+until delivery succeeds; replies that Telegram permanently rejects are cleared
+while their dedupe receipts remain. No audio bytes or Telegram file URL are persisted.
+External replies can be duplicated if Telegram accepted a send but its response
+was lost; booking writes remain protected by their update-derived idempotency
+key.
+
+## API overview
+
+- `GET /businesses/{business_id}/catalog`
+- `POST /availability/search`
+- `POST /bookings` with `Idempotency-Key`
+- `GET /bookings/me` with `X-Booking-Token`
+- `POST /bookings/me/confirm`, `/cancel`, and `/reschedule` with the token and idempotency key
+- `POST /sessions/new` and `POST /chat`
+- `GET /owner/bookings`, `GET /demo/reminders`, and `PATCH /owner/settings`
+- `GET /webhooks/whatsapp` and `POST /webhooks/whatsapp`
+- `GET /health`
+
+Slot results are references, not reservations. Booking writes recalculate the selected slot in a transaction. PostgreSQL also rejects overlapping active bookings for the same professional. Rescheduling updates the booking and reminder in one transaction, so a rejected move leaves the original booking intact.
+
+Management tokens are HMAC-SHA-256 capabilities derived from the booking ID and token version. The database stores only a digest. For a new secret, run `openssl rand -hex 32` and set its output as `BOOKING_TOKEN_SECRET`; use at least 32 random bytes outside the local demo. Secret rotation invalidates existing demo tokens.
+
+## Development
+
+Python 3.11+ is required. The API expects PostgreSQL, and migrations are managed with Alembic.
+
+```bash
+uv sync --extra dev
+docker compose up -d app-postgres chat-redis
+export DATABASE_URL=postgresql://scheduling:scheduling@localhost:5433/scheduling
+export CHAT_REDIS_URL=redis://localhost:6380/0
+export BOOKING_TOKEN_SECRET='use-at-least-32-random-bytes-here'
+uv run alembic upgrade head
+uv run python -m app.seed
+uv run uvicorn app.main:app --reload
+```
+
+In another terminal:
+
+```bash
+uv run streamlit run frontend/streamlit_app.py
+```
+
+Run the offline extraction benchmark with:
 
 ```bash
 uv run python -m app.evals.runner
 ```
 
-The eval runner replays multi-turn scenarios through the real workflow, prints
-one result block per scenario, and saves machine-readable output under
-`.eval_runs/`.
+Run the automated scheduling checks with `uv run --extra dev pytest -q`. Set `TEST_DATABASE_URL` to a disposable PostgreSQL database whose name ends in `_test` to include migration, transaction, concurrency, reminder, and API integration coverage. Without it, the PostgreSQL integration tests skip.
 
-## Design choices
+## Project map
 
-### Deterministic workflow over a free-form agent
+- `app/main.py`: HTTP contracts, chat orchestration, and token boundary
+- `app/models.py`: generic scheduling entities and API DTOs
+- `app/scheduling.py`: timezone-aware deterministic availability and transactional slot validation
+- `app/booking.py`: idempotent booking lifecycle, HMAC capabilities, reminders, and audit events
+- `app/repositories.py`: PostgreSQL catalog, schedule, and booking reads
+- `app/graph/`: one inbound conversation turn. The interpreter extracts fields, the decision port proposes an action, and the graph constrains the transition.
+- `app/chat_adapter.py`: web `/chat` adapter. It resolves a management token before calling the graph.
+- `app/channels/`: WhatsApp signature and dedupe, Telegram API/identity persistence, the audio understanding port, and pause-aware recording splitting.
+- `app/telegram_worker.py`: Telegram polling and per-user conversation orchestration.
+- `app/reminders.py`: Postgres-backed reminder worker and a replaceable sender. The default sender writes the demo inbox.
+- `frontend/`: customer booking flow and read-only owner agenda
+- `alembic/`: versioned PostgreSQL schema, including the overlap exclusion constraint
+- `docs/sdd/`: product requirements and task contracts
 
-I used LangGraph as an explicit workflow, not as an open-ended agent loop. The
-model interprets the user's message, but policy decisions stay in Python.
+The supplied [project specification](docs/Service%20Scheduling%20Agent%20%E2%80%94%20Project%20Specification.md) and [architecture source](docs/Service%20Scheduling%20Agent%20%E2%80%94%20Architecture.md) are retained as source material. The active implementation notes are [architecture](docs/architecture.md), [conversation flow](docs/graph.md), [security](docs/security.md), and [evaluation](docs/evaluation.md).
 
-That matters here because the risky parts are not creative tasks. They are
-things like:
-
-- whether the patient is verified
-- whether an appointment belongs to that patient
-- whether confirm or cancel should be idempotent
-- whether the session should be locked after repeated failed verification
-
-Those rules are easier to test and easier to explain when they are encoded in
-the graph instead of hidden inside model behavior.
-
-### The LLM has a narrow job
-
-The live chat path uses the LLM for intent and entity extraction only.
-
-The workflow uses the LLM output first and only fills simple missing fields
-with deterministic parsing. If the provider call fails, the API returns HTTP
-503 instead of falling back to a full parser.
-
-It can suggest:
-
-- `requested_operation`: the main action the user seems to want, such as `verify_identity`, `list_appointments`, `confirm_appointment`, `cancel_appointment`, `help`, or `unknown`
-- `full_name`
-- `phone`
-- `dob`
-- `selected_index`: a 1-based integer the LLM extracts when the user points at a specific appointment (e.g. `1` in `confirm the first one`); `null` when no appointment was targeted
-
-It does not decide authorization, mutate appointments, or generate the final
-patient-facing response. Final wording comes from deterministic response
-templates in `app/responses.py`.
-
-### Post-verification flow stays simple
-
-After successful verification, the workflow moves the patient to
-`list_appointments`.
-
-### Storage is intentionally small
-
-- patient and appointment data are seeded in memory
-- session records live in `InMemorySessionStore`
-- LangGraph checkpoints use `InMemorySaver`
-
-This gives the project enough statefulness to show the workflow clearly without
-dragging in a production persistence layer.
-
-## Project shape
-
-The main pieces are:
-
-- `app/main.py`: FastAPI routes
-- `app/runtime.py`: runtime wiring and dependency creation
-- `app/graph/`: workflow nodes, state, parsing, and the LangGraph wrapper
-- `app/services.py`: verification, appointment, and session services
-- `app/repositories.py`: seeded in-memory repositories
-- `app/responses.py`: deterministic response building from issues and action results
-- `app/llm/`: OpenAI provider, schemas, and prompt
-- `frontend/`: Streamlit chat UI
-- `tests/`: unit, graph, API, and eval coverage
-
-If you want more detail, start with:
-
-- [`docs/architecture.md`](docs/architecture.md)
-- [`docs/graph.md`](docs/graph.md)
-- [`docs/security.md`](docs/security.md)
-- [`docs/evaluation.md`](docs/evaluation.md)
+The [AI Engineering portfolio roadmap](docs/ai-engineering-portfolio-roadmap.md) records proposed priorities, the reviewed baseline, and the evidence needed to demonstrate model quality, real channel integration, observability, and reliable operation.
 
 ## Scope
 
-This project is intentionally exercise-sized and focused on the core appointment
-workflow. A user starts a chat session, verifies identity, views appointments,
-and can confirm or cancel one appointment. The goal is to keep the behavior
-clear, deterministic, and easy to test, not to present a full production
-healthcare system.
-
-## Out of Scope
-
-To keep the exercise focused, some production concerns were intentionally left out:
-
-- real EHR or EMR integration (Electronic Health Record or Electronic Medical Record), meaning a connection to a real healthcare record system instead of seeded demo data
-- production-grade authentication and authorization
-- cross-session memory for returning users, so users are not remembered across separate sessions
-- long-history compaction through summarization, so older conversation context is not condensed into a persistent summary
-- handling multiple appointment actions in a single message. The bot should not understand commands like "confirm the first and cancel the second".
-- production-grade persistence and background cleanup
-
-Provider failures also currently propagate instead of degrading gracefully. In other words, the system returns a controlled failure instead of falling back to a reduced but still-available experience.
-
-## Future Improvements
-
-If extended further, likely next steps would be:
-
-- deterministic fallback for intent and entity extraction in well-covered cases
-- graceful degradation for provider failures, so the system can still offer a reduced experience when the LLM is unavailable, but not stop the system entirely. 
-- cross-session memory for returning users, so stable user context can persist across separate conversations
-- conversation history summarization to preserve relevant context while controlling token growth
-- stronger persistence and operational hardening
-
-## Documentation
-
-The `docs/` folder has the main technical notes:
-
-- [`docs/architecture.md`](docs/architecture.md): system layout and request flow
-- [`docs/graph.md`](docs/graph.md): workflow behavior and routing
-- [`docs/security.md`](docs/security.md): verification, lockout, ownership, and redaction
-- [`docs/evaluation.md`](docs/evaluation.md): eval runner and scenarios
-
-## Process notes
-
-I used those documents to design the first versions of this project with SDD:
-
-- `specs/001-appointment-management/`
-- `specs/002-frontend-llm-memory/`
-
-I would not expect a reviewer to read those first. They are there if you want
-to see the design trail. 
+This is a local portfolio MVP with synthetic data. WhatsApp/SMS outbound delivery and email are not connected; it does not sync a calendar or take payment. Set `OWNER_API_TOKEN` to require a token on owner routes; when it is unset, those routes stay open for the local demo. Telegram polling and audio transcription require the configured Bot API and an existing compatible Gemma server; real voice behavior still needs end-to-end validation.
