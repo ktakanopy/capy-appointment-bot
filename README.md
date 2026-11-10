@@ -4,7 +4,7 @@ A portfolio MVP for appointment-based service businesses. Customers find a real 
 
 The design keeps a hard boundary: models interpret language and propose an action; deterministic application code decides availability and commits bookings. The repository also includes a scenario benchmark, provider fallbacks, and optional Langfuse traces.
 
-[Demo](#local-demo) · [Architecture](#architecture) · [AI interpretation](#ai-interpretation) · [API](#api-overview) · [Roadmap](#roadmap)
+[Demo](#local-demo) · [Capabilities](#what-the-bot-can-do) · [Workflow](#bot-workflow) · [Architecture](#architecture) · [AI interpretation](#ai-interpretation) · [API](#api-overview) · [Roadmap](#roadmap)
 
 ## Local demo
 
@@ -44,15 +44,58 @@ UNDERSTANDING_PROVIDER=deterministic DECISION_PROVIDER=deterministic docker comp
 
 The seeded business is a wellness studio with two professionals and one massage service. It is fixture data only; the model supports multiple businesses, services, and assignments. Pass `--include-second-business` to `uv run python -m app.seed` to add another synthetic business.
 
-## What it does
+## What the bot can do
 
-- Interprets a free-text request, tracks a scheduling draft across turns, and asks one clarification at a time.
-- Finds real availability and completes a booking after the customer picks a time and provides a name and phone number.
-- Confirms, cancels, or reschedules with a capability token. A token authorizes the caller; it does not by itself make the next selected slot a reschedule.
-- Answers bounded catalog questions such as price, duration, and the demo cancellation rule.
-- Looks up appointments only for a verified channel identity. A phone number typed in chat is not enough.
+| The bot can | Example |
+|---|---|
+| Find real availability | "Do you have a massage tomorrow afternoon?" |
+| Book a slot | "Book the 9:00 with Ana" |
+| Confirm a booking | "Confirm my booking" |
+| Cancel a booking | "Cancel it" |
+| Reschedule a booking | "Move it to Friday at 10" |
+| Answer catalog questions | "How much is a massage?" |
+| Look up an appointment | "When is my appointment?" |
+| Ask for one missing detail | "Which service would you like?" |
+| Escalate unsupported requests | It does not invent data or policy |
 
-The bot does not answer general business questions, use a RAG knowledge base, or deliver outbound email. WhatsApp and SMS are archived, not active.
+A management token authorizes one booking; it does not change the operation. Availability is always rechecked before a write. The bot does not answer general business questions, use a RAG knowledge base, or deliver outbound email. WhatsApp and SMS are archived, not active.
+
+## Bot workflow
+
+```mermaid
+flowchart TD
+    MSG["Customer message<br/>Telegram text/voice or CLI"] --> INT["Interpret<br/>Gemma · OpenAI · deterministic"]
+    INT --> MERGE["Merge scheduling draft<br/>service · date · time · professional"]
+    MERGE --> DECIDE["Decide next action<br/>Laya · deterministic"]
+    DECIDE --> ROUTE{"Route"}
+
+    ROUTE -->|Missing field| CLARIFY["Ask one clarification"]
+    ROUTE -->|Availability| SEARCH["Search real slots"]
+    ROUTE -->|Manage booking| AUTH{"Valid token or<br/>verified identity?"}
+    ROUTE -->|FAQ or lookup| READ["Answer from catalog<br/>or verified appointments"]
+    ROUTE -->|Unsupported| ESCALATE["Bounded escalation"]
+
+    AUTH -->|No| ESCALATE
+    AUTH -->|Yes| MUTATE["Confirm · cancel · reschedule"]
+    SEARCH --> SELECT["Customer selects a slot"]
+    SELECT --> BOOK["Create booking in one transaction<br/>slot validation + reminder + idempotency"]
+    MUTATE --> CHANGE["Apply change in one transaction"]
+    BOOK --> TOKEN["Return booking and management token"]
+    TOKEN --> SAVE["Persist draft and response in Redis"]
+    CHANGE --> SAVE
+    CLARIFY --> SAVE
+    READ --> SAVE
+    ESCALATE --> SAVE
+
+    classDef model fill:#eef2ff,stroke:#c7d2fe;
+    classDef policy fill:#fff7ed,stroke:#fed7aa;
+    classDef store fill:#f0fdf4,stroke:#bbf7d0;
+    class INT,MERGE,DECIDE model;
+    class AUTH,SEARCH,BOOK,MUTATE,CHANGE policy;
+    class SAVE store;
+```
+
+Models only interpret language and propose an action. `app/scheduling.py` and `app/booking.py` decide availability, authorize changes, and commit writes. Catalog answers are bounded; appointment lookup requires a verified Telegram contact or a valid token.
 
 ## Architecture
 
