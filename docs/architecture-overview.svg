@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="690" viewBox="0 0 1000 690" role="img" aria-labelledby="archTitle archDesc">
+  <title id="archTitle">CAPY-bot architecture overview</title>
+  <desc id="archDesc">Customer surfaces feed entry adapters and a LangGraph conversation turn. The graph calls deterministic availability and booking services backed by PostgreSQL and Redis. Optional Gemma, Laya, and OpenAI services only propose understanding or routing.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,4 L0,8 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,4 L0,8 z" fill="#a855f7"/>
+    </marker>
+    <style>
+      .font { font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .title { font-size: 14.5px; font-weight: 600; fill: #0f172a; }
+      .sub { font-size: 12px; fill: #475569; }
+      .pill { font-size: 12px; font-weight: 600; fill: #312e81; }
+      .note { font-size: 12px; fill: #64748b; }
+      .box { stroke-width: 1.5; }
+      .client { fill: #eef2ff; stroke: #c7d2fe; }
+      .entry { fill: #ecfeff; stroke: #a5f3fc; }
+      .graph { fill: #f5f3ff; stroke: #c4b5fd; }
+      .pillbox { fill: #ede9fe; stroke: #c4b5fd; }
+      .cache { fill: #f0fdf4; stroke: #bbf7d0; }
+      .domain { fill: #fff7ed; stroke: #fed7aa; }
+      .data { fill: #f1f5f9; stroke: #cbd5e1; }
+      .optional { fill: #fdf2f8; stroke: #f9a8d4; stroke-dasharray: 5 4; }
+      .edge { stroke: #64748b; stroke-width: 1.5; fill: none; }
+      .edgePurple { stroke: #a855f7; stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+    </style>
+  </defs>
+
+  <rect width="1000" height="690" fill="#ffffff"/>
+
+  <!-- Customer surfaces -->
+  <rect class="box client" x="30" y="36" width="196" height="66" rx="10"/>
+  <text class="font title" x="128" y="64" text-anchor="middle">Streamlit demo</text>
+  <text class="font sub" x="128" y="83" text-anchor="middle">customer + owner</text>
+
+  <rect class="box client" x="242" y="36" width="196" height="66" rx="10"/>
+  <text class="font title" x="340" y="64" text-anchor="middle">Telegram worker</text>
+  <text class="font sub" x="340" y="83" text-anchor="middle">polling · text + voice</text>
+
+  <rect class="box client" x="454" y="36" width="216" height="66" rx="10"/>
+  <text class="font title" x="562" y="64" text-anchor="middle">WhatsApp / SMS</text>
+  <text class="font sub" x="562" y="83" text-anchor="middle">inbound webhooks</text>
+
+  <!-- Entry adapters -->
+  <rect class="box entry" x="30" y="146" width="640" height="62" rx="10"/>
+  <text class="font title" x="50" y="168">Entry adapters</text>
+  <text class="font sub" x="50" y="186">FastAPI routes · chat adapter · channel adapters</text>
+  <text class="font sub" x="50" y="201">token resolution · signature check · dedupe</text>
+
+  <!-- Optional providers -->
+  <rect class="box optional" x="700" y="146" width="270" height="118" rx="10"/>
+  <text class="font title" x="718" y="172">Optional model services</text>
+  <text class="font sub" x="718" y="194">Gemma — text + audio understanding</text>
+  <text class="font sub" x="718" y="214">Laya — action routing</text>
+  <text class="font sub" x="718" y="234">OpenAI — structured extraction</text>
+  <text class="font note" x="718" y="254">dashed = suggestions only</text>
+
+  <!-- Conversation graph -->
+  <rect class="box graph" x="30" y="278" width="640" height="150" rx="10"/>
+  <text class="font title" x="50" y="306">LangGraph conversation turn</text>
+  <text class="font sub" x="50" y="324">one inbound message</text>
+
+  <rect class="box pillbox" x="50" y="340" width="100" height="34" rx="8"/>
+  <text class="font pill" x="100" y="362" text-anchor="middle">interpret</text>
+  <rect class="box pillbox" x="162" y="340" width="100" height="34" rx="8"/>
+  <text class="font pill" x="212" y="362" text-anchor="middle">merge draft</text>
+  <rect class="box pillbox" x="274" y="340" width="100" height="34" rx="8"/>
+  <text class="font pill" x="324" y="362" text-anchor="middle">decide</text>
+  <rect class="box pillbox" x="386" y="340" width="110" height="34" rx="8"/>
+  <text class="font pill" x="441" y="362" text-anchor="middle">search / select</text>
+  <rect class="box pillbox" x="508" y="340" width="120" height="34" rx="8"/>
+  <text class="font pill" x="568" y="362" text-anchor="middle">execute</text>
+
+  <path class="edge" d="M150,357 H162" marker-end="url(#arrow)"/>
+  <path class="edge" d="M262,357 H274" marker-end="url(#arrow)"/>
+  <path class="edge" d="M374,357 H386" marker-end="url(#arrow)"/>
+  <path class="edge" d="M496,357 H508" marker-end="url(#arrow)"/>
+
+  <text class="font note" x="50" y="400">clarify · search · select · help · lookup · escalate → persist</text>
+  <text class="font note" x="50" y="418">no booking write or availability decision lives here</text>
+
+  <!-- Redis -->
+  <rect class="box cache" x="700" y="278" width="270" height="150" rx="10"/>
+  <text class="font title" x="718" y="306">Redis</text>
+  <text class="font sub" x="718" y="326">short-lived conversation state</text>
+  <text class="font sub" x="718" y="352">· draft + offered slots</text>
+  <text class="font sub" x="718" y="370">· redacted message history</text>
+  <text class="font sub" x="718" y="388">· TTL: SESSION_TTL_MINUTES</text>
+
+  <!-- Deterministic domain -->
+  <rect class="box domain" x="30" y="462" width="196" height="68" rx="10"/>
+  <text class="font title" x="128" y="490" text-anchor="middle">Availability service</text>
+  <text class="font sub" x="128" y="509" text-anchor="middle">deterministic slot search</text>
+
+  <rect class="box domain" x="242" y="462" width="196" height="68" rx="10"/>
+  <text class="font title" x="340" y="490" text-anchor="middle">Booking service</text>
+  <text class="font sub" x="340" y="509" text-anchor="middle">policy · idempotency · tokens</text>
+
+  <rect class="box domain" x="454" y="462" width="216" height="68" rx="10"/>
+  <text class="font title" x="562" y="490" text-anchor="middle">Reminder worker</text>
+  <text class="font sub" x="562" y="509" text-anchor="middle">claims due reminders</text>
+
+  <!-- Data stores -->
+  <rect class="box data" x="30" y="566" width="280" height="60" rx="10"/>
+  <text class="font title" x="50" y="592">PostgreSQL</text>
+  <text class="font sub" x="50" y="611">bookings · schedules · reminders · audit</text>
+
+  <rect class="box data" x="350" y="566" width="320" height="60" rx="10"/>
+  <text class="font title" x="370" y="592">Demo inbox</text>
+  <text class="font sub" x="370" y="611">delivered reminder messages</text>
+
+  <!-- Arrows -->
+  <path class="edge" d="M128,102 V146" marker-end="url(#arrow)"/>
+  <path class="edge" d="M340,102 V146" marker-end="url(#arrow)"/>
+  <path class="edge" d="M562,102 V146" marker-end="url(#arrow)"/>
+  <path class="edge" d="M350,208 V278" marker-end="url(#arrow)"/>
+  <path class="edgePurple" d="M700,240 H686 V300 H670" marker-end="url(#arrowPurple)"/>
+  <path class="edge" d="M670,335 H700" marker-end="url(#arrow)"/>
+  <path class="edge" d="M700,361 H670" marker-end="url(#arrow)"/>
+
+  <path class="edge" d="M568,374 V445"/>
+  <path class="edge" d="M140,445 H568"/>
+  <path class="edge" d="M140,445 V462" marker-end="url(#arrow)"/>
+  <path class="edge" d="M340,445 V462" marker-end="url(#arrow)"/>
+
+  <path class="edge" d="M128,530 V566" marker-end="url(#arrow)"/>
+  <path class="edge" d="M340,530 V548 H200 V566" marker-end="url(#arrow)"/>
+  <path class="edge" d="M562,530 V548 H510 V566" marker-end="url(#arrow)"/>
+
+  <text class="font note" x="30" y="652">The model may propose an action. Application code still decides availability and commits bookings.</text>
+  <text class="font note" x="30" y="670">Direct form endpoints call the same domain services without the graph.</text>
+</svg>
