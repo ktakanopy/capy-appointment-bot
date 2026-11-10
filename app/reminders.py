@@ -29,12 +29,9 @@ class ReminderWorker:
     def deliver_due(self, limit: int = 25) -> int:
         with connect(self.database_url) as connection:
             rows = connection.execute(
-                """WITH due AS (
-                       SELECT id FROM reminders WHERE status='pending' AND send_at <= now()
-                       ORDER BY send_at LIMIT %s FOR UPDATE SKIP LOCKED
-                   )
-                   UPDATE reminders r SET status='processing',attempts=r.attempts+1,claimed_at=now()
-                   FROM due WHERE r.id=due.id RETURNING r.id,r.business_id,r.booking_id,r.attempts""",
+                """SELECT id,business_id,booking_id,attempts FROM reminders
+                   WHERE status='pending' AND send_at <= now()
+                   ORDER BY send_at LIMIT %s FOR UPDATE SKIP LOCKED""",
                 (limit,),
             ).fetchall()
             for reminder in rows:
@@ -49,7 +46,7 @@ class ReminderWorker:
                             (reminder["booking_id"],),
                         ).fetchone()
                         if booking is None or booking["status"] == "canceled":
-                            connection.execute("UPDATE reminders SET status='canceled',claimed_at=NULL WHERE id=%s", (reminder["id"],))
+                            connection.execute("UPDATE reminders SET status='canceled' WHERE id=%s", (reminder["id"],))
                             continue
                         starts_at = booking["starts_at"]
                         if starts_at.tzinfo is None:
@@ -63,20 +60,22 @@ class ReminderWorker:
                         )
                         self.sender.send(connection, reminder, booking, message)
                         connection.execute(
-                            "UPDATE reminders SET status='delivered',delivered_at=now(),claimed_at=NULL,last_error=NULL WHERE id=%s",
+                            "UPDATE reminders SET status='delivered',delivered_at=now(),last_error=NULL WHERE id=%s",
                             (reminder["id"],),
                         )
                 except Exception as exc:
-                    if reminder["attempts"] < 3:
+                    # attempts counts failed deliveries, not successful claims.
+                    attempts = reminder["attempts"] + 1
+                    if attempts < 3:
                         connection.execute(
                             """UPDATE reminders SET status='pending',send_at=now()+interval '30 seconds',
-                               claimed_at=NULL,last_error=%s WHERE id=%s""",
-                            (type(exc).__name__, reminder["id"]),
+                               attempts=%s,last_error=%s WHERE id=%s""",
+                            (attempts, type(exc).__name__, reminder["id"]),
                         )
                     else:
                         connection.execute(
-                            "UPDATE reminders SET status='failed',claimed_at=NULL,last_error=%s WHERE id=%s",
-                            (type(exc).__name__, reminder["id"]),
+                            "UPDATE reminders SET status='failed',attempts=%s,last_error=%s WHERE id=%s",
+                            (attempts, type(exc).__name__, reminder["id"]),
                         )
         return len(rows)
 

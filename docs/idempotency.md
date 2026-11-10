@@ -12,7 +12,7 @@ The guarantee is scoped to `(business_id, operation, idempotency_key)`. A retry 
 | `POST /chat` | Header if supplied, otherwise `chat-` plus the first 48 characters of a SHA-256 over `conversation_id:operation:target` | Stable for a retried turn in the same conversation |
 | Telegram worker | `telegram:{bot_id}:{update_id}` | Stable per Telegram update |
 
-Sources: `app/main.py:144`, `app/main.py:164-209`, `app/main.py:326`, `app/chat_helpers.py:24`, `app/graph/steps.py:459`, `app/telegram_worker.py:414`.
+Sources: booking write routes in `app/main.py`, `BookingService`, `_request_key` in `app/chat_helpers.py`, and the Telegram worker update key.
 
 ## Stored record
 
@@ -44,11 +44,11 @@ flowchart TD
     F --> G["BEGIN transaction"]
 
     subgraph TX["One PostgreSQL transaction"]
-        G --> H["pg_advisory_xact_lock<br/>business:operation:key"]
+        G --> H["SELECT business row FOR UPDATE<br/>serializes booking writes"]
         H --> I{"Existing record?"}
 
         I -->|No| J["Validate slot<br/>(create / reschedule)"]
-        J --> K["Write booking / status<br/>reminder / audit"]
+        J --> K["Write booking / status / reminder"]
         K --> L["INSERT idempotency_records<br/>request_hash, resource_id, result_code"]
         L --> M["COMMIT<br/>write + record atomic"]
 
@@ -72,27 +72,27 @@ The canonical hash uses `json.dumps(..., sort_keys=True, separators=(",", ":"), 
 
 ## Concurrent retries
 
-The advisory lock is transaction-scoped and released on commit or rollback. The second request waits, then either replays the committed record or, if the first request rolled back, performs the write itself.
+The business row lock is transaction-scoped and released on commit or rollback. All booking writes for one business serialize, so the second request waits, then either replays the committed record or, if the first request rolled back, performs the write itself.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant A as Request A
-    participant B as Request B (same key)
+    participant B as Request B
     participant DB as PostgreSQL
 
     A->>DB: BEGIN
-    A->>DB: pg_advisory_xact_lock(business:operation:key)
-    DB-->>A: lock held
+    A->>DB: SELECT businesses WHERE id=... FOR UPDATE
+    DB-->>A: business row locked
 
     B->>DB: BEGIN
-    B->>DB: pg_advisory_xact_lock(same key)
+    B->>DB: SELECT businesses WHERE id=... FOR UPDATE
     Note over B,DB: blocks until A commits
 
     A->>DB: validate slot + INSERT booking + idempotency record
     A->>DB: COMMIT
 
-    DB-->>B: lock acquired
+    DB-->>B: business row locked
     B->>DB: SELECT idempotency_records
     DB-->>B: request_hash matches
     B->>DB: COMMIT
@@ -122,7 +122,7 @@ Consequences:
 | Commit succeeded, response lost | Retry with the same key returns the original booking |
 | Failure before commit | Transaction rolls back; no booking and no record, so a retry runs normally |
 | Same key, different payload | `409 idempotency_key_reused` |
-| Same key, concurrent requests | Advisory lock serializes; one writes, the other replays |
+| Same key, concurrent requests | The business row lock serializes; one writes, the other replays |
 | Different key, same slot | Slot validation or the exclusion constraint returns `409` |
 | Replay after the booking changed | Returns the booking's current state, not the state at first response |
 
@@ -130,10 +130,10 @@ Consequences:
 
 Idempotency is not the only duplicate guard:
 
-- `pg_advisory_xact_lock` serializes requests sharing a key (`app/booking.py:72`).
+- A `SELECT ... FOR UPDATE` on the business row serializes booking writes for that business (`BookingService._check_idempotency`). This is a deliberate throughput tradeoff for a single-business demo, not a per-key optimization.
 - The `(business_id, operation, idempotency_key)` primary key rejects a duplicate record as a final backstop.
-- `FOR UPDATE` serializes status changes and reschedules on the booking row (`app/booking.py:211`).
-- A PostgreSQL exclusion constraint rejects overlapping active bookings for the same professional (`app/booking.py:159`, `app/booking.py:282`).
+- `FOR UPDATE` serializes status changes and reschedules on the booking row (`BookingService._mutate_status`, `BookingService.reschedule`).
+- A PostgreSQL exclusion constraint rejects overlapping active bookings for the same professional (`BookingService.create`, `BookingService.reschedule`).
 
 ## Limits
 
@@ -143,22 +143,23 @@ Idempotency is not the only duplicate guard:
 - The derived chat key is only as stable as the Redis draft. If the draft expires, a retry derives a new key; the overlap constraint still blocks a duplicate for the same slot.
 - Keys are validated in the service (`1–200` characters), so direct callers of `BookingService` get the same `422` contract as HTTP callers.
 - A create replay returns the management token only when the full request hash matches, so the key alone does not expose a booking without the original payload.
+- All booking writes for one business serialize on the business row. That is acceptable for this demo and would be the first thing to revisit under real booking volume.
 
 ## Code map
 
 | Code | Responsibility |
 |---|---|
-| `app/booking.py:68` | Key validation, advisory lock, lookup, hash comparison |
-| `app/booking.py:82` | Insert the idempotency record |
-| `app/booking.py:104` | Create: check, replay, or write |
-| `app/booking.py:199` | Confirm and cancel status mutation |
-| `app/booking.py:234` | Reschedule and reminder update |
-| `app/database.py:10` | Transaction boundary: commit on success, rollback on exception |
-| `app/chat_helpers.py:24` | Chat key derivation |
-| `app/graph/steps.py:459` | Seed used for the derived chat key |
-| `app/telegram_worker.py:414` | Telegram update-derived key |
+| `BookingService._check_idempotency` | Key validation, business row lock, lookup, hash comparison |
+| `BookingService._insert_idempotency` | Insert the idempotency record |
+| `BookingService.create` | Create: check, replay, or write |
+| `BookingService._mutate_status` | Confirm and cancel status mutation |
+| `BookingService.reschedule` | Reschedule and reminder update |
+| `app/database.connect` | Transaction boundary: commit on success, rollback on exception |
+| `app/chat_helpers._request_key` | Chat key derivation |
+| `app/graph/steps.execute` | Seed used for the derived chat key |
+| `app/telegram_worker` | Telegram update-derived key |
 
 ## Tests
 
-- `tests/integration/test_postgres_booking_lifecycle.py:31` covers replay, changed-payload rejection, token stability, and slot conflict.
-- `tests/unit/test_booking_tokens.py:46` covers hash stability across dictionary ordering.
+- `tests/integration/test_postgres_booking_lifecycle.py` covers replay, changed-payload rejection, token stability, and slot conflict.
+- `tests/unit/test_booking_tokens.py` covers hash stability across dictionary ordering.

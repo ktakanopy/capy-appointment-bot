@@ -6,7 +6,7 @@ from app.graph.decision import DeterministicDecision
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import DeterministicInterpreter
 from app.llm.schemas import SchedulingExtraction
-from app.models import AvailabilitySearchRequest, AvailabilitySlot, CatalogResponse
+from app.models import AvailabilitySearchRequest
 from tests.conftest import sample_catalog, sample_slot
 
 

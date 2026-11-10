@@ -1,11 +1,11 @@
 # Telegram text and audio integration — implementation plan
 
-Status: implementation authorized by the user and present in the working tree. Migration, worker, Docker image, and real Gemma/Telegram behavior have not been run or verified. Work-package labels below are planning references, not registered tracker tasks.
+Status: historical implementation record. Migration and worker code are implemented and tested locally; live Telegram and real Gemma behavior remain unverified. Work-package labels below are planning references, not registered tracker tasks.
 
 ## Source artifacts
 
 - User request: connect `@capy_appointment_bot` to the existing scheduling workflow, accepting text and audio. Keep phone numbers required. Support long recordings by splitting audio when needed. Telegram is the first customer chat interface; WhatsApp follows. The user does not want a Streamlit chatbot frontend or audio-server implementation work.
-- Current architecture: [architecture](../architecture.md), [conversation graph](../graph.md), and [Gemma/Laya direction](../gemma-laya-default-plan.md).
+- Current architecture: [architecture](../architecture.md) and [conversation graph](../graph.md). Provider defaults are documented in the current configuration.
 - Code: `app/channels/`, `app/chat_ports.py`, `app/runtime.py`, `app/graph/`, `app/llm/gemma.py`, and `alembic/`.
 - External contracts: [Telegram Bot API](https://core.telegram.org/bots/api) and [Gemma 3n developer guide](https://developers.googleblog.com/en/introducing-gemma-3n-developer-guide/).
 

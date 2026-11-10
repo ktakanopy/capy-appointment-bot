@@ -1,6 +1,6 @@
 # AI Engineering portfolio roadmap
 
-Reviewed: 2026-10-27. Reference branch: `portifolio`, commit `3017896`, including the working tree reviewed in this session.
+Reviewed: 2026-11-10. Reference branch: `portifolio`.
 
 Status: proposed portfolio priorities. This document records recommendations; it does not mark features as complete or replace feature requirements and implementation plans.
 
@@ -19,14 +19,20 @@ The strongest portfolio story is a customer completing a real scheduling journey
 - Langfuse integration records events; model generations, usage, latency, and task-level quality need fuller instrumentation.
 - Escalation currently records an event and returns a bounded response; there is no operational human handoff queue.
 - Owner authentication is optional when `OWNER_API_TOKEN` is unset.
-- Live Telegram delivery and real-audio readiness remain integration work. Audio-client and recording-splitting changes are in progress in the working tree; verify their current state before starting related implementation.
-- WhatsApp remains wired into the application. Its webhook verifies subscriptions and handles inbound text, but live Meta outbound delivery is not connected.
+- Telegram is the only customer channel. Live Telegram delivery and real-audio readiness remain integration work. The audio path is implemented; verify its current state before starting related implementation.
+- WhatsApp, SMS, and Streamlit are archived under `.archived/` and are not part of the running app.
 
 ## Channel scope decision
 
-Lead the current portfolio walkthrough with Telegram and keep the existing WhatsApp adapter in the application. Do not remove or archive it as part of this work. Consider WhatsApp rollout or removal as a separate future decision. This commit preserves the current implementation in Git history so a later change can remove it from the app without losing the earlier version. Before any removal, account for the shared phone-normalization and dedupe/outbox helpers imported by SMS and Telegram.
+Lead the portfolio with Telegram. Keep the CLI for local customer and owner flows. WhatsApp, SMS, and Streamlit remain archived for reference; do not restore them without a separate product decision.
 
-Validation performed during the review: `tests/unit`, `tests/api`, and `tests/evals` passed, with **67 tests**. PostgreSQL integration tests, live messaging, and real model/audio endpoints were not validated in that run.
+Validation performed during this review: unit/API/evals and the PostgreSQL integration suite passed. Live messaging, real model endpoints, and real audio recordings were not validated.
+
+## Carried forward from completed plans
+
+- Live Telegram text and voice validation (priority 2).
+- Audio-specific task evaluations, including corrections and background noise (priority 1).
+- Real reminder delivery and an owner configuration dashboard remain out of scope unless the demo needs them.
 
 ## Recommended priorities
 
@@ -111,7 +117,7 @@ Completion evidence: a reviewer can understand the product, reproduce the eviden
 
 ## Related documents and references
 
-- [Current architecture](architecture.md), [conversation graph](graph.md), [evaluations](evaluation.md), and [security](security.md).
-- [Gemma/Laya direction](gemma-laya-default-plan.md) and [specification alignment](spec-alignment-plan.md) for existing design context; check historical findings against current code.
+- [Current architecture](architecture.md), [conversation graph](graph.md), [idempotency](idempotency.md), [evaluations](evaluation.md), and [security](security.md).
+- Historical specifications, the earlier engineering review, and the original design inputs are archived under `.archived/`; check historical findings against current code.
 - [Anthropic: Demystifying evals for AI agents](https://www.anthropic.com/research/demystifying-evals-for-ai-agents) for task outcomes, repeated trials, and grading strategies.
 - [Langfuse: Model usage and cost tracking](https://langfuse.com/docs/observability/features/token-and-cost-tracking) for generation usage and cost instrumentation.

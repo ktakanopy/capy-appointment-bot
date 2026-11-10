@@ -1,6 +1,6 @@
 # Telegram scheduling through text and voice
 
-Status: requirements reflect the user's decisions on 2026-10-27. Telegram, identity persistence, and audio integration are implemented in the working tree; no migration, bot worker, real Telegram call, or real audio provider check has been run.
+Status: historical feature record. Telegram is the active customer channel; WhatsApp is archived under `.archived/`. Text and voice integration is implemented; live Telegram and real Gemma audio remain unverified.
 
 ## Intent checkpoint
 

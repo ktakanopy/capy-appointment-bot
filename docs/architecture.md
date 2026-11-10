@@ -1,6 +1,6 @@
 # Architecture
 
-This note describes the code that runs today. The target product shape is in `docs/Service Scheduling Agent — Architecture.md`. Where the two differ, this file is the one to trust for reading the repository.
+This note describes the code that runs today. The original design input is archived at `.archived/reference/Service Scheduling Agent — Architecture.md`. Where the two differ, this file is the one to trust for reading the repository.
 
 ## What runs
 
@@ -268,7 +268,7 @@ classDiagram
 | `app/cli.py` | Interactive customer and owner console | Booking policy or SQL |
 | `app/owner.py` | Owner agenda and demo reminder views | Which conversation step runs |
 | `app/chat_adapter.py` | Chat translation, token resolution, ports for this request | Booking SQL |
-| `app/telegram_worker.py` | Telegram polling, self-contact verification, text/audio routing, per-user session orchestration | Booking policy or calendar availability |
+| `app/telegram_worker.py` | Telegram polling, self-contact verification, text/audio routing, per-user session orchestration | Booking policy, calendar availability, or trusting a username/typed phone |
 | `app/channels/telegram.py` | Telegram Bot API calls, bounded file download, safe transport errors | Customer ownership or scheduling policy |
 | `app/channels/telegram_repository.py` | Telegram identity links, durable update offsets/receipts, and reply retries | Booking records |
 | `app/channels/audio_chunks.py` | Bounded FFmpeg decoding, pause-aware cuts, and chunk cleanup | Speech interpretation or booking intent |
@@ -276,9 +276,14 @@ classDiagram
 | `app/graph/decision.py` | Propose `BOOK`, `RESCHEDULE`, `CANCEL`, `CHECK_AVAILABILITY`, `FAQ`, `CONFIRM`, `ESCALATE`, or `LOOKUP_BOOKING` | Forcing a transition the workflow does not allow |
 | `app/graph/steps.py` | Draft merge, clarification, search, selection, FAQ, lookup, escalation, and the execute call | Overlap policy and token generation |
 | `app/scheduling.py` | Which times are valid | Conversation copy |
-| `app/booking.py` | Create, confirm, cancel, reschedule, idempotency, audit, token digest | Reading the customer's sentence |
-| `app/telegram_worker.py` | Telegram self-contact links the numeric user ID to the verified phone/customer | Trusting a username or a phone typed in chat |
-| `app/reminders.py` | Claim due reminders and send through a sender port | LangGraph |
+| `app/booking.py` | Create, confirm, cancel, reschedule, idempotency, token digest | Reading the customer's sentence |
+| `app/reminders.py` | Select due reminders and send through a sender port | LangGraph |
+
+## Retry boundaries
+
+A booking write and its idempotency record commit in one PostgreSQL transaction; create and reschedule also update the reminder in that transaction. Booking writes for one business serialize on the business row; that is a deliberate demo tradeoff. The replay contract is in [idempotency](idempotency.md).
+
+The Telegram worker stores update receipts and offsets so a restart does not replay a completed graph turn. The reminder worker selects due rows with `FOR UPDATE SKIP LOCKED` and sends inside a transaction; `attempts` counts failed deliveries, not successful claims.
 
 ## Conversation rules that matter
 
@@ -294,7 +299,7 @@ If the bot asked for a date and the reply contains a date, the draft continues e
 
 | State | Where | Lifetime |
 |---|---|---|
-| Services, hours, bookings, reminders, audit | PostgreSQL | Durable |
+| Services, hours, bookings, reminders | PostgreSQL | Durable |
 | Scheduling draft, offered slots, and redacted messages | LangGraph checkpoint in Redis, keyed by the session id | `SESSION_TTL_MINUTES` |
 | Request-scoped customer details and raw token | `ChatPorts` object | One turn |
 | Telegram identity, verified phone, and optional username | PostgreSQL `telegram_identities` | Durable |

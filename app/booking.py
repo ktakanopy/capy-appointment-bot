@@ -8,7 +8,6 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import psycopg
-from psycopg.types.json import Jsonb
 
 from app.database import connect
 from app.models import (
@@ -17,7 +16,6 @@ from app.models import (
     BookingRescheduleRequest,
     BookingStatus,
     BookingSummary,
-    CustomerInput,
     DomainError,
 )
 from app.repositories import PostgresRepository, booking_from_row
@@ -68,8 +66,13 @@ class BookingService:
     def _check_idempotency(self, connection, business_id: str, operation: str, key: str, body_hash: str):
         if not key or len(key) > 200:
             raise DomainError("invalid_idempotency_key", "Idempotency-Key must contain 1 to 200 characters.", 422)
-        lock_name = f"{business_id}:{operation}:{key}"
-        connection.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (lock_name,))
+        # Serialize booking writes for one business. This demo accepts the
+        # throughput tradeoff in exchange for one clear retry boundary.
+        business = connection.execute(
+            "SELECT id FROM businesses WHERE id=%s FOR UPDATE", (business_id,)
+        ).fetchone()
+        if business is None:
+            raise DomainError("business_not_found", "Business not found.", 404)
         record = connection.execute(
             """SELECT request_hash,resource_id,result_code FROM idempotency_records
                WHERE business_id=%s AND operation=%s AND idempotency_key=%s""",
@@ -84,12 +87,6 @@ class BookingService:
             """INSERT INTO idempotency_records (business_id,operation,idempotency_key,request_hash,resource_id,result_code)
                VALUES (%s,%s,%s,%s,%s,%s)""",
             (business_id, operation, key, body_hash, booking_id, result_code),
-        )
-
-    def _write_audit(self, connection, business_id: str, booking_id: str, action: str, metadata: dict | None = None):
-        connection.execute(
-            "INSERT INTO audit_events (id,business_id,booking_id,action,metadata) VALUES (%s,%s,%s,%s,%s)",
-            (str(uuid.uuid4()), business_id, booking_id, action, Jsonb(metadata or {})),
         )
 
     @staticmethod
@@ -152,7 +149,6 @@ class BookingService:
                     (str(uuid.uuid4()), request.business_id, booking_id,
                      slot.starts_at - timedelta(minutes=business["reminder_lead_minutes"])),
                 )
-                self._write_audit(connection, request.business_id, booking_id, "booking_created", {"service_id": slot.service_id})
                 self._insert_idempotency(connection, request.business_id, "create", idempotency_key, payload_hash, booking_id, "created")
                 row = self._row(connection, booking_id)
                 return BookingSummary(booking=booking_from_row(row), manage_token=token, outcome="created")
@@ -223,8 +219,6 @@ class BookingService:
                     if current != BookingStatus.CANCELED:
                         connection.execute("UPDATE bookings SET status='canceled',updated_at=now() WHERE id=%s", (booking_id,))
                         connection.execute("UPDATE reminders SET status='canceled' WHERE booking_id=%s AND status='pending'", (booking_id,))
-                audit_action = "booking_canceled" if operation == "cancel" else "booking_confirmed"
-                self._write_audit(connection, row["business_id"], booking_id, audit_action, {"outcome": result})
                 self._insert_idempotency(connection, row["business_id"], operation, idempotency_key, payload_hash, booking_id, result)
                 updated = self._row(connection, booking_id)
                 return booking_from_row(updated), result
@@ -269,13 +263,12 @@ class BookingService:
                 pending = connection.execute("SELECT id FROM reminders WHERE booking_id=%s AND status='pending' FOR UPDATE", (booking_id,)).fetchone()
                 new_send_at = slot.starts_at - timedelta(minutes=lead)
                 if pending:
-                    connection.execute("UPDATE reminders SET send_at=%s,claimed_at=NULL,last_error=NULL WHERE id=%s", (new_send_at, pending["id"]))
+                    connection.execute("UPDATE reminders SET send_at=%s,last_error=NULL WHERE id=%s", (new_send_at, pending["id"]))
                 else:
                     connection.execute(
                         "INSERT INTO reminders (id,business_id,booking_id,send_at,status) VALUES (%s,%s,%s,%s,'pending')",
                         (str(uuid.uuid4()), request.business_id, booking_id, new_send_at),
                     )
-                self._write_audit(connection, request.business_id, booking_id, "booking_rescheduled", {"starts_at": slot.starts_at.isoformat()})
                 self._insert_idempotency(connection, request.business_id, "reschedule", idempotency_key, payload_hash, booking_id, "rescheduled")
                 updated = self._row(connection, booking_id)
                 return booking_from_row(updated), "rescheduled"

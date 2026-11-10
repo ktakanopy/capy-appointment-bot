@@ -27,7 +27,7 @@ def test_due_reminder_is_delivered_once_to_demo_inbox(scheduling_db):
             "SELECT count(*) AS n FROM reminder_inbox WHERE booking_id=%s", (created.booking.id,)
         ).fetchone()
     assert reminder["status"] == "delivered"
-    assert reminder["attempts"] == 1
+    assert reminder["attempts"] == 0
     assert inbox["n"] == 1
 
 
@@ -82,5 +82,5 @@ def test_worker_failure_is_retryable_then_reaches_bounded_terminal_state(schedul
             "SELECT count(*) AS n FROM reminder_inbox WHERE booking_id=%s", (created.booking.id,)
         ).fetchone()
     assert state["status"] == "delivered"
-    assert state["attempts"] == 4
+    assert state["attempts"] == 3
     assert inbox["n"] == 1

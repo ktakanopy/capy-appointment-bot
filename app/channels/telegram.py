@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import time
 from urllib import parse, request
 from urllib.error import HTTPError, URLError
 

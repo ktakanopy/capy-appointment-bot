@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, time
 
 from app.chat_helpers import _choose_professional, _choose_service, _request_key, _slot_message
-from app.graph.contracts import BookingRef, DecisionOutput, TurnResult, WorkflowDraft
+from app.graph.contracts import DecisionOutput, TurnResult, WorkflowDraft
 from app.graph.decision import DeterministicDecision, normalized_from_extraction
 from app.graph.ports import WorkflowPorts
 from app.llm.schemas import SchedulingExtraction
@@ -306,7 +306,6 @@ def clarify(state: dict, ports: WorkflowPorts) -> dict:
 
 def search(state: dict, ports: WorkflowPorts) -> dict:
     draft = _draft(state)
-    extraction = _extraction(state)
     catalog = _catalog(state)
     service = _service(catalog, draft.service_id)
     if service is None or not draft.local_date:

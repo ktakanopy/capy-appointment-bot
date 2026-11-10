@@ -11,7 +11,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml README.md ./
-COPY capy.png ./capy.png
 COPY app ./app
 COPY alembic.ini ./alembic.ini
 COPY alembic ./alembic

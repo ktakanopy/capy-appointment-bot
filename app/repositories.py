@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import Any
 
 import psycopg
-from psycopg.rows import dict_row
 
 from app.database import connect
 from app.models import (

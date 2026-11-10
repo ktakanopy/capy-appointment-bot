@@ -127,13 +127,13 @@ Set `TEST_DATABASE_URL` to a disposable PostgreSQL database whose name ends in `
 
 ## Project map
 
-- `app/main.py`: HTTP contracts, token boundary, webhook entry
+- `app/main.py`: HTTP contracts, token boundary, request entry
 - `app/cli.py`: interactive chat and owner console
 - `app/owner.py`: owner agenda and demo reminder views
 - `app/chat_adapter.py`, `app/chat_helpers.py`, `app/chat_history.py`: chat translation, token resolution, catalog matching, Redis history
 - `app/graph/`: one conversation turn (interpret, merge draft, decide, execute, persist)
 - `app/scheduling.py`: timezone-aware availability and transactional slot validation
-- `app/booking.py`: idempotent booking lifecycle, HMAC tokens, reminders, audit
+- `app/booking.py`: idempotent booking lifecycle, HMAC tokens, reminders
 - `app/repositories.py`: PostgreSQL catalog, schedule, owner, and booking reads
 - `app/channels/`: Telegram, audio decoding and splitting
 - `app/telegram_worker.py`: polling, identity checks, per-user orchestration
@@ -158,4 +158,4 @@ Proposed next work; full detail and completion evidence live in the [AI engineer
 
 Local portfolio MVP with synthetic data. Owner routes stay open unless `OWNER_API_TOKEN` is set. Telegram polling requires `TELEGRAM_BOT_TOKEN`; live voice requires a compatible Gemma server. See [security](docs/security.md) and [evaluation](docs/evaluation.md).
 
-The original [project specification](docs/Service%20Scheduling%20Agent%20%E2%80%94%20Project%20Specification.md) and [architecture source](docs/Service%20Scheduling%20Agent%20%E2%80%94%20Architecture.md) are retained as design inputs.
+The original [project specification](.archived/reference/Service%20Scheduling%20Agent%20%E2%80%94%20Project%20Specification.md) and [architecture source](.archived/reference/Service%20Scheduling%20Agent%20%E2%80%94%20Architecture.md) are archived design inputs.

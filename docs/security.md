@@ -23,7 +23,7 @@ The language model has no write tools. It extracts a typed intent only. Python s
 - `Idempotency-Key` is required on booking writes and scoped by business and operation. Reusing a key with a different request hash returns a conflict.
 - Create plus pending reminder, cancel plus pending-reminder cancellation, and reschedule plus reminder adjustment are transactional.
 - The reschedule update is atomic; a failed move leaves the old booking unchanged.
-- The reminder worker claims due rows using `FOR UPDATE SKIP LOCKED` and the inbox has a unique constraint on `reminder_id`.
+- The reminder worker selects due rows with `FOR UPDATE SKIP LOCKED` and sends inside a transaction; the inbox has a unique constraint on `reminder_id`.
 
 ## Logs and traces
 

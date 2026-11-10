@@ -245,12 +245,8 @@ class TelegramRepository:
         """Save a verified number or link to its existing customer."""
         with connect(self.database_url) as connection:
             with connection.transaction():
-                # Serialize claims for the same phone. The unique index is a
-                # final guard if another writer bypasses this repository.
-                connection.execute(
-                    "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
-                    (f"telegram-phone:{business_id}:{bot_id}:{phone}",),
-                )
+                # One polling worker per bot, so the identity row lock plus the
+                # unique indexes cover concurrent claims.
                 identity = connection.execute(
                     """SELECT customer_id FROM telegram_identities
                        WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s

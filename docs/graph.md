@@ -33,7 +33,7 @@ The graph does not authorize a customer, decide that a slot is free, mutate a bo
 1. The customer asks for a service and date, or searches using the form.
 2. Availability returns sorted slots with an opaque `slot_id`, professional, offset-aware instant, local label, duration, and price.
 3. Selecting a slot is a presentation choice only. `/bookings` recomputes policy and conflicts inside the write transaction.
-4. The booking service persists the booking, token digest, audit event, and pending reminder atomically.
+4. The booking service persists the booking, token digest, and pending reminder atomically.
 5. The UI keeps the returned private management token outside conversation state and sends it separately when managing that booking.
 
 ## Read the turn in this order
@@ -48,8 +48,8 @@ The graph does not authorize a customer, decide that a slot is free, mutate a bo
 
 ## Reminder reply
 
-The worker claims due reminder rows and sends through `DemoInboxSender` by default. It does not import LangGraph. A simulated reply in the CLI is a new `/chat` turn. The CLI sends the capability token in a separate field. The adapter resolves that token before the graph runs.
+The worker selects due reminder rows and sends through `DemoInboxSender` by default. It does not import LangGraph. A simulated reply in the CLI is a new `/chat` turn. The CLI sends the capability token in a separate field. The adapter resolves that token before the graph runs.
 
 ## Session behavior
 
-The graph checkpoint in Redis stores the scheduling draft, offered slots, and redacted messages for the session id. It expires after `SESSION_TTL_MINUTES`. This is not LangGraph's in-memory saver, and it is not appointment truth. Booking records remain in PostgreSQL. A new session can manage an existing web booking with the saved capability token.
+The graph checkpoint in Redis stores the scheduling draft, offered slots, and redacted messages for the session id. It expires after `SESSION_TTL_MINUTES`. This is not LangGraph's in-memory saver, and it is not appointment truth. Booking records remain in PostgreSQL. A new session can manage an existing booking with the saved capability token.

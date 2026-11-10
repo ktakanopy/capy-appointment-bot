@@ -99,4 +99,4 @@ def test_api_evaluates_injection_as_unprivileged_text(scheduling_db):
 
     with connect(scheduling_db["url"]) as connection:
         assert connection.execute("SELECT count(*) AS n FROM bookings").fetchone()["n"] == 1
-        assert connection.execute("SELECT count(*) AS n FROM audit_events").fetchone()["n"] == 1
+        assert connection.execute("SELECT status FROM bookings").fetchone()["status"] == "scheduled"

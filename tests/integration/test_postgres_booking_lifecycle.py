@@ -270,7 +270,6 @@ def test_booking_and_reminder_creation_roll_back_together(scheduling_db):
             assert connection.execute("SELECT count(*) AS n FROM customers").fetchone()["n"] == 0
             assert connection.execute("SELECT count(*) AS n FROM bookings").fetchone()["n"] == 0
             assert connection.execute("SELECT count(*) AS n FROM reminders").fetchone()["n"] == 0
-            assert connection.execute("SELECT count(*) AS n FROM audit_events").fetchone()["n"] == 0
             assert connection.execute("SELECT count(*) AS n FROM idempotency_records").fetchone()["n"] == 0
     finally:
         with connect(scheduling_db["url"]) as connection:
