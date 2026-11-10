@@ -34,7 +34,8 @@ _NON_NAME_WORDS = {
     "today", "tomorrow", "want", "what", "when", "would",
 }
 _CONTACT_MISMATCH = (
-    "Please use the button to share your own phone number so I can verify your account."
+    "Tap the 'Share my phone number' button below. "
+    "The contact must be your own Telegram contact."
 )
 
 
@@ -175,7 +176,7 @@ class TelegramWorker:
                 self.repository.save_reply(
                     self.bot_id,
                     update_id,
-                    greeting + "Please share your phone number to verify your account.",
+                    greeting + "Tap the button below to share your phone number and verify your account.",
                     contact_keyboard(),
                 )
             return
@@ -186,7 +187,8 @@ class TelegramWorker:
             self.repository.save_reply(
                 self.bot_id,
                 update_id,
-                "Please share your own phone number first, then send your message again.",
+                "Tap the 'Share my phone number' button below to verify your account. "
+                "Typing the number is not accepted.",
                 contact_keyboard(),
             )
             return
