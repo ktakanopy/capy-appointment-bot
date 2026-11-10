@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import time
 import uuid
+from datetime import timezone
+from zoneinfo import ZoneInfo
 
 from app.config import load_settings
 from app.database import connect
@@ -39,17 +41,25 @@ class ReminderWorker:
                 try:
                     with connection.transaction():
                         booking = connection.execute(
-                            """SELECT b.status,b.starts_at,c.full_name,s.name AS service_name
+                            """SELECT b.status,b.starts_at,biz.timezone AS business_timezone,
+                                      c.full_name,s.name AS service_name
                                FROM bookings b JOIN customers c ON c.id=b.customer_id
-                               JOIN services s ON s.id=b.service_id WHERE b.id=%s""",
+                               JOIN services s ON s.id=b.service_id
+                               JOIN businesses biz ON biz.id=b.business_id WHERE b.id=%s""",
                             (reminder["booking_id"],),
                         ).fetchone()
                         if booking is None or booking["status"] == "canceled":
                             connection.execute("UPDATE reminders SET status='canceled',claimed_at=NULL WHERE id=%s", (reminder["id"],))
                             continue
+                        starts_at = booking["starts_at"]
+                        if starts_at.tzinfo is None:
+                            starts_at = starts_at.replace(tzinfo=timezone.utc)
+                        local_label = starts_at.astimezone(
+                            ZoneInfo(booking["business_timezone"])
+                        ).strftime("%Y-%m-%d %H:%M %Z")
                         message = (
                             f"Reminder: {booking['service_name']} is scheduled for "
-                            f"{booking['starts_at'].isoformat()}. Reply here if you need to reschedule."
+                            f"{local_label}. Reply here if you need to reschedule."
                         )
                         self.sender.send(connection, reminder, booking, message)
                         connection.execute(

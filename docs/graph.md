@@ -44,11 +44,11 @@ The graph does not authorize a customer, decide that a slot is free, mutate a bo
 4. `app/graph/decision.py` proposes an action. `route_turn` in `steps.py` rejects an action that the draft does not allow.
 5. `app/booking.py` performs the write. Search the called method, not the graph, for SQL and token handling.
 
-`app/graph/workflow.py` is the public entry, `handle_turn`. It binds the ports for that call and returns text, intent, slots, and, for the web caller only, a management token. The token is not stored in the draft.
+`app/graph/workflow.py` is the public entry, `handle_turn`. It binds the ports for that call and returns text, intent, slots, and, for a trusted local or HTTP caller, a management token. The token is not stored in the draft.
 
 ## Reminder reply
 
-The worker claims due reminder rows and sends through `DemoInboxSender` by default. It does not import LangGraph. A simulated reply in Streamlit is a new `/chat` request. The page sends the capability token in a separate field. The adapter resolves that token before the graph runs.
+The worker claims due reminder rows and sends through `DemoInboxSender` by default. It does not import LangGraph. A simulated reply in the CLI is a new `/chat` turn. The CLI sends the capability token in a separate field. The adapter resolves that token before the graph runs.
 
 ## Session behavior
 

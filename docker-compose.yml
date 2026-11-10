@@ -76,7 +76,6 @@ services:
       GEMMA_BASE_URL: ${GEMMA_BASE_URL:-http://host.docker.internal:8081}
       LAYA_BASE_URL: ${LAYA_BASE_URL:-http://host.docker.internal:8082}
       LLM_PROVIDER: ${LLM_PROVIDER:-deterministic}
-      SMS_WEBHOOK_SECRET: ${SMS_WEBHOOK_SECRET:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
       CHAT_REDIS_URL: redis://chat-redis:6379/0
@@ -85,11 +84,7 @@ services:
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-lf_sk_local_dev_key}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse-web:3000}
       SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-60}
-      FRONTEND_API_BASE_URL: http://api:8000
       OWNER_API_TOKEN: ${OWNER_API_TOKEN:-}
-      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
-      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
-      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
     depends_on:
       app-postgres:
         condition: service_healthy
@@ -144,19 +139,6 @@ services:
     depends_on:
       api:
         condition: service_healthy
-
-  frontend:
-    build:
-      context: .
-    command: streamlit run frontend/streamlit_app.py --server.address 0.0.0.0 --server.port 8501
-    environment:
-      FRONTEND_API_BASE_URL: http://api:8000
-      DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
-    depends_on:
-      api:
-        condition: service_healthy
-    ports:
-      - "8501:8501"
 
   langfuse-web:
     profiles: ["observability"]

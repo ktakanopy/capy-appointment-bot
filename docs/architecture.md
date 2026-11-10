@@ -6,8 +6,7 @@ This note describes the code that runs today. The target product shape is in `do
 
 ```mermaid
 flowchart LR
-  Browser[Streamlit] --> API[FastAPI adapters]
-  WhatsApp[WhatsApp webhook] --> API
+  CLI[CLI / REST client] --> API[FastAPI adapters]
   Telegram[Telegram Bot API] <--> TelegramWorker[Telegram polling worker]
   TelegramWorker --> TelegramLedger[TelegramRepository]
   TelegramLedger --> DB[(PostgreSQL)]
@@ -49,7 +48,7 @@ PostgreSQL is appointment truth. Redis is short-lived conversation state. The mo
 
 The Telegram worker and its media path are implemented but have not been started or verified against a live bot or Gemma server.
 
-The direct endpoints `POST /availability/search` and `POST /bookings` do not enter the graph. The Streamlit forms use them. Web and messaging channels share the graph, while the direct endpoints remain available.
+The direct endpoints `POST /availability/search` and `POST /bookings` do not enter the graph. The CLI and direct REST clients use them. The CLI and Telegram share the graph, while the direct endpoints remain available.
 
 ## Compiled conversation graph
 
@@ -265,8 +264,10 @@ classDiagram
 
 | Code | Owns | Does not own |
 |---|---|---|
-| `app/main.py` | HTTP routes, owner-token check, webhook entry | Which conversation step runs |
-| `app/chat_adapter.py` | Web chat translation, token resolution, ports for this request | Booking SQL |
+| `app/main.py` | HTTP routes, owner-token check, request entry | Which conversation step runs |
+| `app/cli.py` | Interactive customer and owner console | Booking policy or SQL |
+| `app/owner.py` | Owner agenda and demo reminder views | Which conversation step runs |
+| `app/chat_adapter.py` | Chat translation, token resolution, ports for this request | Booking SQL |
 | `app/telegram_worker.py` | Telegram polling, self-contact verification, text/audio routing, per-user session orchestration | Booking policy or calendar availability |
 | `app/channels/telegram.py` | Telegram Bot API calls, bounded file download, safe transport errors | Customer ownership or scheduling policy |
 | `app/channels/telegram_repository.py` | Telegram identity links, durable update offsets/receipts, and reply retries | Booking records |
@@ -276,7 +277,6 @@ classDiagram
 | `app/graph/steps.py` | Draft merge, clarification, search, selection, FAQ, lookup, escalation, and the execute call | Overlap policy and token generation |
 | `app/scheduling.py` | Which times are valid | Conversation copy |
 | `app/booking.py` | Create, confirm, cancel, reschedule, idempotency, audit, token digest | Reading the customer's sentence |
-| `app/channels/whatsapp.py` | Signature check, sender mapping, dedupe, same workflow call | A second copy of the booking flow |
 | `app/telegram_worker.py` | Telegram self-contact links the numeric user ID to the verified phone/customer | Trusting a username or a phone typed in chat |
 | `app/reminders.py` | Claim due reminders and send through a sender port | LangGraph |
 
@@ -284,11 +284,11 @@ classDiagram
 
 The draft remembers the operation: `create`, `reschedule`, `confirm`, `cancel`, or `none`. It also remembers the service, date, offered slot ids, and the missing field.
 
-A management token authorizes the web caller. A verified WhatsApp sender or Telegram self-contact authorizes the linked customer. Neither one changes the operation. Saying "book another" while a token is present creates a booking. Saying "move it" is what starts a reschedule.
+A management token authorizes the CLI or web caller. A verified Telegram self-contact authorizes the linked customer. Neither one changes the operation. Saying "book another" while a token is present creates a booking. Saying "move it" is what starts a reschedule.
 
 If the bot asked for a date and the reply contains a date, the draft continues even when the interpreter returns `unknown`. An invalid date asks again and writes nothing.
 
-"When is my appointment?" uses the verified customer and PostgreSQL. A phone number typed or spoken in a message is not proof of identity. Telegram requires sharing the account's own contact; the numeric Telegram user ID is the durable channel key, and the username is optional display metadata. On the web demo, the page holds the management token and sends it outside the chat text.
+"When is my appointment?" uses the verified customer and PostgreSQL. A phone number typed or spoken in a message is not proof of identity. Telegram requires sharing the account's own contact; the numeric Telegram user ID is the durable channel key, and the username is optional display metadata. In the CLI, the process holds the management token and sends it outside the chat text.
 
 ## State
 
@@ -301,17 +301,17 @@ If the bot asked for a date and the reply contains a date, the draft continues e
 | Telegram update receipt and polling offset | PostgreSQL `telegram_updates` and `telegram_poll_offsets` | Delivered receipts: 30 days; active receipts until completion |
 | Telegram reply waiting for delivery | PostgreSQL `telegram_updates.reply_text` | Until successfully sent |
 
-Restarting the API does not delete a booking. It can drop an in-progress Redis draft after the TTL. The web demo can still manage the booking with the saved token.
+Restarting the API does not delete a booking. It can drop an in-progress Redis draft after the TTL. The CLI can still manage the booking with the saved token.
 
 ## Messaging channels
 
-The customer channels are WhatsApp and Telegram. Streamlit is only a local demo surface. A customer authorizes themself by messaging from a verified account. They do not paste a token into the chat.
+The customer channel is Telegram. The CLI is a local demo and owner surface. A customer authorizes themself by messaging from a verified account. They do not paste a token into the chat.
 
-Telegram uses an optional polling worker and calls the same graph as the web adapter. It accepts text, voice notes, and audio uploads. The worker requires verified phone sharing and does not deliver the booking management token. The WhatsApp webhook handles inbound text but has no live Meta send integration.
+Telegram uses an optional polling worker and calls the same graph as the HTTP adapter. It accepts text, voice notes, and audio uploads. The worker requires verified phone sharing and does not deliver the booking management token.
 
 `BookingService` creates the booking token. The graph and the channel do not. It happens only after the customer picks an offered slot and the create write is allowed. The service signs `booking-manage:v1:{booking_id}:1` with `BOOKING_TOKEN_SECRET`, saves the SHA-256 digest on the new booking row, and keeps the raw token out of the reply.
 
-The diagram shows Telegram's implemented polling path and the shared scheduling graph. The WhatsApp webhook still handles inbound text separately and has no live Meta send.
+The diagram shows Telegram's implemented polling path and the shared scheduling graph.
 
 ```mermaid
 flowchart TD
@@ -374,7 +374,7 @@ flowchart LR
   Raw --> Digest[SHA-256 digest saved on the booking]
   Raw --> Internal[Used only inside BookingService for confirm, cancel, and reschedule]
   Digest --> DB[(PostgreSQL)]
-  Raw -. never .-> Chat[WhatsApp or Telegram reply]
+  Raw -. never .-> Chat[Telegram reply or CLI]
   Raw -. never .-> Graph[Graph state, logs, or model prompt]
 ```
 
@@ -383,13 +383,11 @@ flowchart LR
 | Booking management token | Every successful `BookingService.create`, and again on an idempotent replay of that create | No customer. The service rebuilds it from the booking id, version, and `BOOKING_TOKEN_SECRET` when a verified sender changes that booking. | One booking. Stored as a digest. |
 | Idempotency key | One per create, confirm, cancel, or reschedule call | The channel adapter, not the customer | Replaying the same write does not create a second booking |
 | Conversation id | First message from a sender on a channel | Nobody. It is a hash of business, channel, and sender. | Redis checkpoint for that thread |
-| Provider message id | Assigned by WhatsApp or Telegram | Stored by the channel adapter | Deduplicate webhook messages and Telegram polling updates |
-| Webhook verify token | Configured in `WHATSAPP_VERIFY_TOKEN`, not created per user | Meta during webhook setup | Proves this server owns the callback URL |
-| App secret | Configured in `WHATSAPP_APP_SECRET` | Nobody. It checks `X-Hub-Signature-256`. | Proves the webhook body came from Meta |
+| Provider message id | Assigned by Telegram | Stored by the channel adapter | Deduplicate polling updates |
 | Owner token | Configured in `OWNER_API_TOKEN` | The business owner, on owner routes only | Read the agenda and change reminder settings |
 
-`BOOKING_TOKEN_SECRET` is not a customer token. It is the signing key. Rotating it invalidates every management token already issued. The booking rows remain. A verified WhatsApp or Telegram sender can still manage their own booking because the service checks `customer_id` before it rebuilds the internal token.
+`BOOKING_TOKEN_SECRET` is not a customer token. It is the signing key. Rotating it invalidates every management token already issued. The booking rows remain. A verified Telegram sender can still manage their own booking because the service checks `customer_id` before it rebuilds the internal token.
 
 ## What is not built
 
-WhatsApp signature verification and inbound text handling exist, but there is no live Meta send. Telegram polling, identity persistence, voice chunking, and safe reply delivery are implemented in the working tree; they have not been validated against a live bot, database migration, or Gemma audio server. Gemma and Laya call configured local servers; model weights are not bundled here. Reminders still land in the demo inbox unless a different sender is injected. Owner routes stay open unless `OWNER_API_TOKEN` is set. There is no calendar, payment, location, or deposit adapter.
+WhatsApp and SMS are archived under `.archived/` and are not part of the running app. Telegram polling, identity persistence, voice chunking, and safe reply delivery are implemented in the working tree; they have not been validated against a live bot, database migration, or Gemma audio server. Gemma and Laya call configured local servers; model weights are not bundled here. Reminders still land in the demo inbox unless a different sender is injected. Owner routes stay open unless `OWNER_API_TOKEN` is set. There is no calendar, payment, location, or deposit adapter.

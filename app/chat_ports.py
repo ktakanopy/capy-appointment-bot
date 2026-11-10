@@ -181,17 +181,20 @@ class ChatPorts:
 
     def list_booking_refs(self) -> list[BookingRef]:
         bookings = []
-        if self.customer_id and hasattr(
+        if getattr(self, "authorized_booking", None) is not None:
+            bookings = [self.authorized_booking]
+        elif self.customer_id and hasattr(
             self.runtime.repository, "list_customer_bookings"
         ):
             bookings = self.runtime.repository.list_customer_bookings(
                 self.business_id, self.customer_id
             )
-        elif getattr(self, "authorized_booking", None) is not None:
-            bookings = [self.authorized_booking]
         return [
             BookingRef(
-                id=item.id, service_id=item.service_id, label=item.starts_at.isoformat()
+                id=item.id,
+                service_id=item.service_id,
+                professional_id=item.professional_id,
+                label=item.starts_at.isoformat(),
             )
             for item in bookings
         ]

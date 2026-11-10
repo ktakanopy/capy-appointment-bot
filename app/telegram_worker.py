@@ -17,7 +17,7 @@ from app.graph.decision import normalized_from_extraction
 from app.models import ChatRequest, CustomerInput, DomainError
 from app.observability import log_event
 from app.runtime import close_runtime, create_runtime
-from app.channels.whatsapp import canonical_phone
+from app.channels.phone import canonical_phone
 
 
 _PHONE_CANDIDATE = re.compile(r"(?<!\w)\+?\d[\d\s().-]{5,22}\d(?!\w)")

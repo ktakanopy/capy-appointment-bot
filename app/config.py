@@ -10,7 +10,6 @@ class Settings:
     database_url: str
     booking_token_secret: str | None
     demo_business_id: str
-    frontend_api_base_url: str
     session_ttl_minutes: int
     llm_provider: str
     openai_api_key: str | None
@@ -20,15 +19,11 @@ class Settings:
     langfuse_public_key: str | None
     langfuse_secret_key: str | None
     langfuse_host: str | None
-    whatsapp_app_secret: str | None = None
-    whatsapp_verify_token: str | None = None
-    whatsapp_phone_number_id: str | None = None
     owner_api_token: str | None = None
     understanding_provider: str = "gemma"
     decision_provider: str = "laya"
     gemma_base_url: str = "http://localhost:8081"
     laya_base_url: str = "http://localhost:8082"
-    sms_webhook_secret: str | None = None
     telegram_bot_token: str | None = None
     telegram_poll_seconds: int = 20
     telegram_audio_max_bytes: int = 20_000_000
@@ -68,7 +63,6 @@ def load_settings() -> Settings:
         ),
         booking_token_secret=os.getenv("BOOKING_TOKEN_SECRET"),
         demo_business_id=os.getenv("DEMO_BUSINESS_ID", "demo-studio"),
-        frontend_api_base_url=os.getenv("FRONTEND_API_BASE_URL", "http://localhost:8000"),
         session_ttl_minutes=int(os.getenv("SESSION_TTL_MINUTES", "60")),
         llm_provider=os.getenv("LLM_PROVIDER", "deterministic").lower(),
         openai_api_key=os.getenv("OPENAI_API_KEY"),
@@ -78,15 +72,11 @@ def load_settings() -> Settings:
         langfuse_public_key=public_key,
         langfuse_secret_key=secret_key,
         langfuse_host=os.getenv("LANGFUSE_HOST"),
-        whatsapp_app_secret=os.getenv("WHATSAPP_APP_SECRET"),
-        whatsapp_verify_token=os.getenv("WHATSAPP_VERIFY_TOKEN"),
-        whatsapp_phone_number_id=os.getenv("WHATSAPP_PHONE_NUMBER_ID"),
         owner_api_token=os.getenv("OWNER_API_TOKEN"),
         understanding_provider=os.getenv("UNDERSTANDING_PROVIDER", "gemma").lower(),
         decision_provider=os.getenv("DECISION_PROVIDER", "laya").lower(),
         gemma_base_url=os.getenv("GEMMA_BASE_URL", "http://localhost:8081"),
         laya_base_url=os.getenv("LAYA_BASE_URL", "http://localhost:8082"),
-        sms_webhook_secret=os.getenv("SMS_WEBHOOK_SECRET"),
         telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN") or None,
         telegram_poll_seconds=int(os.getenv("TELEGRAM_POLL_SECONDS", "20")),
         telegram_audio_max_bytes=int(os.getenv("TELEGRAM_AUDIO_MAX_BYTES", "20000000")),

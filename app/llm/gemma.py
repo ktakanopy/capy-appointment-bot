@@ -21,7 +21,7 @@ class ProviderError(RuntimeError):
 
 
 class GemmaUnderstanding:
-    """Text, SMS, and audio understanding through a local Gemma 3n E2B server.
+    """Text and audio understanding through a local Gemma 3n E2B server.
 
     The model returns scheduling fields only. It does not choose a graph node
     or decide that a time is free.

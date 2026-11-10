@@ -31,4 +31,4 @@ Application logs and Langfuse metadata include intent, outcome, slot count, and 
 
 ## Demo limitations
 
-The owner agenda is unauthenticated and should only be used with local synthetic data. The customer UI stores the management token in the current Streamlit session so the user can complete the demo. Use TLS, real owner authentication, secret management, retention controls, rate limiting, and a reviewed privacy model before adapting this to real customers.
+The owner agenda is unauthenticated and should only be used with local synthetic data. The CLI keeps the management token in memory for the session and sends it in a separate request field so the user can complete the demo. Use TLS, real owner authentication, secret management, retention controls, rate limiting, and a reviewed privacy model before adapting this to real customers.

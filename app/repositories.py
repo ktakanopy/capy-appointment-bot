@@ -13,6 +13,7 @@ from app.models import (
     Business,
     CatalogResponse,
     Customer,
+    OwnerBooking,
     Professional,
     Service,
 )
@@ -187,13 +188,27 @@ class PostgresRepository:
             row = connection.execute(BOOKING_SELECT + " WHERE b.id=%s", (booking_id,)).fetchone()
         return booking_from_row(row) if row else None
 
-    def list_owner_bookings(self, business_id: str, start: datetime, end: datetime) -> list[Booking]:
+    def list_owner_bookings(self, business_id: str, start: datetime, end: datetime) -> list[OwnerBooking]:
         with self.connection() as connection:
             rows = connection.execute(
-                BOOKING_SELECT + " WHERE b.business_id=%s AND b.starts_at >= %s AND b.starts_at < %s ORDER BY b.starts_at",
+                """SELECT b.*,c.full_name AS customer_name,c.phone AS customer_phone,
+                          c.email AS customer_email,r.status AS reminder_status
+                   FROM bookings b JOIN customers c ON c.id=b.customer_id
+                   LEFT JOIN LATERAL (
+                       SELECT status FROM reminders WHERE booking_id=b.id
+                       ORDER BY created_at DESC LIMIT 1
+                   ) r ON true
+                   WHERE b.business_id=%s AND b.starts_at >= %s AND b.starts_at < %s
+                   ORDER BY b.starts_at""",
                 (business_id, start, end),
             ).fetchall()
-        return [booking_from_row(row) for row in rows]
+        return [
+            OwnerBooking(
+                **booking_from_row(row).model_dump(),
+                reminder_status=row["reminder_status"],
+            )
+            for row in rows
+        ]
 
     @staticmethod
     def row_booking(connection: psycopg.Connection, booking_id: str, *, for_update: bool = False):

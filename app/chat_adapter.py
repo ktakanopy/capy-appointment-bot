@@ -49,9 +49,9 @@ def _require_catalog(runtime: RuntimeContext, request: ChatRequest) -> CatalogRe
 
 
 def _authorize_web_booking(runtime: RuntimeContext, token: str | None):
-    """Turn a web management token into a booking id.
+    """Turn a management token into a booking id.
 
-    The token proves that this browser may manage one booking. It is checked
+    The token proves that this caller may manage one booking. It is checked
     here and is not passed into the graph. No token means an anonymous turn.
     """
     if not token:
@@ -129,7 +129,7 @@ def _run_workflow_turn(
 def _to_chat_response(session_id: str, result) -> ChatResponse:
     """Map the graph result back to the HTTP chat contract.
 
-    The management token is included only for the trusted web caller. It is
+    The management token is included only for the trusted caller. It is
     not part of the saved draft or the model input.
     """
     return ChatResponse(
@@ -145,7 +145,7 @@ def _to_chat_response(session_id: str, result) -> ChatResponse:
 def handle_chat(
     runtime: RuntimeContext, request: ChatRequest, idempotency_key: str | None
 ) -> ChatResponse:
-    """Run one web chat turn without choosing the conversation step.
+    """Run one chat turn without choosing the conversation step.
 
     The route validates HTTP input and calls this adapter. The adapter prepares
     a safe turn, the workflow graph decides what happens, and this function

@@ -384,8 +384,8 @@ def prepare_action(state: dict, ports: WorkflowPorts) -> dict:
         )
     if draft.operation == "reschedule":
         booking_id = state.get("booking_id") or draft.active_booking_id
+        refs = ports.list_booking_refs()
         if not booking_id:
-            refs = ports.list_booking_refs()
             if not refs:
                 draft.operation = "create"
                 draft.missing = "date" if not draft.local_date else "none"
@@ -407,12 +407,24 @@ def prepare_action(state: dict, ports: WorkflowPorts) -> dict:
                 )
             booking_id = refs[0].id
             draft.active_booking_id = booking_id
+        if not draft.service_id:
+            selected = next((item for item in refs if item.id == booking_id), None)
+            if selected is not None:
+                draft.service_id = selected.service_id
+                draft.professional_id = (
+                    draft.professional_id or selected.professional_id
+                )
         if not draft.pending_slot_id:
             if draft.local_date and draft.service_id:
                 return search({**state, "draft": draft.model_dump(mode="json"), "booking_id": booking_id}, ports)
-            draft.missing = "date"
+            draft.missing = "service" if not draft.service_id else "date"
+            text = (
+                "Which service is the booking for?"
+                if not draft.service_id
+                else "What date would you like to move the booking to?"
+            )
             return _result(
-                "What date would you like to move the booking to?",
+                text,
                 "reschedule",
                 route="persist",
                 draft=draft.model_dump(mode="json"),

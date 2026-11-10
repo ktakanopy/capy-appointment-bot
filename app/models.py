@@ -231,9 +231,13 @@ class BookingSummary(Contract):
     outcome: str = "created"
 
 
+class OwnerBooking(Booking):
+    reminder_status: ReminderStatus | None = None
+
+
 class OwnerBookingsResponse(Contract):
     business: Business
-    bookings: list[Booking]
+    bookings: list[OwnerBooking]
 
 
 class DemoReminder(Contract):

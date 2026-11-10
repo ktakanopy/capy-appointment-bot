@@ -1,6 +1,6 @@
 # CAPY-bot — Service Scheduling MVP
 
-A portfolio MVP for appointment-based service businesses. Customers find a real available slot, book it, and manage the booking with a private capability token. Owners see the agenda, and a reminder worker simulates delivery into a demo inbox.
+A portfolio MVP for appointment-based service businesses. Customers find a real available slot, book it, and manage the booking with a private capability token. Owners review the agenda from the CLI, and a reminder worker simulates delivery into a demo inbox.
 
 The design keeps a hard boundary: models interpret language and propose an action; deterministic application code decides availability and commits bookings. The repository also includes a scenario benchmark, provider fallbacks, and optional Langfuse traces.
 
@@ -14,9 +14,19 @@ Requirements: Docker Compose. No LLM API key is required: the default Gemma/Laya
 docker compose up --build
 ```
 
-Open the Streamlit app at [http://localhost:8501](http://localhost:8501). The API and OpenAPI page are at [http://localhost:8000](http://localhost:8000) and [http://localhost:8000/docs](http://localhost:8000/docs).
+Open the API and OpenAPI page at [http://localhost:8000](http://localhost:8000) and [http://localhost:8000/docs](http://localhost:8000/docs). Then run the CLI in the API container:
 
-Compose starts the API, Streamlit, PostgreSQL, Redis, and the reminder worker, applies the Alembic migration, and seeds a synthetic business. The app database is separate from the optional Langfuse database.
+```bash
+docker compose run --rm api python -m app.cli
+```
+
+Compose starts the API, PostgreSQL, Redis, and the reminder worker, applies the Alembic migration, and seeds a synthetic business. The app database is separate from the optional Langfuse database.
+
+To test through Telegram instead, set `TELEGRAM_BOT_TOKEN` and start the worker profile:
+
+```bash
+docker compose --profile telegram up --build
+```
 
 For a guaranteed offline run without provider timeouts:
 
@@ -28,9 +38,9 @@ UNDERSTANDING_PROVIDER=deterministic DECISION_PROVIDER=deterministic docker comp
 
 1. Choose a service, date, and optional professional, then find availability.
 2. Select a slot and enter a name and phone number.
-3. Save the private management token shown with the booking.
-4. Confirm, cancel, or move the booking. The owner tab shows the agenda.
-5. The demo business schedules a reminder five minutes before the booking. The worker writes it to the inbox; replying starts a new `/chat` turn with the token sent separately.
+3. Save the private management token the CLI prints with the booking.
+4. Confirm, cancel, or move the booking. `/owner` prints the agenda and reminder status.
+5. The demo business schedules a reminder five minutes before the booking. The worker writes it to the inbox; replying starts a new chat turn with the token attached.
 
 The seeded business is a wellness studio with two professionals and one massage service. It is fixture data only; the model supports multiple businesses, services, and assignments. Pass `--include-second-business` to `uv run python -m app.seed` to add another synthetic business.
 
@@ -42,15 +52,17 @@ The seeded business is a wellness studio with two professionals and one massage 
 - Answers bounded catalog questions such as price, duration, and the demo cancellation rule.
 - Looks up appointments only for a verified channel identity. A phone number typed in chat is not enough.
 
-The bot does not answer general business questions, use a RAG knowledge base, or deliver outbound WhatsApp/email. WhatsApp webhook verification is present, but outbound delivery is not connected.
+The bot does not answer general business questions, use a RAG knowledge base, or deliver outbound email. WhatsApp and SMS are archived, not active.
 
 ## Architecture
 
 ![Architecture overview](docs/architecture-overview.svg)
 
-PostgreSQL is the source of truth; Redis holds short-lived drafts and checkpoints. The LangGraph turn may propose an action, but availability and booking rules live in `app/scheduling.py` and `app/booking.py`. The Streamlit forms use direct REST endpoints that call the same domain services without the graph.
+PostgreSQL is the source of truth; Redis holds short-lived drafts and checkpoints. The LangGraph turn may propose an action, but availability and booking rules live in `app/scheduling.py` and `app/booking.py`. Direct REST clients and the CLI use the same domain services without the graph.
 
-Read more: [architecture](docs/architecture.md) · [conversation graph](docs/graph.md) · [security](docs/security.md).
+> The WhatsApp, SMS, and Streamlit implementations are retained under [`.archived/`](.archived/) for reference and are not part of the running app.
+
+Read more: [architecture](docs/architecture.md) · [conversation graph](docs/graph.md) · [idempotency](docs/idempotency.md) · [security](docs/security.md).
 
 ## AI interpretation
 
@@ -64,11 +76,9 @@ Gemma and Laya call configured local servers; model weights and servers are not 
 
 ## Known limitations
 
-- A booking created in the web chat can lose its management token before the Streamlit UI displays it (open P1 from the PR review). Use the direct booking form for the demo until the widget state is fixed.
-- A later chat search that returns no availability keeps the previous slot list visible (open P2).
-- Reminder text renders the stored instant in UTC rather than the business timezone, and the owner agenda has no per-booking reminder status (open P2).
 - Telegram and Gemma audio are implemented but not validated end-to-end against a live bot, database migration, and real recordings.
-- WhatsApp outbound delivery, email, calendar sync, and payments are not connected.
+- Gemma and Laya servers and weights are not bundled. A successful fallback is not a successful model prediction.
+- Email, calendar sync, and payments are not connected. WhatsApp and SMS are archived, not active.
 
 ## API overview
 
@@ -79,8 +89,7 @@ Gemma and Laya call configured local servers; model weights and servers are not 
 - `GET /bookings/me` with `X-Booking-Token`
 - `POST /bookings/me/confirm`, `/cancel`, and `/reschedule` with the token and idempotency key
 - `POST /sessions/new` and `POST /chat`
-- `GET /owner/bookings`, `GET /demo/reminders`, `PATCH /owner/settings`
-- `GET|POST /webhooks/whatsapp`, `POST /webhooks/sms`
+- `GET /owner/bookings`, `GET /demo/reminders`, `PATCH /owner/settings` (also available through `/owner` in the CLI)
 
 Slot results are references, not reservations: `/bookings` recalculates the slot inside the write transaction, and PostgreSQL rejects overlapping active bookings for the same professional. Rescheduling updates the booking and reminder in one transaction.
 
@@ -101,10 +110,10 @@ uv run python -m app.seed
 uv run uvicorn app.main:app --reload
 ```
 
-In another terminal:
+In another terminal (with the same exports):
 
 ```bash
-uv run streamlit run frontend/streamlit_app.py
+uv run python -m app.cli
 ```
 
 Checks:
@@ -119,16 +128,19 @@ Set `TEST_DATABASE_URL` to a disposable PostgreSQL database whose name ends in `
 ## Project map
 
 - `app/main.py`: HTTP contracts, token boundary, webhook entry
-- `app/chat_adapter.py`, `app/chat_helpers.py`, `app/chat_history.py`: web chat translation, token resolution, catalog matching, Redis history
+- `app/cli.py`: interactive chat and owner console
+- `app/owner.py`: owner agenda and demo reminder views
+- `app/chat_adapter.py`, `app/chat_helpers.py`, `app/chat_history.py`: chat translation, token resolution, catalog matching, Redis history
 - `app/graph/`: one conversation turn (interpret, merge draft, decide, execute, persist)
 - `app/scheduling.py`: timezone-aware availability and transactional slot validation
 - `app/booking.py`: idempotent booking lifecycle, HMAC tokens, reminders, audit
-- `app/repositories.py`: PostgreSQL catalog, schedule, and booking reads
-- `app/channels/`: WhatsApp, Telegram, SMS, audio decoding and splitting
+- `app/repositories.py`: PostgreSQL catalog, schedule, owner, and booking reads
+- `app/channels/`: Telegram, audio decoding and splitting
 - `app/telegram_worker.py`: polling, identity checks, per-user orchestration
 - `app/reminders.py`: reminder worker and replaceable sender (demo inbox by default)
-- `frontend/`: customer booking flow and read-only owner agenda
 - `alembic/`: versioned schema, including the overlap exclusion constraint
+
+Archived code lives under [`.archived/`](.archived/) and is not imported by the app.
 
 ## Roadmap
 

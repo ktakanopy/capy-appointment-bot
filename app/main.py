@@ -1,21 +1,19 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import secrets
 from contextlib import asynccontextmanager
-from datetime import date, datetime, time, timedelta
-from zoneinfo import ZoneInfo
+from datetime import date
 
 from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse
 
-from app.channels.sms import process_sms
-from app.channels.whatsapp import process_inbound, verify_subscription
 from app.chat_adapter import handle_chat
 from app.database import database_is_ready
+from app.owner import demo_reminders as load_demo_reminders
+from app.owner import owner_agenda
 from app.models import (
     AvailabilityResponse,
     AvailabilitySearchRequest,
@@ -25,7 +23,6 @@ from app.models import (
     CatalogResponse,
     ChatRequest,
     ChatResponse,
-    DemoReminder,
     DemoRemindersResponse,
     DomainError,
     HealthResponse,
@@ -95,11 +92,6 @@ def _catalog(runtime: RuntimeContext, business_id: str) -> CatalogResponse:
     if result is None:
         raise DomainError("business_not_found", "Business not found.", 404)
     return result
-
-
-def _local_today(catalog: CatalogResponse) -> date:
-    """Get today's date in the business timezone for interpreting relative dates."""
-    return datetime.now(ZoneInfo(catalog.business.timezone)).date()
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -230,21 +222,7 @@ def owner_bookings(
     runtime: RuntimeContext = Depends(get_runtime),
     _owner: None = Depends(require_owner),
 ):
-    business_id = business_id or runtime.settings.demo_business_id
-    catalog = _catalog(runtime, business_id)
-    start = start_date or _local_today(catalog)
-    end = end_date or (start + timedelta(days=7))
-    if end < start or (end - start).days > 60:
-        raise DomainError(
-            "invalid_date_range", "Date range must be within 60 days.", 422
-        )
-    zone = ZoneInfo(catalog.business.timezone)
-    start_at = datetime.combine(start, time.min, zone)
-    end_at = datetime.combine(end + timedelta(days=1), time.min, zone)
-    return OwnerBookingsResponse(
-        business=catalog.business,
-        bookings=runtime.repository.list_owner_bookings(business_id, start_at, end_at),
-    )
+    return owner_agenda(runtime, business_id, start_date, end_date)
 
 
 @app.get("/demo/reminders", response_model=DemoRemindersResponse)
@@ -253,56 +231,7 @@ def demo_reminders(
     runtime: RuntimeContext = Depends(get_runtime),
     _owner: None = Depends(require_owner),
 ):
-    business_id = business_id or runtime.settings.demo_business_id
-    with runtime.repository.connection() as connection:
-        rows = connection.execute(
-            """SELECT i.id,i.reminder_id,i.booking_id,c.full_name AS customer_name,
-                      s.name AS service_name,b.starts_at,i.message,i.delivered_at
-               FROM reminder_inbox i JOIN bookings b ON b.id=i.booking_id
-               JOIN customers c ON c.id=b.customer_id JOIN services s ON s.id=b.service_id
-               WHERE i.business_id=%s ORDER BY i.delivered_at DESC LIMIT 100""",
-            (business_id,),
-        ).fetchall()
-    return DemoRemindersResponse(reminders=[DemoReminder(**row) for row in rows])
-
-
-@app.get("/webhooks/whatsapp")
-def whatsapp_verify(
-    hub_mode: str | None = Query(default=None, alias="hub.mode"),
-    hub_verify_token: str | None = Query(default=None, alias="hub.verify_token"),
-    hub_challenge: str | None = Query(default=None, alias="hub.challenge"),
-    runtime: RuntimeContext = Depends(get_runtime),
-):
-    challenge = verify_subscription(
-        hub_mode,
-        hub_verify_token,
-        hub_challenge,
-        getattr(runtime.settings, "whatsapp_verify_token", None),
-    )
-    if challenge is None:
-        raise DomainError("invalid_subscription", "Webhook verification failed.", 403)
-    return PlainTextResponse(challenge)
-
-
-@app.post("/webhooks/sms")
-async def sms_inbound(request: Request, runtime: RuntimeContext = Depends(get_runtime)):
-    body = await request.body()
-    signature = request.headers.get("x-sms-signature")
-    status, payload = await asyncio.to_thread(process_sms, runtime, body, signature)
-    return JSONResponse(status_code=status, content=payload)
-
-
-@app.post("/webhooks/whatsapp")
-async def whatsapp_inbound(
-    request: Request, runtime: RuntimeContext = Depends(get_runtime)
-):
-    body = await request.body()
-    signature = request.headers.get("x-hub-signature-256")
-    status, payload = await asyncio.to_thread(process_inbound, runtime, body, signature)
-    return JSONResponse(
-        status_code=status,
-        content=payload if isinstance(payload, dict) else {"received": payload},
-    )
+    return load_demo_reminders(runtime, business_id)
 
 
 @app.patch("/owner/settings")

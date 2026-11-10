@@ -14,6 +14,11 @@ _LOOKUP = re.compile(
     r"\b(when is my|my appointment|my booking|que horas|meu hor[aá]rio|minha consulta|meu agendamento)\b",
     re.I,
 )
+_OVERRIDE = re.compile(
+    r"\b(ignore|disregard|forget)\b[^.!?]{0,60}\b(rules?|instructions?|prompt|policy|policies)\b"
+    r"|\b(system prompt|jailbreak|developer message)\b",
+    re.I,
+)
 
 
 class DecisionEngine:
@@ -22,6 +27,13 @@ class DecisionEngine:
 
 class DeterministicDecision:
     def decide(self, request: NormalizedRequest, draft: WorkflowDraft) -> DecisionOutput:
+        if request.intent in {"unknown", "help"} and _OVERRIDE.search(request.transcript):
+            return DecisionOutput(
+                next_action="ESCALATE",
+                confidence=0.1,
+                needs_human=True,
+                reason_code="instruction_override",
+            )
         if request.intent == "confirm":
             return DecisionOutput(next_action="CONFIRM", confidence=0.95, needs_human=False)
         if request.intent == "cancel":

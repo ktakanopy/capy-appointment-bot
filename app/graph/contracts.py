@@ -82,6 +82,7 @@ class BookingRef(BaseModel):
 
     id: str
     service_id: str
+    professional_id: str | None = None
     label: str
 
 

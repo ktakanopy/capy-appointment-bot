@@ -23,6 +23,6 @@ TEST_DATABASE_URL=postgresql://user:password@localhost:5433/scheduling_test \
 
 The API and persistence scenarios assert structured outcomes for date clarification, service-backed slots, idempotent replay, stale-slot rejection, prompt-injection resistance, booking conflicts, transaction rollback, concurrent creates, reminder retries, and reminder-reply rescheduling. The API reminder journey also checks the owner agenda and that the management token stays out of graph state and logs.
 
-The browser walkthrough was exercised locally with PostgreSQL, FastAPI, Streamlit, and a reminder-worker delivery: search, book, confirm, inspect the owner agenda, receive a simulated reminder reply, and move the booking. Docker Compose startup could not be exercised because Docker was unavailable in the implementation environment.
+The customer walkthrough was exercised locally with PostgreSQL, FastAPI, the CLI, and a reminder-worker delivery: search, book, confirm, inspect the owner agenda, receive a simulated reminder reply, and move the booking. The same flow also runs under Docker Compose.
 
 Run the complete unit, API, evaluation, and integration suite with `uv run --extra dev pytest -q` after setting `TEST_DATABASE_URL`. Without it, PostgreSQL integration cases skip; unit and API contract checks still run.

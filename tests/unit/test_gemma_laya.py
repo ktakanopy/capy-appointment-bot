@@ -13,8 +13,8 @@ class _Response:
     def __init__(self, payload):
         self.payload = json.dumps(payload).encode()
 
-    def read(self):
-        return self.payload
+    def read(self, amount=None):
+        return self.payload if amount is None else self.payload[:amount]
 
     def __enter__(self):
         return self

@@ -32,7 +32,7 @@
 
   <!-- Customer surfaces -->
   <rect class="box client" x="30" y="36" width="196" height="66" rx="10"/>
-  <text class="font title" x="128" y="64" text-anchor="middle">Streamlit demo</text>
+  <text class="font title" x="128" y="64" text-anchor="middle">CLI console</text>
   <text class="font sub" x="128" y="83" text-anchor="middle">customer + owner</text>
 
   <rect class="box client" x="242" y="36" width="196" height="66" rx="10"/>
@@ -40,14 +40,14 @@
   <text class="font sub" x="340" y="83" text-anchor="middle">polling · text + voice</text>
 
   <rect class="box client" x="454" y="36" width="216" height="66" rx="10"/>
-  <text class="font title" x="562" y="64" text-anchor="middle">WhatsApp / SMS</text>
-  <text class="font sub" x="562" y="83" text-anchor="middle">inbound webhooks</text>
+  <text class="font title" x="562" y="64" text-anchor="middle">REST clients</text>
+  <text class="font sub" x="562" y="83" text-anchor="middle">scripts · owner routes</text>
 
   <!-- Entry adapters -->
   <rect class="box entry" x="30" y="146" width="640" height="62" rx="10"/>
   <text class="font title" x="50" y="168">Entry adapters</text>
   <text class="font sub" x="50" y="186">FastAPI routes · chat adapter · channel adapters</text>
-  <text class="font sub" x="50" y="201">token resolution · signature check · dedupe</text>
+  <text class="font sub" x="50" y="201">token resolution · update dedupe</text>
 
   <!-- Optional providers -->
   <rect class="box optional" x="700" y="146" width="270" height="118" rx="10"/>
@@ -130,5 +130,5 @@
   <path class="edge" d="M562,530 V548 H510 V566" marker-end="url(#arrow)"/>
 
   <text class="font note" x="30" y="652">The model may propose an action. Application code still decides availability and commits bookings.</text>
-  <text class="font note" x="30" y="670">Direct form endpoints call the same domain services without the graph.</text>
+  <text class="font note" x="30" y="670">Direct REST endpoints call the same domain services without the graph.</text>
 </svg>
