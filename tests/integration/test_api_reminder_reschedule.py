@@ -44,8 +44,8 @@ def test_api_booking_reminder_reply_reschedules_and_updates_owner_agenda(schedul
 
             with connect(scheduling_db["url"]) as connection:
                 connection.execute(
-                    "UPDATE reminders SET send_at=%s WHERE booking_id=%s",
-                    (datetime.now(timezone.utc), booking_id),
+                    "UPDATE reminders SET send_at=now() - interval '1 minute' WHERE booking_id=%s",
+                    (booking_id,),
                 )
             assert ReminderWorker(scheduling_db["url"]).deliver_due() == 1
             inbox = client.get("/demo/reminders", params={"business_id": "demo-studio"}).json()["reminders"]

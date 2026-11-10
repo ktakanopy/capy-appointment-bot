@@ -150,7 +150,7 @@ def merge_draft(state: dict) -> dict:
             draft.service_id = service.id
             draft.service_name = service.name
             extraction = extraction.model_copy(update={"service_name": service.name})
-    elif draft.service_id is None and len(catalog.services) == 1 and extraction.intent == "search":
+    elif draft.service_id is None and len(catalog.services) == 1 and extraction.intent in {"search", "create"}:
         service = catalog.services[0]
         draft.service_id = service.id
         draft.service_name = service.name
@@ -173,7 +173,7 @@ def merge_draft(state: dict) -> dict:
         draft.operation = "confirm"
     elif extraction.intent == "cancel":
         draft.operation = "cancel"
-    elif extraction.intent == "search" and draft.operation != "reschedule":
+    elif extraction.intent in {"search", "create"} and draft.operation != "reschedule":
         draft.operation = "create"
     elif extraction.intent == "select_slot" and draft.operation == "none":
         draft.operation = "create"
@@ -191,9 +191,9 @@ def _missing(draft: WorkflowDraft, extraction: SchedulingExtraction, catalog: Ca
         return "professional"
     if draft.invalid_date:
         return "date"
-    if draft.operation in {"create", "reschedule", "none"} and not draft.service_id and extraction.intent in {"search", "reschedule"}:
+    if draft.operation in {"create", "reschedule", "none"} and not draft.service_id and extraction.intent in {"search", "reschedule", "create"}:
         return "service"
-    if draft.operation in {"create", "reschedule"} and not draft.local_date and extraction.intent in {"search", "reschedule", "unknown"}:
+    if draft.operation in {"create", "reschedule"} and not draft.local_date and extraction.intent in {"search", "reschedule", "create", "unknown"}:
         return "date"
     return "none"
 

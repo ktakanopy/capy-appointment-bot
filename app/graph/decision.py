@@ -44,11 +44,11 @@ class DeterministicDecision:
             return DecisionOutput(next_action="LOOKUP_BOOKING", confidence=0.9, needs_human=False)
         if _FAQ.search(request.transcript) and request.intent in {"unknown", "help"}:
             return DecisionOutput(next_action="FAQ", confidence=0.9, needs_human=False, reason_code="catalog")
-        if draft.service_id and draft.local_date and request.intent in {"unknown", "search"} and draft.operation == "create":
+        if draft.service_id and draft.local_date and request.intent in {"unknown", "search", "create"} and draft.operation == "create":
             return DecisionOutput(next_action="CHECK_AVAILABILITY", confidence=0.9, needs_human=False)
         if request.intent == "select_slot":
             return DecisionOutput(next_action="BOOK", confidence=0.9, needs_human=False)
-        if request.intent == "search":
+        if request.intent in {"search", "create"}:
             return DecisionOutput(next_action="CHECK_AVAILABILITY", confidence=0.9, needs_human=False)
         if request.intent == "help" or _FAQ.search(request.transcript):
             return DecisionOutput(next_action="FAQ", confidence=0.9, needs_human=False, reason_code="catalog")

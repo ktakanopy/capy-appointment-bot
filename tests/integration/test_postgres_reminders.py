@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 from app.database import connect
 from app.reminders import ReminderWorker
 from tests.integration.helpers import create_booking, offered_slots
@@ -12,8 +10,8 @@ def test_due_reminder_is_delivered_once_to_demo_inbox(scheduling_db):
     created = create_booking(scheduling_db, slot, key="reminder-deliver", phone="+5511999940001")
     with connect(scheduling_db["url"]) as connection:
         connection.execute(
-            "UPDATE reminders SET send_at=%s WHERE booking_id=%s",
-            (datetime.now(timezone.utc), created.booking.id),
+            "UPDATE reminders SET send_at=now() - interval '1 minute' WHERE booking_id=%s",
+            (created.booking.id,),
         )
 
     worker = ReminderWorker(scheduling_db["url"])
@@ -36,8 +34,8 @@ def test_worker_failure_is_retryable_then_reaches_bounded_terminal_state(schedul
     created = create_booking(scheduling_db, slot, key="reminder-failure", phone="+5511999940002")
     with connect(scheduling_db["url"]) as connection:
         connection.execute(
-            "UPDATE reminders SET send_at=%s WHERE booking_id=%s",
-            (datetime.now(timezone.utc), created.booking.id),
+            "UPDATE reminders SET send_at=now() - interval '1 minute' WHERE booking_id=%s",
+            (created.booking.id,),
         )
         connection.execute("""CREATE FUNCTION fail_demo_inbox_insert() RETURNS trigger LANGUAGE plpgsql AS $$
             BEGIN RAISE EXCEPTION 'simulated inbox outage'; END $$""")
@@ -54,8 +52,8 @@ def test_worker_failure_is_retryable_then_reaches_bounded_terminal_state(schedul
                     (created.booking.id,),
                 ).fetchone()
                 connection.execute(
-                    "UPDATE reminders SET send_at=%s WHERE booking_id=%s",
-                    (datetime.now(timezone.utc), created.booking.id),
+                    "UPDATE reminders SET send_at=now() - interval '1 minute' WHERE booking_id=%s",
+                    (created.booking.id,),
                 )
             assert state["attempts"] == expected_attempt
             if expected_attempt < 3:
@@ -69,8 +67,8 @@ def test_worker_failure_is_retryable_then_reaches_bounded_terminal_state(schedul
             connection.execute("DROP TRIGGER IF EXISTS fail_demo_inbox_insert_trigger ON reminder_inbox")
             connection.execute("DROP FUNCTION IF EXISTS fail_demo_inbox_insert()")
             connection.execute(
-                "UPDATE reminders SET status='pending',send_at=%s,last_error=NULL WHERE booking_id=%s",
-                (datetime.now(timezone.utc), created.booking.id),
+                "UPDATE reminders SET status='pending',send_at=now() - interval '1 minute',last_error=NULL WHERE booking_id=%s",
+                (created.booking.id,),
             )
 
     assert worker.deliver_due() == 1
