@@ -6,6 +6,5 @@ __pycache__
 .ruff_cache
 .data
 .archived
-tests
 docs
 specs

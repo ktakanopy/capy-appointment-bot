@@ -4,8 +4,7 @@ import re
 from datetime import date, timedelta
 from typing import Protocol
 
-from app.llm.schemas import SchedulingExtraction, SchedulingLLMExtraction
-from app.observability import log_event
+from app.llm.schemas import SchedulingExtraction
 
 
 class Interpreter(Protocol):
@@ -13,7 +12,7 @@ class Interpreter(Protocol):
 
 
 class DeterministicInterpreter:
-    """Small, predictable local interpreter used for the demo and as a safe fallback."""
+    """Small, predictable local interpreter used only as an explicit evaluation baseline."""
 
     def interpret(self, message: str, context: dict) -> SchedulingExtraction:
         text = " ".join(message.strip().split())
@@ -45,15 +44,6 @@ class DeterministicInterpreter:
         local_date = self._date(text, context.get("today"))
         local_time = self._time(text)
         slot_index = self._index(lowered) if intent == "select_slot" else None
-        phone_match = re.search(r"(?<!\w)(\+?\d[\d\s().-]{5,22}\d)(?!\w)", text)
-        phone = re.sub(r"[\s().-]", "", phone_match.group(1)) if phone_match else None
-        customer_name = None
-        if phone_match:
-            possible_name = text[:phone_match.start()].strip(" ,;:-")
-            possible_name = re.sub(r"^(my name is|i am|i'm|name|nome)\s*:?\s+", "", possible_name, flags=re.I)
-            possible_name = re.sub(r"\b(my )?(phone|number|contact|telefone|celular)\b.*$", "", possible_name, flags=re.I).strip(" ,;:-")
-            if len(possible_name.split()) >= 2 and not self._looks_like_request(possible_name):
-                customer_name = possible_name
         return SchedulingExtraction(
             intent=intent,
             service_name=service_name,
@@ -61,13 +51,7 @@ class DeterministicInterpreter:
             local_date=local_date,
             local_time=local_time,
             slot_index=slot_index,
-            customer_name=customer_name,
-            phone=phone,
         )
-
-    @staticmethod
-    def _looks_like_request(value: str) -> bool:
-        return bool(re.search(r"\b(book|schedule|appointment|available|cancel|confirm|reschedule|agendar|hor[aá]rio)\b", value, re.I))
 
     @staticmethod
     def _date(text: str, today: date | None) -> str | None:
@@ -126,76 +110,21 @@ class DeterministicInterpreter:
         return None
 
 
-class OpenAIInterpreter:
-    def __init__(self, api_key: str, model: str):
-        from openai import OpenAI
-
-        self.client = OpenAI(api_key=api_key)
-        self.model = model
-
-    def interpret(self, message: str, context: dict) -> SchedulingExtraction:
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "Interpret the latest user message using the conversation history for context. "
-                    "Extract scheduling intent and fields only; do not authorize, claim availability, or perform actions. "
-                    "Use only listed services and professionals. Return a local_date in YYYY-MM-DD when explicit "
-                    "and a 24-hour local_time in HH:MM when explicit. Use null for absent information. "
-                    "Intent is one of search, select_slot, create, confirm, cancel, reschedule, help, unknown.\n"
-                    f"Available services: {context.get('service_names', [])}\n"
-                    f"Available professionals: {context.get('professional_names', [])}\n"
-                    f"Today's business-local date: {context.get('today')}"
-                ),
-            }
-        ]
-        for history_message in context.get("history", []):
-            role = history_message.get("role")
-            content = history_message.get("content")
-            if role in {"user", "assistant"} and isinstance(content, str):
-                messages.append({"role": role, "content": content})
-        messages.append({"role": "user", "content": message})
-
-        completion = self.client.chat.completions.parse(
-            model=self.model,
-            temperature=0,
-            response_format=SchedulingLLMExtraction,
-            messages=messages,
-        )
-        parsed = completion.choices[0].message.parsed
-        if parsed is None:
-            raise ValueError("OpenAI returned no structured scheduling extraction")
-        return SchedulingExtraction.model_validate(parsed.model_dump())
-
-
-class FallbackInterpreter:
-    def __init__(self, primary: Interpreter, fallback: Interpreter, logger=None):
-        self.primary = primary
-        self.fallback = fallback
-        self.logger = logger
-
-    def interpret(self, message: str, context: dict) -> SchedulingExtraction:
-        try:
-            return self.primary.interpret(message, context)
-        except Exception as error:
-            if self.logger is not None:
-                log_event(
-                    self.logger,
-                    "understanding.fallback",
-                    failure_type=type(error).__name__,
-                )
-            return self.fallback.interpret(message, context)
-
-    def understand_audio(self, audio: bytes, context: dict):
-        return self.primary.understand_audio(audio, context)
-
-
-def build_interpreter(provider: str, api_key: str | None, model: str, logger=None) -> Interpreter:
-    deterministic = DeterministicInterpreter()
-    if provider == "openai" and api_key:
-        return FallbackInterpreter(OpenAIInterpreter(api_key, model), deterministic, logger)
+def build_interpreter(provider: str, base_url: str = "http://localhost:8081") -> Interpreter:
+    """Construct the requested provider; never silently substitute predictions."""
     if provider == "deterministic":
-        return deterministic
-    from app.llm.gemma import GemmaUnderstanding
+        return DeterministicInterpreter()
+    if provider == "gemma":
+        from app.llm.gemma import GemmaUnderstanding
+        return GemmaUnderstanding(base_url)
+    raise ValueError(f"Unsupported understanding provider: {provider}")
 
-    return FallbackInterpreter(GemmaUnderstanding(model), deterministic, logger)
+
+def build_decision(provider: str, base_url: str = "http://localhost:8082"):
+    from app.graph.decision import DeterministicDecision
+    from app.graph.laya import LayaDecision
+    if provider == "deterministic":
+        return DeterministicDecision()
+    if provider == "laya":
+        return LayaDecision(base_url)
+    raise ValueError(f"Unsupported routing provider: {provider}")

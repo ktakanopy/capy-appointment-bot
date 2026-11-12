@@ -64,12 +64,24 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
         )
 
     def list(self, config, *, filter=None, before=None, limit=None) -> Iterator[CheckpointTuple]:
-        _ = filter, before, limit
         if config is None:
             return
-        found = self.get_tuple({"configurable": {"thread_id": config["configurable"]["thread_id"], "checkpoint_ns": config["configurable"].get("checkpoint_ns", "")}})
-        if found is not None:
-            yield found
+        cursor = config
+        remaining = limit
+        while remaining is None or remaining > 0:
+            found = self.get_tuple(cursor)
+            if found is None:
+                return
+            checkpoint_id = found.config["configurable"]["checkpoint_id"]
+            if (before is None or checkpoint_id < get_checkpoint_id(before)) and all(
+                found.metadata.get(key) == value for key, value in (filter or {}).items()
+            ):
+                yield found
+                if remaining is not None:
+                    remaining -= 1
+            if found.parent_config is None:
+                return
+            cursor = found.parent_config
 
     def put(self, config, checkpoint: Checkpoint, metadata: CheckpointMetadata, new_versions: ChannelVersions):
         _ = new_versions
@@ -139,15 +151,15 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
 
     @staticmethod
     def _latest_key(thread_id: str, checkpoint_ns: str) -> str:
-        return f"lg:ckpt:{thread_id}:{checkpoint_ns}:latest"
+        return f"lg:v2:ckpt:{thread_id}:{checkpoint_ns}:latest"
 
     @staticmethod
     def _item_key(thread_id: str, checkpoint_ns: str, checkpoint_id: str) -> str:
-        return f"lg:ckpt:{thread_id}:{checkpoint_ns}:{checkpoint_id}"
+        return f"lg:v2:ckpt:{thread_id}:{checkpoint_ns}:{checkpoint_id}"
 
     @staticmethod
     def _writes_key(thread_id: str, checkpoint_ns: str, checkpoint_id: str) -> str:
-        return f"lg:writes:{thread_id}:{checkpoint_ns}:{checkpoint_id}"
+        return f"lg:v2:writes:{thread_id}:{checkpoint_ns}:{checkpoint_id}"
 
     @staticmethod
     def _config(thread_id: str, checkpoint_ns: str, checkpoint_id: str):

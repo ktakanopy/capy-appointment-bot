@@ -1,5 +1,7 @@
 # Telegram scheduling through text and voice
 
+> Historical design input. [Portfolio simplification](plan-portfolio-simplification.md) supersedes phone-proof, token-interface and fallback rules. Full Gemma audio and Laya routing remain supported.
+
 Status: historical feature record. Telegram is the active customer channel; WhatsApp is archived under `.archived/`. Text and voice integration is implemented; live Telegram and real Gemma audio remain unverified.
 
 ## Intent checkpoint

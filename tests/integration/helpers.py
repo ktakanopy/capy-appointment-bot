@@ -38,6 +38,16 @@ def create_booking(runtime, slot, *, key: str, phone: str):
         professional_id=slot.professional_id,
         slot_id=slot.slot_id,
         starts_at=slot.starts_at,
-        customer=CustomerInput(full_name="Integration Customer", phone=phone),
+        customer_id=test_customer(runtime, phone),
     )
     return runtime["bookings"].create(request, key)
+
+
+def test_customer(runtime, phone):
+    from app.database import connect
+    customer_id = "test-" + phone
+    with connect(runtime["url"]) as connection:
+        connection.execute("INSERT INTO customers (id,business_id,full_name,phone) VALUES (%s,'demo-studio','Integration Customer',%s) ON CONFLICT (id) DO NOTHING", (customer_id, phone))
+    return customer_id
+
+test_customer.__test__ = False

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, time
 
-from app.chat_helpers import _choose_professional, _choose_service, _request_key, _slot_message
+from app.chat_helpers import _choose_professional, _choose_service, _slot_message
 from app.graph.contracts import DecisionOutput, TurnResult, WorkflowDraft
 from app.graph.decision import DeterministicDecision, normalized_from_extraction
 from app.graph.ports import WorkflowPorts
@@ -67,76 +67,18 @@ def load_context(state: dict, ports: WorkflowPorts) -> dict:
 
 
 def interpret(state: dict, ports: WorkflowPorts, interpreter) -> dict:
-    """Extract scheduling details and report whether customer details are ready.
-
-    Already-normalized input skips the text interpreter. Otherwise, the
-    interpreter receives the message plus catalog, date, offered-slot, and
-    conversation context. Customer contact details are captured through the
-    ports, then removed from the extraction before it is saved in graph state.
-    """
-    if state.get("skip_interpret"):
-        from app.graph.contracts import NormalizedRequest
-
-        normalized = NormalizedRequest.model_validate(state["normalized_request"])
-        supported_intents = {
-            "search",
-            "select_slot",
-            "create",
-            "confirm",
-            "cancel",
-            "reschedule",
-            "help",
-            "unknown",
-        }
-        intent = normalized.intent
-        if intent not in supported_intents:
-            intent = "unknown"
-
-        extraction = SchedulingExtraction(
-            intent=intent,
-            service_name=normalized.service,
-            professional_name=normalized.professional,
-            local_date=normalized.date_constraint,
-            local_time=normalized.time_constraint,
-            slot_index=normalized.slot_index,
-        )
-        return {
-            "extraction": extraction.model_dump(mode="json"),
-            "customer_ready": bool(
-                state.get("customer_ready") or ports.customer_ready()
-            ),
-        }
-
     message = state.get("message", "")
     history = list(state.get("messages") or [])
-    # The current message may already be present in the saved conversation history.
     if history and history[-1].get("content") == message:
         history = history[:-1]
-
-    context = {
+    extraction = interpreter.interpret(message, {
         "service_names": state.get("service_names", []),
         "professional_names": state.get("professional_names", []),
         "today": state.get("today"),
-        "has_slots": bool(_offered_slots(state, ports)),
-        "history": history,
-    }
-    extraction = interpreter.interpret(message, context)
-
-    ports.remember_extraction(extraction)
-    customer_ready = ports.capture_customer(
-        extraction.customer_name,
-        extraction.phone,
-    )
-
-    safe_extraction = extraction.model_dump(mode="json")
-    safe_extraction["customer_name"] = None
-    safe_extraction["phone"] = None
-    return {
-        "extraction": safe_extraction,
-        "customer_ready": bool(
-            state.get("customer_ready") or customer_ready or ports.customer_ready()
-        ),
-    }
+        "has_slots": bool(state.get("offered_slots") or _draft(state).candidate_booking_ids), "history": history,
+    })
+    safe = extraction.model_dump(mode="json")
+    return {"extraction": safe}
 
 
 def merge_draft(state: dict) -> dict:
@@ -180,7 +122,7 @@ def merge_draft(state: dict) -> dict:
     elif state.get("selected_slot_id") and draft.operation == "none":
         draft.operation = "create"
     draft.invalid_date = invalid_date
-    draft.missing = _missing(draft, extraction, catalog)
+    draft.missing = "booking" if draft.candidate_booking_ids and extraction.slot_index else _missing(draft, extraction, catalog)
     return {"draft": draft.model_dump(mode="json"), "extraction": extraction.model_dump(mode="json")}
 
 
@@ -203,21 +145,23 @@ def route_turn(state: dict, decision_engine, threshold: float) -> dict:
 
     draft = _draft(state)
     extraction = _extraction(state)
-    if state.get("normalized_request"):
-        normalized = NormalizedRequest.model_validate(state["normalized_request"])
-    else:
-        normalized = normalized_from_extraction(
-            extraction,
-            conversation_id=state["conversation_id"],
-            customer_id=state.get("customer_id"),
-            transcript=state.get("message", ""),
-            modality=state.get("input_modality", "text"),
-            draft=draft,
-        )
+    normalized = normalized_from_extraction(
+        extraction, conversation_id=state["conversation_id"], customer_id=None,
+        transcript=state.get("message", ""), modality=state.get("input_modality", "text"), draft=draft,
+    )
+    # A numbered reply to a booking clarification selects only a currently owned booking.
+    selected_booking = None
+    if draft.missing == "booking" and draft.candidate_booking_ids and extraction.slot_index:
+        if 1 <= extraction.slot_index <= len(draft.candidate_booking_ids):
+            selected_booking = draft.candidate_booking_ids[extraction.slot_index-1]
+            draft.active_booking_id = selected_booking
+            draft.candidate_booking_ids = []
+            extraction = extraction.model_copy(update={"slot_index": None})
     decision = decision_engine.decide(normalized, draft)
-    route = _constrain(decision, draft, extraction, state, threshold)
+    route = "prepare_action" if selected_booking and not decision.needs_human and decision.confidence >= threshold else _constrain(decision, draft, extraction, state, threshold)
     return {
         "normalized_request": normalized.model_dump(mode="json"),
+        "extraction": extraction.model_dump(mode="json"),
         "decision": decision.model_dump(mode="json"),
         "route": route,
         "draft": draft.model_dump(mode="json"),
@@ -225,7 +169,11 @@ def route_turn(state: dict, decision_engine, threshold: float) -> dict:
 
 
 def _constrain(decision: DecisionOutput, draft: WorkflowDraft, extraction: SchedulingExtraction, state: dict, threshold: float) -> str:
-    if state.get("selected_slot_id") or extraction.slot_index or (draft.pending_slot_id and state.get("customer_ready")):
+    if state.get("selected_slot_id") and not any(s["slot_id"] == state["selected_slot_id"] for s in state.get("offered_slots", [])):
+        return "select"  # Invalid offered-slot references can only produce a clarification.
+    if decision.needs_human or decision.confidence < threshold:
+        return "escalate"
+    if state.get("selected_slot_id") or extraction.slot_index:
         return "select"
     if decision.next_action == "LOOKUP_BOOKING":
         return "lookup"
@@ -258,9 +206,9 @@ def clarify(state: dict, ports: WorkflowPorts) -> dict:
     draft = _draft(state)
     extraction = _extraction(state)
     catalog = _catalog(state)
-    if extraction.intent in {"confirm", "cancel", "reschedule"} and state.get("auth_kind") == "anonymous":
+    if extraction.intent in {"confirm", "cancel", "reschedule"} and not state.get("customer_id"):
         return _result(
-            "To manage a booking, provide its private management token in the booking controls.",
+            "Use your Telegram account to manage your appointments.",
             "manage_booking",
             route="persist",
             draft=draft.model_dump(mode="json"),
@@ -297,7 +245,7 @@ def clarify(state: dict, ports: WorkflowPorts) -> dict:
             text = "That date was not valid. Please give a date as YYYY-MM-DD, or say today or tomorrow."
         return _result(text, "clarify_date", route="persist", draft=draft.model_dump(mode="json"))
     return _result(
-        "Tell me which service you'd like and the date, or choose an action in the booking controls.",
+        "Tell me which service you'd like and the date,.",
         "clarify",
         route="persist",
         draft=draft.model_dump(mode="json"),
@@ -321,7 +269,6 @@ def search(state: dict, ports: WorkflowPorts) -> dict:
             earliest_local_time=time.fromisoformat(earliest) if earliest else None,
         )
     )
-    ports.save_slots(state["conversation_id"], slots)
     draft.offered_slot_ids = [slot.slot_id for slot in slots]
     draft.pending_slot_id = None
     if draft.operation != "reschedule":
@@ -335,6 +282,7 @@ def search(state: dict, ports: WorkflowPorts) -> dict:
         draft=draft.model_dump(mode="json"),
     )
     update["offered_slots"] = [slot.model_dump(mode="json") for slot in slots]
+    update["result"]["slots"] = update["offered_slots"]
     return update
 
 
@@ -343,8 +291,6 @@ def select(state: dict, ports: WorkflowPorts) -> dict:
     extraction = _extraction(state)
     slots = _offered_slots(state, ports)
     chosen = _chosen_slot(slots, state.get("selected_slot_id"), extraction.slot_index)
-    if chosen is None and draft.pending_slot_id and state.get("customer_ready"):
-        chosen = next((slot for slot in slots if slot.slot_id == draft.pending_slot_id), None)
     if chosen is None:
         return _result(
             "Choose one of the times I just offered.",
@@ -357,11 +303,11 @@ def select(state: dict, ports: WorkflowPorts) -> dict:
         draft.operation = "reschedule"
     else:
         draft.operation = "create"
-    if draft.operation == "create" and not (state.get("customer_ready") or ports.customer_ready()):
-        draft.missing = "customer"
+    if draft.operation == "create" and not state.get("customer_id"):
+        draft.missing = "booking"
         return _result(
-            f"I can hold this choice while we finish the demo flow. Please share your full name and phone number for {chosen.local_label}.",
-            "collect_customer",
+            "Use your Telegram account to book an appointment.",
+            "manage_booking",
             route="persist",
             draft=draft.model_dump(mode="json"),
         )
@@ -374,9 +320,9 @@ def select(state: dict, ports: WorkflowPorts) -> dict:
 
 def prepare_action(state: dict, ports: WorkflowPorts) -> dict:
     draft = _draft(state)
-    if draft.operation in {"confirm", "cancel", "reschedule"} and state.get("auth_kind") == "anonymous":
+    if draft.operation in {"confirm", "cancel", "reschedule"} and not state.get("customer_id"):
         return _result(
-            "To manage a booking, provide its private management token in the booking controls.",
+            "Use your Telegram account to manage your appointments.",
             "manage_booking",
             route="persist",
             draft=draft.model_dump(mode="json"),
@@ -432,20 +378,22 @@ def prepare_action(state: dict, ports: WorkflowPorts) -> dict:
     if draft.operation == "create":
         if not draft.pending_slot_id and not state.get("selected_slot_id"):
             return clarify(state, ports)
-        if not (state.get("customer_ready") or ports.customer_ready()):
-            draft.missing = "customer"
+        if not state.get("customer_id"):
+            draft.missing = "booking"
             return _result(
-                "Please share your full name and phone number to finish the booking.",
-                "collect_customer",
+                "Use your Telegram account to book an appointment.",
+                "manage_booking",
                 route="persist",
                 draft=draft.model_dump(mode="json"),
             )
         return {"route": "execute", "draft": draft.model_dump(mode="json")}
     if draft.operation in {"confirm", "cancel"}:
         booking_id = state.get("booking_id") or draft.active_booking_id
-        if not booking_id and state.get("auth_kind") == "customer":
+        if not booking_id and state.get("customer_id"):
             refs = ports.list_booking_refs()
             if len(refs) != 1:
+                draft.candidate_booking_ids = [item.id for item in refs]
+                draft.missing = "booking"
                 return _result(
                     "I need to know which appointment you mean.",
                     "clarify_booking",
@@ -456,7 +404,7 @@ def prepare_action(state: dict, ports: WorkflowPorts) -> dict:
             draft.active_booking_id = booking_id
         if not booking_id:
             return _result(
-                "To manage a booking, provide its private management token in the booking controls.",
+                "Use your Telegram account to manage your appointments.",
                 "manage_booking",
                 route="persist",
                 draft=draft.model_dump(mode="json"),
@@ -467,7 +415,9 @@ def prepare_action(state: dict, ports: WorkflowPorts) -> dict:
 
 def execute(state: dict, ports: WorkflowPorts) -> dict:
     draft = _draft(state)
-    key = _request_key(state.get("idempotency_key"), f"{state['conversation_id']}:{draft.operation}:{draft.pending_slot_id or draft.active_booking_id}")
+    key = state["idempotency_key"]
+    if not key:
+        raise ValueError("A stable turn idempotency key is required")
     slots = _offered_slots(state, ports)
     chosen = _chosen_slot(slots, draft.pending_slot_id or state.get("selected_slot_id"), None)
     booking_id = state.get("booking_id") or draft.active_booking_id
@@ -480,7 +430,7 @@ def execute(state: dict, ports: WorkflowPorts) -> dict:
         draft.operation = "none"
         _ = summary
         return _result(
-            f"You're booked for {chosen.local_label} with {chosen.professional_name}. Your private management token is shown in the booking details.",
+            f"You're booked for {chosen.local_label} with {chosen.professional_name}.",
             "create",
             route="persist",
             draft=draft.model_dump(mode="json"),
@@ -526,7 +476,7 @@ def help_reply(state: dict, ports: WorkflowPorts) -> dict:
 
 
 def lookup(state: dict, ports: WorkflowPorts) -> dict:
-    if state.get("auth_kind") == "anonymous":
+    if not state.get("customer_id"):
         return _result(
             "I can only look up appointments for a verified channel identity. A phone number typed in the message is not enough.",
             "manage_booking",
@@ -568,10 +518,7 @@ def _service(catalog: CatalogResponse, service_id: str | None) -> Service | None
 
 
 def _offered_slots(state: dict, ports: WorkflowPorts) -> list[AvailabilitySlot]:
-    raw = state.get("offered_slots")
-    if raw:
-        return [AvailabilitySlot.model_validate(item) for item in raw]
-    return ports.load_slots(state["conversation_id"])
+    return [AvailabilitySlot.model_validate(item) for item in state.get("offered_slots", [])]
 
 
 def _chosen_slot(slots: list[AvailabilitySlot], slot_id: str | None, index: int | None) -> AvailabilitySlot | None:
@@ -580,7 +527,3 @@ def _chosen_slot(slots: list[AvailabilitySlot], slot_id: str | None, index: int 
     if index is not None and 1 <= index <= len(slots):
         return slots[index - 1]
     return None
-
-
-def default_decision():
-    return DeterministicDecision()

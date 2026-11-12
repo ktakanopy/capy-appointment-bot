@@ -33,7 +33,10 @@ class LayaDecision:
         )
         try:
             with urlrequest.urlopen(req, timeout=self.timeout_seconds) as response:
-                payload = json.loads(response.read().decode())
+                body = response.read(1_000_001)
+                if len(body) > 1_000_000:
+                    raise ProviderError("response_limit")
+                payload = json.loads(body.decode())
         except (URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
             raise ProviderError(type(exc).__name__) from exc
         if not isinstance(payload, dict):
@@ -42,20 +45,3 @@ class LayaDecision:
             return DecisionOutput.model_validate(payload)
         except ValueError as exc:
             raise ProviderError("invalid_decision") from exc
-
-
-class FallbackDecision:
-    def __init__(self, primary, fallback, logger=None):
-        self.primary = primary
-        self.fallback = fallback
-        self.logger = logger
-
-    def decide(self, request: NormalizedRequest, draft: WorkflowDraft) -> DecisionOutput:
-        from app.observability import log_event
-
-        try:
-            return self.primary.decide(request, draft)
-        except Exception as error:
-            if self.logger is not None:
-                log_event(self.logger, "decision.fallback", failure_type=type(error).__name__)
-            return self.fallback.decide(request, draft)

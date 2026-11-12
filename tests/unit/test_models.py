@@ -31,7 +31,7 @@ def test_booking_requires_timezone_aware_start():
             professional_id="alex",
             slot_id="slot-1",
             starts_at=datetime(2099, 1, 5, 15),
-            customer={"full_name": "Ada Lovelace", "phone": "+5511999999999"},
+            customer_id="customer-1",
         )
 
 
@@ -41,7 +41,7 @@ def test_booking_normalizes_start_to_utc():
         professional_id="alex",
         slot_id="slot-1",
         starts_at=datetime.fromisoformat("2099-01-05T12:00:00-03:00"),
-        customer={"full_name": "Ada Lovelace", "phone": "+5511999999999"},
+        customer_id="customer-1",
     )
 
     assert request.starts_at == datetime(2099, 1, 5, 15, tzinfo=timezone.utc)

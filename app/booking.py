@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-import hmac
 import json
-import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -30,38 +28,17 @@ def _request_hash(value: object) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
-def _digest(token: str) -> str:
-    return hashlib.sha256(token.encode()).hexdigest()
-
-
 class BookingService:
-    def __init__(self, repository: PostgresRepository, token_secret: str | None):
+    def __init__(self, repository: PostgresRepository):
         self.repository = repository
         self.database_url = repository.database_url
-        self._secret = token_secret.encode() if token_secret else None
 
-    def _require_secret(self) -> bytes:
-        if self._secret is None or len(self._secret) < 32:
-            raise DomainError("booking_token_not_configured", "Booking management is not configured.", 503)
-        return self._secret
-
-    def _token(self, booking_id: str, version: int) -> str:
-        message = f"booking-manage:v1:{booking_id}:{version}".encode()
-        signature = hmac.new(self._require_secret(), message, hashlib.sha256).hexdigest()
-        return f"bk1.{booking_id}.{version}.{signature}"
-
-    def _token_claims(self, token: str) -> tuple[str, int, str]:
-        try:
-            prefix, booking_id, version_text, signature = token.split(".", 3)
-            version = int(version_text)
-        except (ValueError, AttributeError) as exc:
-            raise DomainError("booking_not_found", "Booking not found.", 404) from exc
-        if prefix != "bk1" or not booking_id or version < 1:
+    @classmethod
+    def _owned_row(cls, connection, business_id: str, customer_id: str, booking_id: str, *, for_update=False):
+        row = cls._row(connection, booking_id, for_update=for_update)
+        if not customer_id or row is None or row["business_id"] != business_id or row["customer_id"] != customer_id:
             raise DomainError("booking_not_found", "Booking not found.", 404)
-        expected = self._token(booking_id, version)
-        if not secrets.compare_digest(token, expected):
-            raise DomainError("booking_not_found", "Booking not found.", 404)
-        return booking_id, version, _digest(token)
+        return row
 
     def _check_idempotency(self, connection, business_id: str, operation: str, key: str, body_hash: str):
         if not key or len(key) > 200:
@@ -107,8 +84,8 @@ class BookingService:
                     row = self._row(connection, record["resource_id"])
                     if row is None:
                         raise DomainError("booking_not_found", "Booking not found.", 404)
-                    token = self._token(row["id"], row["token_version"])
-                    return BookingSummary(booking=booking_from_row(row), manage_token=token, outcome="replayed")
+                    self._owned_row(connection, request.business_id, request.customer_id, row["id"])
+                    return BookingSummary(booking=booking_from_row(row), outcome="replayed")
 
                 slot = validate_slot_in_transaction(
                     connection,
@@ -118,29 +95,22 @@ class BookingService:
                     slot_id=request.slot_id,
                     starts_at=request.starts_at,
                 )
-                customer_id = str(uuid.uuid4())
-                customer_row = connection.execute(
-                    """INSERT INTO customers (id,business_id,full_name,phone,email)
-                       VALUES (%s,%s,%s,%s,%s)
-                       ON CONFLICT (business_id,phone) DO UPDATE SET full_name=excluded.full_name,
-                         email=COALESCE(excluded.email,customers.email)
-                       RETURNING id""",
-                    (customer_id, request.business_id, request.customer.full_name, request.customer.phone, request.customer.email),
+                customer = connection.execute(
+                    "SELECT id FROM customers WHERE id=%s AND business_id=%s",
+                    (request.customer_id, request.business_id),
                 ).fetchone()
+                if customer is None:
+                    raise DomainError("customer_not_found", "Customer not found.", 404)
                 booking_id = str(uuid.uuid4())
-                token_version = 1
-                token = self._token(booking_id, token_version)
-                token_digest = _digest(token)
                 connection.execute(
                     """INSERT INTO bookings (id,business_id,service_id,professional_id,customer_id,starts_at,ends_at,
-                       occupied_from,occupied_until,status,token_version,token_digest)
-                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'scheduled',%s,%s)""",
+                       occupied_from,occupied_until,status)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'scheduled')""",
                     (
-                        booking_id, request.business_id, slot.service_id, slot.professional_id, customer_row["id"],
+                        booking_id, request.business_id, slot.service_id, slot.professional_id, request.customer_id,
                         slot.starts_at, slot.ends_at,
                         slot.starts_at - timedelta(minutes=self._service_buffer(connection, slot.service_id, "before")),
                         slot.ends_at + timedelta(minutes=self._service_buffer(connection, slot.service_id, "after")),
-                        token_version, token_digest,
                     ),
                 )
                 business = connection.execute("SELECT reminder_lead_minutes FROM businesses WHERE id=%s", (request.business_id,)).fetchone()
@@ -151,7 +121,7 @@ class BookingService:
                 )
                 self._insert_idempotency(connection, request.business_id, "create", idempotency_key, payload_hash, booking_id, "created")
                 row = self._row(connection, booking_id)
-                return BookingSummary(booking=booking_from_row(row), manage_token=token, outcome="created")
+                return BookingSummary(booking=booking_from_row(row), outcome="created")
         except psycopg.errors.ExclusionViolation as exc:
             raise DomainError("slot_unavailable", "That time is no longer available. Choose another slot.", 409) from exc
 
@@ -160,51 +130,26 @@ class BookingService:
         column = "buffer_before_minutes" if side == "before" else "buffer_after_minutes"
         return connection.execute(f"SELECT {column} AS minutes FROM services WHERE id=%s", (service_id,)).fetchone()["minutes"]
 
-    def read(self, token: str) -> Booking:
-        booking_id, _version, token_digest = self._token_claims(token)
+    def read(self, business_id: str, customer_id: str, booking_id: str) -> Booking:
         with connect(self.database_url) as connection:
-            row = self.repository.row_booking_with_token(connection, booking_id, token_digest)
-        if row is None:
-            raise DomainError("booking_not_found", "Booking not found.", 404)
+            row = self._owned_row(connection, business_id, customer_id, booking_id)
         return booking_from_row(row)
 
-    def confirm_for_customer(self, business_id: str, customer_id: str | None, booking_id: str, idempotency_key: str) -> tuple[Booking, str]:
-        return self.confirm(self._token_for_owner(business_id, customer_id, booking_id), idempotency_key)
+    def confirm(self, business_id: str, customer_id: str, booking_id: str, idempotency_key: str):
+        return self._mutate_status(business_id, customer_id, booking_id, "confirm", idempotency_key)
 
-    def cancel_for_customer(self, business_id: str, customer_id: str | None, booking_id: str, idempotency_key: str) -> tuple[Booking, str]:
-        return self.cancel(self._token_for_owner(business_id, customer_id, booking_id), idempotency_key)
+    def cancel(self, business_id: str, customer_id: str, booking_id: str, idempotency_key: str):
+        return self._mutate_status(business_id, customer_id, booking_id, "cancel", idempotency_key)
 
-    def reschedule_for_customer(self, business_id: str, customer_id: str | None, booking_id: str, request: BookingRescheduleRequest, idempotency_key: str) -> tuple[Booking, str]:
-        return self.reschedule(self._token_for_owner(business_id, customer_id, booking_id), request, idempotency_key)
-
-    def _token_for_owner(self, business_id: str, customer_id: str | None, booking_id: str) -> str:
-        if not customer_id:
-            raise DomainError("booking_not_found", "Booking not found.", 404)
-        with connect(self.database_url) as connection:
-            row = self._row(connection, booking_id)
-        if row is None or row["business_id"] != business_id or row["customer_id"] != customer_id:
-            raise DomainError("booking_not_found", "Booking not found.", 404)
-        return self._token(booking_id, row["token_version"])
-
-    def confirm(self, token: str, idempotency_key: str) -> tuple[Booking, str]:
-        return self._mutate_status(token, "confirm", idempotency_key)
-
-    def cancel(self, token: str, idempotency_key: str) -> tuple[Booking, str]:
-        return self._mutate_status(token, "cancel", idempotency_key)
-
-    def _mutate_status(self, token: str, operation: str, idempotency_key: str) -> tuple[Booking, str]:
-        booking_id, _version, token_digest = self._token_claims(token)
-        payload_hash = _request_hash({"booking_id": booking_id, "operation": operation})
+    def _mutate_status(self, business_id: str, customer_id: str, booking_id: str, operation: str, idempotency_key: str):
+        payload_hash = _request_hash({"customer_id": customer_id, "booking_id": booking_id, "operation": operation})
         try:
             with connect(self.database_url) as connection:
-                row = self.repository.row_booking_with_token(connection, booking_id, token_digest)
-                if row is None:
-                    raise DomainError("booking_not_found", "Booking not found.", 404)
-                record = self._check_idempotency(connection, row["business_id"], operation, idempotency_key, payload_hash)
+                record = self._check_idempotency(connection, business_id, operation, idempotency_key, payload_hash)
+                row = self._owned_row(connection, business_id, customer_id, booking_id, for_update=True)
                 if record:
                     saved = self._row(connection, record["resource_id"])
                     return booking_from_row(saved), record["result_code"]
-                row = self._row(connection, booking_id, for_update=True)
                 if row["starts_at"] <= datetime.now(UTC):
                     raise DomainError("booking_started", "This booking can no longer be changed.", 409)
                 current = BookingStatus(row["status"])
@@ -225,19 +170,17 @@ class BookingService:
         except psycopg.errors.ExclusionViolation as exc:
             raise DomainError("booking_conflict", "The booking could not be updated because the time is no longer available.", 409) from exc
 
-    def reschedule(self, token: str, request: BookingRescheduleRequest, idempotency_key: str) -> tuple[Booking, str]:
-        booking_id, _version, token_digest = self._token_claims(token)
-        payload_hash = _request_hash({"booking_id": booking_id, **request.model_dump(mode="json")})
+    def reschedule(self, business_id: str, customer_id: str, booking_id: str, request: BookingRescheduleRequest, idempotency_key: str) -> tuple[Booking, str]:
+        if request.business_id != business_id:
+            raise DomainError("booking_not_found", "Booking not found.", 404)
+        payload_hash = _request_hash({"customer_id": customer_id, "booking_id": booking_id, **request.model_dump(mode="json")})
         try:
             with connect(self.database_url) as connection:
-                row = self.repository.row_booking_with_token(connection, booking_id, token_digest)
-                if row is None or row["business_id"] != request.business_id:
-                    raise DomainError("booking_not_found", "Booking not found.", 404)
-                record = self._check_idempotency(connection, request.business_id, "reschedule", idempotency_key, payload_hash)
+                record = self._check_idempotency(connection, business_id, "reschedule", idempotency_key, payload_hash)
+                row = self._owned_row(connection, business_id, customer_id, booking_id, for_update=True)
                 if record:
                     saved = self._row(connection, record["resource_id"])
                     return booking_from_row(saved), record["result_code"]
-                row = self._row(connection, booking_id, for_update=True)
                 if BookingStatus(row["status"]) == BookingStatus.CANCELED:
                     raise DomainError("booking_not_reschedulable", "A canceled booking cannot be rescheduled.", 409)
                 if row["starts_at"] <= datetime.now(UTC):

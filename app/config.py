@@ -8,18 +8,13 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Settings:
     database_url: str
-    booking_token_secret: str | None
     demo_business_id: str
     session_ttl_minutes: int
-    llm_provider: str
-    openai_api_key: str | None
-    openai_model: str
     chat_redis_url: str
     tracing_enabled: bool
     langfuse_public_key: str | None
     langfuse_secret_key: str | None
     langfuse_host: str | None
-    owner_api_token: str | None = None
     understanding_provider: str = "gemma"
     decision_provider: str = "laya"
     gemma_base_url: str = "http://localhost:8081"
@@ -33,6 +28,8 @@ class Settings:
     telegram_audio_processing_timeout_seconds: float = 900
 
     def __post_init__(self):
+        if self.session_ttl_minutes < 1:
+            raise ValueError("SESSION_TTL_MINUTES must be positive")
         if not 1 <= self.telegram_poll_seconds <= 50:
             raise ValueError("TELEGRAM_POLL_SECONDS must be between 1 and 50")
         if self.telegram_audio_max_bytes <= 0 or self.telegram_audio_max_decoded_bytes < 960_000:
@@ -61,18 +58,13 @@ def load_settings() -> Settings:
             "DATABASE_URL",
             "postgresql://scheduling:scheduling@localhost:5433/scheduling",
         ),
-        booking_token_secret=os.getenv("BOOKING_TOKEN_SECRET"),
         demo_business_id=os.getenv("DEMO_BUSINESS_ID", "demo-studio"),
         session_ttl_minutes=int(os.getenv("SESSION_TTL_MINUTES", "60")),
-        llm_provider=os.getenv("LLM_PROVIDER", "deterministic").lower(),
-        openai_api_key=os.getenv("OPENAI_API_KEY"),
-        openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         chat_redis_url=os.getenv("CHAT_REDIS_URL", "redis://localhost:6380/0"),
         tracing_enabled=_flag("TRACING_ENABLED", bool(public_key and secret_key)),
         langfuse_public_key=public_key,
         langfuse_secret_key=secret_key,
         langfuse_host=os.getenv("LANGFUSE_HOST"),
-        owner_api_token=os.getenv("OWNER_API_TOKEN"),
         understanding_provider=os.getenv("UNDERSTANDING_PROVIDER", "gemma").lower(),
         decision_provider=os.getenv("DECISION_PROVIDER", "laya").lower(),
         gemma_base_url=os.getenv("GEMMA_BASE_URL", "http://localhost:8081"),

@@ -7,11 +7,10 @@ from uuid import uuid4
 import psycopg
 import pytest
 
-from app.booking import _digest
 from app.database import connect
 from app.models import BookingCreateRequest, BookingRescheduleRequest, BookingSummary, CustomerInput, DomainError
 from app.seed import seed
-from tests.integration.helpers import create_booking, offered_slots, slot_at_offset
+from tests.integration.helpers import create_booking, offered_slots, slot_at_offset, test_customer
 
 
 def test_migration_seed_repeatability_and_second_business_scope(scheduling_db):
@@ -28,7 +27,7 @@ def test_migration_seed_repeatability_and_second_business_scope(scheduling_db):
         assert connection.execute("SELECT count(*) AS n FROM weekly_availability_rules").fetchone()["n"] == 24
 
 
-def test_create_idempotency_digest_and_postgres_overlap_constraint(scheduling_db):
+def test_create_idempotency_and_postgres_overlap_constraint(scheduling_db):
     slots = offered_slots(scheduling_db)
     slot = slots[0]
     request = BookingCreateRequest(
@@ -37,7 +36,7 @@ def test_create_idempotency_digest_and_postgres_overlap_constraint(scheduling_db
         professional_id=slot.professional_id,
         slot_id=slot.slot_id,
         starts_at=slot.starts_at,
-        customer=CustomerInput(full_name="First Customer", phone="+5511999910001"),
+        customer_id=test_customer(scheduling_db, "+5511999910001"),
     )
     service = scheduling_db["bookings"]
     created = service.create(request, "create-replay-key")
@@ -45,16 +44,8 @@ def test_create_idempotency_digest_and_postgres_overlap_constraint(scheduling_db
 
     assert replay.outcome == "replayed"
     assert replay.booking.id == created.booking.id
-    assert replay.manage_token == created.manage_token
-    with connect(scheduling_db["url"]) as connection:
-        row = connection.execute(
-            "SELECT token_digest FROM bookings WHERE id=%s", (created.booking.id,)
-        ).fetchone()
-        assert row["token_digest"] == _digest(created.manage_token)
-        assert created.manage_token not in row["token_digest"]
-
     changed = request.model_copy(update={
-        "customer": CustomerInput(full_name="Different Customer", phone="+5511999910002")
+        "customer_id": test_customer(scheduling_db, "+5511999910002")
     })
     with pytest.raises(DomainError) as reused_key:
         service.create(changed, "create-replay-key")
@@ -91,8 +82,8 @@ def test_create_idempotency_digest_and_postgres_overlap_constraint(scheduling_db
                 )
                 connection.execute(
                     """INSERT INTO bookings (id,business_id,service_id,professional_id,customer_id,
-                       starts_at,ends_at,occupied_from,occupied_until,status,token_version,token_digest)
-                       VALUES (%s,'demo-studio','service-demo',%s,%s,%s,%s,%s,%s,%s,1,%s)""",
+                       starts_at,ends_at,occupied_from,occupied_until,status)
+                       VALUES (%s,'demo-studio','service-demo',%s,%s,%s,%s,%s,%s,%s)""",
                     (
                         booking_id,
                         slot.professional_id,
@@ -102,7 +93,6 @@ def test_create_idempotency_digest_and_postgres_overlap_constraint(scheduling_db
                         overlapping_start,
                         overlapping_end + timedelta(minutes=15),
                         status,
-                        "0" * 64,
                     ),
                 )
         except psycopg.errors.ExclusionViolation:
@@ -143,9 +133,9 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
         starts_at=second_slot.starts_at,
     )
     with pytest.raises(DomainError) as conflict:
-        scheduling_db["bookings"].reschedule(first.manage_token, occupied_request, "failed-move")
+        scheduling_db["bookings"].reschedule(first.booking.business_id, first.booking.customer.id, first.booking.id, occupied_request, "failed-move")
     assert conflict.value.code == "slot_unavailable"
-    assert scheduling_db["bookings"].read(first.manage_token).starts_at == first_slot.starts_at
+    assert scheduling_db["bookings"].read(first.booking.business_id, first.booking.customer.id, first.booking.id).starts_at == first_slot.starts_at
     with connect(scheduling_db["url"]) as connection:
         unchanged_reminder = connection.execute(
             "SELECT id,send_at,status FROM reminders WHERE booking_id=%s", (first.booking.id,)
@@ -159,7 +149,7 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
         slot_id=free_slot.slot_id,
         starts_at=free_slot.starts_at,
     )
-    moved, outcome = scheduling_db["bookings"].reschedule(first.manage_token, free_request, "successful-move")
+    moved, outcome = scheduling_db["bookings"].reschedule(first.booking.business_id, first.booking.customer.id, first.booking.id, free_request, "successful-move")
     assert outcome == "rescheduled"
     assert moved.starts_at == free_slot.starts_at
     with connect(scheduling_db["url"]) as connection:
@@ -169,14 +159,14 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
     assert updated_reminder["id"] == old_reminder["id"]
     assert updated_reminder["send_at"] != old_reminder["send_at"]
     assert updated_reminder["status"] == "pending"
-    assert scheduling_db["bookings"].read(second.manage_token).starts_at == second_slot.starts_at
+    assert scheduling_db["bookings"].read(second.booking.business_id, second.booking.customer.id, second.booking.id).starts_at == second_slot.starts_at
 
 
 def test_cancel_cancels_reminder_and_releases_slot(scheduling_db):
     slot = offered_slots(scheduling_db)[0]
     created = create_booking(scheduling_db, slot, key="cancel-booking", phone="+5511999930001")
 
-    booking, outcome = scheduling_db["bookings"].cancel(created.manage_token, "cancel-key")
+    booking, outcome = scheduling_db["bookings"].cancel(created.booking.business_id, created.booking.customer.id, created.booking.id, "cancel-key")
 
     assert outcome == "canceled"
     assert booking.status.value == "canceled"
@@ -199,7 +189,7 @@ def test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once(sc
         professional_id=first_slot.professional_id,
         slot_id=first_slot.slot_id,
         starts_at=first_slot.starts_at,
-        customer=CustomerInput(full_name="Same Request", phone="+5511999960001"),
+        customer_id=test_customer(scheduling_db, "+5511999960001"),
     )
     with ThreadPoolExecutor(max_workers=2) as executor:
         same_key_results = list(executor.map(
@@ -207,7 +197,6 @@ def test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once(sc
         ))
     assert len({result.booking.id for result in same_key_results}) == 1
     assert sorted(result.outcome for result in same_key_results) == ["created", "replayed"]
-    assert same_key_results[0].manage_token == same_key_results[1].manage_token
 
     competing_slot = slot_at_offset(
         slots,
@@ -223,10 +212,7 @@ def test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once(sc
             professional_id=competing_slot.professional_id,
             slot_id=competing_slot.slot_id,
             starts_at=competing_slot.starts_at,
-            customer=CustomerInput(
-                full_name=f"Competing Customer {index}",
-                phone=f"+551199996000{index + 2}",
-            ),
+            customer_id=test_customer(scheduling_db, f"+551199996000{index + 2}"),
         )
         try:
             return service.create(request, f"concurrent-key-{index}")
@@ -256,7 +242,7 @@ def test_booking_and_reminder_creation_roll_back_together(scheduling_db):
         professional_id=slot.professional_id,
         slot_id=slot.slot_id,
         starts_at=slot.starts_at,
-        customer=CustomerInput(full_name="Rollback Customer", phone="+5511999970001"),
+        customer_id=test_customer(scheduling_db, "+5511999970001"),
     )
     with connect(scheduling_db["url"]) as connection:
         connection.execute("""CREATE FUNCTION fail_booking_reminder_insert() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -267,7 +253,7 @@ def test_booking_and_reminder_creation_roll_back_together(scheduling_db):
         with pytest.raises(psycopg.errors.RaiseException):
             scheduling_db["bookings"].create(request, "rollback-create")
         with connect(scheduling_db["url"]) as connection:
-            assert connection.execute("SELECT count(*) AS n FROM customers").fetchone()["n"] == 0
+            assert connection.execute("SELECT count(*) AS n FROM customers").fetchone()["n"] == 1
             assert connection.execute("SELECT count(*) AS n FROM bookings").fetchone()["n"] == 0
             assert connection.execute("SELECT count(*) AS n FROM reminders").fetchone()["n"] == 0
             assert connection.execute("SELECT count(*) AS n FROM idempotency_records").fetchone()["n"] == 0

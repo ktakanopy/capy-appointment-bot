@@ -163,154 +163,42 @@ class TelegramRepository:
                 (delay_seconds, code[:64], bot_id, update_id),
             )
 
-    def save_username(self, business_id: str, bot_id: int, user_id: int, username: str | None) -> None:
+    def ensure_identity(self, business_id: str, bot_id: int, user_id: int, display_name: str, username: str | None = None) -> dict:
+        """Provision by transport identity; never look up a customer by phone."""
+        import uuid
         with connect(self.database_url) as connection:
             connection.execute(
-                """INSERT INTO telegram_identities
-                   (business_id,bot_id,telegram_user_id,username)
-                   VALUES (%s,%s,%s,%s)
+                """INSERT INTO telegram_identities (business_id,bot_id,telegram_user_id,username,display_name)
+                   VALUES (%s,%s,%s,%s,%s)
                    ON CONFLICT (business_id,bot_id,telegram_user_id) DO UPDATE
-                   SET username=EXCLUDED.username,updated_at=now()""",
-                (business_id, bot_id, user_id, username),
+                   SET username=EXCLUDED.username,display_name=EXCLUDED.display_name,updated_at=now()""",
+                (business_id, bot_id, user_id, username, display_name),
             )
-
-    def identity(self, business_id: str, bot_id: int, user_id: int) -> dict[str, Any] | None:
-        with connect(self.database_url) as connection:
-            row = connection.execute(
+            identity = connection.execute(
                 """SELECT * FROM telegram_identities
-                   WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s""",
+                   WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s FOR UPDATE""",
                 (business_id, bot_id, user_id),
             ).fetchone()
-        return dict(row) if row else None
+            if identity["customer_id"] is None:
+                customer_id = str(uuid.uuid4())
+                connection.execute(
+                    "INSERT INTO customers (id,business_id,full_name,phone) VALUES (%s,%s,%s,%s)",
+                    (customer_id, business_id, identity["display_name"] or display_name, identity["contact_phone"]),
+                )
+                connection.execute(
+                    """UPDATE telegram_identities SET customer_id=%s,updated_at=now()
+                       WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s""",
+                    (customer_id, business_id, bot_id, user_id),
+                )
+                identity["customer_id"] = customer_id
+            return dict(identity)
 
-    def save_verified_name(self, business_id: str, bot_id: int, user_id: int, name: str) -> None:
+    def save_contact(self, business_id: str, customer_id: str, phone: str) -> None:
         with connect(self.database_url) as connection:
             connection.execute(
-                """UPDATE telegram_identities SET verified_name=%s,updated_at=now()
-                   WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s
-                     AND verified_phone IS NOT NULL AND customer_id IS NULL""",
-                (name, business_id, bot_id, user_id),
+                "UPDATE customers SET phone=%s WHERE business_id=%s AND id=%s",
+                (phone, business_id, customer_id),
             )
-
-    def customer(self, business_id: str, customer_id: str) -> dict[str, Any] | None:
-        with connect(self.database_url) as connection:
-            row = connection.execute(
-                "SELECT id,full_name,phone FROM customers WHERE business_id=%s AND id=%s",
-                (business_id, customer_id),
-            ).fetchone()
-        return dict(row) if row else None
-
-    def link_existing_customer(
-        self, business_id: str, bot_id: int, user_id: int
-    ) -> bool:
-        """Finish a verified phone link when a previous booking turn was interrupted."""
-        try:
-            with connect(self.database_url) as connection:
-                with connection.transaction():
-                    identity = connection.execute(
-                        """SELECT verified_phone,customer_id FROM telegram_identities
-                           WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s
-                           FOR UPDATE""",
-                        (business_id, bot_id, user_id),
-                    ).fetchone()
-                    if identity is None or not identity["verified_phone"] or identity["customer_id"]:
-                        return False
-                    customer = connection.execute(
-                        """SELECT id,full_name FROM customers
-                           WHERE business_id=%s AND phone=%s""",
-                        (business_id, identity["verified_phone"]),
-                    ).fetchone()
-                    if customer is None:
-                        return False
-                    linked = connection.execute(
-                        """UPDATE telegram_identities
-                           SET customer_id=%s,verified_name=%s,updated_at=now()
-                           WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s
-                             AND customer_id IS NULL
-                           RETURNING customer_id""",
-                        (customer["id"], customer["full_name"], business_id, bot_id, user_id),
-                    ).fetchone()
-                    return linked is not None
-        except psycopg.errors.UniqueViolation:
-            return False
-
-    def verify_contact(
-        self,
-        business_id: str,
-        bot_id: int,
-        user_id: int,
-        phone: str,
-        name: str | None,
-    ) -> str:
-        """Save a verified number or link to its existing customer."""
-        with connect(self.database_url) as connection:
-            with connection.transaction():
-                # One polling worker per bot, so the identity row lock plus the
-                # unique indexes cover concurrent claims.
-                identity = connection.execute(
-                    """SELECT customer_id FROM telegram_identities
-                       WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s
-                       FOR UPDATE""",
-                    (business_id, bot_id, user_id),
-                ).fetchone()
-                if identity is None:
-                    return "identity_missing"
-                claimed = connection.execute(
-                    """SELECT 1 FROM telegram_identities
-                       WHERE business_id=%s AND bot_id=%s AND verified_phone=%s
-                         AND telegram_user_id<>%s""",
-                    (business_id, bot_id, phone, user_id),
-                ).fetchone()
-                if claimed:
-                    return "already_linked"
-                customer = connection.execute(
-                    "SELECT id FROM customers WHERE business_id=%s AND phone=%s",
-                    (business_id, phone),
-                ).fetchone()
-                if identity["customer_id"] and (
-                    customer is None or identity["customer_id"] != customer["id"]
-                ):
-                    return "already_linked"
-                if customer:
-                    existing_link = connection.execute(
-                        """SELECT telegram_user_id FROM telegram_identities
-                           WHERE business_id=%s AND bot_id=%s AND customer_id=%s
-                             AND telegram_user_id<>%s""",
-                        (business_id, bot_id, customer["id"], user_id),
-                    ).fetchone()
-                    if existing_link:
-                        return "already_linked"
-                    connection.execute(
-                        """UPDATE telegram_identities SET customer_id=%s,verified_phone=%s,
-                           verified_name=COALESCE(%s,verified_name),updated_at=now()
-                           WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s""",
-                        (customer["id"], phone, name, business_id, bot_id, user_id),
-                    )
-                    return "linked"
-                connection.execute(
-                    """UPDATE telegram_identities SET verified_phone=%s,
-                       verified_name=COALESCE(%s,verified_name),updated_at=now()
-                       WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s""",
-                    (phone, name, business_id, bot_id, user_id),
-                )
-                return "verified"
-
-    def attach_customer(
-        self, business_id: str, bot_id: int, user_id: int, customer_id: str, phone: str, name: str,
-    ) -> bool:
-        try:
-            with connect(self.database_url) as connection:
-                row = connection.execute(
-                    """UPDATE telegram_identities SET customer_id=%s,verified_phone=%s,
-                           verified_name=%s,updated_at=now()
-                       WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s
-                         AND (customer_id IS NULL OR customer_id=%s)
-                       RETURNING customer_id""",
-                    (customer_id, phone, name, business_id, bot_id, user_id, customer_id),
-                ).fetchone()
-        except psycopg.errors.UniqueViolation:
-            return False
-        return row is not None
 
     def mark_ignored(self, bot_id: int, update_id: int) -> None:
         with connect(self.database_url) as connection:

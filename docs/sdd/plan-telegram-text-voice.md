@@ -1,5 +1,7 @@
 # Telegram text and audio integration — implementation plan
 
+> Historical design input. [Portfolio simplification](plan-portfolio-simplification.md) supersedes phone-proof, token-interface and fallback rules. Full Gemma audio and Laya routing remain supported.
+
 Status: historical implementation record. Migration and worker code are implemented and tested locally; live Telegram and real Gemma behavior remain unverified. Work-package labels below are planning references, not registered tracker tasks.
 
 ## Source artifacts

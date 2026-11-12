@@ -1,34 +1,15 @@
-# Security and data handling
+# Ownership and data handling
 
-This repository is a synthetic-data local portfolio demo, not a production booking service.
+This is a synthetic-data portfolio application. Telegram's numeric sender ID, scoped by business and bot, maps to the customer. Username and display name are metadata. A supplied phone number never grants access or merges customers.
 
-## Booking management capability
+Booking reads and changes require trusted business/customer IDs from the transport boundary. The application checks them against the booking inside the mutation transaction, including idempotent replay. The model never supplies these trusted IDs. Customer management tokens and public customer mutation routes are retired. Owner inspection is a local CLI; it has no public HTTP surface.
 
-- Each booking receives a capability token derived from `BOOKING_TOKEN_SECRET`, booking ID, and token version using HMAC-SHA-256.
-- The token is returned only when a booking is created or replayed with the same idempotency key. The database stores a SHA-256 digest, not the token.
-- Management reads and mutations require the token in `X-Booking-Token` or the separate `manage_token` field on `/chat`. An opaque database ID alone grants no access.
-- Unknown bookings, malformed tokens, and invalid tokens share the same `booking_not_found` response.
-- A secret with at least 32 random bytes is required to create or use management tokens. Rotating it invalidates outstanding tokens; the demo has no token-recovery flow.
+Contacts shared through Telegram are stored only for that account. They are optional and do not constitute account linking. Do not add a typed-phone shortcut for claiming old bookings. Legacy records without a trusted link remain owner-visible.
 
-## Conversation boundary
+Known customer display names, recognizable phone/email strings and pasted legacy tokens are sanitized before model input and the first checkpoint write. Contact fields returned by models are discarded. Arbitrary names in free text cannot be reliably detected by this simple sanitizer; this is not a guarantee of named-entity anonymization. Audio itself reaches the configured Gemma transcription endpoint before transcript sanitization.
 
-The API removes any token-shaped text from a message before passing it to LangGraph. The token supplied separately for a management action is not included in graph input, checkpoint state, model input, logs, traces, URLs, or error messages. The worker has no graph or checkpointer dependency.
+New checkpoints contain bounded history and expire with the session TTL. Old checkpoint namespaces expire under their existing TTL; use an explicitly scoped purge if immediate old-data removal is required. Business records persist in PostgreSQL. Telegram intake payloads are removed when the turn becomes reply-ready; deduplication receipts have bounded retention. Temporary decoded audio is cleaned up on success and failure.
 
-The language model has no write tools. It extracts a typed intent only. Python services validate slot policy, booking ownership through the capability, future-time rules, and allowed status transitions.
+Logs/traces contain safe event names, IDs and outcomes, not raw messages, audio, provider exception bodies or contact values. Provider failure makes no booking write. An interrupted or otherwise ambiguous turn reports uncertainty rather than claiming rollback.
 
-## Concurrency and idempotency
-
-- Booking transactions lock the professional and recheck service assignment, weekly hours, notice/horizon, blocks, and active bookings.
-- A PostgreSQL GiST exclusion constraint rejects overlapping occupied intervals for scheduled or confirmed bookings. The interval includes service buffers and is half-open, so adjacent bookings can touch exactly at a boundary.
-- `Idempotency-Key` is required on booking writes and scoped by business and operation. Reusing a key with a different request hash returns a conflict.
-- Create plus pending reminder, cancel plus pending-reminder cancellation, and reschedule plus reminder adjustment are transactional.
-- The reschedule update is atomic; a failed move leaves the old booking unchanged.
-- The reminder worker selects due rows with `FOR UPDATE SKIP LOCKED` and sends inside a transaction; the inbox has a unique constraint on `reminder_id`.
-
-## Logs and traces
-
-Application logs and Langfuse metadata include intent, outcome, slot count, and stable resource IDs. Names, phone numbers, email addresses, raw messages, and capability tokens are excluded or redacted. Langfuse is optional and uses a database separate from the app database.
-
-## Demo limitations
-
-The owner agenda is unauthenticated and should only be used with local synthetic data. The CLI keeps the management token in memory for the session and sends it in a separate request field so the user can complete the demo. Use TLS, real owner authentication, secret management, retention controls, rate limiting, and a reviewed privacy model before adapting this to real customers.
+Before upgrading an existing instance, stop old workers and back up the database. Token removal has no automatic downgrade; restore the matching backup and application to roll back. The cleanup does not migrate or reset the currently running demo database.

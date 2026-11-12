@@ -9,7 +9,6 @@ from app.models import AvailabilitySlot, Booking
 
 Operation = Literal["create", "reschedule", "confirm", "cancel", "none"]
 MissingField = Literal["service", "date", "professional", "customer", "slot", "booking", "none"]
-AuthKind = Literal["anonymous", "customer", "booking"]
 NextAction = Literal[
     "BOOK",
     "RESCHEDULE",
@@ -68,15 +67,6 @@ class DecisionOutput(BaseModel):
     reason_code: str | None = None
 
 
-class ToolResult(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    success: bool
-    error_code: str | None = None
-    domain_payload: dict = Field(default_factory=dict)
-    retryable: bool = False
-
-
 class BookingRef(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -87,28 +77,23 @@ class BookingRef(BaseModel):
 
 
 class TurnContext(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(extra="forbid")
 
     conversation_id: str
     business_id: str
     message: str
     today: str
     selected_slot_id: str | None = None
-    auth_kind: AuthKind = "anonymous"
     customer_id: str | None = None
     booking_id: str | None = None
-    customer_ready: bool = False
     idempotency_key: str | None = None
     input_modality: Literal["text", "audio"] = "text"
-    normalized: NormalizedRequest | None = None
-    draft: WorkflowDraft | None = None
 
 
 class TurnResult(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(extra="forbid")
 
     text: str
     intent: str
     slots: list[AvailabilitySlot] = Field(default_factory=list)
     booking: Booking | None = None
-    manage_token: str | None = None

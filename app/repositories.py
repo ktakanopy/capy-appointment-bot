@@ -213,10 +213,3 @@ class PostgresRepository:
     def row_booking(connection: psycopg.Connection, booking_id: str, *, for_update: bool = False):
         suffix = " FOR UPDATE OF b" if for_update else ""
         return connection.execute(BOOKING_SELECT + " WHERE b.id=%s" + suffix, (booking_id,)).fetchone()
-
-    @staticmethod
-    def row_booking_with_token(connection: psycopg.Connection, booking_id: str, token_digest: str):
-        return connection.execute(
-            BOOKING_SELECT + " WHERE b.id=%s AND b.token_digest=%s",
-            (booking_id, token_digest),
-        ).fetchone()

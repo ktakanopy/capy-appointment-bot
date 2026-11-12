@@ -1,25 +1,6 @@
-from app.llm.provider import DeterministicInterpreter, FallbackInterpreter
+from app.llm.provider import DeterministicInterpreter, build_interpreter, build_decision
 
 
-def test_deterministic_interpreter_extracts_name_and_phone():
-    interpreter = DeterministicInterpreter()
-
-    result = interpreter.interpret(
-        "My name is Ada Lovelace, my phone is +55 (11) 99999-9999",
-        {
-            "today": "2026-10-19",
-            "service_names": ["Massage"],
-            "professional_names": ["Alex"],
-            "has_slots": False,
-        },
-    )
-
-    assert result.intent == "unknown"
-    assert result.service_name is None
-    assert result.local_date is None
-    assert result.local_time is None
-    assert result.customer_name == "Ada Lovelace"
-    assert result.phone == "+5511999999999"
 
 
 def test_deterministic_interpreter_extracts_service_date_and_time():
@@ -43,13 +24,14 @@ def test_deterministic_interpreter_resolves_slot_ordinal_only_with_offers():
     assert result.slot_index == 2
 
 
-def test_fallback_interpreter_uses_deterministic_provider_after_failure():
-    class BrokenInterpreter:
-        def interpret(self, _message, _context):
-            raise RuntimeError("provider unavailable")
 
-    result = FallbackInterpreter(BrokenInterpreter(), DeterministicInterpreter()).interpret(
-        "cancel my booking", {}
-    )
-
-    assert result.intent == "cancel"
+def test_provider_selection_never_silently_substitutes():
+    import pytest
+    from app.llm.gemma import GemmaUnderstanding
+    from app.graph.laya import LayaDecision
+    assert isinstance(build_interpreter("gemma"), GemmaUnderstanding)
+    assert isinstance(build_decision("laya"), LayaDecision)
+    with pytest.raises(ValueError):
+        build_interpreter("typo")
+    with pytest.raises(ValueError):
+        build_decision("typo")

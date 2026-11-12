@@ -14,12 +14,11 @@ from app.booking import BookingService
 from app.seed import seed
 
 
-TOKEN_SECRET = "integration-test-secret-32-bytes-minimum!!"
-
-
 @pytest.fixture
 def scheduling_db(monkeypatch):
     url = os.getenv("TEST_DATABASE_URL")
+    if not url and os.getenv("CAPY_REQUIRE_INTEGRATION") == "1":
+        pytest.fail("CI requires TEST_DATABASE_URL")
     if not url:
         pytest.skip("set TEST_DATABASE_URL to run PostgreSQL integration tests")
     database_name = urlparse(url).path.rstrip("/").split("/")[-1]
@@ -27,10 +26,7 @@ def scheduling_db(monkeypatch):
         pytest.fail("TEST_DATABASE_URL must point to a disposable database whose name ends in _test")
 
     monkeypatch.setenv("DATABASE_URL", url)
-    monkeypatch.setenv("BOOKING_TOKEN_SECRET", TOKEN_SECRET)
     monkeypatch.setenv("DEMO_BUSINESS_ID", "demo-studio")
-    monkeypatch.setenv("LLM_PROVIDER", "deterministic")
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setenv("TRACING_ENABLED", "false")
 
     subprocess.run(
@@ -49,7 +45,7 @@ def scheduling_db(monkeypatch):
         "url": url,
         "repository": repository,
         "availability": AvailabilityService(repository),
-        "bookings": BookingService(repository, TOKEN_SECRET),
+        "bookings": BookingService(repository),
     }
 
     with connect(url) as connection:

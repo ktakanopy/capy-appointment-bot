@@ -77,7 +77,7 @@ class Customer(Contract):
     id: str
     business_id: str
     full_name: str
-    phone: str
+    phone: str | None = None
     email: str | None = None
 
 
@@ -162,12 +162,14 @@ class AvailabilityResponse(Contract):
 
 class CustomerInput(Contract):
     full_name: str = Field(min_length=2, max_length=120)
-    phone: str = Field(min_length=7, max_length=24)
+    phone: str | None = Field(default=None, min_length=7, max_length=24)
     email: str | None = None
 
     @field_validator("phone")
     @classmethod
-    def validate_phone(cls, value: str) -> str:
+    def validate_phone(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
         if any(not (ch.isdigit() or ch in "+(). -") for ch in value):
             raise ValueError("phone may contain digits and standard phone punctuation only")
         normalized = "".join(ch for ch in value if ch.isdigit() or ch == "+")
@@ -200,7 +202,7 @@ class BookingCreateRequest(Contract):
     professional_id: str
     slot_id: str
     starts_at: datetime
-    customer: CustomerInput
+    customer_id: str
 
     @field_validator("starts_at")
     @classmethod
@@ -227,7 +229,6 @@ class BookingRescheduleRequest(Contract):
 
 class BookingSummary(Contract):
     booking: Booking
-    manage_token: str | None = None
     outcome: str = "created"
 
 
@@ -253,31 +254,6 @@ class DemoReminder(Contract):
 
 class DemoRemindersResponse(Contract):
     reminders: list[DemoReminder]
-
-
-class SessionResponse(Contract):
-    session_id: str
-    thread_id: str
-    response: str | None = None
-
-
-class ChatRequest(Contract):
-    session_id: str = Field(min_length=1, max_length=128)
-    business_id: str = "demo-studio"
-    message: str = Field(min_length=1, max_length=4000)
-    manage_token: str | None = Field(default=None, max_length=512)
-    selected_slot_id: str | None = Field(default=None, max_length=80)
-    customer: CustomerInput | None = None
-
-
-class ChatResponse(Contract):
-    session_id: str
-    response: str
-    intent: str
-    slots: list[AvailabilitySlot] = Field(default_factory=list)
-    booking: Booking | None = None
-    manage_token: str | None = None
-    issue: str | None = None
 
 
 class HealthResponse(Contract):

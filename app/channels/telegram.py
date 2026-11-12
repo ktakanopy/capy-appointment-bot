@@ -116,14 +116,6 @@ class TelegramBotApi:
         self.call("sendMessage", payload)
 
 
-def contact_keyboard() -> dict:
-    return {
-        "keyboard": [[{"text": "Share my phone number", "request_contact": True}]],
-        "resize_keyboard": True,
-        "one_time_keyboard": True,
-    }
-
-
 def _retry_after(result: object) -> int | None:
     if not isinstance(result, dict):
         return None

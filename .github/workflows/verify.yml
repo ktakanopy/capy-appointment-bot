@@ -1,0 +1,41 @@
+name: Verify scheduling
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: scheduling
+          POSTGRES_PASSWORD: scheduling
+          POSTGRES_DB: scheduling_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd 'pg_isready -U scheduling -d scheduling_test'
+          --health-interval 2s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+        options: --health-cmd 'redis-cli ping' --health-interval 2s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql://scheduling:scheduling@localhost:5432/scheduling_test
+      TEST_REDIS_URL: redis://localhost:6379/15
+      CAPY_REQUIRE_INTEGRATION: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: '3.11'
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: uv sync --locked --extra dev
+      - run: uv run --extra dev pytest -q
+      - run: uv run python -m app.evals.runner --understanding deterministic --routing deterministic --output .eval_runs/offline.json
+      - run: docker compose config --quiet
+      - run: docker compose -f docker-compose.yml -f docker-compose.observability.yml config --quiet
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: offline-evaluation
+          path: .eval_runs/

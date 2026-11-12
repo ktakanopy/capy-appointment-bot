@@ -4,7 +4,7 @@ from typing import Annotated, Any, TypedDict
 
 
 def _append_messages(existing: list[dict[str, str]] | None, new: list[dict[str, str]] | None) -> list[dict[str, str]]:
-    return [*(existing or []), *(new or [])]
+    return [*(existing or []), *(new or [])][-24:]
 
 
 class SchedulingGraphState(TypedDict, total=False):
@@ -13,13 +13,10 @@ class SchedulingGraphState(TypedDict, total=False):
     message: str
     today: str
     selected_slot_id: str | None
-    auth_kind: str
     customer_id: str | None
     booking_id: str | None
-    customer_ready: bool
     idempotency_key: str | None
     input_modality: str
-    skip_interpret: bool
     normalized_request: dict[str, Any]
     service_names: list[str]
     professional_names: list[str]

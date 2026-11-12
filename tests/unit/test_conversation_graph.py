@@ -1,7 +1,7 @@
 from datetime import date
 
 from app.graph.builder import build_graph
-from app.graph.contracts import BookingRef, NormalizedRequest, TurnContext, WorkflowDraft
+from app.graph.contracts import BookingRef, TurnContext, WorkflowDraft
 from app.graph.decision import DeterministicDecision
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import DeterministicInterpreter
@@ -14,8 +14,6 @@ class Ports:
     def __init__(self, slots=None, refs=None):
         self.slots = list(slots or [])
         self.refs = list(refs or [])
-        self.draft = WorkflowDraft()
-        self.saved_slots = []
         self.created = []
         self.rescheduled = []
         self.confirmed = []
@@ -23,29 +21,14 @@ class Ports:
         self.escalations = []
         self.last_slots = []
         self.last_booking = None
-        self.last_manage_token = None
-        self._ready = False
 
     def catalog(self, business_id):
         _ = business_id
         return sample_catalog()
 
-    def load_draft(self, conversation_id):
-        _ = conversation_id
-        return self.draft.model_copy(deep=True)
 
-    def save_draft(self, conversation_id, draft):
-        _ = conversation_id
-        self.draft = draft.model_copy(deep=True)
 
-    def load_slots(self, conversation_id):
-        _ = conversation_id
-        return list(self.saved_slots)
 
-    def save_slots(self, conversation_id, slots):
-        _ = conversation_id
-        self.saved_slots = list(slots)
-        self.last_slots = list(slots)
 
     def search(self, request: AvailabilitySearchRequest):
         self.requests = getattr(self, "requests", [])
@@ -53,21 +36,15 @@ class Ports:
         self.last_slots = list(self.slots)
         return list(self.slots)
 
-    def capture_customer(self, name, phone):
-        _ = name, phone
-        return self._ready
 
-    def customer_ready(self):
-        return self._ready
 
     def create_booking(self, slot, idempotency_key):
         self.created.append((slot.slot_id, idempotency_key))
         from app.models import BookingSummary
         from tests.conftest import sample_booking
 
-        summary = BookingSummary(booking=sample_booking(), manage_token="hidden-from-graph")
+        summary = BookingSummary(booking=sample_booking())
         self.last_booking = summary.booking
-        self.last_manage_token = summary.manage_token
         return summary
 
     def confirm(self, booking_id, idempotency_key):
@@ -97,15 +74,10 @@ class Ports:
     def list_booking_refs(self):
         return list(self.refs)
 
-    def messages(self, conversation_id):
-        _ = conversation_id
-        return []
 
     def record_escalation(self, conversation_id):
         self.escalations.append(conversation_id)
 
-    def remember_extraction(self, extraction):
-        _ = extraction
 
 
 def _turn(message, **kwargs):
@@ -114,6 +86,7 @@ def _turn(message, **kwargs):
         business_id="demo-studio",
         message=message,
         today="2026-10-19",
+        idempotency_key="test-turn",
         **kwargs,
     )
 
@@ -144,8 +117,8 @@ def test_search_offers_only_returned_slots():
 
 def test_unoffered_slot_does_not_write():
     ports = Ports()
-    ports.saved_slots = [sample_slot()]
-    result = _workflow().handle_turn(_turn("choose this", selected_slot_id="missing", customer_ready=True), ports)
+    ports.slots = [sample_slot()]
+    result = _workflow().handle_turn(_turn("choose this", selected_slot_id="missing", customer_id="customer-1"), ports)
 
     assert result.intent == "clarify"
     assert ports.created == []
@@ -153,14 +126,10 @@ def test_unoffered_slot_does_not_write():
 
 
 def test_authorized_create_does_not_reschedule():
-    ports = Ports()
-    ports.saved_slots = [sample_slot()]
-    ports._ready = True
-    result = _workflow().handle_turn(
-        _turn("book another", selected_slot_id="slot-1", auth_kind="booking", booking_id="booking-1", customer_ready=True),
-        ports,
-    )
-
+    ports = Ports(slots=[sample_slot()])
+    workflow = _workflow()
+    workflow.handle_turn(_turn("book Massage on 2099-01-05", customer_id="customer-1"), ports)
+    result = workflow.handle_turn(_turn("1", customer_id="customer-1"), ports)
     assert result.intent == "create"
     assert ports.created
     assert ports.rescheduled == []
@@ -172,9 +141,7 @@ def test_explicit_reschedule_uses_one_authorized_booking():
     result = workflow.handle_turn(
         _turn(
             "move it to 2099-01-05",
-            auth_kind="customer",
             customer_id="customer-1",
-            draft=WorkflowDraft(operation="reschedule", service_id="massage", service_name="Massage", local_date="2099-01-05"),
         ),
         ports,
     )
@@ -190,7 +157,7 @@ def test_several_bookings_do_not_write():
         BookingRef(id="two", service_id="massage", label="two"),
     ])
     workflow = _workflow()
-    result = workflow.handle_turn(_turn("please reschedule", auth_kind="customer", customer_id="customer-1"), ports)
+    result = workflow.handle_turn(_turn("please reschedule", customer_id="customer-1"), ports)
 
     assert result.intent == "clarify_booking"
     assert ports.rescheduled == []
@@ -212,11 +179,8 @@ def test_second_turn_reads_the_checkpoint_draft():
 def test_date_reply_continues_draft():
     ports = Ports(slots=[sample_slot()])
     workflow = _workflow()
-    result = workflow.handle_turn(
-        _turn("tomorrow", draft=WorkflowDraft(operation="create", service_id="massage", service_name="Massage", missing="date")),
-        ports,
-    )
-
+    workflow.handle_turn(_turn("Book Massage"), ports)
+    result = workflow.handle_turn(_turn("tomorrow"), ports)
     assert result.intent == "search"
     assert ports.requests[0].start_date == date(2026, 10, 20)
 
@@ -242,35 +206,18 @@ def test_swapped_decision_cannot_force_reschedule():
             _ = request, draft
             return DecisionOutput(next_action="RESCHEDULE", confidence=0.99, needs_human=False)
 
-    ports = Ports()
-    ports.saved_slots = [sample_slot()]
-    ports._ready = True
-    result = LangGraphWorkflow(build_graph(DeterministicInterpreter(), AlwaysReschedule())).handle_turn(
-        _turn("book Massage on 2099-01-05", selected_slot_id="slot-1", auth_kind="booking", booking_id="booking-1", customer_ready=True),
-        ports,
-    )
-
+    ports = Ports(slots=[sample_slot()])
+    from langgraph.checkpoint.memory import InMemorySaver
+    workflow = LangGraphWorkflow(build_graph(DeterministicInterpreter(), AlwaysReschedule(), checkpointer=InMemorySaver()))
+    workflow.handle_turn(_turn("book Massage on 2099-01-05", customer_id="customer-1"), ports)
+    result = workflow.handle_turn(_turn("1", customer_id="customer-1"), ports)
     assert ports.rescheduled == []
     assert result.intent == "create"
 
 
-def test_audio_normalized_request_uses_same_workflow():
-    from app.channels.audio import FixtureAudioUnderstanding
-
-    normalized = NormalizedRequest(
-        conversation_id="session-1",
-        transcript="move it",
-        intent="reschedule",
-        input_modality="audio",
-        confidence=0.8,
-    )
-    understood = FixtureAudioUnderstanding(normalized).understand(b"audio", {})
+def test_audio_transcript_uses_same_workflow():
     ports = Ports(refs=[BookingRef(id="booking-9", service_id="massage", label="later")])
-    result = _workflow().handle_turn(
-        _turn("", normalized=understood, input_modality="audio", auth_kind="customer", customer_id="customer-1"),
-        ports,
-    )
-
+    result = _workflow().handle_turn(_turn("move it", input_modality="audio", customer_id="customer-1"), ports)
     assert result.intent == "reschedule"
     assert ports.rescheduled == []
 
@@ -299,3 +246,26 @@ def test_lookup_requires_verified_customer():
 
     assert result.intent == "manage_booking"
     assert "later" not in result.text
+
+
+def test_numbered_booking_selection_resolves_multiple_owned_appointments():
+    ports = Ports(refs=[BookingRef(id="one", service_id="massage", label="one"),
+                        BookingRef(id="two", service_id="massage", label="two")])
+    workflow = _workflow()
+    first = workflow.handle_turn(_turn("cancel my booking", customer_id="customer-1"), ports)
+    assert first.intent == "clarify_booking"
+    second = workflow.handle_turn(_turn("2", customer_id="customer-1"), ports)
+    assert second.intent == "cancel"
+    assert ports.canceled[0][0] == "two"
+
+
+def test_laya_escalation_cannot_commit_a_selected_slot():
+    from app.graph.contracts import DecisionOutput
+    class Escalate:
+        def decide(self, request, draft):
+            return DecisionOutput(next_action="ESCALATE", confidence=0.1, needs_human=True)
+    from langgraph.checkpoint.memory import InMemorySaver
+    ports = Ports(slots=[sample_slot()])
+    workflow = LangGraphWorkflow(build_graph(DeterministicInterpreter(), Escalate(), checkpointer=InMemorySaver()))
+    result = workflow.handle_turn(_turn("1", selected_slot_id="slot-1", customer_id="customer-1"), ports)
+    assert not ports.created

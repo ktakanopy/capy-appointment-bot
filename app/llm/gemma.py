@@ -9,7 +9,6 @@ from urllib import request as urlrequest
 from urllib.error import URLError
 
 from app.channels.audio_chunks import AudioChunker, AudioError
-from app.graph.contracts import NormalizedRequest
 from app.llm.schemas import SchedulingExtraction
 
 
@@ -34,29 +33,6 @@ class GemmaUnderstanding:
     def interpret(self, message: str, context: dict) -> SchedulingExtraction:
         payload = self._post({"modality": "text", "message": message, "context": _safe_context(context)})
         return _extraction(payload)
-
-    def understand_audio(self, audio: bytes, context: dict) -> NormalizedRequest:
-        """Understand one already bounded clip; use transcribe_recording for uploads."""
-        payload = self._post(
-            {
-                "modality": "audio",
-                "audio_base64": base64.b64encode(audio).decode("ascii"),
-                "context": _safe_context(context),
-            }
-        )
-        extraction = _extraction(payload)
-        transcript = payload.get("transcript") if isinstance(payload.get("transcript"), str) else ""
-        return NormalizedRequest(
-            conversation_id=str(context.get("conversation_id") or ""),
-            transcript=transcript,
-            intent=extraction.intent,
-            service=extraction.service_name,
-            professional=extraction.professional_name,
-            date_constraint=extraction.local_date,
-            time_constraint=extraction.local_time,
-            input_modality="audio",
-            confidence=0.9 if extraction.intent != "unknown" else 0.2,
-        )
 
     def transcribe_recording(
         self,
@@ -180,14 +156,12 @@ def _extraction(payload: dict) -> SchedulingExtraction:
     try:
         return SchedulingExtraction.model_validate(
             {
-                "intent": payload.get("intent") or "unknown",
+                "intent": payload.get("intent"),
                 "service_name": payload.get("service_name"),
                 "professional_name": payload.get("professional_name"),
                 "local_date": payload.get("local_date"),
                 "local_time": payload.get("local_time"),
                 "slot_index": payload.get("slot_index"),
-                "customer_name": payload.get("customer_name"),
-                "phone": payload.get("phone"),
             }
         )
     except ValueError as exc:

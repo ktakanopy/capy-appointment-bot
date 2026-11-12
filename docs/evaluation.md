@@ -1,28 +1,24 @@
 # Evaluation
 
-The project uses two evaluation layers. `app.evals.runner` checks deterministic language extraction without PostgreSQL or model credentials. PostgreSQL integration tests check product outcomes through the real API, booking services, repositories, and reminder worker.
+The versioned JSONL corpus under `evals/data/` supports English and Portuguese text and audio. `smoke-text.jsonl` contains 16 synthetic task cases; `smoke-audio.jsonl` contains two synthesized speech cases. `smoke.jsonl` combines them. Speech was generated with installed macOS Eddy voices and converted to 16 kHz mono WAV. These samples validate the plumbing and provide a tiny regression baseline; they do not establish real-world speech/model quality.
 
-## Extraction benchmark
-
-Run the offline benchmark with:
+Each case records ID, language, split, group ID and provenance. Turns contain text or a relative audio path, reference transcript for audio, expected extraction fields, proposed action and final response intent. Cases can specify initial bookings and expected write counts. Paired recordings/paraphrases must share a group across splits. Duplicate IDs, invalid schema, unsafe/missing audio paths and split leakage fail dataset validation.
 
 ```bash
-uv run python -m app.evals.runner
+# Offline workflow regression with fixture services:
+uv run python -m app.evals.runner --understanding deterministic --routing deterministic
+# Actual Gemma and Laya:
+uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understanding gemma --routing laya --gemma-revision CHECKPOINT --laya-revision CHECKPOINT
+# Same corpus without Laya:
+uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understanding gemma --routing deterministic --gemma-revision CHECKPOINT
 ```
 
-It prints pass/fail per scenario and writes JSON results under `.eval_runs/`. Scenarios cover service/date discovery, professional and local-time extraction, ordinal slot selection, customer contact extraction, cancellation intent, and rescheduling language. If `LLM_PROVIDER=openai` is configured, they exercise model extraction with deterministic fallback on provider errors.
+`--layer workflow` runs the real graph with isolated synthetic domain services. It checks fields, routing, final intent and writes across turns. PostgreSQL/Redis integration tests separately establish persistence, ownership and concurrency guarantees. `--layer extraction` checks interpretation against labels. `--layer routing` supplies labelled extraction and explicit draft state to the selected router to isolate its quality.
 
-## Product outcome evaluations
+Audio always requires Gemma transcription. Deterministic text understanding cannot silently stand in for an audio model. Every complete recording is transcribed before its scheduling request; failures are errors. Word-level edit distance and reference-word counts are included for audio. No successful fallback is counted as a model prediction; the runner has no automatic fallback.
 
-Integration tests require `TEST_DATABASE_URL` to point to a disposable PostgreSQL database whose name ends in `_test`; each test migrates, seeds, and clears it. Run them with:
+Results under `.eval_runs/` contain schema version, hash of dataset and audio assets, requested/actual providers, model revision labels, predictions, errors and transcription/understanding/routing latency. Summaries group language and modality. Nonzero exit means a failed case, provider error or invalid dataset. Use labelled revision identifiers: the runner cannot infer the checkpoint actually served by an external endpoint.
 
-```bash
-TEST_DATABASE_URL=postgresql://user:password@localhost:5433/scheduling_test \
-  uv run --extra dev pytest -q tests/integration
-```
+CI runs offline cases, provider contracts, real audio decoding/chunk failure tests and real PostgreSQL/Redis integration checks. Integration tests cover populated legacy migration, account separation, scoped booking operations, overlap protection, concurrency, idempotency, atomic reminders, receipts, restart and expiry.
 
-The API and persistence scenarios assert structured outcomes for date clarification, service-backed slots, idempotent replay, stale-slot rejection, prompt-injection resistance, booking conflicts, transaction rollback, concurrent creates, reminder retries, and reminder-reply rescheduling. The API reminder journey also checks the owner agenda and that the management token stays out of graph state and logs.
-
-The customer walkthrough was exercised locally with PostgreSQL, FastAPI, the CLI, and a reminder-worker delivery: search, book, confirm, inspect the owner agenda, receive a simulated reminder reply, and move the booking. The same flow also runs under Docker Compose.
-
-Run the complete unit, API, evaluation, and integration suite with `uv run --extra dev pytest -q` after setting `TEST_DATABASE_URL`. Without it, PostgreSQL integration cases skip; unit and API contract checks still run.
+Live Gemma/Laya evaluations and a real Telegram walkthrough remain pending until compatible servers and an authorized synthetic-data test chat are available. Use examples with long recordings, noise and late corrections before claiming voice readiness. Preserve raw results with a case-study summary and sample counts; a tiny smoke corpus must not be presented as general model accuracy.

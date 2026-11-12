@@ -21,10 +21,6 @@ _OVERRIDE = re.compile(
 )
 
 
-class DecisionEngine:
-    def decide(self, request: NormalizedRequest, draft: WorkflowDraft) -> DecisionOutput: ...
-
-
 class DeterministicDecision:
     def decide(self, request: NormalizedRequest, draft: WorkflowDraft) -> DecisionOutput:
         if request.intent in {"unknown", "help"} and _OVERRIDE.search(request.transcript):

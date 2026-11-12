@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -20,3 +20,11 @@ RUN pip install --no-cache-dir .
 EXPOSE 8000
 
 CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+FROM runtime AS checks
+RUN pip install --no-cache-dir '.[dev]'
+COPY tests ./tests
+COPY evals ./evals
+CMD ["python", "-m", "pytest", "-q"]
+
+FROM runtime AS production
