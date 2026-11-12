@@ -1,36 +1,44 @@
-# appointment-bot Development Guidelines
+# General Service Scheduling Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-15
+Auto-generated from the general service scheduling MVP plan. Last updated: 2026-11-10
 
 ## Active Technologies
-- Python 3.11+ + FastAPI, LangGraph, Pydantic, pytest (001-build-appointment-service)
-- LangGraph `InMemorySaver` for thread-scoped checkpoints; in-memory patient and appointment repositories for v1 (001-build-appointment-service)
-- Python 3.11+ + FastAPI, LangGraph, Pydantic, Streamlit, OpenAI Python SDK, Langfuse Python SDK, pytest (002-frontend-llm-memory)
-- LangGraph `InMemorySaver` for thread-scoped session state; in-memory patient and appointment repositories for v1 domain data (002-frontend-llm-memory)
 
-- Python 3.11+ (document any justified deviation) + FastAPI, LangGraph, Pydantic, pytest, plus feature-specific additions (001-build-appointment-service)
+- Python 3.11+ with FastAPI, LangGraph, Pydantic v2, psycopg 3, Alembic, PostgreSQL, and Redis.
+- Gemma text/audio understanding and Laya routing are required in the application; deterministic providers are explicit evaluation baselines.
+- Gemma returns a plain-language interpreted message and booking facts without intent/action labels. Laya receives only `message` and draft `context`; it chooses the next action. See `docs/model-contracts.md`.
+- Langfuse Python SDK for optional observability.
+- Redis-backed LangGraph checkpoints for short-lived conversation state; PostgreSQL for business, schedule, booking, and reminder data.
 
 ## Project Structure
 
 ```text
 app/
-frontend/
+alembic/
 tests/
+evals/
+docs/
 ```
 
 ## Commands
 
-pytest
+- `uv run python -m app.evals.runner --understanding deterministic --routing deterministic` runs the offline bilingual task corpus.
+- `uv run --extra dev pytest -q` runs the general scheduling contract and unit suite.
+- `docker compose run --rm api python -m app.cli` prints the local owner agenda and reminder inbox.
+- PostgreSQL transaction and full Compose walkthrough checks require a local database runtime.
 
 ## Code Style
 
-Python 3.11+ (document any justified deviation): Follow standard conventions
+- Python 3.11+; follow standard conventions and keep booking policy in deterministic application services.
+- Keep contact details and pasted legacy booking tokens out of model input, checkpoints, logs, traces, and errors; document the limits of free-text redaction.
+- Keep migrations in `alembic/`; update them when persistence contracts change.
 
 ## Recent Changes
-- 002-frontend-llm-memory: Added Python 3.11+ + FastAPI, LangGraph, Pydantic, Streamlit, OpenAI Python SDK, Langfuse Python SDK, pytest
-- 001-build-appointment-service: Added Python 3.11+ + FastAPI, LangGraph, Pydantic, pytest
 
-- 001-build-appointment-service: Added Python 3.11+ (document any justified deviation) + FastAPI, LangGraph, Pydantic, pytest, plus feature-specific additions
+- Generalized the clinic prototype into a service scheduling MVP with PostgreSQL, deterministic availability, Telegram customer ownership, and a demo reminder worker.
+- Made Telegram the only customer channel with text/audio and a local owner CLI; historical WhatsApp, SMS, and Streamlit implementations are in Git history.
+- Laya is required in the app and bypassable in evaluations. Large bilingual datasets and Gemma/Laya fine-tuning remain follow-up work.
 
 <!-- MANUAL ADDITIONS START -->
+- Review and resolve outstanding `TODO` comments as follow-up work; keep them visible until handled.
 <!-- MANUAL ADDITIONS END -->

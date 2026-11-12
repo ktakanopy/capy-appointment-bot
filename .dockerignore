@@ -5,6 +5,6 @@ __pycache__
 .mypy_cache
 .ruff_cache
 .data
-tests
+.archived
 docs
 specs

@@ -1,0 +1,180 @@
+from __future__ import annotations
+
+import base64
+import json
+import math
+import re
+from time import monotonic
+from urllib import request as urlrequest
+from urllib.error import URLError
+
+from app.channels.audio_chunks import AudioChunker, AudioError
+from app.llm.schemas import SchedulingInterpretation
+
+_MAX_RESPONSE_BYTES = 1_000_000
+
+
+class ProviderError(RuntimeError):
+    pass
+
+
+class GemmaUnderstanding:
+    """Text and audio understanding through a local Gemma 3n E2B server.
+
+    The model rewrites the customer's meaning in simple terms and extracts
+    booking facts for Python. It does not label intent or choose the next step.
+    """
+
+    def __init__(self, base_url: str, timeout_seconds: float = 8):
+        self.base_url = base_url.rstrip("/")
+        self.timeout_seconds = timeout_seconds
+
+    def interpret(self, message: str, context: dict) -> SchedulingInterpretation:
+        payload = self._post(
+            {"modality": "text", "message": message, "context": _safe_context(context)}
+        )
+        return _interpretation(payload)
+
+    def transcribe_recording(
+        self,
+        audio: bytes,
+        context: dict,
+        *,
+        chunker: AudioChunker | None = None,
+        processing_timeout_seconds: float = 900,
+        max_transcript_characters: int = 64_000,
+    ) -> str:
+        """Transcribe a whole recording using pause-aware, overlapping clips.
+
+        No chunk-level intent is used. Only return after every chunk succeeds,
+        so the caller can interpret this complete transcript once and run one
+        workflow turn. Decoding/provider failures never return a partial result.
+
+        Matching phrases of at least three words at overlapping boundaries are
+        joined conservatively. Without word timestamps, exact alignment is not
+        guaranteed; short or differently transcribed repetitions are retained.
+        """
+        if (
+            not math.isfinite(processing_timeout_seconds)
+            or processing_timeout_seconds <= 0
+        ):
+            raise ValueError("processing_timeout_seconds must be finite and positive")
+        if max_transcript_characters <= 0:
+            raise ValueError("max_transcript_characters must be positive")
+        deadline = monotonic() + processing_timeout_seconds
+        chunker = chunker or AudioChunker(
+            decode_timeout_seconds=min(120, processing_timeout_seconds),
+        )
+        transcript = ""
+        try:
+            decode_budget = deadline - monotonic()
+            if decode_budget <= 0:
+                raise ProviderError("audio_processing_timeout")
+            with chunker.chunks(
+                audio,
+                decode_timeout_seconds=min(
+                    chunker.decode_timeout_seconds, decode_budget
+                ),
+            ) as chunks:
+                for chunk in chunks:
+                    remaining = deadline - monotonic()
+                    if remaining <= 0:
+                        raise ProviderError("audio_processing_timeout")
+                    payload = self._post(
+                        {
+                            "modality": "audio",
+                            "audio_base64": base64.b64encode(chunk.wav_bytes).decode(
+                                "ascii"
+                            ),
+                            "context": _safe_context(context),
+                        },
+                        timeout_seconds=min(self.timeout_seconds, remaining),
+                    )
+                    text = payload.get("transcript")
+                    if not isinstance(text, str) or not text.strip():
+                        raise ProviderError("empty_audio_transcript")
+                    if len(text) > max_transcript_characters:
+                        raise ProviderError("audio_transcript_limit")
+                    transcript = _join_transcripts(
+                        transcript, text.strip(), chunk.overlap_seconds
+                    )
+                    if len(transcript) > max_transcript_characters:
+                        raise ProviderError("audio_transcript_limit")
+                    if monotonic() >= deadline:
+                        raise ProviderError("audio_processing_timeout")
+        except AudioError as exc:
+            raise ProviderError(str(exc)) from None
+        if not transcript:
+            raise ProviderError("empty_audio_transcript")
+        return transcript
+
+    def _post(self, body: dict, *, timeout_seconds: float | None = None) -> dict:
+        encoded = json.dumps(body).encode()
+        req = urlrequest.Request(
+            f"{self.base_url}/understand",
+            data=encoded,
+            headers={"content-type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urlrequest.urlopen(
+                req,
+                timeout=self.timeout_seconds
+                if timeout_seconds is None
+                else timeout_seconds,
+            ) as response:
+                body = response.read(_MAX_RESPONSE_BYTES + 1)
+                if len(body) > _MAX_RESPONSE_BYTES:
+                    raise ProviderError("response_limit")
+                parsed = json.loads(body.decode())
+        except (URLError, TimeoutError, json.JSONDecodeError, OSError) as exc:
+            raise ProviderError(type(exc).__name__) from exc
+        if not isinstance(parsed, dict):
+            raise ProviderError("invalid_response")
+        return parsed
+
+
+def _join_transcripts(previous: str, current: str, overlap_seconds: float) -> str:
+    if not previous:
+        return current
+    previous_words = previous.split()
+    current_words = current.split()
+    # Restrict matching to the audio overlap. Never globally deduplicate text:
+    # repetition elsewhere in a message can be intentional.
+    max_words = min(
+        len(previous_words), len(current_words), math.ceil(overlap_seconds * 6)
+    )
+    for count in range(max_words, 2, -1):
+        left = [
+            re.sub(r"[^\w]", "", word).casefold() for word in previous_words[-count:]
+        ]
+        right = [
+            re.sub(r"[^\w]", "", word).casefold() for word in current_words[:count]
+        ]
+        if all(left) and left == right:
+            remainder = " ".join(current_words[count:])
+            return f"{previous} {remainder}".strip()
+    return f"{previous} {current}"
+
+
+def _safe_context(context: dict) -> dict:
+    return {
+        "service_names": context.get("service_names", []),
+        "professional_names": context.get("professional_names", []),
+        "today": context.get("today"),
+        "has_slots": bool(context.get("has_slots")),
+        "history": [
+            {"role": item.get("role"), "content": item.get("content")}
+            for item in context.get("history", [])
+            if isinstance(item, dict)
+            and item.get("role") in {"user", "assistant"}
+            and isinstance(item.get("content"), str)
+        ],
+    }
+
+
+def _interpretation(payload: dict) -> SchedulingInterpretation:
+    try:
+        return SchedulingInterpretation.model_validate(payload)
+    except ValueError as exc:
+        raise ProviderError("invalid_interpretation") from exc

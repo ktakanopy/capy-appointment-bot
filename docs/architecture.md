@@ -1,278 +1,52 @@
 # Architecture
 
-This project is small enough to follow without a giant diagram, which is a good
-thing for a take-home. The code is split into a few clear layers:
+![CAPY runtime architecture. The Telegram worker handles text and audio, then runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](assets/architecture.svg)
 
-- FastAPI for the HTTP API
-- LangGraph for the conversation workflow
-- services and repositories for business logic and demo data
-- a small OpenAI provider for intent extraction and eval judging
-- Streamlit for the optional frontend
+Telegram is the customer interface. `app/telegram_worker.py` validates private-chat sender identity, provisions the scoped customer, handles text/audio and saves replies in the durable update ledger.
 
-## System layout
+`app/llm/gemma.py` rewrites a message in simple language and extracts booking facts for Python, without assigning an intent or next action. It also transcribes full recordings. `app/channels/audio_chunks.py` splits decoded audio near pauses with overlap and enforces size/time budgets. No chunk can execute a booking. The completed transcript enters the same interpreter as typed text.
 
-```mermaid
-flowchart LR
-    subgraph client [Client]
-        streamlit[Streamlit frontend]
-    end
+`app/runtime.py` constructs Gemma and Laya directly through the same provider constructors used by evaluations. The normal app rejects deterministic overrides. Provider errors propagate to a safe retry response before writes. `app/graph/laya.py` sends only Gemma's interpreted `message` and draft `context` to Laya. Laya proposes the action; Python enforces required facts, valid references and booking authorization. External servers must follow the [model contracts](model-contracts.md).
 
-    subgraph apiLayer [API]
-        api[FastAPI app]
-        runtime[Runtime wiring]
-    end
+`app/graph/workflow.py` invokes one graph turn with a stable business/bot/user thread. Its Redis checkpoint owns draft, offered slots and at most 24 history messages. There is no separate draft/history/slot store. Private booking results stay in request-scoped `CustomerSchedulingActions`, outside checkpoints. `lg:v3` isolates the interpreted-message contract from older temporary state.
 
-    subgraph workflow [Workflow]
-        lgraph[LangGraph workflow]
-        parsing[Parsing helpers]
-    end
+`app/graph/actions.py` defines `SchedulingActions`, the protocol for operations the workflow may request. `CustomerSchedulingActions` in `app/customer_scheduling_actions.py` implements that contract for the trusted business/customer identity and calls deterministic services. Evaluation fixtures implement the same contract without real booking writes. `app/booking.py` checks ownership and current policy inside transactions; `app/scheduling.py` handles local time, service assignment, notice, horizon, buffers and conflicts. PostgreSQL's exclusion constraint independently prevents overlaps. The business-row lock deliberately serializes writes per business for a simple idempotency boundary; this limits throughput and should be measured before changing.
 
-    subgraph core [Core]
-        services[Services]
-        repos[Repositories]
-        responses[Response builder]
-        models[Shared models]
-    end
+`app/channels/telegram_repository.py` owns identity provisioning, update receipts, polling offsets and saved replies. Phone data never chooses the customer record. Duplicate updates do not rerun a turn; a crash with an unknown committed outcome yields a check-your-appointments response. Saved replies retry without rerunning booking operations. External reply delivery can duplicate after an ambiguous send timeout.
 
-    subgraph llm [LLM]
-        provider[OpenAI provider]
-    end
+`app/reminders.py` writes demo reminders into an inbox using `SKIP LOCKED` and bounded retry. It has no graph dependency. `app/cli.py` is a local owner inspection command that constructs only a PostgreSQL repository. `app/main.py` exposes health only and constructs its own Redis client. Neither entry point constructs Gemma, Laya or the conversation graph; only the Telegram worker needs the full application runtime.
 
-    streamlit --> api
-    api --> runtime
-    api --> responses
-    runtime --> lgraph
-    runtime --> services
-    runtime --> repos
-    runtime --> provider
-    lgraph --> parsing
-    lgraph --> services
-    lgraph --> models
-    responses --> models
-```
+`app/evals/` runs the real workflow with synthetic service boundaries or isolates extraction/routing. It does not establish database correctness: PostgreSQL/Redis integration tests cover that separately. Model training and servers are external to this repository.
 
-## Main modules
 
-### `app/main.py`
+## How to read the code
 
-FastAPI entrypoint. It exposes:
+Follow one user request rather than reading files alphabetically. Use “Book a relaxation massage tomorrow”, then “1”, as the example.
 
-- `POST /sessions/new`
-- `POST /chat`
-- `GET /health`
+1. Start at `TelegramWorker._run_turn` in `app/telegram_worker.py`. It turns trusted channel identity and sanitized text into `TurnContext`, creates request-scoped `CustomerSchedulingActions`, calls the workflow, and returns reply text. Read `_process_one` next to see how text and complete audio transcripts reach that entry point.
+2. Read `TurnContext`, `WorkflowDraft`, and `TurnResult` in `app/graph/contracts.py`: current-turn input, the scheduling information remembered across turns, and the response. `SchedulingInterpretation` in `app/llm/schemas.py` contains Gemma's plain-language message and booking facts. Laya receives the interpreted message and draft context, then returns `DecisionOutput`.
+3. Read `LangGraphWorkflow.handle_turn` in `app/graph/workflow.py`. It prepares graph input and uses the stable thread ID for checkpoint persistence. `app/runtime.py` shows how Gemma, Laya, Redis and domain services are connected.
+4. Read graph edges in `app/graph/builder.py`, then follow the relevant functions in `app/graph/steps.py`: `load_context` → `interpret` → `merge_draft` → `route_turn`. For the first example message, follow `search`; for the numbered reply, follow `select` → `prepare_action` → `execute`. All successful terminal paths reach `persist`.
+5. Read `GemmaUnderstanding.interpret` and `LayaDecision.decide` in `app/llm/gemma.py` and `app/graph/laya.py`. Gemma interprets the message and supplies booking facts; Laya alone chooses the action from that interpreted message and context. `_constrain` in `steps.py` applies deterministic workflow restrictions. For voice, read `transcribe_recording` after the text path is clear.
+6. Follow a write from `CustomerSchedulingActions.create_booking` into `BookingService.create` in `app/booking.py`. `app/scheduling.py` calculates slots and revalidates them inside writes. `app/repositories.py` reads business data; `alembic/versions/` defines database constraints and migrations. Read `_owned_row` to understand management authorization.
+7. Read `tests/integration/test_workflow_booking_journey.py` as an executable booking→confirmation→reminder→rescheduling→cancellation example. It uses real PostgreSQL services with deterministic model substitutes. Then read `app/evals/runner.py`: `run_scenarios` evaluates the corpus, `_evaluate_case` follows one conversation, `_read_turn_input` handles text/audio, and `_score_turn` compares predictions with labels. Use `evals/data/smoke-text.jsonl` to follow Laya on/off experiments.
 
-It also maps app-level failures to HTTP responses. The main example is provider
-failure: if the LLM call fails during interpretation, the API returns HTTP 503.
+For each step ask: What does it receive? What does it return? What does it change? Which part is allowed to make that decision? Start with responsibilities and data shapes; inspect Redis serialization, audio splitting and receipt SQL when you need those details.
 
-### `app/runtime.py`
+To learn the flow locally without a bot or model servers, run `uv run --extra dev pytest -q tests/unit/test_conversation_graph.py`, then `uv run python -m app.evals.runner --understanding deterministic --routing deterministic`. Read one test together with the corresponding graph nodes before opening the next layer.
 
-This is the composition root. It wires together:
 
-- settings
-- logger and optional tracer
-- in-memory LangGraph checkpointer
-- in-memory repositories
-- services
-- OpenAI provider
-- compiled workflow
+### Following a Telegram update
 
-There is no extra dependency-injection layer hiding things. For a project this
-size, that would just add ceremony.
+`TelegramWorker.run` manages startup checks, the single-worker lock and the polling cycle. `_poll_updates` saves updates before advancing the offset; `_process_pending_updates` claims them before handling them. `_deliver_ready_replies` sends persisted responses and preserves retry order.
 
-### `app/models.py`
+For one claimed update, `_process_one` reads in order:
 
-Shared domain and API models live here:
+1. `_private_message` validates the channel and recorded sender.
+2. `_ensure_customer` resolves the trusted Telegram account.
+3. `_reply_to_message` handles `/start`, optional contact sharing, or a scheduling request.
+4. `save_reply` persists the response before delivery.
 
-- value objects such as `FullName`, `Phone`, and `DateOfBirth`
-- domain entities such as `Patient` and `Appointment`
-- enums such as `ConversationOperation`, `TurnIssue`, and `VerificationStatus`
-- request and response DTOs
-- domain and application errors
+For scheduling input, `_message_input` returns typed text or the complete audio transcript. `_run_turn` sanitizes it, builds `TurnContext` and calls the workflow once. Provider errors produce a safe retry message; an unknown outcome asks the user to inspect their appointments. Whitespace-only text gets the supported-input hint. No audio chunk runs a booking action.
 
-### `app/repositories.py`
-
-The project uses seeded in-memory adapters:
-
-- `InMemoryPatientRepository`
-- `InMemoryAppointmentRepository`
-- `InMemorySessionStore`
-
-That is intentional. The goal here is to make the workflow easy to review, not
-to spend the take-home on persistence plumbing.
-
-### `app/services.py`
-
-The services layer is narrow:
-
-- `VerificationService`
-- `AppointmentService`
-- `SessionService`
-
-These classes keep the graph focused on workflow decisions while the services do
-the domain work.
-
-### `app/graph/`
-
-This is the center of the project.
-
-- `builder.py` compiles the graph
-- `state.py` defines workflow state
-- `nodes.py` contains the graph nodes
-- `parsing.py` contains extraction helpers
-- `workflow.py` wraps the compiled graph for runtime use
-
-### `app/llm/`
-
-The LLM boundary stays small:
-
-- `provider.py` talks to OpenAI
-- `schemas.py` defines typed structured outputs
-- `prompt.py` contains the intent prompt
-
-## Request flow
-
-### `POST /sessions/new`
-
-```mermaid
-sequenceDiagram
-    participant client as Client
-    participant api as FastAPI
-    participant sessions as SessionService
-
-    client->>api: POST /sessions/new
-    api->>sessions: cleanup_expired()
-    api->>sessions: create_session()
-    api-->>client: session_id + thread_id
-```
-
-### `POST /chat`
-
-```mermaid
-sequenceDiagram
-    participant client as Client
-    participant api as FastAPI
-    participant sessions as SessionService
-    participant workflow as LangGraphWorkflow
-    participant responses as responses.py
-
-    client->>api: POST /chat
-    api->>sessions: cleanup_expired()
-    api->>sessions: require_session(session_id)
-    api->>workflow: run(thread_id, message)
-    api->>responses: build_response_text(state)
-    api->>responses: build_chat_response(...)
-    api-->>client: ChatTurnResponse
-```
-
-## State and persistence
-
-- session registry is in `InMemorySessionStore`
-- conversation workflow state uses LangGraph `InMemorySaver`
-- patient and appointment data are seeded in memory
-
-That mix is a little unusual, but it fits the exercise well. The workflow needs
-real conversation state across turns inside a running process, while the domain
-data only needs to be good enough to demonstrate the flows.
-
-## Data model
-
-The domain model is intentionally small.
-
-There are two kinds of state in the project:
-
-- domain data: patients and appointments
-- workflow data: verification progress, turn output, and appointment-list context
-
-### Entities
-
-```mermaid
-erDiagram
-    Patient ||--o{ Appointment : has
-    Patient {
-        string id PK
-        string full_name
-        string phone
-        date date_of_birth
-    }
-    Appointment {
-        string id PK
-        string patient_id FK
-        date date
-        string time
-        string doctor
-        string status
-    }
-    ConversationOperationResult {
-        string operation
-        string outcome
-        string appointment_id
-    }
-```
-
-`ConversationOperationResult` is workflow output, not persisted domain data.
-
-### Appointment status transitions
-
-```mermaid
-stateDiagram-v2
-    [*] --> scheduled
-    scheduled --> confirmed : confirm_appointment
-    scheduled --> canceled : cancel_appointment
-    confirmed --> confirmed : confirm_appointment\n(already_confirmed)
-    confirmed --> canceled : cancel_appointment
-    canceled --> canceled : cancel_appointment\n(already_canceled)
-```
-
-Repeated confirm and cancel are idempotent. That matters in chat because users
-retry and repeat themselves.
-
-## LLM boundary
-
-The model is intentionally boxed in.
-
-The live chat path uses the model for one thing:
-
-- intent and entity extraction
-
-The provider returns a structured prediction with:
-
-- `requested_operation`
-- `full_name`
-- `phone`
-- `dob`
-- `selected_index`
-
-The model does not:
-
-- decide whether the patient is verified
-- decide whether an appointment belongs to the patient
-- confirm or cancel appointments directly
-- choose final patient-facing wording
-- control the workflow once interpretation is done
-
-Those decisions stay in deterministic Python. The eval system also uses the
-provider as a judge, but only in eval mode.
-
-If `interpret()` fails after retries, the workflow raises
-`DependencyUnavailableError` and the API returns HTTP 503. I intentionally left
-out a heuristic fallback parser for this exercise.
-
-## Observability
-
-The app logs structured JSON events to stdout and can optionally send traces to
-Langfuse. Tracing is optional and failures are isolated from the request path.
-
-Each turn produces one Langfuse trace (keyed by `thread_id`) with spans for
-node transitions, routing decisions, and LLM calls. All payloads redact PII
-before logging or tracing (names, phone numbers, and dates of birth).
-
-## Key decisions
-
-The main architecture decisions for this project are:
-
-- FastAPI for a small, reviewable API surface
-- LangGraph for deterministic multi-turn workflow control
-- LLM used only for interpretation, never for authorization or mutation
-- deterministic final responses from `app/responses.py`
-- in-memory workflow checkpoints and in-memory business repositories
-- one main appointment action per user turn
+The transport boundary is `TelegramBotApi` in `app/channels/telegram.py`: it builds requests, decodes bounded responses and returns safe error codes with retry metadata. `TelegramRepository.ensure_customer_for_sender` creates or finds the customer for the numeric sender inside one transaction. `ready_replies` returns the oldest waiting reply across the bot; a delayed reply blocks newer ones. Delivery retries send the saved text without invoking the graph again.

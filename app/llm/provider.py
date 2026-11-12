@@ -1,189 +1,133 @@
 from __future__ import annotations
 
-import json
-import time
-from typing import Any, TypeVar
+import re
+from datetime import date, timedelta
+from typing import Protocol
 
-from openai import OpenAI
-from pydantic import BaseModel
-
-from app.config import ProviderSettings
-from app.llm.prompt import INTENT_PROMPT
-from app.llm.schemas import IntentPrediction, JudgeResult
-from app.observability import record_provider_event, trace_generation
-
-T = TypeVar("T", bound=BaseModel)
-
-MAX_PARSE_ATTEMPTS = 3
-BASE_RETRY_SECONDS = 0.1
+from app.graph.decision import DeterministicDecision
+from app.graph.laya import LayaDecision
+from app.llm.gemma import GemmaUnderstanding
+from app.llm.schemas import SchedulingInterpretation
 
 
-class OpenAIProvider:
-    name = "openai"
+class Interpreter(Protocol):
+    def interpret(self, message: str, context: dict) -> SchedulingInterpretation: ...
 
-    def __init__(self, settings: ProviderSettings, logger, tracer=None, client: Any | None = None):
-        self.settings = settings
-        self.logger = logger
-        self.tracer = tracer
-        self.client = client or OpenAI(api_key=settings.api_key, timeout=settings.timeout_seconds)
 
-    def interpret(self, message: str, state: dict[str, Any]) -> IntentPrediction:
-        verification = state.get("verification", {})
-        turn = state.get("turn", {})
-        payload = {
-            "message": message,
-            "state": {
-                "verified": verification.get("verified", False),
-                "requested_operation": turn.get("requested_operation"),
-                "missing_verification_fields": state.get("missing_verification_fields", []),
-                "messages": state.get("messages", []),
-            },
-        }
-        return self._complete_model(
-            event_name="interpret",
-            response_model=IntentPrediction,
-            system_message=INTENT_PROMPT,
-            payload=payload,
-            thread_id=state.get("thread_id"),
+class DeterministicInterpreter:
+    """Small, predictable local interpreter used only as an explicit evaluation baseline."""
+
+    def interpret(self, message: str, context: dict) -> SchedulingInterpretation:
+        text = " ".join(message.strip().split())
+        lowered = text.lower()
+        service_name = None
+        for candidate in sorted(
+            context.get("service_names", []), key=len, reverse=True
+        ):
+            if candidate.lower() in lowered:
+                service_name = candidate
+                break
+        professional_name = None
+        for candidate in context.get("professional_names", []):
+            if candidate.lower() in lowered:
+                professional_name = candidate
+                break
+        local_date = self._date(text, context.get("today"))
+        local_time = self._time(text)
+        slot_index = (
+            self._index(lowered)
+            if context.get("has_slots") and not local_date and not local_time
+            else None
         )
-
-    def judge(self, scenario: dict[str, Any], transcript: list[dict[str, Any]], observed_outcomes: dict[str, Any]) -> JudgeResult:
-        payload = {
-            "scenario": scenario,
-            "transcript": transcript,
-            "observed_outcomes": observed_outcomes,
-        }
-        return self._complete_model(
-            event_name="judge",
-            response_model=JudgeResult,
-            system_message=(
-                "Return strict JSON with keys status, summary, and score. "
-                "Use status values pass, fail, or error. Score should be between 0 and 1 when present."
-            ),
-            payload=payload,
-            thread_id=scenario.get("scenario_id"),
-        )
-
-    def _complete_model(
-        self,
-        *,
-        event_name: str,
-        response_model: type[T],
-        system_message: str,
-        payload: dict[str, Any],
-        thread_id: str | None,
-    ) -> T:
-        generation_input = {
-            "system_message": system_message,
-            "payload": payload,
-            "response_model": response_model.__name__,
-        }
-        try:
-            with trace_generation(
-                self.logger,
-                self.tracer,
-                thread_id=thread_id,
-                name=f"provider.{event_name}",
-                model=self.settings.model_name,
-                input_payload=generation_input,
-                metadata={
-                    "provider": self.name,
-                    "response_model": response_model.__name__,
-                    "timeout_seconds": self.settings.timeout_seconds,
-                },
-            ) as generation:
-                result = self._complete_with_retries(
-                    response_model=response_model,
-                    system_message=system_message,
-                    user_message=json.dumps(payload, ensure_ascii=True, default=str),
-                    event_name=event_name,
-                    thread_id=thread_id,
-                )
-                if generation is not None:
-                    generation.update(output=result.model_dump(mode="json"))
-        except Exception as exc:
-            record_provider_event(
-                self.logger,
-                self.tracer,
-                event_name,
-                {
-                    "provider": self.name,
-                    "status": "error",
-                    "error_type": type(exc).__name__,
-                    "thread_id": thread_id,
-                    "response_model": response_model.__name__,
-                },
+        if local_date:
+            text = re.sub(
+                r"\b(tomorrow|amanh[ãa]|today|hoje)\b", local_date, text, flags=re.I
             )
-            raise
-        record_provider_event(
-            self.logger,
-            self.tracer,
-            event_name,
-            {
-                "provider": self.name,
-                "status": "ok",
-                "thread_id": thread_id,
-                "response_model": response_model.__name__,
-            },
+        return SchedulingInterpretation(
+            message=text,
+            service_name=service_name,
+            professional_name=professional_name,
+            local_date=local_date,
+            local_time=local_time,
+            slot_index=slot_index,
         )
-        return result
 
-    def _complete_with_retries(
-        self,
-        *,
-        response_model: type[T],
-        system_message: str,
-        user_message: str,
-        event_name: str,
-        thread_id: str | None,
-    ) -> T:
-        last_error: Exception | None = None
-        for attempt in range(MAX_PARSE_ATTEMPTS):
+    @staticmethod
+    def _date(text: str, today: date | None) -> str | None:
+        match = re.search(r"\b(20\d{2}-\d{2}-\d{2})\b", text)
+        if match:
             try:
-                return self._complete(
-                    response_model=response_model,
-                    system_message=system_message,
-                    user_message=user_message,
-                )
-            except Exception as error:
-                last_error = error
-                record_provider_event(
-                    self.logger,
-                    self.tracer,
-                    f"{event_name}.retry",
-                    {
-                        "provider": self.name,
-                        "status": "retry",
-                        "thread_id": thread_id,
-                        "attempt": attempt + 1,
-                        "max_attempts": MAX_PARSE_ATTEMPTS,
-                        "error_type": type(error).__name__,
-                    },
-                )
-                if attempt == MAX_PARSE_ATTEMPTS - 1:
-                    raise
-                time.sleep(BASE_RETRY_SECONDS * (2**attempt))
+                return date.fromisoformat(match.group(1)).isoformat()
+            except ValueError:
+                return None
+        match = re.search(r"\b(\d{1,2})/(\d{1,2})/(20\d{2})\b", text)
+        if match:
+            try:
+                return date(
+                    int(match.group(3)), int(match.group(2)), int(match.group(1))
+                ).isoformat()
+            except ValueError:
+                return None
+        if isinstance(today, str):
+            try:
+                today = date.fromisoformat(today)
+            except ValueError:
+                today = None
+        if today:
+            if re.search(r"\b(tomorrow|amanh[ãa])\b", text, re.I):
+                return (today + timedelta(days=1)).isoformat()
+            if re.search(r"\b(today|hoje)\b", text, re.I):
+                return today.isoformat()
+        return None
 
-    def _complete(
-        self,
-        *,
-        response_model: type[T],
-        system_message: str,
-        user_message: str,
-    ) -> T:
-        response = self.client.beta.chat.completions.parse(
-            model=self.settings.model_name,
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message},
-            ],
-            response_format=response_model,
-        )
-        message = response.choices[0].message
-        parsed = getattr(message, "parsed", None)
-        if parsed is not None:
-            return response_model.model_validate(parsed)
-        refusal = getattr(message, "refusal", None)
-        if refusal:
-            raise ValueError(f"OpenAI refused structured output: {refusal}")
-        raise ValueError("OpenAI returned no parsed content")
+    @staticmethod
+    def _time(text: str) -> str | None:
+        match = re.search(r"\b(\d{1,2}):(\d{2})\b", text)
+        if match:
+            hour, minute = int(match.group(1)), int(match.group(2))
+            if hour < 24 and minute < 60:
+                return f"{hour:02}:{minute:02}"
+        match = re.search(r"\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b", text, re.I)
+        if match:
+            hour = int(match.group(1)) % 12
+            if match.group(3).lower() == "pm":
+                hour += 12
+            minute = int(match.group(2) or "0")
+            return f"{hour:02}:{minute:02}"
+        return None
+
+    @staticmethod
+    def _index(text: str) -> int | None:
+        numeric = re.search(r"\b(\d{1,2})\b", text)
+        if numeric:
+            return int(numeric.group(1))
+        for index, terms in enumerate(
+            (
+                ("first", "1st", "primeiro", "primeira"),
+                ("second", "2nd", "segundo", "segunda"),
+                ("third", "3rd", "terceiro", "terceira"),
+            ),
+            1,
+        ):
+            if any(term in text for term in terms):
+                return index
+        return None
+
+
+def build_interpreter(
+    provider: str, base_url: str = "http://localhost:8081"
+) -> Interpreter:
+    """Construct the requested provider; never silently substitute predictions."""
+    if provider == "deterministic":
+        return DeterministicInterpreter()
+    if provider == "gemma":
+        return GemmaUnderstanding(base_url)
+    raise ValueError(f"Unsupported understanding provider: {provider}")
+
+
+def build_decision(provider: str, base_url: str = "http://localhost:8082"):
+    if provider == "deterministic":
+        return DeterministicDecision()
+    if provider == "laya":
+        return LayaDecision(base_url)
+    raise ValueError(f"Unsupported routing provider: {provider}")

@@ -9,6 +9,7 @@ build/
 *.egg-info/
 .coverage
 htmlcov/
+.eval_runs/
 .env
 .env.*
 *.log

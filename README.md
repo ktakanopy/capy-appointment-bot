@@ -1,285 +1,78 @@
-# CAPY Appointment Bot
+# CAPY — Telegram scheduling with text and audio
 
-<p align="center">
-  <img src="capy.png" alt="CAPY" width="300" />
-</p>
+A portfolio scheduling assistant for service businesses. Gemma rewrites text or complete voice recordings into simple language; Laya receives that interpreted message and the conversation context, then proposes the next action. Deterministic Python services authorize changes, calculate availability and commit bookings in PostgreSQL.
 
-**NOTE**: I only had a few days to finish this project.
+<p align="center"><img src="docs/assets/capy.png" alt="CAPY on Telegram. Find available times, book and look up upcoming appointments, confirm, cancel or reschedule, and ask about services and prices. Send text, voice notes or audio." width="640"></p>
 
-CAPY Appointment Bot is a take-home implementation of a clinic appointment assistant.
-It lets a patient verify identity, list appointments, confirm an appointment,
-and cancel an appointment in the same chat session.
+Customers can search, choose a slot, book, look up appointments, confirm, cancel and reschedule in private Telegram chats. Numeric Telegram identity owns the customer's bookings. A phone number is optional contact information; providing someone else's number grants no access.
 
-I kept the workflow explicit on purpose. The hard part of this exercise is not
-writing a chatbot that sounds clever. It is making sure verification,
-appointment ownership, lockout behavior, and idempotent mutations stay
-predictable.
+## Run the application
 
-Demo:
+Requirements: Docker Compose, a Telegram bot, compatible running Gemma `/understand` and Laya `/decide` endpoints. Model servers and weights are not bundled. Set `TELEGRAM_BOT_TOKEN`, `GEMMA_BASE_URL` and `LAYA_BASE_URL` in your environment or a private `.env` using `.env.example`.
 
-<p align="center">
-  <img src="docs/demo-chat-flow.gif" alt="Chat flow demo" width="700" />
-</p>
-
-## What it does
-
-- verifies identity with full name, phone number, and date of birth
-- lists appointments after verification
-- confirms appointments
-- cancels appointments
-- lets the user move between those actions in one conversation
-- exposes the flow through a FastAPI backend and a small Streamlit frontend
-
-## Implemented features
-
-- session-based chat flow
-- identity verification with full name, phone, and date of birth
-- protected appointment access after verification
-- appointment listing
-- appointment confirmation
-- appointment cancellation
-- multi-turn conversation flow with rerouting between actions
-- bounded recent-message context to reduce context rot
-- verification retry handling with lockout after repeated failed identity attempts
-- Langfuse tracing and observability
-- Streamlit demo frontend
-- automated tests for core workflow and failure paths
-- eval scenarios for multi-turn behavior and quality assurance
-
-## Quickstart
-
-### Requirements
-
-- Python 3.11+
-- `uv`
-- `OPENAI_API_KEY`
-
-### Run locally
-
-This is the fastest way to review the project.
+The endpoints must implement the current [model contracts](docs/model-contracts.md): Gemma returns a plain-language `message` and booking facts without an intent label; Laya accepts only `message` and `context`. Older intent/request-based servers must be updated alongside the app.
 
 ```bash
-uv sync --extra dev
-export OPENAI_API_KEY=your_key_here
-export OPENAI_MODEL=gpt-4o-mini
-uv run uvicorn app.main:app --reload
+docker compose --profile telegram up --build
 ```
 
-Then open:
+Compose starts PostgreSQL, Redis, a health API, the reminder worker and Telegram polling. It migrates the schema and seeds a synthetic studio. Open `/health` at `http://localhost:8000/health`. Customer HTTP/chat and owner HTTP routes have been retired.
 
-- API docs: `http://localhost:8000/docs`
-- Health check: `http://localhost:8000/health`
-
-Optional frontend:
+The app requires Gemma and Laya. A failed model request produces a retry response and makes no booking change. Deterministic providers are explicit evaluation baselines. To inspect the owner agenda and demo reminder inbox locally:
 
 ```bash
-uv run streamlit run frontend/streamlit_app.py
+docker compose run --rm api python -m app.cli
 ```
 
-### Run with Docker Compose
+Reminders currently deliver into a database demo inbox, not Telegram. Telegram supports both voice notes and audio attachments. A recording is fully transcribed before one scheduling turn; a failed chunk prevents that turn. Size, decode, chunk and total processing budgets are configurable.
 
-If you want the full local stack, including Streamlit and Langfuse:
+## Flow and guarantees
+
+![CAPY runtime architecture. The Telegram worker handles text and audio, then runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](docs/assets/architecture.svg)
+
+Availability results are references, not reservations. Booking writes revalidate policy inside their transaction. PostgreSQL rejects overlapping active bookings; idempotency protects retries. Booking and reminder changes commit atomically. Redis holds a bounded, temporary conversation draft, offered slots and history. Telegram receipts preserve update deduplication and saved replies across restarts.
+
+## Evaluate with and without Laya
 
 ```bash
-docker compose up --build
+uv sync --locked --extra dev
+# Offline text/task regression baseline:
+uv run python -m app.evals.runner --understanding deterministic --routing deterministic
+# Real text and speech through Gemma, then Laya:
+uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understanding gemma --routing laya
+# Same cases through Gemma with deterministic routing:
+uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understanding gemma --routing deterministic
 ```
 
-That starts:
+Use `--gemma-revision` and `--laya-revision` to identify checkpoints. Reports include dataset/asset hashes, predictions, errors, per-stage latency and language/modality summaries. Failed cases cause a nonzero exit. `--layer extraction`, `--layer routing` and `--layer workflow` isolate different questions; fixed-input routing uses each turn's labelled `interpreted_message` and draft context without invoking Gemma.
 
-- API: `http://localhost:8000`
-- Streamlit: `http://localhost:8501`
-- Langfuse: `http://localhost:3000`
+The seed corpus has 16 English/Portuguese text task cases and two synthetic speech cases. It is a regression corpus, not proof of general model quality. The next research step is a much larger grouped train/dev/test dataset, followed by Gemma and Laya fine-tuning and held-out comparisons. See [evaluation](docs/evaluation.md).
 
-Local Langfuse login defaults:
-
-- email: `admin@admin.com`
-- password: `admin1234`
-
-Tracing is already enabled by default in Docker Compose. If you run the API
-outside Docker, set:
-
-- `TRACING_ENABLED=true`
-- `LANGFUSE_PUBLIC_KEY=lf_pk_local_dev_key`
-- `LANGFUSE_SECRET_KEY=lf_sk_local_dev_key`
-- `LANGFUSE_HOST=http://localhost:3000`
-
-Inside Docker Compose, the API talks to Langfuse through the internal service
-hostname `http://langfuse-web:3000`. Do not set `LANGFUSE_HOST=http://localhost:3000`
-for the API container, because inside the container `localhost` points back to
-the API container itself, not to Langfuse.
-
-## Try it quickly
-
-The project ships with seeded demo patients in `app/repositories.py`. These are
-the two valid identity sets:
-
-- `Ana Silva` / `11999998888` / `1990-05-10`
-- `Carlos Souza` / `11911112222` / `1985-09-22`
-
-A fast happy path looks like this:
-
-1. `show my appointments`
-2. `Ana Silva`
-3. `11999998888`
-4. `1990-05-10`
-5. `confirm the first one`
-
-After verification, the workflow shows the appointment list. From there the
-patient can continue with messages like:
-
-- `list my appointments`
-- `confirm the first one`
-- `cancel the first one`
-
-If the name, phone, and date of birth do not belong to the same patient, the
-bot returns `issue=invalid_identity` and restarts verification.
-
-## Run tests
-
-Full suite:
+## Verify
 
 ```bash
-uv run --extra dev pytest
+# Disposable PostgreSQL and Redis; does not use application data volumes:
+docker compose -p capy-simplification-test -f docker-compose.test.yml run --build --rm checks
+# Remove the disposable containers when finished:
+docker compose -p capy-simplification-test -f docker-compose.test.yml down
 ```
 
-By area:
+For host tests, provide a disposable PostgreSQL `TEST_DATABASE_URL` ending in `_test` and `TEST_REDIS_URL`, then run `uv run --extra dev pytest -q`. Without those variables, integration tests skip. CI sets them and requires integration checks. ffmpeg is required for audio tests.
+
+Optional self-hosted Langfuse:
 
 ```bash
-uv run --extra dev pytest tests/unit
-uv run --extra dev pytest tests/graph
-uv run --extra dev pytest tests/api
-uv run --extra dev pytest tests/evals
+docker compose -f docker-compose.yml -f docker-compose.observability.yml --profile telegram up --build
 ```
 
-Offline eval runner:
+Set `TRACING_ENABLED=true` when configuring tracing. Observability services have separate storage from business data.
 
-```bash
-uv run python -m app.evals.runner
-```
+## Migration and current limits
 
-The eval runner replays multi-turn scenarios through the real workflow, prints
-one result block per scenario, and saves machine-readable output under
-`.eval_runs/`.
+Existing databases need a coordinated cutover: stop old workers, back up PostgreSQL, then upgrade with the new application. Migration `0003_telegram_ownership` preserves bookings and verified identity links while retiring token columns. Legacy customers without a trusted link remain owner-visible. It never claims them by phone. Reverting token removal requires restoring the matching backup and application. The message/context model contract starts temporary conversations fresh under checkpoint namespace `lg:v3`; business records are unchanged.
 
-## Design choices
+Real Telegram journeys and Gemma/Laya model quality are not yet validated by this cleanup's automated tests. A live walkthrough requires available model endpoints and an explicitly authorized test chat. Existing running demo containers are not automatically upgraded by the code changes.
 
-### Deterministic workflow over a free-form agent
+Read [architecture](docs/architecture.md), [privacy and ownership](docs/security.md), [idempotency](docs/idempotency.md), [history](docs/history.md) and the [approved plan](docs/sdd/plan-portfolio-simplification.md).
 
-I used LangGraph as an explicit workflow, not as an open-ended agent loop. The
-model interprets the user's message, but policy decisions stay in Python.
-
-That matters here because the risky parts are not creative tasks. They are
-things like:
-
-- whether the patient is verified
-- whether an appointment belongs to that patient
-- whether confirm or cancel should be idempotent
-- whether the session should be locked after repeated failed verification
-
-Those rules are easier to test and easier to explain when they are encoded in
-the graph instead of hidden inside model behavior.
-
-### The LLM has a narrow job
-
-The live chat path uses the LLM for intent and entity extraction only.
-
-The workflow uses the LLM output first and only fills simple missing fields
-with deterministic parsing. If the provider call fails, the API returns HTTP
-503 instead of falling back to a full parser.
-
-It can suggest:
-
-- `requested_operation`: the main action the user seems to want, such as `verify_identity`, `list_appointments`, `confirm_appointment`, `cancel_appointment`, `help`, or `unknown`
-- `full_name`
-- `phone`
-- `dob`
-- `selected_index`: a 1-based integer the LLM extracts when the user points at a specific appointment (e.g. `1` in `confirm the first one`); `null` when no appointment was targeted
-
-It does not decide authorization, mutate appointments, or generate the final
-patient-facing response. Final wording comes from deterministic response
-templates in `app/responses.py`.
-
-### Post-verification flow stays simple
-
-After successful verification, the workflow moves the patient to
-`list_appointments`.
-
-### Storage is intentionally small
-
-- patient and appointment data are seeded in memory
-- session records live in `InMemorySessionStore`
-- LangGraph checkpoints use `InMemorySaver`
-
-This gives the project enough statefulness to show the workflow clearly without
-dragging in a production persistence layer.
-
-## Project shape
-
-The main pieces are:
-
-- `app/main.py`: FastAPI routes
-- `app/runtime.py`: runtime wiring and dependency creation
-- `app/graph/`: workflow nodes, state, parsing, and the LangGraph wrapper
-- `app/services.py`: verification, appointment, and session services
-- `app/repositories.py`: seeded in-memory repositories
-- `app/responses.py`: deterministic response building from issues and action results
-- `app/llm/`: OpenAI provider, schemas, and prompt
-- `frontend/`: Streamlit chat UI
-- `tests/`: unit, graph, API, and eval coverage
-
-If you want more detail, start with:
-
-- [`docs/architecture.md`](docs/architecture.md)
-- [`docs/graph.md`](docs/graph.md)
-- [`docs/security.md`](docs/security.md)
-- [`docs/evaluation.md`](docs/evaluation.md)
-
-## Scope
-
-This project is intentionally exercise-sized and focused on the core appointment
-workflow. A user starts a chat session, verifies identity, views appointments,
-and can confirm or cancel one appointment. The goal is to keep the behavior
-clear, deterministic, and easy to test, not to present a full production
-healthcare system.
-
-## Out of Scope
-
-To keep the exercise focused, some production concerns were intentionally left out:
-
-- real EHR or EMR integration (Electronic Health Record or Electronic Medical Record), meaning a connection to a real healthcare record system instead of seeded demo data
-- production-grade authentication and authorization
-- cross-session memory for returning users, so users are not remembered across separate sessions
-- long-history compaction through summarization, so older conversation context is not condensed into a persistent summary
-- handling multiple appointment actions in a single message. The bot should not understand commands like "confirm the first and cancel the second".
-- production-grade persistence and background cleanup
-
-Provider failures also currently propagate instead of degrading gracefully. In other words, the system returns a controlled failure instead of falling back to a reduced but still-available experience.
-
-## Future Improvements
-
-If extended further, likely next steps would be:
-
-- deterministic fallback for intent and entity extraction in well-covered cases
-- graceful degradation for provider failures, so the system can still offer a reduced experience when the LLM is unavailable, but not stop the system entirely. 
-- cross-session memory for returning users, so stable user context can persist across separate conversations
-- conversation history summarization to preserve relevant context while controlling token growth
-- stronger persistence and operational hardening
-
-## Documentation
-
-The `docs/` folder has the main technical notes:
-
-- [`docs/architecture.md`](docs/architecture.md): system layout and request flow
-- [`docs/graph.md`](docs/graph.md): workflow behavior and routing
-- [`docs/security.md`](docs/security.md): verification, lockout, ownership, and redaction
-- [`docs/evaluation.md`](docs/evaluation.md): eval runner and scenarios
-
-## Process notes
-
-I used those documents to design the first versions of this project with SDD:
-
-- `specs/001-appointment-management/`
-- `specs/002-frontend-llm-memory/`
-
-I would not expect a reviewer to read those first. They are there if you want
-to see the design trail. 
+Start with [How to read the code](docs/architecture.md#how-to-read-the-code) for a walkthrough from one Telegram message to a booking transaction and its evaluation.

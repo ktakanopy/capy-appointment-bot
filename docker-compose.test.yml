@@ -1,0 +1,32 @@
+# Disposable verification services. Never mount application data volumes here.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: scheduling
+      POSTGRES_PASSWORD: scheduling
+      POSTGRES_DB: capy_simplification_test
+    ports: ["127.0.0.1:15433:5432"]
+    tmpfs: [/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scheduling -d capy_simplification_test"]
+      interval: 1s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    ports: ["127.0.0.1:16380:6379"]
+    command: redis-server --save "" --appendonly no
+  checks:
+    build:
+      context: .
+      target: checks
+    environment:
+      TEST_DATABASE_URL: postgresql://scheduling:scheduling@postgres:5432/capy_simplification_test
+      TEST_REDIS_URL: redis://redis:6379/15
+      CAPY_REQUIRE_INTEGRATION: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started

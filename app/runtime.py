@@ -1,116 +1,92 @@
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 
-from langgraph.checkpoint.memory import InMemorySaver
+from redis import Redis
 
+from app.booking import BookingService
+from app.channels.audio_chunks import AudioChunker
 from app.config import Settings, load_settings
 from app.graph.builder import build_graph
+from app.graph.redis_checkpoint import RedisCheckpointSaver
 from app.graph.workflow import LangGraphWorkflow
-from app.llm.provider import OpenAIProvider
-from app.observability import build_tracer, get_eval_logger, get_logger
-from app.repositories import InMemoryAppointmentRepository, InMemoryPatientRepository, InMemorySessionStore
-from app.services import AppointmentService, SessionService, VerificationService
+from app.llm.gemma import GemmaUnderstanding
+from app.llm.provider import build_decision, build_interpreter
+from app.observability import build_tracer, get_logger
+from app.repositories import PostgresRepository
+from app.scheduling import AvailabilityService
 
 
 @dataclass
 class RuntimeContext:
     settings: Settings
-    logger: logging.Logger
+    logger: object
     tracer: object | None
-    graph: object
+    repository: PostgresRepository
+    availability: AvailabilityService
+    bookings: BookingService
     workflow: LangGraphWorkflow
-    provider: OpenAIProvider
-    session_service: SessionService
-
-
-def build_provider(settings: Settings, logger: logging.Logger, tracer: object | None = None) -> OpenAIProvider:
-    if settings.provider.provider_name != "openai":
-        raise ValueError(f"Unsupported LLM provider: {settings.provider.provider_name}")
-    if not settings.provider.api_key:
-        raise ValueError("OPENAI_API_KEY is required")
-    return OpenAIProvider(settings.provider, logger, tracer=tracer)
-
-
-def build_checkpointer() -> InMemorySaver:
-    return InMemorySaver()
+    redis: Redis
+    audio_understanding: GemmaUnderstanding
+    audio_chunker: AudioChunker
 
 
 def create_runtime(settings: Settings | None = None) -> RuntimeContext:
     settings = settings or load_settings()
     logger = get_logger()
     tracer = build_tracer(settings)
-    setattr(logger, "tracer", tracer)
-    checkpointer = build_checkpointer()
-    patient_repository = InMemoryPatientRepository()
-    appointment_repository = InMemoryAppointmentRepository()
-    session_store = InMemorySessionStore()
-    verification_service = VerificationService(patient_repository)
-    appointment_service = AppointmentService(appointment_repository)
-    session_service = SessionService(session_store, settings.session_ttl_minutes)
-    provider = build_provider(settings, logger, tracer=tracer)
-    graph = build_graph(
-        logger=logger,
-        provider=provider,
-        verification_service=verification_service,
-        appointment_service=appointment_service,
-        max_verification_attempts=settings.max_verification_attempts,
-        checkpointer=checkpointer,
+    repository = PostgresRepository(settings.database_url)
+    availability = AvailabilityService(repository)
+    bookings = BookingService(repository)
+    if (
+        settings.understanding_provider != "gemma"
+        or settings.decision_provider != "laya"
+    ):
+        raise ValueError(
+            "Application operation requires Gemma and Laya; use the evaluation CLI for deterministic baselines"
+        )
+    redis_client = Redis.from_url(
+        settings.chat_redis_url,
+        decode_responses=True,
+        socket_connect_timeout=2,
+        socket_timeout=2,
     )
-    workflow = LangGraphWorkflow(graph, logger, tracer=tracer)
+    interpreter = build_interpreter("gemma", settings.gemma_base_url)
+    decision = build_decision("laya", settings.laya_base_url)
+    graph = build_graph(
+        interpreter,
+        decision,
+        checkpointer=RedisCheckpointSaver(
+            redis_client,
+            ttl_seconds=settings.session_ttl_minutes * 60,
+        ),
+    )
     return RuntimeContext(
         settings=settings,
         logger=logger,
         tracer=tracer,
-        graph=graph,
-        workflow=workflow,
-        provider=provider,
-        session_service=session_service,
-    )
-
-
-def create_eval_runtime(settings: Settings | None = None) -> RuntimeContext:
-    settings = settings or load_settings()
-    logger = get_eval_logger()
-    tracer = build_tracer(settings)
-    setattr(logger, "tracer", tracer)
-    checkpointer = build_checkpointer()
-    patient_repository = InMemoryPatientRepository()
-    appointment_repository = InMemoryAppointmentRepository()
-    session_store = InMemorySessionStore()
-    verification_service = VerificationService(patient_repository)
-    appointment_service = AppointmentService(appointment_repository)
-    session_service = SessionService(session_store, settings.session_ttl_minutes)
-    provider = build_provider(settings, logger, tracer=tracer)
-    graph = build_graph(
-        logger=logger,
-        provider=provider,
-        verification_service=verification_service,
-        appointment_service=appointment_service,
-        max_verification_attempts=settings.max_verification_attempts,
-        checkpointer=checkpointer,
-    )
-    workflow = LangGraphWorkflow(graph, logger, tracer=tracer)
-    return RuntimeContext(
-        settings=settings,
-        logger=logger,
-        tracer=tracer,
-        graph=graph,
-        workflow=workflow,
-        provider=provider,
-        session_service=session_service,
+        repository=repository,
+        availability=availability,
+        bookings=bookings,
+        workflow=LangGraphWorkflow(graph),
+        redis=redis_client,
+        audio_understanding=GemmaUnderstanding(
+            settings.gemma_base_url,
+            timeout_seconds=settings.telegram_audio_chunk_timeout_seconds,
+        ),
+        audio_chunker=AudioChunker(
+            max_input_bytes=settings.telegram_audio_max_bytes,
+            max_decoded_bytes=settings.telegram_audio_max_decoded_bytes,
+            decode_timeout_seconds=settings.telegram_audio_decode_timeout_seconds,
+        ),
     )
 
 
 def close_runtime(runtime: RuntimeContext | None) -> None:
-    if runtime is None:
-        return None
-    return None
-
-
-def reset_runtime(target_app, settings: Settings | None = None) -> RuntimeContext:
-    close_runtime(getattr(target_app.state, "runtime", None))
-    runtime = create_runtime(settings=settings)
-    target_app.state.runtime = runtime
-    return runtime
+    if runtime and runtime.tracer is not None:
+        try:
+            runtime.tracer.flush()
+        except Exception:
+            pass
+    if runtime is not None:
+        runtime.redis.close()
