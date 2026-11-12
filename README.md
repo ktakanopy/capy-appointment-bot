@@ -28,18 +28,7 @@ Reminders currently deliver into a database demo inbox, not Telegram. Telegram s
 
 ## Flow and guarantees
 
-```mermaid
-flowchart LR
-    T[Telegram text] --> P[Sanitize]
-    A[Telegram audio] --> G[Gemma full transcription]
-    G --> P
-    P --> I[Gemma plain-language interpretation]
-    I --> L[Laya routing]
-    L --> W[Deterministic workflow constraints]
-    W --> B[Owned booking services]
-    B --> DB[(PostgreSQL)]
-    W --> R[(Redis checkpoint)]
-```
+![CAPY runtime architecture. The Telegram worker handles text and audio, then runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](docs/assets/architecture.svg)
 
 Availability results are references, not reservations. Booking writes revalidate policy inside their transaction. PostgreSQL rejects overlapping active bookings; idempotency protects retries. Booking and reminder changes commit atomically. Redis holds a bounded, temporary conversation draft, offered slots and history. Telegram receipts preserve update deduplication and saved replies across restarts.
 
