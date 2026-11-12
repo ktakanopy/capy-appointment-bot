@@ -2,6 +2,8 @@
 
 Status: approved in Plannotator with no annotations; local implementation and automated verification are complete; live model/channel validation is pending. Created 2026-11-11.
 
+Follow-up model-boundary decision: Gemma now returns a plain-language interpretation without intent/action labels. Laya receives only that message and draft context. The current [model contracts](../model-contracts.md) supersede the model payload details in this implementation record.
+
 ## Source artifacts and intent
 
 - [Requirements](prd-portfolio-simplification.md)

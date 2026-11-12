@@ -1,6 +1,6 @@
 import json
 
-from app.evals.models import EvaluationScenario
+from app.evals.models import EvaluationScenario, EvaluationTurn
 from app.evals.runner import load_dataset, main, run_scenarios
 
 
@@ -9,7 +9,7 @@ def test_failed_extraction_makes_cli_exit_nonzero(tmp_path):
         scenario_id="wrong",
         title="Wrong label",
         utterance="cancel",
-        expected={"intent": "confirm"},
+        expected={"service_name": "Massage"},
     )
     dataset = tmp_path / "dataset.jsonl"
     dataset.write_text(case.model_dump_json() + "\n")
@@ -76,3 +76,44 @@ def test_duplicate_ids_and_split_leakage_are_rejected(tmp_path):
     )
     with pytest.raises(ValueError):
         load_dataset(path)
+
+
+def test_fixed_input_routing_uses_only_labelled_meaning_without_gemma_or_audio(
+    monkeypatch,
+):
+    def must_not_run(*args, **kwargs):
+        raise AssertionError("Fixed-input routing must not invoke understanding")
+
+    monkeypatch.setattr("app.llm.gemma.GemmaUnderstanding.interpret", must_not_run)
+    monkeypatch.setattr(
+        "app.llm.gemma.GemmaUnderstanding.transcribe_recording", must_not_run
+    )
+    case = EvaluationScenario(
+        scenario_id="labelled-audio",
+        title="Route the gold interpretation of an audio case",
+        turns=[
+            EvaluationTurn(
+                audio_path="not-read.wav",
+                interpreted_message="Cancel my booking.",
+                expected_action="CANCEL",
+            )
+        ],
+    )
+    result = run_scenarios(
+        [case], understanding="gemma", routing="deterministic", layer="routing"
+    )[0]
+    assert result.status == "pass"
+    assert (
+        result.observed["turns"][0]["interpretation"]["message"] == "Cancel my booking."
+    )
+
+
+def test_fixed_input_routing_requires_a_labelled_interpreted_message():
+    case = EvaluationScenario(
+        scenario_id="missing-meaning",
+        title="Do not substitute original text for missing interpretation",
+        turns=[EvaluationTurn(utterance="cancel", expected_action="CANCEL")],
+    )
+    result = run_scenarios([case], layer="routing")[0]
+    assert result.status == "error"
+    assert result.observed["fallback_used"] is False

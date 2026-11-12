@@ -3,22 +3,22 @@ from app.graph.contracts import TurnContext
 from app.graph.decision import DeterministicDecision
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import DeterministicInterpreter
-from app.llm.schemas import SchedulingExtraction
+from app.llm.schemas import SchedulingInterpretation
 from tests.unit.test_conversation_graph import FakeSchedulingActions
 
 
-class CreateIntentInterpreter:
+class ClearMessageInterpreter:
     def interpret(self, message, context):
         _ = message, context
-        return SchedulingExtraction(
-            intent="create",
+        return SchedulingInterpretation(
+            message="Book Massage on 2026-10-20.",
             service_name="Massage",
             local_date="2026-10-20",
         )
 
 
-def test_langgraph_workflow_treats_create_intent_as_booking_search():
-    graph = build_graph(CreateIntentInterpreter(), DeterministicDecision())
+def test_langgraph_routes_the_interpreted_message():
+    graph = build_graph(ClearMessageInterpreter(), DeterministicDecision())
     workflow = LangGraphWorkflow(graph)
     actions = FakeSchedulingActions()
 

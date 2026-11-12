@@ -18,11 +18,10 @@ from app.evals.fixtures import ScenarioSchedulingActions
 from app.evals.models import EvaluationResult, EvaluationScenario, EvaluationTurn
 from app.graph.builder import build_graph
 from app.graph.contracts import TurnContext
-from app.graph.decision import normalized_from_extraction
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.gemma import GemmaUnderstanding
 from app.llm.provider import build_decision, build_interpreter
-from app.llm.schemas import SchedulingExtraction
+from app.llm.schemas import SchedulingInterpretation
 from app.privacy import sanitize_message
 
 
@@ -42,10 +41,10 @@ class TimedDecision:
     def __init__(self, provider):
         self.provider, self.milliseconds = provider, 0.0
 
-    def decide(self, request, draft):
+    def decide(self, message, context):
         start = perf_counter()
         try:
-            return self.provider.decide(request, draft)
+            return self.provider.decide(message, context)
         finally:
             self.milliseconds = (perf_counter() - start) * 1000
 
@@ -142,9 +141,20 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
         )
         for i, turn in enumerate(turns):
             turn_context = {**context, **turn.context}
-            message, transcript_ms, audio_metrics = _read_turn_input(
-                turn, turn_context, settings, understanding, dataset_dir
-            )
+            if layer == "routing":
+                if not turn.interpreted_message:
+                    raise ValueError(
+                        "Fixed-input routing requires an interpreted_message label"
+                    )
+                message, transcript_ms, audio_metrics = (
+                    sanitize_message(turn.interpreted_message),
+                    0.0,
+                    {},
+                )
+            else:
+                message, transcript_ms, audio_metrics = _read_turn_input(
+                    turn, turn_context, settings, understanding, dataset_dir
+                )
             actions.last_booking = None
             if layer == "workflow":
                 reply = workflow.handle_turn(
@@ -160,31 +170,25 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
                     actions,
                 )
                 state = workflow.state(case.scenario_id)
-                extraction = SchedulingExtraction.model_validate(state["extraction"])
+                interpretation = SchedulingInterpretation.model_validate(
+                    state["interpretation"]
+                )
                 action = state["decision"]["next_action"]
                 if turn.expected_intent and reply.intent != turn.expected_intent:
                     mismatches.append(
                         f"turn {i}: intent expected {turn.expected_intent}, observed {reply.intent}"
                     )
             elif layer == "routing":
-                extraction = SchedulingExtraction.model_validate(turn.expected)
-                normalized = normalized_from_extraction(
-                    extraction,
-                    conversation_id=case.scenario_id,
-                    customer_id=None,
-                    transcript=message,
-                    modality="text",
-                    draft=turn.draft,
-                )
-                action = decision.decide(normalized, turn.draft).next_action
+                interpretation = SchedulingInterpretation(message=message)
+                action = decision.decide(message, turn.draft).next_action
             else:
-                extraction = interpreter.interpret(message, turn_context)
+                interpretation = interpreter.interpret(message, turn_context)
                 action = None
-            fields = extraction.model_dump(mode="json")
+            fields = interpretation.model_dump(mode="json")
             _score_turn(turn, i, fields, action, layer, counters, mismatches)
             observed["turns"].append(
                 {
-                    "extraction": fields,
+                    "interpretation": fields,
                     "action": action,
                     "understanding_ms": interpreter.milliseconds,
                     "routing_ms": decision.milliseconds,
@@ -209,8 +213,8 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
         language=case.language,
         modality="audio" if any(t.audio_path for t in case.turns) else "text",
         elapsed_ms=(perf_counter() - started) * 1000,
-        understanding=understanding,
-        routing=routing,
+        understanding="labelled" if layer == "routing" else understanding,
+        routing="not_run" if layer == "extraction" else routing,
         layer=layer,
     )
     return EvaluationResult(
@@ -322,7 +326,7 @@ def main(argv=None):
                     (args.dataset.parent / turn.audio_path).read_bytes()
                 )
     receipt = {
-        "schema_version": 1,
+        "schema_version": 2,
         "dataset_sha256": dataset_hash.hexdigest(),
         "understanding": args.understanding,
         "routing": args.routing,

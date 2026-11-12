@@ -2,6 +2,8 @@
 
 Status: requirements accompany the approved plan; implemented locally, automated checks passed, live verification pending. Created 2026-11-11.
 
+Follow-up model-boundary decision: Gemma interprets the message without intent/action labels; Laya receives only the interpreted message and conversation context, then chooses the action. See the current [model contracts](../model-contracts.md), which supersede earlier model payload details in this record.
+
 ## Intent checkpoint
 
 - **Intent:** simplify CAPY into a credible senior engineering portfolio project while preserving Telegram text and audio, Gemma understanding, and Laya routing.

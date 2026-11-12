@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from app.evals.models import EvaluationScenario
-from app.llm.schemas import SchedulingExtraction
+from app.llm.schemas import SchedulingInterpretation
 
 
 def evaluate_extraction(
-    scenario: EvaluationScenario, extraction: SchedulingExtraction
+    scenario: EvaluationScenario, extraction: SchedulingInterpretation
 ) -> list[str]:
     observed = extraction.model_dump(mode="json")
     return [

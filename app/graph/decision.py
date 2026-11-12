@@ -2,131 +2,77 @@ from __future__ import annotations
 
 import re
 
-from app.graph.contracts import DecisionOutput, NormalizedRequest, WorkflowDraft
-from app.llm.schemas import SchedulingExtraction
+from app.graph.contracts import DecisionOutput, WorkflowDraft
 
+_RESCHEDULE = re.compile(r"\b(reschedule|move|change|mudar|remarcar|trocar)\b", re.I)
+_CANCEL = re.compile(r"\b(cancel|cancelar|cancela)\b", re.I)
+_CONFIRM = re.compile(r"\b(confirm|confirmar|confirmo)\b", re.I)
+_SEARCH = re.compile(
+    r"\b(available|availability|book|booking|schedule|appointment|agendar|marcar|hor[aá]rio|dispon[ií]vel)\b",
+    re.I,
+)
 _FAQ = re.compile(
-    r"\b(price|cost|how much|quanto custa|duration|how long|dura[cç][aã]o|prepar|pol[ií]tica|cancellation policy)\b",
+    r"\b(price|cost|how much|quanto custa|pre[cç]o|duration|how long|dura[cç][aã]o|prepar|pol[ií]tica|cancellation policy|help|ajuda|options|services|servi[cç]os)\b",
     re.I,
 )
 _LOOKUP = re.compile(
-    r"\b(when is my|my appointment|my booking|que horas|meu hor[aá]rio|minha consulta|meu agendamento)\b",
+    r"\b(when is my|my appointment|my booking|upcoming appointments|que horas|meu hor[aá]rio|minha consulta|meu agendamento)\b",
     re.I,
 )
 _OVERRIDE = re.compile(
     r"\b(ignore|disregard|forget)\b[^.!?]{0,60}\b(rules?|instructions?|prompt|policy|policies)\b"
-    r"|\b(system prompt|jailbreak|developer message)\b",
+    r"|\b(system prompt|jailbreak|developer message)\b"
+    r"|\bignore\b[^.!?]{0,60}\b(regras|instru[cç][oõ]es)\b",
     re.I,
 )
+_CHOICE = re.compile(
+    r"\b(\d{1,2}|first|second|third|1st|2nd|3rd|primeiro|primeira|segundo|segunda|terceiro|terceira)\b",
+    re.I,
+)
+_DATE_OR_TIME = re.compile(r"\b(?:20\d{2}-\d{2}-\d{2}|\d{1,2}:\d{2})\b")
 
 
 class DeterministicDecision:
-    def decide(
-        self, request: NormalizedRequest, draft: WorkflowDraft
-    ) -> DecisionOutput:
-        if request.intent in {"unknown", "help"} and _OVERRIDE.search(
-            request.transcript
+    """Explicit evaluation baseline for Laya's message-and-context contract."""
+
+    def decide(self, message: str, context: WorkflowDraft) -> DecisionOutput:
+        choosing = bool(_CHOICE.search(message) and not _DATE_OR_TIME.search(message))
+        if _OVERRIDE.search(message):
+            action = "ESCALATE"
+        elif _CANCEL.search(message) and _RESCHEDULE.search(message):
+            action = "CLARIFY"
+        elif _FAQ.search(message):
+            action = "FAQ"
+        elif _RESCHEDULE.search(message):
+            action = "RESCHEDULE"
+        elif _CANCEL.search(message):
+            action = "CANCEL"
+        elif _CONFIRM.search(message):
+            action = "CONFIRM"
+        elif _LOOKUP.search(message):
+            action = "LOOKUP_BOOKING"
+        elif choosing and context.candidate_booking_ids:
+            action = {
+                "cancel": "CANCEL",
+                "confirm": "CONFIRM",
+                "reschedule": "RESCHEDULE",
+            }.get(context.operation, "CLARIFY")
+        elif choosing and context.offered_slot_ids:
+            action = "BOOK"
+        elif _SEARCH.search(message):
+            action = "CHECK_AVAILABILITY"
+        elif context.operation in {"create", "reschedule"} and _DATE_OR_TIME.search(
+            message
         ):
-            return DecisionOutput(
-                next_action="ESCALATE",
-                confidence=0.1,
-                needs_human=True,
-                reason_code="instruction_override",
+            action = (
+                "RESCHEDULE"
+                if context.operation == "reschedule"
+                else "CHECK_AVAILABILITY"
             )
-        if request.intent == "confirm":
-            return DecisionOutput(
-                next_action="CONFIRM", confidence=0.95, needs_human=False
-            )
-        if request.intent == "cancel":
-            return DecisionOutput(
-                next_action="CANCEL", confidence=0.95, needs_human=False
-            )
-        if request.intent == "reschedule" or (
-            draft.operation == "reschedule" and request.intent in {"unknown", "search"}
-        ):
-            return DecisionOutput(
-                next_action="RESCHEDULE",
-                confidence=0.9,
-                needs_human=False,
-                reason_code="reschedule",
-            )
-        if _LOOKUP.search(request.transcript) and request.intent not in {
-            "confirm",
-            "cancel",
-            "reschedule",
-            "select_slot",
-        }:
-            return DecisionOutput(
-                next_action="LOOKUP_BOOKING", confidence=0.9, needs_human=False
-            )
-        if _FAQ.search(request.transcript) and request.intent in {"unknown", "help"}:
-            return DecisionOutput(
-                next_action="FAQ",
-                confidence=0.9,
-                needs_human=False,
-                reason_code="catalog",
-            )
-        if (
-            draft.service_id
-            and draft.local_date
-            and request.intent in {"unknown", "search", "create"}
-            and draft.operation == "create"
-        ):
-            return DecisionOutput(
-                next_action="CHECK_AVAILABILITY", confidence=0.9, needs_human=False
-            )
-        if request.intent == "select_slot":
-            return DecisionOutput(next_action="BOOK", confidence=0.9, needs_human=False)
-        if request.intent in {"search", "create"}:
-            return DecisionOutput(
-                next_action="CHECK_AVAILABILITY", confidence=0.9, needs_human=False
-            )
-        if request.intent == "help" or _FAQ.search(request.transcript):
-            return DecisionOutput(
-                next_action="FAQ",
-                confidence=0.9,
-                needs_human=False,
-                reason_code="catalog",
-            )
-        if _LOOKUP.search(request.transcript):
-            return DecisionOutput(
-                next_action="LOOKUP_BOOKING", confidence=0.9, needs_human=False
-            )
+        else:
+            action = "ESCALATE"
         return DecisionOutput(
-            next_action="ESCALATE",
-            confidence=0.2,
-            needs_human=True,
-            reason_code="unsupported",
+            next_action=action,
+            confidence=0.2 if action == "ESCALATE" else 0.9,
+            needs_human=action == "ESCALATE",
         )
-
-
-def normalized_from_extraction(
-    extraction: SchedulingExtraction,
-    *,
-    conversation_id: str,
-    customer_id: str | None,
-    transcript: str,
-    modality: str,
-    draft: WorkflowDraft,
-) -> NormalizedRequest:
-    missing: list[str] = []
-    if not draft.service_id and not extraction.service_name:
-        missing.append("service")
-    if not draft.local_date and not extraction.local_date:
-        missing.append("date")
-    confidence = 0.2 if extraction.intent == "unknown" else 0.9
-    return NormalizedRequest(
-        conversation_id=conversation_id,
-        customer_id=customer_id,
-        input_modality="audio" if modality == "audio" else "text",
-        transcript=transcript,
-        intent=extraction.intent,
-        service=extraction.service_name,
-        professional=extraction.professional_name,
-        date_constraint=extraction.local_date,
-        time_constraint=extraction.local_time,
-        booking_reference=draft.active_booking_id,
-        slot_index=extraction.slot_index,
-        missing_fields=missing,
-        confidence=confidence,
-    )

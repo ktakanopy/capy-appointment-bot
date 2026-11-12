@@ -34,6 +34,14 @@ The full disposable Python 3.11/PostgreSQL 17/Redis 7 suite passed **101 tests**
 
 All **16 bilingual text cases** passed separately in workflow, extraction and fixed-input routing modes using deterministic providers. Import/unused-name checks, Python formatting, both Compose configurations and `git diff --check` passed. These checks preserve the application requirement for Gemma and Laya; they do not add live model or Telegram evidence. The updated reading order is in [architecture](architecture.md#how-to-read-the-code).
 
+## Interpreted-message routing verification
+
+The next contract change removes Gemma intent classification and the normalized request object. Gemma returns a simple-language message plus booking facts for Python. Laya receives only `message` and draft `context`; it chooses the action, including `CLARIFY`. Checkpoints use `lg:v3`, while PostgreSQL data and booking transactions are unchanged. See [model contracts](model-contracts.md) for exact seed-based examples and external server requirements.
+
+The disposable Python 3.11/PostgreSQL 17/Redis 7 suite passed **112 tests**, including **98 unit/API/evaluation tests** and **14 integration tests**, with the same upstream warning. Contract tests verify the actual HTTP payload shape, rejection of Gemma intent/action fields, sanitization of rewritten text, ambiguous-request clarification, numbered booking choices, and full audio transcription before one interpretation/routing/action sequence.
+
+All **16 text cases** passed in offline workflow and extraction modes. All **18 labelled text/audio cases** passed in fixed-input routing mode without invoking Gemma or audio transcription. Those routing results measure the supplied interpretation/context labels, not speech recognition. The corpus now includes human-written interpreted-message labels and no Gemma intent labels; old receipt hashes and schema-version-1 measurements above describe the earlier contract. Model and Telegram live evidence remain pending.
+
 ## Remaining live evidence
 
 The configured host and Compose-resolved Gemma/Laya endpoints were unreachable during verification. Live model comparisons and a Telegram text/audio walkthrough were not performed. The corpus includes two synthesized English/Portuguese speech recordings, but their actual Gemma transcription accuracy remains unmeasured. No Telegram messages were sent by the cleanup.

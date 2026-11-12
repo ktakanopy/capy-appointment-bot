@@ -1,6 +1,6 @@
 # CAPY — Telegram scheduling with text and audio
 
-A portfolio scheduling assistant for service businesses. Gemma understands text and complete voice recordings; Laya proposes the next action. Deterministic Python services authorize changes, calculate availability and commit bookings in PostgreSQL.
+A portfolio scheduling assistant for service businesses. Gemma rewrites text or complete voice recordings into simple language; Laya receives that interpreted message and the conversation context, then proposes the next action. Deterministic Python services authorize changes, calculate availability and commit bookings in PostgreSQL.
 
 <p align="center"><img src="docs/assets/capy.png" alt="CAPY scheduling assistant" width="320"></p>
 
@@ -9,6 +9,8 @@ Customers can search, choose a slot, book, look up appointments, confirm, cancel
 ## Run the application
 
 Requirements: Docker Compose, a Telegram bot, compatible running Gemma `/understand` and Laya `/decide` endpoints. Model servers and weights are not bundled. Set `TELEGRAM_BOT_TOKEN`, `GEMMA_BASE_URL` and `LAYA_BASE_URL` in your environment or a private `.env` using `.env.example`.
+
+The endpoints must implement the current [model contracts](docs/model-contracts.md): Gemma returns a plain-language `message` and booking facts without an intent label; Laya accepts only `message` and `context`. Older intent/request-based servers must be updated alongside the app.
 
 ```bash
 docker compose --profile telegram up --build
@@ -31,7 +33,7 @@ flowchart LR
     T[Telegram text] --> P[Sanitize]
     A[Telegram audio] --> G[Gemma full transcription]
     G --> P
-    P --> I[Gemma extraction]
+    P --> I[Gemma plain-language interpretation]
     I --> L[Laya routing]
     L --> W[Deterministic workflow constraints]
     W --> B[Owned booking services]
@@ -53,7 +55,7 @@ uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understandi
 uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understanding gemma --routing deterministic
 ```
 
-Use `--gemma-revision` and `--laya-revision` to identify checkpoints. Reports include dataset/asset hashes, predictions, errors, per-stage latency and language/modality summaries. Failed cases cause a nonzero exit. `--layer extraction`, `--layer routing` and `--layer workflow` isolate different questions; fixed-input routing uses labelled extraction fields rather than interpreting them again.
+Use `--gemma-revision` and `--laya-revision` to identify checkpoints. Reports include dataset/asset hashes, predictions, errors, per-stage latency and language/modality summaries. Failed cases cause a nonzero exit. `--layer extraction`, `--layer routing` and `--layer workflow` isolate different questions; fixed-input routing uses each turn's labelled `interpreted_message` and draft context without invoking Gemma.
 
 The seed corpus has 16 English/Portuguese text task cases and two synthetic speech cases. It is a regression corpus, not proof of general model quality. The next research step is a much larger grouped train/dev/test dataset, followed by Gemma and Laya fine-tuning and held-out comparisons. See [evaluation](docs/evaluation.md).
 
@@ -78,7 +80,7 @@ Set `TRACING_ENABLED=true` when configuring tracing. Observability services have
 
 ## Migration and current limits
 
-Existing databases need a coordinated cutover: stop old workers, back up PostgreSQL, then upgrade with the new application. Migration `0003_telegram_ownership` preserves bookings and verified identity links while retiring token columns. Legacy customers without a trusted link remain owner-visible. It never claims them by phone. Reverting token removal requires restoring the matching backup and application. Existing temporary conversations start fresh under checkpoint namespace `lg:v2`.
+Existing databases need a coordinated cutover: stop old workers, back up PostgreSQL, then upgrade with the new application. Migration `0003_telegram_ownership` preserves bookings and verified identity links while retiring token columns. Legacy customers without a trusted link remain owner-visible. It never claims them by phone. Reverting token removal requires restoring the matching backup and application. The message/context model contract starts temporary conversations fresh under checkpoint namespace `lg:v3`; business records are unchanged.
 
 Real Telegram journeys and Gemma/Laya model quality are not yet validated by this cleanup's automated tests. A live walkthrough requires available model endpoints and an explicitly authorized test chat. Existing running demo containers are not automatically upgraded by the code changes.
 

@@ -7,7 +7,8 @@ def test_deterministic_interpreter_extracts_service_date_and_time():
         {"today": "2026-10-19", "service_names": ["Massage"]},
     )
 
-    assert result.intent == "search"
+    assert result.message == "Book Massage 2026-10-20 at 10:30"
+    assert "intent" not in result.model_dump()
     assert result.service_name == "Massage"
     assert result.local_date == "2026-10-20"
     assert result.local_time == "10:30"
@@ -18,8 +19,9 @@ def test_deterministic_interpreter_resolves_slot_ordinal_only_with_offers():
 
     result = interpreter.interpret("I'd like the second one", {"has_slots": True})
 
-    assert result.intent == "select_slot"
+    assert result.message == "I'd like the second one"
     assert result.slot_index == 2
+    assert interpreter.interpret("second", {"has_slots": False}).slot_index is None
 
 
 def test_provider_selection_never_silently_substitutes():

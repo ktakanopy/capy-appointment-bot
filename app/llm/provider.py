@@ -7,41 +7,19 @@ from typing import Protocol
 from app.graph.decision import DeterministicDecision
 from app.graph.laya import LayaDecision
 from app.llm.gemma import GemmaUnderstanding
-from app.llm.schemas import SchedulingExtraction
+from app.llm.schemas import SchedulingInterpretation
 
 
 class Interpreter(Protocol):
-    def interpret(self, message: str, context: dict) -> SchedulingExtraction: ...
+    def interpret(self, message: str, context: dict) -> SchedulingInterpretation: ...
 
 
 class DeterministicInterpreter:
     """Small, predictable local interpreter used only as an explicit evaluation baseline."""
 
-    def interpret(self, message: str, context: dict) -> SchedulingExtraction:
+    def interpret(self, message: str, context: dict) -> SchedulingInterpretation:
         text = " ".join(message.strip().split())
         lowered = text.lower()
-        intent = "unknown"
-        if re.search(
-            r"\b(reschedule|reschedul|move|change|mudar|remarcar|trocar)\b", lowered
-        ):
-            intent = "reschedule"
-        elif re.search(r"\b(cancel|cancelar|cancela)\b", lowered):
-            intent = "cancel"
-        elif re.search(r"\b(confirm|confirmar|confirmo)\b", lowered):
-            intent = "confirm"
-        elif re.search(
-            r"\b(available|availability|book|booking|schedule|appointment|agendar|marcar|hor[aá]rio|dispon[ií]vel)\b",
-            lowered,
-        ):
-            intent = "search"
-        elif re.search(r"\b(help|ajuda|options|services|servi[cç]os)\b", lowered):
-            intent = "help"
-        elif context.get("has_slots") and re.search(
-            r"\b(\d+|first|second|third|1st|2nd|3rd|primeiro|primeira|segundo|segunda)\b",
-            lowered,
-        ):
-            intent = "select_slot"
-
         service_name = None
         for candidate in sorted(
             context.get("service_names", []), key=len, reverse=True
@@ -56,9 +34,17 @@ class DeterministicInterpreter:
                 break
         local_date = self._date(text, context.get("today"))
         local_time = self._time(text)
-        slot_index = self._index(lowered) if intent == "select_slot" else None
-        return SchedulingExtraction(
-            intent=intent,
+        slot_index = (
+            self._index(lowered)
+            if context.get("has_slots") and not local_date and not local_time
+            else None
+        )
+        if local_date:
+            text = re.sub(
+                r"\b(tomorrow|amanh[ãa]|today|hoje)\b", local_date, text, flags=re.I
+            )
+        return SchedulingInterpretation(
+            message=text,
             service_name=service_name,
             professional_name=professional_name,
             local_date=local_date,

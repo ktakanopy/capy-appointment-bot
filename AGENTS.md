@@ -6,6 +6,7 @@ Auto-generated from the general service scheduling MVP plan. Last updated: 2026-
 
 - Python 3.11+ with FastAPI, LangGraph, Pydantic v2, psycopg 3, Alembic, PostgreSQL, and Redis.
 - Gemma text/audio understanding and Laya routing are required in the application; deterministic providers are explicit evaluation baselines.
+- Gemma returns a plain-language interpreted message and booking facts without intent/action labels. Laya receives only `message` and draft `context`; it chooses the next action. See `docs/model-contracts.md`.
 - Langfuse Python SDK for optional observability.
 - Redis-backed LangGraph checkpoints for short-lived conversation state; PostgreSQL for business, schedule, booking, and reminder data.
 

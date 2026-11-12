@@ -10,6 +10,9 @@ class EvaluationTurn(BaseModel):
     utterance: str = ""
     audio_path: str | None = None
     reference_transcript: str | None = None
+    interpreted_message: str | None = Field(
+        default=None, min_length=1, max_length=64_000
+    )
     expected: dict[str, Any] = Field(default_factory=dict)
     expected_action: str | None = None
     expected_intent: str | None = None

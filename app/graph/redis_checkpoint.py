@@ -189,15 +189,15 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
 
     @staticmethod
     def _latest_key(thread_id: str, checkpoint_ns: str) -> str:
-        return f"lg:v2:ckpt:{thread_id}:{checkpoint_ns}:latest"
+        return f"lg:v3:ckpt:{thread_id}:{checkpoint_ns}:latest"
 
     @staticmethod
     def _item_key(thread_id: str, checkpoint_ns: str, checkpoint_id: str) -> str:
-        return f"lg:v2:ckpt:{thread_id}:{checkpoint_ns}:{checkpoint_id}"
+        return f"lg:v3:ckpt:{thread_id}:{checkpoint_ns}:{checkpoint_id}"
 
     @staticmethod
     def _writes_key(thread_id: str, checkpoint_ns: str, checkpoint_id: str) -> str:
-        return f"lg:v2:writes:{thread_id}:{checkpoint_ns}:{checkpoint_id}"
+        return f"lg:v3:writes:{thread_id}:{checkpoint_ns}:{checkpoint_id}"
 
     @staticmethod
     def _config(thread_id: str, checkpoint_ns: str, checkpoint_id: str):

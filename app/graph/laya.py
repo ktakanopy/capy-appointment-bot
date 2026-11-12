@@ -4,12 +4,12 @@ import json
 from urllib import request as urlrequest
 from urllib.error import URLError
 
-from app.graph.contracts import DecisionOutput, NormalizedRequest, WorkflowDraft
+from app.graph.contracts import DecisionOutput, WorkflowDraft
 from app.llm.gemma import ProviderError
 
 
 class LayaDecision:
-    """Route a normalized request through a local fine-tuned Laya server.
+    """Route Gemma's interpreted message using the current conversation context.
 
     Laya proposes the next action. The workflow still rejects an action the
     draft does not allow.
@@ -19,12 +19,10 @@ class LayaDecision:
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
 
-    def decide(
-        self, request: NormalizedRequest, draft: WorkflowDraft
-    ) -> DecisionOutput:
+    def decide(self, message: str, context: WorkflowDraft) -> DecisionOutput:
         body = {
-            "request": request.model_dump(mode="json"),
-            "draft": draft.model_dump(mode="json"),
+            "message": message,
+            "context": context.model_dump(mode="json"),
         }
         encoded = json.dumps(body).encode()
         req = urlrequest.Request(

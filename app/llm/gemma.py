@@ -9,7 +9,7 @@ from urllib import request as urlrequest
 from urllib.error import URLError
 
 from app.channels.audio_chunks import AudioChunker, AudioError
-from app.llm.schemas import SchedulingExtraction
+from app.llm.schemas import SchedulingInterpretation
 
 _MAX_RESPONSE_BYTES = 1_000_000
 
@@ -21,19 +21,19 @@ class ProviderError(RuntimeError):
 class GemmaUnderstanding:
     """Text and audio understanding through a local Gemma 3n E2B server.
 
-    The model returns scheduling fields only. It does not choose a graph node
-    or decide that a time is free.
+    The model rewrites the customer's meaning in simple terms and extracts
+    booking facts for Python. It does not label intent or choose the next step.
     """
 
     def __init__(self, base_url: str, timeout_seconds: float = 8):
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
 
-    def interpret(self, message: str, context: dict) -> SchedulingExtraction:
+    def interpret(self, message: str, context: dict) -> SchedulingInterpretation:
         payload = self._post(
             {"modality": "text", "message": message, "context": _safe_context(context)}
         )
-        return _extraction(payload)
+        return _interpretation(payload)
 
     def transcribe_recording(
         self,
@@ -173,17 +173,8 @@ def _safe_context(context: dict) -> dict:
     }
 
 
-def _extraction(payload: dict) -> SchedulingExtraction:
+def _interpretation(payload: dict) -> SchedulingInterpretation:
     try:
-        return SchedulingExtraction.model_validate(
-            {
-                "intent": payload.get("intent"),
-                "service_name": payload.get("service_name"),
-                "professional_name": payload.get("professional_name"),
-                "local_date": payload.get("local_date"),
-                "local_time": payload.get("local_time"),
-                "slot_index": payload.get("slot_index"),
-            }
-        )
+        return SchedulingInterpretation.model_validate(payload)
     except ValueError as exc:
-        raise ProviderError("invalid_extraction") from exc
+        raise ProviderError("invalid_interpretation") from exc

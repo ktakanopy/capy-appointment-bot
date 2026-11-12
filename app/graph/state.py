@@ -19,12 +19,11 @@ class SchedulingGraphState(TypedDict, total=False):
     booking_id: str | None
     idempotency_key: str | None
     input_modality: str
-    normalized_request: dict[str, Any]
     service_names: list[str]
     professional_names: list[str]
     catalog: dict[str, Any]
     draft: dict[str, Any]
-    extraction: dict[str, Any]
+    interpretation: dict[str, Any]
     decision: dict[str, Any]
     route: str
     result: dict[str, Any]

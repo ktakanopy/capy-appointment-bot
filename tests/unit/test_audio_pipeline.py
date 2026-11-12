@@ -6,7 +6,11 @@ from array import array
 import pytest
 
 from app.channels.audio_chunks import AudioChunker
+from app.graph.builder import build_graph
+from app.graph.contracts import BookingRef, DecisionOutput
+from app.graph.workflow import LangGraphWorkflow
 from app.llm.gemma import GemmaUnderstanding, ProviderError
+from tests.unit.test_conversation_graph import FakeSchedulingActions, _turn
 
 
 def recording(seconds):
@@ -69,3 +73,46 @@ def test_corrupt_audio_is_rejected():
     with pytest.raises(AudioError):
         with AudioChunker().chunks(b"not audio") as chunks:
             list(chunks)
+
+
+def test_full_audio_is_interpreted_before_one_laya_route_and_booking_action(
+    monkeypatch,
+):
+    model = GemmaUnderstanding("http://fixture")
+    chunks = iter(
+        [
+            "Book Massage tomorrow.",
+            "Actually cancel my appointment instead.",
+            "Please cancel it.",
+        ]
+    )
+    calls = []
+
+    def post(body, **kwargs):
+        calls.append(body["modality"])
+        if body["modality"] == "audio":
+            return {"transcript": next(chunks)}
+        assert calls == ["audio", "audio", "audio", "text"]
+        assert "Actually cancel my appointment instead" in body["message"]
+        return {"message": "Cancel my booking."}
+
+    class RouteMeaning:
+        def decide(self, message, context):
+            assert calls == ["audio", "audio", "audio", "text"]
+            assert message == "Cancel my booking."
+            calls.append("route")
+            return DecisionOutput(next_action="CANCEL", confidence=0.9)
+
+    monkeypatch.setattr(model, "_post", post)
+    transcript = model.transcribe_recording(recording(61), {}, chunker=AudioChunker())
+    actions = FakeSchedulingActions(
+        refs=[BookingRef(id="booking-1", service_id="massage", label="later")]
+    )
+    workflow = LangGraphWorkflow(build_graph(model, RouteMeaning()))
+    result = workflow.handle_turn(
+        _turn(transcript, customer_id="customer-1", input_modality="audio"), actions
+    )
+    assert calls == ["audio", "audio", "audio", "text", "route"]
+    assert result.intent == "cancel"
+    assert len(actions.canceled) == 1
+    assert not actions.created

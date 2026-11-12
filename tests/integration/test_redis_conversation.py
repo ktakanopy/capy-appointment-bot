@@ -45,7 +45,7 @@ def test_checkpoint_restart_expiry_and_isolation():
         assert workflow().messages(thread) == []
         assert workflow().draft(thread).service_id is None
     finally:
-        keys = list(client.scan_iter(match=f"lg:v2:*:{thread}:*"))
+        keys = list(client.scan_iter(match=f"lg:v3:*:{thread}:*"))
         if keys:
             client.delete(*keys)
         client.close()

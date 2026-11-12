@@ -19,6 +19,7 @@ NextAction = Literal[
     "CONFIRM",
     "ESCALATE",
     "LOOKUP_BOOKING",
+    "CLARIFY",
 ]
 
 
@@ -38,25 +39,6 @@ class WorkflowDraft(BaseModel):
     candidate_booking_ids: list[str] = Field(default_factory=list)
     escalated: bool = False
     invalid_date: bool = False
-
-
-class NormalizedRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    conversation_id: str
-    customer_id: str | None = None
-    input_modality: Literal["text", "audio"] = "text"
-    transcript: str
-    intent: str = "unknown"
-    service: str | None = None
-    professional: str | None = None
-    location: str | None = None
-    date_constraint: str | None = None
-    time_constraint: str | None = None
-    booking_reference: str | None = None
-    slot_index: int | None = Field(default=None, ge=1, le=100)
-    missing_fields: list[str] = Field(default_factory=list)
-    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class DecisionOutput(BaseModel):

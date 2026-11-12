@@ -5,7 +5,7 @@ from app.graph.contracts import BookingRef, TurnContext
 from app.graph.decision import DeterministicDecision
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import DeterministicInterpreter
-from app.llm.schemas import SchedulingExtraction
+from app.llm.schemas import SchedulingInterpretation
 from app.models import AvailabilitySearchRequest
 from tests.conftest import sample_catalog, sample_slot
 
@@ -207,8 +207,10 @@ def test_invalid_date_asks_again():
     class BadDate:
         def interpret(self, message, context):
             _ = message, context
-            return SchedulingExtraction(
-                intent="search", service_name="Massage", local_date="2099-13-40"
+            return SchedulingInterpretation(
+                message="Book Massage on 2099-13-40.",
+                service_name="Massage",
+                local_date="2099-13-40",
             )
 
     actions = FakeSchedulingActions()
@@ -220,7 +222,7 @@ def test_invalid_date_asks_again():
     assert actions.created == []
 
 
-def test_swapped_decision_cannot_force_reschedule():
+def test_router_cannot_invent_an_owned_booking_or_an_offered_slot():
     class AlwaysReschedule:
         def decide(self, request, draft):
             from app.graph.contracts import DecisionOutput
@@ -243,7 +245,8 @@ def test_swapped_decision_cannot_force_reschedule():
     )
     result = workflow.handle_turn(_turn("1", customer_id="customer-1"), actions)
     assert actions.rescheduled == []
-    assert result.intent == "create"
+    assert actions.created == []
+    assert result.intent == "clarify"
 
 
 def test_audio_transcript_uses_same_workflow():
