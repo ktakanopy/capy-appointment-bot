@@ -29,7 +29,7 @@ docs/
 ## Code Style
 
 - Python 3.11+; follow standard conventions and keep booking policy in deterministic application services.
-- Keep raw booking management tokens out of graph state, model input, logs, traces, URLs, and errors.
+- Keep contact details and pasted legacy booking tokens out of model input, checkpoints, logs, traces, and errors; document the limits of free-text redaction.
 - Keep migrations in `alembic/`; update them when persistence contracts change.
 
 ## Recent Changes

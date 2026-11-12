@@ -2,15 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from redis import Redis
+
 from app.booking import BookingService
 from app.channels.audio_chunks import AudioChunker
 from app.config import Settings, load_settings
 from app.graph.builder import build_graph
-from app.graph.decision import DeterministicDecision
 from app.graph.redis_checkpoint import RedisCheckpointSaver
 from app.graph.workflow import LangGraphWorkflow
-from app.llm.provider import build_interpreter, build_decision
 from app.llm.gemma import GemmaUnderstanding
+from app.llm.provider import build_decision, build_interpreter
 from app.observability import build_tracer, get_logger
 from app.repositories import PostgresRepository
 from app.scheduling import AvailabilityService
@@ -25,7 +26,7 @@ class RuntimeContext:
     availability: AvailabilityService
     bookings: BookingService
     workflow: LangGraphWorkflow
-    redis: object
+    redis: Redis
     audio_understanding: GemmaUnderstanding
     audio_chunker: AudioChunker
 
@@ -37,10 +38,19 @@ def create_runtime(settings: Settings | None = None) -> RuntimeContext:
     repository = PostgresRepository(settings.database_url)
     availability = AvailabilityService(repository)
     bookings = BookingService(repository)
-    if settings.understanding_provider != "gemma" or settings.decision_provider != "laya":
-        raise ValueError("Application operation requires Gemma and Laya; use the evaluation CLI for deterministic baselines")
-    from redis import Redis
-    redis_client = Redis.from_url(settings.chat_redis_url, decode_responses=True, socket_connect_timeout=2, socket_timeout=2)
+    if (
+        settings.understanding_provider != "gemma"
+        or settings.decision_provider != "laya"
+    ):
+        raise ValueError(
+            "Application operation requires Gemma and Laya; use the evaluation CLI for deterministic baselines"
+        )
+    redis_client = Redis.from_url(
+        settings.chat_redis_url,
+        decode_responses=True,
+        socket_connect_timeout=2,
+        socket_timeout=2,
+    )
     interpreter = build_interpreter("gemma", settings.gemma_base_url)
     decision = build_decision("laya", settings.laya_base_url)
     graph = build_graph(

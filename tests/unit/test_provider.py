@@ -1,6 +1,4 @@
-from app.llm.provider import DeterministicInterpreter, build_interpreter, build_decision
-
-
+from app.llm.provider import DeterministicInterpreter, build_decision, build_interpreter
 
 
 def test_deterministic_interpreter_extracts_service_date_and_time():
@@ -24,11 +22,12 @@ def test_deterministic_interpreter_resolves_slot_ordinal_only_with_offers():
     assert result.slot_index == 2
 
 
-
 def test_provider_selection_never_silently_substitutes():
     import pytest
-    from app.llm.gemma import GemmaUnderstanding
+
     from app.graph.laya import LayaDecision
+    from app.llm.gemma import GemmaUnderstanding
+
     assert isinstance(build_interpreter("gemma"), GemmaUnderstanding)
     assert isinstance(build_decision("laya"), LayaDecision)
     with pytest.raises(ValueError):

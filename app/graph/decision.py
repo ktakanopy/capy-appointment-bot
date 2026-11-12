@@ -5,7 +5,6 @@ import re
 from app.graph.contracts import DecisionOutput, NormalizedRequest, WorkflowDraft
 from app.llm.schemas import SchedulingExtraction
 
-
 _FAQ = re.compile(
     r"\b(price|cost|how much|quanto custa|duration|how long|dura[cç][aã]o|prepar|pol[ií]tica|cancellation policy)\b",
     re.I,
@@ -22,8 +21,12 @@ _OVERRIDE = re.compile(
 
 
 class DeterministicDecision:
-    def decide(self, request: NormalizedRequest, draft: WorkflowDraft) -> DecisionOutput:
-        if request.intent in {"unknown", "help"} and _OVERRIDE.search(request.transcript):
+    def decide(
+        self, request: NormalizedRequest, draft: WorkflowDraft
+    ) -> DecisionOutput:
+        if request.intent in {"unknown", "help"} and _OVERRIDE.search(
+            request.transcript
+        ):
             return DecisionOutput(
                 next_action="ESCALATE",
                 confidence=0.1,
@@ -31,25 +34,64 @@ class DeterministicDecision:
                 reason_code="instruction_override",
             )
         if request.intent == "confirm":
-            return DecisionOutput(next_action="CONFIRM", confidence=0.95, needs_human=False)
+            return DecisionOutput(
+                next_action="CONFIRM", confidence=0.95, needs_human=False
+            )
         if request.intent == "cancel":
-            return DecisionOutput(next_action="CANCEL", confidence=0.95, needs_human=False)
-        if request.intent == "reschedule" or (draft.operation == "reschedule" and request.intent in {"unknown", "search"}):
-            return DecisionOutput(next_action="RESCHEDULE", confidence=0.9, needs_human=False, reason_code="reschedule")
-        if _LOOKUP.search(request.transcript) and request.intent not in {"confirm", "cancel", "reschedule", "select_slot"}:
-            return DecisionOutput(next_action="LOOKUP_BOOKING", confidence=0.9, needs_human=False)
+            return DecisionOutput(
+                next_action="CANCEL", confidence=0.95, needs_human=False
+            )
+        if request.intent == "reschedule" or (
+            draft.operation == "reschedule" and request.intent in {"unknown", "search"}
+        ):
+            return DecisionOutput(
+                next_action="RESCHEDULE",
+                confidence=0.9,
+                needs_human=False,
+                reason_code="reschedule",
+            )
+        if _LOOKUP.search(request.transcript) and request.intent not in {
+            "confirm",
+            "cancel",
+            "reschedule",
+            "select_slot",
+        }:
+            return DecisionOutput(
+                next_action="LOOKUP_BOOKING", confidence=0.9, needs_human=False
+            )
         if _FAQ.search(request.transcript) and request.intent in {"unknown", "help"}:
-            return DecisionOutput(next_action="FAQ", confidence=0.9, needs_human=False, reason_code="catalog")
-        if draft.service_id and draft.local_date and request.intent in {"unknown", "search", "create"} and draft.operation == "create":
-            return DecisionOutput(next_action="CHECK_AVAILABILITY", confidence=0.9, needs_human=False)
+            return DecisionOutput(
+                next_action="FAQ",
+                confidence=0.9,
+                needs_human=False,
+                reason_code="catalog",
+            )
+        if (
+            draft.service_id
+            and draft.local_date
+            and request.intent in {"unknown", "search", "create"}
+            and draft.operation == "create"
+        ):
+            return DecisionOutput(
+                next_action="CHECK_AVAILABILITY", confidence=0.9, needs_human=False
+            )
         if request.intent == "select_slot":
             return DecisionOutput(next_action="BOOK", confidence=0.9, needs_human=False)
         if request.intent in {"search", "create"}:
-            return DecisionOutput(next_action="CHECK_AVAILABILITY", confidence=0.9, needs_human=False)
+            return DecisionOutput(
+                next_action="CHECK_AVAILABILITY", confidence=0.9, needs_human=False
+            )
         if request.intent == "help" or _FAQ.search(request.transcript):
-            return DecisionOutput(next_action="FAQ", confidence=0.9, needs_human=False, reason_code="catalog")
+            return DecisionOutput(
+                next_action="FAQ",
+                confidence=0.9,
+                needs_human=False,
+                reason_code="catalog",
+            )
         if _LOOKUP.search(request.transcript):
-            return DecisionOutput(next_action="LOOKUP_BOOKING", confidence=0.9, needs_human=False)
+            return DecisionOutput(
+                next_action="LOOKUP_BOOKING", confidence=0.9, needs_human=False
+            )
         return DecisionOutput(
             next_action="ESCALATE",
             confidence=0.2,

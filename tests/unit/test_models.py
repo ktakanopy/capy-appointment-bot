@@ -48,7 +48,9 @@ def test_booking_normalizes_start_to_utc():
 
 
 def test_availability_range_is_bounded():
-    with pytest.raises(ValidationError, match="availability range cannot exceed 60 days"):
+    with pytest.raises(
+        ValidationError, match="availability range cannot exceed 60 days"
+    ):
         AvailabilitySearchRequest(
             service_id="massage",
             start_date=date(2026, 1, 1),

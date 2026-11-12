@@ -11,6 +11,15 @@ class TelegramApiError(RuntimeError):
         self.code = code
         self.retry_after = retry_after
 
+    @property
+    def is_permanent_rejection(self) -> bool:
+        return self.code in {
+            "telegram_api_400",
+            "telegram_api_403",
+            "telegram_http_400",
+            "telegram_http_403",
+        }
+
 
 _MAX_RESPONSE_BYTES = 1_000_000
 
@@ -24,35 +33,28 @@ class TelegramBotApi:
 
     def call(self, method: str, payload: dict | None = None, *, timeout: float = 30):
         url = f"{self._api_base_url}/bot{self._token}/{method}"
-        body = json.dumps(payload or {}).encode()
-        req = request.Request(url, data=body, headers={"content-type": "application/json"})
+        request_body = json.dumps(payload or {}).encode()
+        api_request = request.Request(
+            url, data=request_body, headers={"content-type": "application/json"}
+        )
         try:
-            with request.urlopen(req, timeout=timeout) as response:
-                body = response.read(_MAX_RESPONSE_BYTES + 1)
-                if len(body) > _MAX_RESPONSE_BYTES:
-                    raise TelegramApiError("telegram_response_too_large")
-                result = json.loads(body.decode())
-        except HTTPError as exc:
-            retry_after = None
-            try:
-                body = exc.read(_MAX_RESPONSE_BYTES + 1)
-                if len(body) > _MAX_RESPONSE_BYTES:
-                    body = b""
-                result = json.loads(body.decode())
-                retry_after = _retry_after(result)
-            except (ValueError, OSError):
-                pass
-            raise TelegramApiError(
-                f"telegram_http_{exc.code}", retry_after=retry_after
-            ) from None
+            with request.urlopen(api_request, timeout=timeout) as response:
+                result = _decode_response(response)
+        except HTTPError as error:
+            raise _http_failure(error) from None
         except (URLError, TimeoutError, OSError, ValueError):
             raise TelegramApiError("telegram_transport_error") from None
-        if not isinstance(result, dict) or not result.get("ok"):
-            code = result.get("error_code") if isinstance(result, dict) else None
-            raise TelegramApiError(
-                f"telegram_api_{code}" if isinstance(code, int) else "telegram_api_error",
-                retry_after=_retry_after(result),
+
+        if not isinstance(result, dict):
+            raise TelegramApiError("telegram_api_error")
+        if not result.get("ok"):
+            error_code = result.get("error_code")
+            code = (
+                f"telegram_api_{error_code}"
+                if isinstance(error_code, int)
+                else "telegram_api_error"
             )
+            raise TelegramApiError(code, retry_after=_retry_after(result))
         return result.get("result")
 
     def get_me(self) -> dict:
@@ -105,15 +107,36 @@ class TelegramBotApi:
             raise TelegramApiError("telegram_invalid_file")
         size = result.get("file_size")
         path = result.get("file_path")
-        if not isinstance(path, str) or (isinstance(size, int) and size > max_bytes):
+        if not isinstance(path, str) or not path:
+            raise TelegramApiError("telegram_invalid_file")
+        if isinstance(size, int) and size > max_bytes:
             raise TelegramApiError("telegram_file_too_large")
         return self.download_file(path, max_bytes)
 
-    def send_message(self, chat_id: int, text: str, reply_markup: dict | None = None) -> None:
+    def send_message(
+        self, chat_id: int, text: str, reply_markup: dict | None = None
+    ) -> None:
         payload: dict = {"chat_id": chat_id, "text": text[:4000]}
         if reply_markup is not None:
             payload["reply_markup"] = reply_markup
         self.call("sendMessage", payload)
+
+
+def _decode_response(response):
+    body = response.read(_MAX_RESPONSE_BYTES + 1)
+    if len(body) > _MAX_RESPONSE_BYTES:
+        raise TelegramApiError("telegram_response_too_large")
+    return json.loads(body.decode())
+
+
+def _http_failure(error: HTTPError) -> TelegramApiError:
+    """Read retry metadata without exposing the credential-bearing request URL."""
+    retry_after = None
+    try:
+        retry_after = _retry_after(_decode_response(error))
+    except (TelegramApiError, ValueError, OSError):
+        pass
+    return TelegramApiError(f"telegram_http_{error.code}", retry_after=retry_after)
 
 
 def _retry_after(result: object) -> int | None:

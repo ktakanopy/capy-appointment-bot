@@ -3,7 +3,7 @@ from app.graph.decision import DeterministicDecision
 from app.graph.redis_checkpoint import RedisCheckpointSaver
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import DeterministicInterpreter
-from tests.unit.test_conversation_graph import Ports, _turn
+from tests.unit.test_conversation_graph import FakeSchedulingActions, _turn
 
 
 class FakeRedis:
@@ -39,10 +39,10 @@ def test_redis_checkpoint_keeps_the_draft_for_the_session_thread():
             checkpointer=RedisCheckpointSaver(redis, ttl_seconds=3600),
         )
     )
-    ports = Ports()
+    actions = FakeSchedulingActions()
 
-    workflow.handle_turn(_turn("Book Massage"), ports)
-    result = workflow.handle_turn(_turn("tomorrow"), ports)
+    workflow.handle_turn(_turn("Book Massage"), actions)
+    result = workflow.handle_turn(_turn("tomorrow"), actions)
 
     assert result.intent == "search"
     assert workflow.draft("session-1").service_id == "massage"

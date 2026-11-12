@@ -1,8 +1,8 @@
 # Telegram scheduling through text and voice
 
-> Historical design input. [Portfolio simplification](plan-portfolio-simplification.md) supersedes phone-proof, token-interface and fallback rules. Full Gemma audio and Laya routing remain supported.
+> Historical design input, not current setup or runtime guidance. The original requirements and implementation notes below describe an earlier checkout. [Portfolio simplification](plan-portfolio-simplification.md) supersedes phone-proof, token-interface and fallback rules. Use [current architecture](../architecture.md) for the running code. Full Gemma audio and Laya routing remain supported.
 
-Status: historical feature record. Telegram is the active customer channel; WhatsApp is archived under `.archived/`. Text and voice integration is implemented; live Telegram and real Gemma audio remain unverified.
+Status: historical feature record. Telegram is the active customer channel; earlier WhatsApp code is retained in Git history. Text and voice integration is implemented; live Telegram and real Gemma audio remain unverified.
 
 ## Intent checkpoint
 
@@ -21,7 +21,7 @@ The customer conversation needs to run in Telegram now and later WhatsApp. The e
 
 ## Solution
 
-Add an optional Telegram polling worker around the existing graph, `ChatPorts`, availability service, and booking service. The worker handles identity, contact sharing, durable update receipts, text/audio routing, and safe text replies. Use the supplied bot credential from local environment configuration only.
+Add an optional Telegram polling worker around the existing graph, `CustomerSchedulingActions`, availability service, and booking service. The worker handles identity, contact sharing, durable update receipts, text/audio routing, and safe text replies. Use the supplied bot credential from local environment configuration only.
 
 For voice, decode incrementally and divide the recording into model-sized windows. Reassemble ordered transcripts, interpret the complete message once, and then execute one workflow turn. Chunk-level extraction must not execute actions: a later correction can change the user's request.
 

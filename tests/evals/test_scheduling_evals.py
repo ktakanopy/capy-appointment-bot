@@ -9,10 +9,16 @@ def test_evaluation_compares_structured_extraction_fields():
         title="Find a service for tomorrow",
         utterance="Book Massage tomorrow",
         context={"today": "2026-10-19", "service_names": ["Massage"]},
-        expected={"intent": "search", "service_name": "Massage", "local_date": "2026-10-20"},
+        expected={
+            "intent": "search",
+            "service_name": "Massage",
+            "local_date": "2026-10-20",
+        },
         category="intent",
     )
-    observed = DeterministicInterpreter().interpret(scenario.utterance, scenario.context)
+    observed = DeterministicInterpreter().interpret(
+        scenario.utterance, scenario.context
+    )
 
     assert evaluate_extraction(scenario, observed) == []
 
@@ -26,9 +32,13 @@ def test_evaluation_reports_each_structured_mismatch():
         expected={"intent": "search", "local_date": "2026-10-21"},
         category="intent",
     )
-    observed = DeterministicInterpreter().interpret(scenario.utterance, scenario.context)
+    observed = DeterministicInterpreter().interpret(
+        scenario.utterance, scenario.context
+    )
 
-    assert evaluate_extraction(scenario, observed) == ["local_date: expected '2026-10-21', observed '2026-10-20'"]
+    assert evaluate_extraction(scenario, observed) == [
+        "local_date: expected '2026-10-21', observed '2026-10-20'"
+    ]
 
 
 def test_route_eval_keeps_decision_separate_from_workflow():

@@ -11,7 +11,6 @@ from urllib.error import URLError
 from app.channels.audio_chunks import AudioChunker, AudioError
 from app.llm.schemas import SchedulingExtraction
 
-
 _MAX_RESPONSE_BYTES = 1_000_000
 
 
@@ -31,7 +30,9 @@ class GemmaUnderstanding:
         self.timeout_seconds = timeout_seconds
 
     def interpret(self, message: str, context: dict) -> SchedulingExtraction:
-        payload = self._post({"modality": "text", "message": message, "context": _safe_context(context)})
+        payload = self._post(
+            {"modality": "text", "message": message, "context": _safe_context(context)}
+        )
         return _extraction(payload)
 
     def transcribe_recording(
@@ -53,7 +54,10 @@ class GemmaUnderstanding:
         joined conservatively. Without word timestamps, exact alignment is not
         guaranteed; short or differently transcribed repetitions are retained.
         """
-        if not math.isfinite(processing_timeout_seconds) or processing_timeout_seconds <= 0:
+        if (
+            not math.isfinite(processing_timeout_seconds)
+            or processing_timeout_seconds <= 0
+        ):
             raise ValueError("processing_timeout_seconds must be finite and positive")
         if max_transcript_characters <= 0:
             raise ValueError("max_transcript_characters must be positive")
@@ -68,7 +72,9 @@ class GemmaUnderstanding:
                 raise ProviderError("audio_processing_timeout")
             with chunker.chunks(
                 audio,
-                decode_timeout_seconds=min(chunker.decode_timeout_seconds, decode_budget),
+                decode_timeout_seconds=min(
+                    chunker.decode_timeout_seconds, decode_budget
+                ),
             ) as chunks:
                 for chunk in chunks:
                     remaining = deadline - monotonic()
@@ -77,7 +83,9 @@ class GemmaUnderstanding:
                     payload = self._post(
                         {
                             "modality": "audio",
-                            "audio_base64": base64.b64encode(chunk.wav_bytes).decode("ascii"),
+                            "audio_base64": base64.b64encode(chunk.wav_bytes).decode(
+                                "ascii"
+                            ),
                             "context": _safe_context(context),
                         },
                         timeout_seconds=min(self.timeout_seconds, remaining),
@@ -87,7 +95,9 @@ class GemmaUnderstanding:
                         raise ProviderError("empty_audio_transcript")
                     if len(text) > max_transcript_characters:
                         raise ProviderError("audio_transcript_limit")
-                    transcript = _join_transcripts(transcript, text.strip(), chunk.overlap_seconds)
+                    transcript = _join_transcripts(
+                        transcript, text.strip(), chunk.overlap_seconds
+                    )
                     if len(transcript) > max_transcript_characters:
                         raise ProviderError("audio_transcript_limit")
                     if monotonic() >= deadline:
@@ -108,7 +118,10 @@ class GemmaUnderstanding:
         )
         try:
             with urlrequest.urlopen(
-                req, timeout=self.timeout_seconds if timeout_seconds is None else timeout_seconds,
+                req,
+                timeout=self.timeout_seconds
+                if timeout_seconds is None
+                else timeout_seconds,
             ) as response:
                 body = response.read(_MAX_RESPONSE_BYTES + 1)
                 if len(body) > _MAX_RESPONSE_BYTES:
@@ -128,10 +141,16 @@ def _join_transcripts(previous: str, current: str, overlap_seconds: float) -> st
     current_words = current.split()
     # Restrict matching to the audio overlap. Never globally deduplicate text:
     # repetition elsewhere in a message can be intentional.
-    max_words = min(len(previous_words), len(current_words), math.ceil(overlap_seconds * 6))
+    max_words = min(
+        len(previous_words), len(current_words), math.ceil(overlap_seconds * 6)
+    )
     for count in range(max_words, 2, -1):
-        left = [re.sub(r"[^\w]", "", word).casefold() for word in previous_words[-count:]]
-        right = [re.sub(r"[^\w]", "", word).casefold() for word in current_words[:count]]
+        left = [
+            re.sub(r"[^\w]", "", word).casefold() for word in previous_words[-count:]
+        ]
+        right = [
+            re.sub(r"[^\w]", "", word).casefold() for word in current_words[:count]
+        ]
         if all(left) and left == right:
             remainder = " ".join(current_words[count:])
             return f"{previous} {remainder}".strip()
@@ -147,7 +166,9 @@ def _safe_context(context: dict) -> dict:
         "history": [
             {"role": item.get("role"), "content": item.get("content")}
             for item in context.get("history", [])
-            if isinstance(item, dict) and item.get("role") in {"user", "assistant"} and isinstance(item.get("content"), str)
+            if isinstance(item, dict)
+            and item.get("role") in {"user", "assistant"}
+            and isinstance(item.get("content"), str)
         ],
     }
 

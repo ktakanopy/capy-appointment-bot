@@ -9,11 +9,11 @@ from app.models import (
     DomainError,
     OwnerBookingsResponse,
 )
-from app.runtime import RuntimeContext
+from app.repositories import PostgresRepository
 
 
-def _catalog(runtime: RuntimeContext, business_id: str):
-    catalog = runtime.repository.catalog(business_id)
+def _catalog(repository: PostgresRepository, business_id: str):
+    catalog = repository.catalog(business_id)
     if catalog is None:
         raise DomainError("business_not_found", "Business not found.", 404)
     return catalog
@@ -24,31 +24,31 @@ def _today(catalog) -> date:
 
 
 def owner_agenda(
-    runtime: RuntimeContext,
-    business_id: str | None = None,
+    repository: PostgresRepository,
+    business_id: str,
     start_date: date | None = None,
     end_date: date | None = None,
 ) -> OwnerBookingsResponse:
-    business_id = business_id or runtime.settings.demo_business_id
-    catalog = _catalog(runtime, business_id)
+    catalog = _catalog(repository, business_id)
     start = start_date or _today(catalog)
     end = end_date or (start + timedelta(days=7))
     if end < start or (end - start).days > 60:
-        raise DomainError("invalid_date_range", "Date range must be within 60 days.", 422)
+        raise DomainError(
+            "invalid_date_range", "Date range must be within 60 days.", 422
+        )
     zone = ZoneInfo(catalog.business.timezone)
     start_at = datetime.combine(start, time.min, zone)
     end_at = datetime.combine(end + timedelta(days=1), time.min, zone)
     return OwnerBookingsResponse(
         business=catalog.business,
-        bookings=runtime.repository.list_owner_bookings(business_id, start_at, end_at),
+        bookings=repository.list_owner_bookings(business_id, start_at, end_at),
     )
 
 
 def demo_reminders(
-    runtime: RuntimeContext, business_id: str | None = None
+    repository: PostgresRepository, business_id: str
 ) -> DemoRemindersResponse:
-    business_id = business_id or runtime.settings.demo_business_id
-    with runtime.repository.connection() as connection:
+    with repository.connection() as connection:
         rows = connection.execute(
             """SELECT i.id,i.reminder_id,i.booking_id,c.full_name AS customer_name,
                       s.name AS service_name,b.starts_at,i.message,i.delivered_at

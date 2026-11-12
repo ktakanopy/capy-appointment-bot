@@ -171,9 +171,13 @@ class CustomerInput(Contract):
         if value is None:
             return None
         if any(not (ch.isdigit() or ch in "+(). -") for ch in value):
-            raise ValueError("phone may contain digits and standard phone punctuation only")
+            raise ValueError(
+                "phone may contain digits and standard phone punctuation only"
+            )
         normalized = "".join(ch for ch in value if ch.isdigit() or ch == "+")
-        if normalized.count("+") > 1 or ("+" in normalized and not normalized.startswith("+")):
+        if normalized.count("+") > 1 or (
+            "+" in normalized and not normalized.startswith("+")
+        ):
             raise ValueError("phone must be an international phone number")
         digits = normalized.lstrip("+")
         if not digits.isdigit() or not 7 <= len(digits) <= 20:
@@ -191,7 +195,9 @@ class CustomerInput(Contract):
     @field_validator("email")
     @classmethod
     def validate_email(cls, value: str | None) -> str | None:
-        if value is not None and ("@" not in value or value.startswith("@") or value.endswith("@")):
+        if value is not None and (
+            "@" not in value or value.startswith("@") or value.endswith("@")
+        ):
             raise ValueError("email must be a valid address")
         return value.lower() if value else None
 

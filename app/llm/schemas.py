@@ -8,7 +8,16 @@ from pydantic import BaseModel, ConfigDict, Field
 class SchedulingExtraction(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    intent: Literal["search", "select_slot", "create", "confirm", "cancel", "reschedule", "help", "unknown"] = "unknown"
+    intent: Literal[
+        "search",
+        "select_slot",
+        "create",
+        "confirm",
+        "cancel",
+        "reschedule",
+        "help",
+        "unknown",
+    ] = "unknown"
     service_name: str | None = Field(default=None, max_length=120)
     professional_name: str | None = Field(default=None, max_length=120)
     local_date: str | None = Field(default=None, max_length=20)

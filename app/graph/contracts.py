@@ -6,9 +6,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import AvailabilitySlot, Booking
 
-
 Operation = Literal["create", "reschedule", "confirm", "cancel", "none"]
-MissingField = Literal["service", "date", "professional", "customer", "slot", "booking", "none"]
+MissingField = Literal[
+    "service", "date", "professional", "customer", "slot", "booking", "none"
+]
 NextAction = Literal[
     "BOOK",
     "RESCHEDULE",

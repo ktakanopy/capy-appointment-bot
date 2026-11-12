@@ -7,7 +7,9 @@ from tests.integration.helpers import create_booking, offered_slots
 
 def test_due_reminder_is_delivered_once_to_demo_inbox(scheduling_db):
     slot = offered_slots(scheduling_db)[0]
-    created = create_booking(scheduling_db, slot, key="reminder-deliver", phone="+5511999940001")
+    created = create_booking(
+        scheduling_db, slot, key="reminder-deliver", phone="+5511999940001"
+    )
     with connect(scheduling_db["url"]) as connection:
         connection.execute(
             "UPDATE reminders SET send_at=now() - interval '1 minute' WHERE booking_id=%s",
@@ -19,10 +21,12 @@ def test_due_reminder_is_delivered_once_to_demo_inbox(scheduling_db):
     assert worker.deliver_due() == 0
     with connect(scheduling_db["url"]) as connection:
         reminder = connection.execute(
-            "SELECT status,attempts FROM reminders WHERE booking_id=%s", (created.booking.id,)
+            "SELECT status,attempts FROM reminders WHERE booking_id=%s",
+            (created.booking.id,),
         ).fetchone()
         inbox = connection.execute(
-            "SELECT count(*) AS n FROM reminder_inbox WHERE booking_id=%s", (created.booking.id,)
+            "SELECT count(*) AS n FROM reminder_inbox WHERE booking_id=%s",
+            (created.booking.id,),
         ).fetchone()
     assert reminder["status"] == "delivered"
     assert reminder["attempts"] == 0
@@ -31,7 +35,9 @@ def test_due_reminder_is_delivered_once_to_demo_inbox(scheduling_db):
 
 def test_worker_failure_is_retryable_then_reaches_bounded_terminal_state(scheduling_db):
     slot = offered_slots(scheduling_db)[0]
-    created = create_booking(scheduling_db, slot, key="reminder-failure", phone="+5511999940002")
+    created = create_booking(
+        scheduling_db, slot, key="reminder-failure", phone="+5511999940002"
+    )
     with connect(scheduling_db["url"]) as connection:
         connection.execute(
             "UPDATE reminders SET send_at=now() - interval '1 minute' WHERE booking_id=%s",
@@ -64,7 +70,9 @@ def test_worker_failure_is_retryable_then_reaches_bounded_terminal_state(schedul
                 assert state["last_error"] == "RaiseException"
     finally:
         with connect(scheduling_db["url"]) as connection:
-            connection.execute("DROP TRIGGER IF EXISTS fail_demo_inbox_insert_trigger ON reminder_inbox")
+            connection.execute(
+                "DROP TRIGGER IF EXISTS fail_demo_inbox_insert_trigger ON reminder_inbox"
+            )
             connection.execute("DROP FUNCTION IF EXISTS fail_demo_inbox_insert()")
             connection.execute(
                 "UPDATE reminders SET status='pending',send_at=now() - interval '1 minute',last_error=NULL WHERE booking_id=%s",
@@ -74,10 +82,12 @@ def test_worker_failure_is_retryable_then_reaches_bounded_terminal_state(schedul
     assert worker.deliver_due() == 1
     with connect(scheduling_db["url"]) as connection:
         state = connection.execute(
-            "SELECT status,attempts FROM reminders WHERE booking_id=%s", (created.booking.id,)
+            "SELECT status,attempts FROM reminders WHERE booking_id=%s",
+            (created.booking.id,),
         ).fetchone()
         inbox = connection.execute(
-            "SELECT count(*) AS n FROM reminder_inbox WHERE booking_id=%s", (created.booking.id,)
+            "SELECT count(*) AS n FROM reminder_inbox WHERE booking_id=%s",
+            (created.booking.id,),
         ).fetchone()
     assert state["status"] == "delivered"
     assert state["attempts"] == 3

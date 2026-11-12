@@ -67,19 +67,25 @@ class PostgresRepository:
 
     def business(self, business_id: str) -> Business | None:
         with self.connection() as connection:
-            row = connection.execute("SELECT * FROM businesses WHERE id=%s", (business_id,)).fetchone()
+            row = connection.execute(
+                "SELECT * FROM businesses WHERE id=%s", (business_id,)
+            ).fetchone()
         return _business(row) if row else None
 
     def catalog(self, business_id: str) -> CatalogResponse | None:
         with self.connection() as connection:
-            business = connection.execute("SELECT * FROM businesses WHERE id=%s", (business_id,)).fetchone()
+            business = connection.execute(
+                "SELECT * FROM businesses WHERE id=%s", (business_id,)
+            ).fetchone()
             if not business:
                 return None
             services = connection.execute(
-                "SELECT * FROM services WHERE business_id=%s AND active ORDER BY name", (business_id,)
+                "SELECT * FROM services WHERE business_id=%s AND active ORDER BY name",
+                (business_id,),
             ).fetchall()
             professionals = connection.execute(
-                "SELECT * FROM professionals WHERE business_id=%s AND active ORDER BY name", (business_id,)
+                "SELECT * FROM professionals WHERE business_id=%s AND active ORDER BY name",
+                (business_id,),
             ).fetchall()
         return CatalogResponse(
             business=_business(business),
@@ -115,14 +121,19 @@ class PostgresRepository:
         exclude_booking_id: str | None = None,
     ) -> tuple[Business | None, Service | None, list[dict[str, Any]]]:
         with self.connection() as connection:
-            business_row = connection.execute("SELECT * FROM businesses WHERE id=%s", (business_id,)).fetchone()
+            business_row = connection.execute(
+                "SELECT * FROM businesses WHERE id=%s", (business_id,)
+            ).fetchone()
             service_row = connection.execute(
                 "SELECT * FROM services WHERE id=%s AND business_id=%s AND active",
                 (service_id, business_id),
             ).fetchone()
             if not business_row or not service_row:
-                return (_business(business_row) if business_row else None,
-                        _service(service_row) if service_row else None, [])
+                return (
+                    _business(business_row) if business_row else None,
+                    _service(service_row) if service_row else None,
+                    [],
+                )
             params: list[Any] = [business_id, service_id]
             filter_professional = ""
             if professional_id:
@@ -130,7 +141,9 @@ class PostgresRepository:
                 params.append(professional_id)
             professionals = connection.execute(
                 """SELECT p.* FROM professionals p JOIN professional_services ps ON ps.professional_id=p.id
-                   WHERE p.business_id=%s AND ps.service_id=%s AND p.active""" + filter_professional + " ORDER BY p.name",
+                   WHERE p.business_id=%s AND ps.service_id=%s AND p.active"""
+                + filter_professional
+                + " ORDER BY p.name",
                 params,
             ).fetchall()
             schedule = []
@@ -150,10 +163,18 @@ class PostgresRepository:
                     booking_params.append(exclude_booking_id)
                 bookings = connection.execute(
                     """SELECT occupied_from,occupied_until FROM bookings WHERE professional_id=%s
-                       AND status IN ('scheduled','confirmed') AND occupied_from < %s AND occupied_until > %s""" + exclusion,
+                       AND status IN ('scheduled','confirmed') AND occupied_from < %s AND occupied_until > %s"""
+                    + exclusion,
                     booking_params,
                 ).fetchall()
-                schedule.append({"professional": professional, "rules": rules, "blocks": blocks, "bookings": bookings})
+                schedule.append(
+                    {
+                        "professional": professional,
+                        "rules": rules,
+                        "blocks": blocks,
+                        "bookings": bookings,
+                    }
+                )
         return _business(business_row), _service(service_row), schedule
 
     def customer_by_phone(self, business_id: str, phone: str) -> Customer | None:
@@ -166,10 +187,13 @@ class PostgresRepository:
             return None
         return Customer.model_validate(row)
 
-    def list_customer_bookings(self, business_id: str, customer_id: str) -> list[Booking]:
+    def list_customer_bookings(
+        self, business_id: str, customer_id: str
+    ) -> list[Booking]:
         with self.connection() as connection:
             rows = connection.execute(
-                BOOKING_SELECT + " WHERE b.business_id=%s AND b.customer_id=%s AND b.status IN ('scheduled','confirmed') AND b.starts_at > now() ORDER BY b.starts_at",
+                BOOKING_SELECT
+                + " WHERE b.business_id=%s AND b.customer_id=%s AND b.status IN ('scheduled','confirmed') AND b.starts_at > now() ORDER BY b.starts_at",
                 (business_id, customer_id),
             ).fetchall()
         return [booking_from_row(row) for row in rows]
@@ -184,10 +208,14 @@ class PostgresRepository:
 
     def booking(self, booking_id: str) -> Booking | None:
         with self.connection() as connection:
-            row = connection.execute(BOOKING_SELECT + " WHERE b.id=%s", (booking_id,)).fetchone()
+            row = connection.execute(
+                BOOKING_SELECT + " WHERE b.id=%s", (booking_id,)
+            ).fetchone()
         return booking_from_row(row) if row else None
 
-    def list_owner_bookings(self, business_id: str, start: datetime, end: datetime) -> list[OwnerBooking]:
+    def list_owner_bookings(
+        self, business_id: str, start: datetime, end: datetime
+    ) -> list[OwnerBooking]:
         with self.connection() as connection:
             rows = connection.execute(
                 """SELECT b.*,c.full_name AS customer_name,c.phone AS customer_phone,
@@ -210,6 +238,10 @@ class PostgresRepository:
         ]
 
     @staticmethod
-    def row_booking(connection: psycopg.Connection, booking_id: str, *, for_update: bool = False):
+    def row_booking(
+        connection: psycopg.Connection, booking_id: str, *, for_update: bool = False
+    ):
         suffix = " FOR UPDATE OF b" if for_update else ""
-        return connection.execute(BOOKING_SELECT + " WHERE b.id=%s" + suffix, (booking_id,)).fetchone()
+        return connection.execute(
+            BOOKING_SELECT + " WHERE b.id=%s" + suffix, (booking_id,)
+        ).fetchone()

@@ -2,22 +2,23 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 
-from app.graph.ports import WorkflowPorts
+from app.graph.actions import SchedulingActions
+
+_ACTIONS: ContextVar[SchedulingActions | None] = ContextVar(
+    "scheduling_actions", default=None
+)
 
 
-_PORTS: ContextVar[WorkflowPorts | None] = ContextVar("workflow_ports", default=None)
+def current_actions() -> SchedulingActions:
+    actions = _ACTIONS.get()
+    if actions is None:
+        raise RuntimeError("scheduling actions are not bound")
+    return actions
 
 
-def current_ports() -> WorkflowPorts:
-    ports = _PORTS.get()
-    if ports is None:
-        raise RuntimeError("workflow ports are not bound")
-    return ports
+def bind_actions(actions: SchedulingActions):
+    return _ACTIONS.set(actions)
 
 
-def bind_ports(ports: WorkflowPorts):
-    return _PORTS.set(ports)
-
-
-def reset_ports(token) -> None:
-    _PORTS.reset(token)
+def reset_actions(token) -> None:
+    _ACTIONS.reset(token)

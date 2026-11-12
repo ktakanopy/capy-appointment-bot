@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 import psycopg
@@ -52,7 +53,14 @@ class TelegramRepository:
                 """INSERT INTO telegram_updates
                    (bot_id,update_id,business_id,chat_id,telegram_user_id,payload)
                    VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (bot_id,update_id) DO NOTHING""",
-                (bot_id, update_id, business_id, chat_id, telegram_user_id, Jsonb(payload)),
+                (
+                    bot_id,
+                    update_id,
+                    business_id,
+                    chat_id,
+                    telegram_user_id,
+                    Jsonb(payload),
+                ),
             )
             connection.execute(
                 """INSERT INTO telegram_poll_offsets (bot_id,next_update_id)
@@ -111,10 +119,20 @@ class TelegramRepository:
                    SET status='reply_ready',payload=NULL,reply_text=%s,reply_markup=%s,
                        next_attempt_at=now(),last_error=NULL
                    WHERE bot_id=%s AND update_id=%s AND status='processing'""",
-                (text, Jsonb(reply_markup) if reply_markup is not None else None, bot_id, update_id),
+                (
+                    text,
+                    Jsonb(reply_markup) if reply_markup is not None else None,
+                    bot_id,
+                    update_id,
+                ),
             )
 
     def ready_replies(self, bot_id: int, limit: int = 25) -> list[dict[str, Any]]:
+        """Return the oldest waiting reply when its retry time has arrived.
+
+        Ordering is global per bot, including across chats. A delayed older
+        reply blocks later replies; the worker deliberately preserves that rule.
+        """
         with connect(self.database_url) as connection:
             rows = connection.execute(
                 """SELECT u.bot_id,u.update_id,u.chat_id,u.reply_text,
@@ -153,7 +171,9 @@ class TelegramRepository:
                 (code[:64], bot_id, update_id),
             )
 
-    def delay_reply(self, bot_id: int, update_id: int, delay_seconds: float, code: str) -> None:
+    def delay_reply(
+        self, bot_id: int, update_id: int, delay_seconds: float, code: str
+    ) -> None:
         delay_seconds = min(max(delay_seconds, 1), 3600)
         with connect(self.database_url) as connection:
             connection.execute(
@@ -163,9 +183,19 @@ class TelegramRepository:
                 (delay_seconds, code[:64], bot_id, update_id),
             )
 
-    def ensure_identity(self, business_id: str, bot_id: int, user_id: int, display_name: str, username: str | None = None) -> dict:
-        """Provision by transport identity; never look up a customer by phone."""
-        import uuid
+    def ensure_customer_for_sender(
+        self,
+        business_id: str,
+        bot_id: int,
+        user_id: int,
+        display_name: str,
+        username: str | None = None,
+    ) -> dict:
+        """Resolve the sender and create a customer only when it has no customer link.
+
+        The identity row is locked until creation and linking commit together.
+        A phone number never selects an existing customer.
+        """
         with connect(self.database_url) as connection:
             connection.execute(
                 """INSERT INTO telegram_identities (business_id,bot_id,telegram_user_id,username,display_name)
@@ -183,7 +213,12 @@ class TelegramRepository:
                 customer_id = str(uuid.uuid4())
                 connection.execute(
                     "INSERT INTO customers (id,business_id,full_name,phone) VALUES (%s,%s,%s,%s)",
-                    (customer_id, business_id, identity["display_name"] or display_name, identity["contact_phone"]),
+                    (
+                        customer_id,
+                        business_id,
+                        identity["display_name"] or display_name,
+                        identity["contact_phone"],
+                    ),
                 )
                 connection.execute(
                     """UPDATE telegram_identities SET customer_id=%s,updated_at=now()

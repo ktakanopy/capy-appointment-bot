@@ -35,52 +35,94 @@ class ScheduleRepository:
             return self.demo_service
         return None
 
-    def scheduling_data(self, _business_id, _service_id, _professional_id, _from_at, _until_at, **_kwargs):
-        return None, None, [{
-            "professional": {"id": "alex", "name": "Alex"},
-            "rules": [{"weekday": 1, "opens_at": time(9), "closes_at": time(12)}],
-            "blocks": self.blocked,
-            "bookings": [],
-        }]
+    def scheduling_data(
+        self,
+        _business_id,
+        _service_id,
+        _professional_id,
+        _from_at,
+        _until_at,
+        **_kwargs,
+    ):
+        return (
+            None,
+            None,
+            [
+                {
+                    "professional": {"id": "alex", "name": "Alex"},
+                    "rules": [
+                        {"weekday": 1, "opens_at": time(9), "closes_at": time(12)}
+                    ],
+                    "blocks": self.blocked,
+                    "bookings": [],
+                }
+            ],
+        )
 
 
 def test_availability_observes_work_hours_buffers_and_blocked_periods():
-    repo = ScheduleRepository(blocked=[{
-        "starts_at": datetime(2026, 10, 20, 10, 30, tzinfo=timezone.utc),
-        "ends_at": datetime(2026, 10, 20, 10, 45, tzinfo=timezone.utc),
-    }])
-    service = AvailabilityService(repo, now=lambda: datetime(2026, 10, 19, 8, tzinfo=timezone.utc))
+    repo = ScheduleRepository(
+        blocked=[
+            {
+                "starts_at": datetime(2026, 10, 20, 10, 30, tzinfo=timezone.utc),
+                "ends_at": datetime(2026, 10, 20, 10, 45, tzinfo=timezone.utc),
+            }
+        ]
+    )
+    service = AvailabilityService(
+        repo, now=lambda: datetime(2026, 10, 19, 8, tzinfo=timezone.utc)
+    )
 
-    slots = service.search(AvailabilitySearchRequest(
-        service_id="massage",
-        start_date=date(2026, 10, 20),
-        end_date=date(2026, 10, 20),
-    ))
+    slots = service.search(
+        AvailabilitySearchRequest(
+            service_id="massage",
+            start_date=date(2026, 10, 20),
+            end_date=date(2026, 10, 20),
+        )
+    )
 
     # A 15 minute pre-buffer keeps 09:00 from starting before opening; the
     # post-buffer must finish by noon. The blocked period also removes overlap.
-    assert [slot.starts_at for slot in slots] == [datetime(2026, 10, 20, 9, 15, tzinfo=timezone.utc)]
+    assert [slot.starts_at for slot in slots] == [
+        datetime(2026, 10, 20, 9, 15, tzinfo=timezone.utc)
+    ]
     assert slots[0].ends_at == datetime(2026, 10, 20, 10, 15, tzinfo=timezone.utc)
 
 
 def test_availability_excludes_existing_booking_occupied_interval():
     repo = ScheduleRepository()
-    repo.scheduling_data = lambda *_args, **_kwargs: (None, None, [{
-        "professional": {"id": "alex", "name": "Alex"},
-        "rules": [{"weekday": 1, "opens_at": time(9), "closes_at": time(12)}],
-        "blocks": [],
-        "bookings": [{
-            "occupied_from": datetime(2026, 10, 20, 10, tzinfo=timezone.utc),
-            "occupied_until": datetime(2026, 10, 20, 11, tzinfo=timezone.utc),
-        }],
-    }])
-    service = AvailabilityService(repo, now=lambda: datetime(2026, 10, 19, 8, tzinfo=timezone.utc))
+    repo.scheduling_data = lambda *_args, **_kwargs: (
+        None,
+        None,
+        [
+            {
+                "professional": {"id": "alex", "name": "Alex"},
+                "rules": [{"weekday": 1, "opens_at": time(9), "closes_at": time(12)}],
+                "blocks": [],
+                "bookings": [
+                    {
+                        "occupied_from": datetime(
+                            2026, 10, 20, 10, tzinfo=timezone.utc
+                        ),
+                        "occupied_until": datetime(
+                            2026, 10, 20, 11, tzinfo=timezone.utc
+                        ),
+                    }
+                ],
+            }
+        ],
+    )
+    service = AvailabilityService(
+        repo, now=lambda: datetime(2026, 10, 19, 8, tzinfo=timezone.utc)
+    )
 
-    slots = service.search(AvailabilitySearchRequest(
-        service_id="massage",
-        start_date=date(2026, 10, 20),
-        end_date=date(2026, 10, 20),
-    ))
+    slots = service.search(
+        AvailabilitySearchRequest(
+            service_id="massage",
+            start_date=date(2026, 10, 20),
+            end_date=date(2026, 10, 20),
+        )
+    )
 
     assert slots == []
 

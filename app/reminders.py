@@ -15,7 +15,13 @@ class DemoInboxSender:
         connection.execute(
             """INSERT INTO reminder_inbox (id,reminder_id,booking_id,business_id,message)
                VALUES (%s,%s,%s,%s,%s) ON CONFLICT (reminder_id) DO NOTHING""",
-            (str(uuid.uuid4()), reminder["id"], reminder["booking_id"], reminder["business_id"], message),
+            (
+                str(uuid.uuid4()),
+                reminder["id"],
+                reminder["booking_id"],
+                reminder["business_id"],
+                message,
+            ),
         )
 
 
@@ -46,7 +52,10 @@ class ReminderWorker:
                             (reminder["booking_id"],),
                         ).fetchone()
                         if booking is None or booking["status"] == "canceled":
-                            connection.execute("UPDATE reminders SET status='canceled' WHERE id=%s", (reminder["id"],))
+                            connection.execute(
+                                "UPDATE reminders SET status='canceled' WHERE id=%s",
+                                (reminder["id"],),
+                            )
                             continue
                         starts_at = booking["starts_at"]
                         if starts_at.tzinfo is None:

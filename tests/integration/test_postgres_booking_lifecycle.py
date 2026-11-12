@@ -8,9 +8,19 @@ import psycopg
 import pytest
 
 from app.database import connect
-from app.models import BookingCreateRequest, BookingRescheduleRequest, BookingSummary, CustomerInput, DomainError
+from app.models import (
+    BookingCreateRequest,
+    BookingRescheduleRequest,
+    BookingSummary,
+    DomainError,
+)
 from app.seed import seed
-from tests.integration.helpers import create_booking, offered_slots, slot_at_offset, test_customer
+from tests.integration.helpers import (
+    create_booking,
+    offered_slots,
+    slot_at_offset,
+    test_customer,
+)
 
 
 def test_migration_seed_repeatability_and_second_business_scope(scheduling_db):
@@ -21,10 +31,21 @@ def test_migration_seed_repeatability_and_second_business_scope(scheduling_db):
     assert catalog is not None
     assert len(catalog.professionals) == 2
     assert [service.id for service in catalog.services] == ["service-demo"]
-    assert scheduling_db["repository"].catalog("second-demo-studio").services[0].id == "service-second"
+    assert (
+        scheduling_db["repository"].catalog("second-demo-studio").services[0].id
+        == "service-second"
+    )
     with connect(scheduling_db["url"]) as connection:
-        assert connection.execute("SELECT count(*) AS n FROM businesses").fetchone()["n"] == 2
-        assert connection.execute("SELECT count(*) AS n FROM weekly_availability_rules").fetchone()["n"] == 24
+        assert (
+            connection.execute("SELECT count(*) AS n FROM businesses").fetchone()["n"]
+            == 2
+        )
+        assert (
+            connection.execute(
+                "SELECT count(*) AS n FROM weekly_availability_rules"
+            ).fetchone()["n"]
+            == 24
+        )
 
 
 def test_create_idempotency_and_postgres_overlap_constraint(scheduling_db):
@@ -44,9 +65,9 @@ def test_create_idempotency_and_postgres_overlap_constraint(scheduling_db):
 
     assert replay.outcome == "replayed"
     assert replay.booking.id == created.booking.id
-    changed = request.model_copy(update={
-        "customer_id": test_customer(scheduling_db, "+5511999910002")
-    })
+    changed = request.model_copy(
+        update={"customer_id": test_customer(scheduling_db, "+5511999910002")}
+    )
     with pytest.raises(DomainError) as reused_key:
         service.create(changed, "create-replay-key")
     assert reused_key.value.code == "idempotency_key_reused"
@@ -102,7 +123,9 @@ def test_create_idempotency_and_postgres_overlap_constraint(scheduling_db):
             assert status == "canceled"
 
 
-def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_both(scheduling_db):
+def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_both(
+    scheduling_db,
+):
     slots = offered_slots(scheduling_db)
     first_slot = slots[0]
     second_slot = slot_at_offset(
@@ -117,12 +140,17 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
         after=first_slot.starts_at,
         minutes=150,
     )
-    first = create_booking(scheduling_db, first_slot, key="reschedule-first", phone="+5511999920001")
-    second = create_booking(scheduling_db, second_slot, key="reschedule-second", phone="+5511999920002")
+    first = create_booking(
+        scheduling_db, first_slot, key="reschedule-first", phone="+5511999920001"
+    )
+    second = create_booking(
+        scheduling_db, second_slot, key="reschedule-second", phone="+5511999920002"
+    )
 
     with connect(scheduling_db["url"]) as connection:
         old_reminder = connection.execute(
-            "SELECT id,send_at,status FROM reminders WHERE booking_id=%s", (first.booking.id,)
+            "SELECT id,send_at,status FROM reminders WHERE booking_id=%s",
+            (first.booking.id,),
         ).fetchone()
 
     occupied_request = BookingRescheduleRequest(
@@ -133,12 +161,24 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
         starts_at=second_slot.starts_at,
     )
     with pytest.raises(DomainError) as conflict:
-        scheduling_db["bookings"].reschedule(first.booking.business_id, first.booking.customer.id, first.booking.id, occupied_request, "failed-move")
+        scheduling_db["bookings"].reschedule(
+            first.booking.business_id,
+            first.booking.customer.id,
+            first.booking.id,
+            occupied_request,
+            "failed-move",
+        )
     assert conflict.value.code == "slot_unavailable"
-    assert scheduling_db["bookings"].read(first.booking.business_id, first.booking.customer.id, first.booking.id).starts_at == first_slot.starts_at
+    assert (
+        scheduling_db["bookings"]
+        .read(first.booking.business_id, first.booking.customer.id, first.booking.id)
+        .starts_at
+        == first_slot.starts_at
+    )
     with connect(scheduling_db["url"]) as connection:
         unchanged_reminder = connection.execute(
-            "SELECT id,send_at,status FROM reminders WHERE booking_id=%s", (first.booking.id,)
+            "SELECT id,send_at,status FROM reminders WHERE booking_id=%s",
+            (first.booking.id,),
         ).fetchone()
     assert unchanged_reminder == old_reminder
 
@@ -149,24 +189,43 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
         slot_id=free_slot.slot_id,
         starts_at=free_slot.starts_at,
     )
-    moved, outcome = scheduling_db["bookings"].reschedule(first.booking.business_id, first.booking.customer.id, first.booking.id, free_request, "successful-move")
+    moved, outcome = scheduling_db["bookings"].reschedule(
+        first.booking.business_id,
+        first.booking.customer.id,
+        first.booking.id,
+        free_request,
+        "successful-move",
+    )
     assert outcome == "rescheduled"
     assert moved.starts_at == free_slot.starts_at
     with connect(scheduling_db["url"]) as connection:
         updated_reminder = connection.execute(
-            "SELECT id,send_at,status FROM reminders WHERE booking_id=%s", (first.booking.id,)
+            "SELECT id,send_at,status FROM reminders WHERE booking_id=%s",
+            (first.booking.id,),
         ).fetchone()
     assert updated_reminder["id"] == old_reminder["id"]
     assert updated_reminder["send_at"] != old_reminder["send_at"]
     assert updated_reminder["status"] == "pending"
-    assert scheduling_db["bookings"].read(second.booking.business_id, second.booking.customer.id, second.booking.id).starts_at == second_slot.starts_at
+    assert (
+        scheduling_db["bookings"]
+        .read(second.booking.business_id, second.booking.customer.id, second.booking.id)
+        .starts_at
+        == second_slot.starts_at
+    )
 
 
 def test_cancel_cancels_reminder_and_releases_slot(scheduling_db):
     slot = offered_slots(scheduling_db)[0]
-    created = create_booking(scheduling_db, slot, key="cancel-booking", phone="+5511999930001")
+    created = create_booking(
+        scheduling_db, slot, key="cancel-booking", phone="+5511999930001"
+    )
 
-    booking, outcome = scheduling_db["bookings"].cancel(created.booking.business_id, created.booking.customer.id, created.booking.id, "cancel-key")
+    booking, outcome = scheduling_db["bookings"].cancel(
+        created.booking.business_id,
+        created.booking.customer.id,
+        created.booking.id,
+        "cancel-key",
+    )
 
     assert outcome == "canceled"
     assert booking.status.value == "canceled"
@@ -175,11 +234,15 @@ def test_cancel_cancels_reminder_and_releases_slot(scheduling_db):
             "SELECT status FROM reminders WHERE booking_id=%s", (created.booking.id,)
         ).fetchone()
     assert reminder["status"] == "canceled"
-    replacement = create_booking(scheduling_db, slot, key="replacement-booking", phone="+5511999930002")
+    replacement = create_booking(
+        scheduling_db, slot, key="replacement-booking", phone="+5511999930002"
+    )
     assert replacement.booking.starts_at == slot.starts_at
 
 
-def test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once(scheduling_db):
+def test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once(
+    scheduling_db,
+):
     slots = offered_slots(scheduling_db)
     first_slot = slots[0]
     service = scheduling_db["bookings"]
@@ -192,11 +255,17 @@ def test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once(sc
         customer_id=test_customer(scheduling_db, "+5511999960001"),
     )
     with ThreadPoolExecutor(max_workers=2) as executor:
-        same_key_results = list(executor.map(
-            lambda _index: service.create(same_request, "concurrent-same-key"), range(2)
-        ))
+        same_key_results = list(
+            executor.map(
+                lambda _index: service.create(same_request, "concurrent-same-key"),
+                range(2),
+            )
+        )
     assert len({result.booking.id for result in same_key_results}) == 1
-    assert sorted(result.outcome for result in same_key_results) == ["created", "replayed"]
+    assert sorted(result.outcome for result in same_key_results) == [
+        "created",
+        "replayed",
+    ]
 
     competing_slot = slot_at_offset(
         slots,
@@ -222,7 +291,9 @@ def test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once(sc
     with ThreadPoolExecutor(max_workers=2) as executor:
         competing_results = list(executor.map(competing_create, range(2)))
     assert sum(isinstance(result, BookingSummary) for result in competing_results) == 1
-    failures = [result for result in competing_results if isinstance(result, DomainError)]
+    failures = [
+        result for result in competing_results if isinstance(result, DomainError)
+    ]
     assert len(failures) == 1
     assert failures[0].code == "slot_unavailable"
     with connect(scheduling_db["url"]) as connection:
@@ -253,11 +324,31 @@ def test_booking_and_reminder_creation_roll_back_together(scheduling_db):
         with pytest.raises(psycopg.errors.RaiseException):
             scheduling_db["bookings"].create(request, "rollback-create")
         with connect(scheduling_db["url"]) as connection:
-            assert connection.execute("SELECT count(*) AS n FROM customers").fetchone()["n"] == 1
-            assert connection.execute("SELECT count(*) AS n FROM bookings").fetchone()["n"] == 0
-            assert connection.execute("SELECT count(*) AS n FROM reminders").fetchone()["n"] == 0
-            assert connection.execute("SELECT count(*) AS n FROM idempotency_records").fetchone()["n"] == 0
+            assert (
+                connection.execute("SELECT count(*) AS n FROM customers").fetchone()[
+                    "n"
+                ]
+                == 1
+            )
+            assert (
+                connection.execute("SELECT count(*) AS n FROM bookings").fetchone()["n"]
+                == 0
+            )
+            assert (
+                connection.execute("SELECT count(*) AS n FROM reminders").fetchone()[
+                    "n"
+                ]
+                == 0
+            )
+            assert (
+                connection.execute(
+                    "SELECT count(*) AS n FROM idempotency_records"
+                ).fetchone()["n"]
+                == 0
+            )
     finally:
         with connect(scheduling_db["url"]) as connection:
-            connection.execute("DROP TRIGGER IF EXISTS fail_booking_reminder_insert_trigger ON reminders")
+            connection.execute(
+                "DROP TRIGGER IF EXISTS fail_booking_reminder_insert_trigger ON reminders"
+            )
             connection.execute("DROP FUNCTION IF EXISTS fail_booking_reminder_insert()")

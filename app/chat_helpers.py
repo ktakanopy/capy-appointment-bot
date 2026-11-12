@@ -1,4 +1,4 @@
-from app.models import CatalogResponse, AvailabilitySlot
+from app.models import AvailabilitySlot, CatalogResponse
 
 
 def _choose_service(catalog: CatalogResponse, phrase: str | None):
@@ -35,5 +35,11 @@ def _slot_message(slots: list[AvailabilitySlot]) -> str:
     """Format search results as numbered choices, or explain when no times are available."""
     if not slots:
         return "I couldn't find an available time for that date. Try another date or professional."
-    lines = [f"{index}. {slot.local_label} with {slot.professional_name}" for index, slot in enumerate(slots[:10], 1)]
-    return "Here are the available times. Choose a time below or reply with its number:\n" + "\n".join(lines)
+    lines = [
+        f"{index}. {slot.local_label} with {slot.professional_name}"
+        for index, slot in enumerate(slots[:10], 1)
+    ]
+    return (
+        "Here are the available times. Choose a time below or reply with its number:\n"
+        + "\n".join(lines)
+    )

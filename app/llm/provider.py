@@ -4,6 +4,9 @@ import re
 from datetime import date, timedelta
 from typing import Protocol
 
+from app.graph.decision import DeterministicDecision
+from app.graph.laya import LayaDecision
+from app.llm.gemma import GemmaUnderstanding
 from app.llm.schemas import SchedulingExtraction
 
 
@@ -18,21 +21,31 @@ class DeterministicInterpreter:
         text = " ".join(message.strip().split())
         lowered = text.lower()
         intent = "unknown"
-        if re.search(r"\b(reschedule|reschedul|move|change|mudar|remarcar|trocar)\b", lowered):
+        if re.search(
+            r"\b(reschedule|reschedul|move|change|mudar|remarcar|trocar)\b", lowered
+        ):
             intent = "reschedule"
         elif re.search(r"\b(cancel|cancelar|cancela)\b", lowered):
             intent = "cancel"
         elif re.search(r"\b(confirm|confirmar|confirmo)\b", lowered):
             intent = "confirm"
-        elif re.search(r"\b(available|availability|book|booking|schedule|appointment|agendar|marcar|hor[aá]rio|dispon[ií]vel)\b", lowered):
+        elif re.search(
+            r"\b(available|availability|book|booking|schedule|appointment|agendar|marcar|hor[aá]rio|dispon[ií]vel)\b",
+            lowered,
+        ):
             intent = "search"
         elif re.search(r"\b(help|ajuda|options|services|servi[cç]os)\b", lowered):
             intent = "help"
-        elif context.get("has_slots") and re.search(r"\b(\d+|first|second|third|1st|2nd|3rd|primeiro|primeira|segundo|segunda)\b", lowered):
+        elif context.get("has_slots") and re.search(
+            r"\b(\d+|first|second|third|1st|2nd|3rd|primeiro|primeira|segundo|segunda)\b",
+            lowered,
+        ):
             intent = "select_slot"
 
         service_name = None
-        for candidate in sorted(context.get("service_names", []), key=len, reverse=True):
+        for candidate in sorted(
+            context.get("service_names", []), key=len, reverse=True
+        ):
             if candidate.lower() in lowered:
                 service_name = candidate
                 break
@@ -64,7 +77,9 @@ class DeterministicInterpreter:
         match = re.search(r"\b(\d{1,2})/(\d{1,2})/(20\d{2})\b", text)
         if match:
             try:
-                return date(int(match.group(3)), int(match.group(2)), int(match.group(1))).isoformat()
+                return date(
+                    int(match.group(3)), int(match.group(2)), int(match.group(1))
+                ).isoformat()
             except ValueError:
                 return None
         if isinstance(today, str):
@@ -100,29 +115,31 @@ class DeterministicInterpreter:
         numeric = re.search(r"\b(\d{1,2})\b", text)
         if numeric:
             return int(numeric.group(1))
-        for index, terms in enumerate((
-            ("first", "1st", "primeiro", "primeira"),
-            ("second", "2nd", "segundo", "segunda"),
-            ("third", "3rd", "terceiro", "terceira"),
-        ), 1):
+        for index, terms in enumerate(
+            (
+                ("first", "1st", "primeiro", "primeira"),
+                ("second", "2nd", "segundo", "segunda"),
+                ("third", "3rd", "terceiro", "terceira"),
+            ),
+            1,
+        ):
             if any(term in text for term in terms):
                 return index
         return None
 
 
-def build_interpreter(provider: str, base_url: str = "http://localhost:8081") -> Interpreter:
+def build_interpreter(
+    provider: str, base_url: str = "http://localhost:8081"
+) -> Interpreter:
     """Construct the requested provider; never silently substitute predictions."""
     if provider == "deterministic":
         return DeterministicInterpreter()
     if provider == "gemma":
-        from app.llm.gemma import GemmaUnderstanding
         return GemmaUnderstanding(base_url)
     raise ValueError(f"Unsupported understanding provider: {provider}")
 
 
 def build_decision(provider: str, base_url: str = "http://localhost:8082"):
-    from app.graph.decision import DeterministicDecision
-    from app.graph.laya import LayaDecision
     if provider == "deterministic":
         return DeterministicDecision()
     if provider == "laya":

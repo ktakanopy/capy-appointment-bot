@@ -7,10 +7,10 @@ from urllib.parse import urlparse
 
 import pytest
 
+from app.booking import BookingService
 from app.database import connect
 from app.repositories import PostgresRepository
 from app.scheduling import AvailabilityService
-from app.booking import BookingService
 from app.seed import seed
 
 
@@ -23,7 +23,9 @@ def scheduling_db(monkeypatch):
         pytest.skip("set TEST_DATABASE_URL to run PostgreSQL integration tests")
     database_name = urlparse(url).path.rstrip("/").split("/")[-1]
     if not database_name.endswith("_test"):
-        pytest.fail("TEST_DATABASE_URL must point to a disposable database whose name ends in _test")
+        pytest.fail(
+            "TEST_DATABASE_URL must point to a disposable database whose name ends in _test"
+        )
 
     monkeypatch.setenv("DATABASE_URL", url)
     monkeypatch.setenv("DEMO_BUSINESS_ID", "demo-studio")

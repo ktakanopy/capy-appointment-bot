@@ -41,7 +41,9 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
 
     def get_tuple(self, config) -> CheckpointTuple | None:
         thread_id, checkpoint_ns = self._thread(config)
-        checkpoint_id = get_checkpoint_id(config) or self._latest_id(thread_id, checkpoint_ns)
+        checkpoint_id = get_checkpoint_id(config) or self._latest_id(
+            thread_id, checkpoint_ns
+        )
         if not checkpoint_id:
             return None
         item = self._read_json(self._item_key(thread_id, checkpoint_ns, checkpoint_id))
@@ -51,19 +53,30 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
         checkpoint = self.serde.loads_typed(_decode(item["checkpoint"]))
         metadata = self.serde.loads_typed(_decode(item["metadata"]))
         parent_id = item.get("parent")
-        writes = self._read_json(self._writes_key(thread_id, checkpoint_ns, checkpoint_id)) or []
+        writes = (
+            self._read_json(self._writes_key(thread_id, checkpoint_ns, checkpoint_id))
+            or []
+        )
         return CheckpointTuple(
             config=self._config(thread_id, checkpoint_ns, checkpoint_id),
             checkpoint=checkpoint,
             metadata=metadata,
-            parent_config=self._config(thread_id, checkpoint_ns, parent_id) if parent_id else None,
+            parent_config=self._config(thread_id, checkpoint_ns, parent_id)
+            if parent_id
+            else None,
             pending_writes=[
-                (row["task_id"], row["channel"], self.serde.loads_typed(_decode(row["value"])))
+                (
+                    row["task_id"],
+                    row["channel"],
+                    self.serde.loads_typed(_decode(row["value"])),
+                )
                 for row in writes
             ],
         )
 
-    def list(self, config, *, filter=None, before=None, limit=None) -> Iterator[CheckpointTuple]:
+    def list(
+        self, config, *, filter=None, before=None, limit=None
+    ) -> Iterator[CheckpointTuple]:
         if config is None:
             return
         cursor = config
@@ -74,7 +87,8 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
                 return
             checkpoint_id = found.config["configurable"]["checkpoint_id"]
             if (before is None or checkpoint_id < get_checkpoint_id(before)) and all(
-                found.metadata.get(key) == value for key, value in (filter or {}).items()
+                found.metadata.get(key) == value
+                for key, value in (filter or {}).items()
             ):
                 yield found
                 if remaining is not None:
@@ -83,20 +97,40 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
                 return
             cursor = found.parent_config
 
-    def put(self, config, checkpoint: Checkpoint, metadata: CheckpointMetadata, new_versions: ChannelVersions):
+    def put(
+        self,
+        config,
+        checkpoint: Checkpoint,
+        metadata: CheckpointMetadata,
+        new_versions: ChannelVersions,
+    ):
         _ = new_versions
         thread_id, checkpoint_ns = self._thread(config)
         checkpoint_id = checkpoint["id"]
         payload = {
             "checkpoint": _encode(self.serde.dumps_typed(checkpoint)),
-            "metadata": _encode(self.serde.dumps_typed(get_checkpoint_metadata(config, metadata))),
+            "metadata": _encode(
+                self.serde.dumps_typed(get_checkpoint_metadata(config, metadata))
+            ),
             "parent": config["configurable"].get("checkpoint_id"),
         }
-        self._write_json(self._item_key(thread_id, checkpoint_ns, checkpoint_id), payload)
-        self.redis.set(self._latest_key(thread_id, checkpoint_ns), checkpoint_id, ex=self.ttl_seconds)
+        self._write_json(
+            self._item_key(thread_id, checkpoint_ns, checkpoint_id), payload
+        )
+        self.redis.set(
+            self._latest_key(thread_id, checkpoint_ns),
+            checkpoint_id,
+            ex=self.ttl_seconds,
+        )
         return self._config(thread_id, checkpoint_ns, checkpoint_id)
 
-    def put_writes(self, config, writes: Sequence[tuple[str, Any]], task_id: str, task_path: str = "") -> None:
+    def put_writes(
+        self,
+        config,
+        writes: Sequence[tuple[str, Any]],
+        task_id: str,
+        task_path: str = "",
+    ) -> None:
         thread_id, checkpoint_ns = self._thread(config)
         checkpoint_id = config["configurable"]["checkpoint_id"]
         key = self._writes_key(thread_id, checkpoint_ns, checkpoint_id)
@@ -137,8 +171,12 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
 
     def _touch(self, thread_id: str, checkpoint_ns: str, checkpoint_id: str) -> None:
         self.redis.expire(self._latest_key(thread_id, checkpoint_ns), self.ttl_seconds)
-        self.redis.expire(self._item_key(thread_id, checkpoint_ns, checkpoint_id), self.ttl_seconds)
-        self.redis.expire(self._writes_key(thread_id, checkpoint_ns, checkpoint_id), self.ttl_seconds)
+        self.redis.expire(
+            self._item_key(thread_id, checkpoint_ns, checkpoint_id), self.ttl_seconds
+        )
+        self.redis.expire(
+            self._writes_key(thread_id, checkpoint_ns, checkpoint_id), self.ttl_seconds
+        )
 
     def _read_json(self, key: str):
         raw = self.redis.get(key)

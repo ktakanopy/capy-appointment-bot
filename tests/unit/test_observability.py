@@ -8,7 +8,13 @@ def test_sensitive_fields_and_capability_tokens_are_redacted(caplog):
     logger = logging.getLogger("test-redaction")
 
     with caplog.at_level(logging.INFO, logger="test-redaction"):
-        log_event(logger, "booking", customer_name="Ada Lovelace", phone="+5511999999999", note=token)
+        log_event(
+            logger,
+            "booking",
+            customer_name="Ada Lovelace",
+            phone="+5511999999999",
+            note=token,
+        )
 
     assert "Ada Lovelace" not in caplog.text
     assert "+5511999999999" not in caplog.text

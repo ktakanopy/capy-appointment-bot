@@ -19,7 +19,9 @@ class LayaDecision:
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
 
-    def decide(self, request: NormalizedRequest, draft: WorkflowDraft) -> DecisionOutput:
+    def decide(
+        self, request: NormalizedRequest, draft: WorkflowDraft
+    ) -> DecisionOutput:
         body = {
             "request": request.model_dump(mode="json"),
             "draft": draft.model_dump(mode="json"),

@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import Annotated, Any, TypedDict
 
 
-def _append_messages(existing: list[dict[str, str]] | None, new: list[dict[str, str]] | None) -> list[dict[str, str]]:
+def _append_messages(
+    existing: list[dict[str, str]] | None, new: list[dict[str, str]] | None
+) -> list[dict[str, str]]:
     return [*(existing or []), *(new or [])][-24:]
 
 

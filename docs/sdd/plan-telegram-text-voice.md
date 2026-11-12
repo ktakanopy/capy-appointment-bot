@@ -1,6 +1,6 @@
 # Telegram text and audio integration — implementation plan
 
-> Historical design input. [Portfolio simplification](plan-portfolio-simplification.md) supersedes phone-proof, token-interface and fallback rules. Full Gemma audio and Laya routing remain supported.
+> Historical design input, not current setup or runtime guidance. The original requirements and implementation notes below describe an earlier checkout. [Portfolio simplification](plan-portfolio-simplification.md) supersedes phone-proof, token-interface and fallback rules. Use [current architecture](../architecture.md) for the running code. Full Gemma audio and Laya routing remain supported.
 
 Status: historical implementation record. Migration and worker code are implemented and tested locally; live Telegram and real Gemma behavior remain unverified. Work-package labels below are planning references, not registered tracker tasks.
 
@@ -8,7 +8,7 @@ Status: historical implementation record. Migration and worker code are implemen
 
 - User request: connect `@capy_appointment_bot` to the existing scheduling workflow, accepting text and audio. Keep phone numbers required. Support long recordings by splitting audio when needed. Telegram is the first customer chat interface; WhatsApp follows. The user does not want a Streamlit chatbot frontend or audio-server implementation work.
 - Current architecture: [architecture](../architecture.md) and [conversation graph](../graph.md). Provider defaults are documented in the current configuration.
-- Code: `app/channels/`, `app/chat_ports.py`, `app/runtime.py`, `app/graph/`, `app/llm/gemma.py`, and `alembic/`.
+- Code: `app/channels/`, `app/customer_scheduling_actions.py`, `app/runtime.py`, `app/graph/`, `app/llm/gemma.py`, and `alembic/`.
 - External contracts: [Telegram Bot API](https://core.telegram.org/bots/api) and [Gemma 3n developer guide](https://developers.googleblog.com/en/introducing-gemma-3n-developer-guide/).
 
 ## Intent checkpoint
@@ -172,7 +172,7 @@ These are design boundaries, not registered SDD task state. SDD IDs will be allo
 - **Why:** complete the user-facing booking journey through Telegram.
 - **Start / end:** verified Telegram update and runtime collaborators -> saved graph result and a channel-safe text reply.
 - **Owner:** channel orchestration. **Migration owner:** WP2.
-- **Inputs:** new `app/channels/telegram.py`, `ChatPorts`, `TurnContext`, text/audio adapters, identity service, stable update idempotency key.
+- **Inputs:** new `app/channels/telegram.py`, `CustomerSchedulingActions`, `TurnContext`, text/audio adapters, identity service, stable update idempotency key.
 - **Outputs:** text and audio routing, session creation, required-phone onboarding using own-contact sharing, existing availability/booking calls, reply formatting, and delivery-only retry handling. Telegram is the active customer chatbot interface; no Streamlit chat frontend is required for these journeys.
 - **Acceptance:** search, slot choice, booking, authorized management, catalog questions, and unsupported requests follow existing deterministic policy. New users cannot access another customer's appointments. Telegram responses contain no management token or misleading references to web-only controls.
 - **Dependencies:** WP2, WP3, WP4. **Non-goals:** copying the scheduling graph, changing overlap policy, or model-driven authorization.
@@ -214,7 +214,7 @@ Deploy the optional Telegram worker after migration and provider compatibility c
 - **WP6 — Operations and quality: partially implemented.** Compose, Docker FFmpeg installation, environment examples, and operator documentation are in place. No tests, Docker build, real media, live provider, database migration, or bot walkthrough were run in this pass; these remain release checks. The host has no FFmpeg executable, so real media decoding requires the worker image or a local FFmpeg installation.
 - No bot worker was started, no Telegram messages were sent, and no webhook configuration was changed. The supplied bot credential remains in ignored local environment configuration and is not part of source or plan content.
 - `sdd-mcp` and Plannotator are unavailable in this session; work-package labels are document references, and no external review or tracker registration is claimed.
-- Existing repository work, including the extracted `ChatPorts` class and readability changes, was preserved.
+- Existing repository work, including the extracted `CustomerSchedulingActions` class and readability changes, was preserved.
 
 ## Out of scope
 

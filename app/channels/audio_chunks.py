@@ -14,7 +14,6 @@ from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-
 SAMPLE_RATE = 16_000
 SAMPLE_BYTES = 2
 MAX_CHUNK_FRAMES = 30 * SAMPLE_RATE
@@ -79,7 +78,11 @@ class AudioChunker:
             raise AudioError("empty_audio")
         if len(audio) > self.max_input_bytes:
             raise AudioError("audio_download_limit")
-        timeout = self.decode_timeout_seconds if decode_timeout_seconds is None else decode_timeout_seconds
+        timeout = (
+            self.decode_timeout_seconds
+            if decode_timeout_seconds is None
+            else decode_timeout_seconds
+        )
         if not math.isfinite(timeout) or timeout <= 0:
             raise AudioError("audio_decode_timeout")
         try:
@@ -98,11 +101,35 @@ class AudioChunker:
         # Only stdin is allowed as an input protocol: uploaded media cannot
         # reference local files or trigger network requests through FFmpeg.
         command = [
-            self.ffmpeg_binary, "-hide_banner", "-loglevel", "error", "-nostdin",
-            "-xerror", "-protocol_whitelist", "pipe", "-threads", "1",
-            "-i", "pipe:0", "-map", "0:a:0", "-vn", "-sn", "-dn",
-            "-ac", "1", "-ar", str(SAMPLE_RATE), "-c:a", "pcm_s16le",
-            "-threads", "1", "-f", "s16le", "-fs", str(self.max_decoded_bytes),
+            self.ffmpeg_binary,
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-nostdin",
+            "-xerror",
+            "-protocol_whitelist",
+            "pipe",
+            "-threads",
+            "1",
+            "-i",
+            "pipe:0",
+            "-map",
+            "0:a:0",
+            "-vn",
+            "-sn",
+            "-dn",
+            "-ac",
+            "1",
+            "-ar",
+            str(SAMPLE_RATE),
+            "-c:a",
+            "pcm_s16le",
+            "-threads",
+            "1",
+            "-f",
+            "s16le",
+            "-fs",
+            str(self.max_decoded_bytes),
             "pipe:1",
         ]
         try:
@@ -142,7 +169,7 @@ class AudioChunker:
                 cut = _pause_cut(pcm) if start + frames < total_frames else frames
                 end = start + cut
                 yield AudioChunk(
-                    wav_bytes=_as_wav(pcm[:cut * SAMPLE_BYTES]),
+                    wav_bytes=_as_wav(pcm[: cut * SAMPLE_BYTES]),
                     start_seconds=start / SAMPLE_RATE,
                     end_seconds=end / SAMPLE_RATE,
                     overlap_seconds=max(0, previous_end - start) / SAMPLE_RATE,
@@ -164,10 +191,12 @@ def _pause_cut(pcm: bytes) -> int:
     cut = len(samples)
     search_start = 25 * SAMPLE_RATE
     search_end = min(29 * SAMPLE_RATE, len(samples))
-    threshold_squared = SILENCE_AMPLITUDE ** 2
+    threshold_squared = SILENCE_AMPLITUDE**2
     for position in range(search_start, search_end, WINDOW_FRAMES):
-        window = samples[position:min(position + WINDOW_FRAMES, search_end)]
-        is_quiet = sum(value * value for value in window) <= threshold_squared * len(window)
+        window = samples[position : min(position + WINDOW_FRAMES, search_end)]
+        is_quiet = sum(value * value for value in window) <= threshold_squared * len(
+            window
+        )
         if is_quiet:
             if silence_start is None:
                 silence_start = position

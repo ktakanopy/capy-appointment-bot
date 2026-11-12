@@ -82,4 +82,6 @@ Existing databases need a coordinated cutover: stop old workers, back up Postgre
 
 Real Telegram journeys and Gemma/Laya model quality are not yet validated by this cleanup's automated tests. A live walkthrough requires available model endpoints and an explicitly authorized test chat. Existing running demo containers are not automatically upgraded by the code changes.
 
-Read [implementation evidence](docs/case-study.md), [architecture](docs/architecture.md), [privacy and ownership](docs/security.md), [idempotency](docs/idempotency.md), [history](docs/history.md) and the [approved plan](docs/sdd/plan-portfolio-simplification.md).
+Read [architecture](docs/architecture.md), [privacy and ownership](docs/security.md), [idempotency](docs/idempotency.md), [history](docs/history.md) and the [approved plan](docs/sdd/plan-portfolio-simplification.md).
+
+Start with [How to read the code](docs/architecture.md#how-to-read-the-code) for a walkthrough from one Telegram message to a booking transaction and its evaluation.

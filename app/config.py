@@ -32,8 +32,13 @@ class Settings:
             raise ValueError("SESSION_TTL_MINUTES must be positive")
         if not 1 <= self.telegram_poll_seconds <= 50:
             raise ValueError("TELEGRAM_POLL_SECONDS must be between 1 and 50")
-        if self.telegram_audio_max_bytes <= 0 or self.telegram_audio_max_decoded_bytes < 960_000:
-            raise ValueError("Telegram audio limits must allow one 30-second mono audio chunk")
+        if (
+            self.telegram_audio_max_bytes <= 0
+            or self.telegram_audio_max_decoded_bytes < 960_000
+        ):
+            raise ValueError(
+                "Telegram audio limits must allow one 30-second mono audio chunk"
+            )
         timeouts = (
             self.telegram_audio_decode_timeout_seconds,
             self.telegram_audio_chunk_timeout_seconds,

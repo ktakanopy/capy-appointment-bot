@@ -13,7 +13,9 @@ Status: requirements accompany the approved plan; implemented locally, automated
 
 The user requested the plan directly after the clarification batch. The following are conservative planning defaults, not separately confirmed answers: provider failures stop the turn without writes; existing database records are preserved; customer HTTP mutation interfaces are retired; owner operations use a local CLI; live text/audio validation is required before claiming release readiness. Implementation must not interpret this plan as permission to reset a database or send live Telegram messages without an authorized test destination.
 
-## Problem and source evidence
+## Original problem and source evidence
+
+The observations below describe the checkout before simplification. References to deleted modules identify historical sources, not current entry points. See [current architecture](../architecture.md) and [verification evidence](../case-study.md) for the implemented system.
 
 - Booking ownership is checked through both Telegram identity and management tokens. Customer-authorized operations mint a token internally and then validate it again (`app/booking.py`).
 - Customer creation merges records by phone number. Removing contact proof without replacing that linkage would create an ownership risk.

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langgraph.graph import END, START, StateGraph
 
-from app.graph.context import current_ports
+from app.graph.context import current_actions
 from app.graph.decision import DeterministicDecision
 from app.graph.state import SchedulingGraphState
 from app.graph.steps import (
@@ -26,40 +26,40 @@ def build_graph(interpreter, decision=None, threshold: float = 0.55, checkpointe
     decision_engine = decision or DeterministicDecision()
 
     def load_context_node(state: SchedulingGraphState) -> dict:
-        return load_context(state, current_ports())
+        return load_context(state, current_actions())
 
     def interpret_node(state: SchedulingGraphState) -> dict:
-        return interpret(state, current_ports(), interpreter)
+        return interpret(state, current_actions(), interpreter)
 
     def decide_node(state: SchedulingGraphState) -> dict:
         return route_turn(state, decision_engine, threshold)
 
     def clarify_node(state: SchedulingGraphState) -> dict:
-        return clarify(state, current_ports())
+        return clarify(state, current_actions())
 
     def search_node(state: SchedulingGraphState) -> dict:
-        return search(state, current_ports())
+        return search(state, current_actions())
 
     def select_node(state: SchedulingGraphState) -> dict:
-        return select(state, current_ports())
+        return select(state, current_actions())
 
     def prepare_node(state: SchedulingGraphState) -> dict:
-        return prepare_action(state, current_ports())
+        return prepare_action(state, current_actions())
 
     def execute_node(state: SchedulingGraphState) -> dict:
-        return execute(state, current_ports())
+        return execute(state, current_actions())
 
     def help_node(state: SchedulingGraphState) -> dict:
-        return help_reply(state, current_ports())
+        return help_reply(state, current_actions())
 
     def lookup_node(state: SchedulingGraphState) -> dict:
-        return lookup(state, current_ports())
+        return lookup(state, current_actions())
 
     def escalate_node(state: SchedulingGraphState) -> dict:
-        return escalate(state, current_ports())
+        return escalate(state, current_actions())
 
     def persist_node(state: SchedulingGraphState) -> dict:
-        return persist(state, current_ports())
+        return persist(state, current_actions())
 
     graph = StateGraph(SchedulingGraphState)
     graph.add_node("load_context", load_context_node)
@@ -95,7 +95,11 @@ def build_graph(interpreter, decision=None, threshold: float = 0.55, checkpointe
     graph.add_conditional_edges(
         "select",
         lambda state: state["route"],
-        {"prepare_action": "prepare_action", "persist": "persist", "clarify": "clarify"},
+        {
+            "prepare_action": "prepare_action",
+            "persist": "persist",
+            "clarify": "clarify",
+        },
     )
     graph.add_conditional_edges(
         "prepare_action",

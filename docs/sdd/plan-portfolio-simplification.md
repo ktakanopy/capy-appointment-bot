@@ -80,6 +80,8 @@ Deterministic understanding is a text-only baseline. Audio comparisons retain th
 
 ## Work packages and dependencies
 
+This is the approved implementation design, retained as a record. File lists include the pre-change modules that were removed. For the current reading order use [architecture](../architecture.md); completed local checks and remaining live checks are recorded in [implementation evidence](../case-study.md).
+
 These are proposed work-package labels, not registered SDD task IDs. No mutable task statuses are maintained in this document.
 
 | Package | Priority | Requirement coverage | Depends on | Owner / migration responsibility |
@@ -127,7 +129,7 @@ These are proposed work-package labels, not registered SDD task IDs. No mutable 
 
 **Why:** remove the second customer authorization mechanism and its maintenance burden.
 
-**Start / inputs:** WP2 service contracts; `app/main.py`, `app/chat_adapter.py`, `app/chat_ports.py`, `app/cli.py`, `app/models.py`, booking token tests and API tests.
+**Start / inputs:** WP2 service contracts; `app/main.py`, `app/chat_adapter.py`, `app/customer_scheduling_actions.py`, `app/cli.py`, `app/models.py`, booking token tests and API tests.
 
 **Implementation:** remove `/chat`, `/sessions/new` and public customer booking mutation/token routes; remove token fields, signing/version/digest logic and secret configuration after their consumers are migrated. Keep owner agenda/settings/reminder inspection in a local CLI; remove owner HTTP routes, or require authentication if an explicitly justified route remains. Keep health endpoints. Migrate useful API scenario tests to the retained service/workflow boundary instead of losing their assertions.
 
@@ -143,7 +145,7 @@ These are proposed work-package labels, not registered SDD task IDs. No mutable 
 
 **Why:** avoid inconsistent state, unbounded history and accidental contact persistence.
 
-**Start / inputs:** `app/chat_history.py`, `app/chat_ports.py`, `app/graph/{contracts,state,workflow,steps,ports,memory,redis_checkpoint}.py` and checkpoint/graph tests.
+**Start / inputs:** `app/chat_history.py`, `app/customer_scheduling_actions.py`, `app/graph/{contracts,state,workflow,steps,actions,memory,redis_checkpoint}.py` and checkpoint/graph tests.
 
 **Implementation:** checkpoint owns draft, offered slots and sanitized history. Remove separate Redis copies and unused pending-slot/history/draft APIs after callers migrate. Use a bounded history reducer (initially 24 messages), with the same bounded input supplied to interpretation. Capture known contact data outside the graph and sanitize free text before the first checkpoint write. Remove test-only production fallbacks/no-op methods through explicit fixtures. Require a valid workflow result instead of silently generating default text for malformed results. Keep private booking/customer result objects outside persistent graph state.
 

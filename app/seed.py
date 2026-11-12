@@ -37,7 +37,15 @@ def _seed_business(
              description=excluded.description, duration_minutes=excluded.duration_minutes,
              buffer_before_minutes=excluded.buffer_before_minutes, buffer_after_minutes=excluded.buffer_after_minutes,
              price_minor=excluded.price_minor, currency=excluded.currency, active=true""",
-        (service_id, business_id, service_name, service_description, duration_minutes, buffer_after_minutes, price_minor),
+        (
+            service_id,
+            business_id,
+            service_name,
+            service_description,
+            duration_minutes,
+            buffer_after_minutes,
+            price_minor,
+        ),
     )
     for professional_id, professional_name in professionals:
         connection.execute(
@@ -55,7 +63,12 @@ def _seed_business(
                 """INSERT INTO weekly_availability_rules (id,business_id,professional_id,weekday,opens_at,closes_at)
                    VALUES (%s,%s,%s,%s,'09:00','17:00') ON CONFLICT (id) DO UPDATE SET
                    opens_at=excluded.opens_at,closes_at=excluded.closes_at""",
-                (f"hours-{professional_id}-{weekday}", business_id, professional_id, weekday),
+                (
+                    f"hours-{professional_id}-{weekday}",
+                    business_id,
+                    professional_id,
+                    weekday,
+                ),
             )
 
 
@@ -74,7 +87,10 @@ def seed(include_second_business: bool = False) -> None:
             duration_minutes=60,
             buffer_after_minutes=15,
             price_minor=18000,
-            professionals=[("professional-demo-ana", "Ana Costa"), ("professional-demo-rui", "Rui Mendes")],
+            professionals=[
+                ("professional-demo-ana", "Ana Costa"),
+                ("professional-demo-rui", "Rui Mendes"),
+            ],
         )
         if include_second_business:
             _seed_business(
@@ -89,7 +105,10 @@ def seed(include_second_business: bool = False) -> None:
                 duration_minutes=45,
                 buffer_after_minutes=15,
                 price_minor=12000,
-                professionals=[("professional-second-alex", "Alex Ferreira"), ("professional-second-sam", "Sam Rocha")],
+                professionals=[
+                    ("professional-second-alex", "Alex Ferreira"),
+                    ("professional-second-sam", "Sam Rocha"),
+                ],
             )
 
 
