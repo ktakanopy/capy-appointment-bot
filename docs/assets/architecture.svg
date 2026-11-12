@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="652" viewBox="0 0 1000 652" role="img" aria-labelledby="title description">
+  <title id="title">CAPY runtime architecture</title>
+  <desc id="description">Private Telegram chats connect to the Telegram worker. It calls Gemma for complete audio transcription, sanitizes the input and runs a LangGraph turn. LangGraph calls Gemma for interpretation, gives Laya the interpreted message and draft context, and applies workflow rules to the proposed action. Python services enforce availability and booking policy in PostgreSQL. Redis checkpoints conversation state. PostgreSQL also stores Telegram receipts, saved replies and demo reminders, and is accessed by the reminder worker and owner CLI.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#536b64"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+    .title { font-size: 34px; font-weight: 700; }
+    .heading { font-size: 22px; font-weight: 700; }
+    .detail { font-size: 16px; fill: #354d44; }
+    .main { fill: #e4efdf; stroke: #8baa86; }
+    .model { fill: #fbefd5; stroke: #c5a268; }
+    .store { fill: #e4eff0; stroke: #8ba8ac; }
+    .utility { fill: #f1f2ea; stroke: #a7afa0; }
+    .card { stroke-width: 1.5; }
+    .link { fill: none; stroke: #536b64; stroke-width: 2.2; marker-end: url(#arrow); }
+    .two-way { marker-start: url(#arrow); }
+  </style>
+
+  <rect width="1000" height="652" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="32" y="52">CAPY runtime architecture</text>
+
+  <!-- The vertical path follows one customer turn. Side links show model and storage calls. -->
+  <path class="link two-way" d="M 500 166 V 198"/>
+  <path class="link two-way" d="M 500 290 V 322"/>
+  <path class="link two-way" d="M 500 488 V 525"/>
+  <path class="link two-way" d="M 336 245 H 282"/>
+  <path class="link two-way" d="M 336 361 H 282"/>
+  <path class="link two-way" d="M 336 454 H 282"/>
+  <path class="link two-way" d="M 336 477 H 309 V 573 H 282"/>
+  <path class="link two-way" d="M 664 245 H 691 V 369 H 718"/>
+  <path class="link two-way" d="M 664 573 H 691 V 414 H 718"/>
+  <path class="link two-way" d="M 845 453 V 525"/>
+
+  <g class="card main">
+    <rect x="340" y="88" width="320" height="74" rx="12"/>
+    <rect x="340" y="202" width="320" height="84" rx="12"/>
+    <rect x="340" y="326" width="320" height="158" rx="12"/>
+    <rect x="340" y="529" width="320" height="92" rx="12"/>
+  </g>
+  <g class="card model">
+    <rect x="32" y="202" width="246" height="84" rx="12"/>
+    <rect x="32" y="319" width="246" height="84" rx="12"/>
+    <rect x="32" y="412" width="246" height="84" rx="12"/>
+  </g>
+  <g class="card store">
+    <rect x="32" y="529" width="246" height="92" rx="12"/>
+    <rect x="722" y="333" width="246" height="116" rx="12"/>
+  </g>
+  <rect class="card utility" x="722" y="529" width="246" height="92" rx="12"/>
+
+  <text class="heading" x="358" y="117">Private Telegram chat</text>
+  <text class="detail" x="358" y="142">Text, voice notes and audio files</text>
+
+  <text class="heading" x="358" y="229">Telegram worker</text>
+  <text class="detail" x="358" y="251">Verify sender and sanitize text</text>
+  <text class="detail" x="358" y="272">Save replies before sending</text>
+
+  <text class="heading" x="358" y="356">LangGraph workflow</text>
+  <text class="detail" x="358" y="385">Interpret text and update the draft</text>
+  <text class="detail" x="358" y="408">Send message and context to Laya</text>
+  <text class="detail" x="358" y="431">Validate the action and its references</text>
+  <text class="detail" x="358" y="454">Return a reply to the worker</text>
+
+  <text class="heading" x="358" y="557">Python scheduling services</text>
+  <text class="detail" x="358" y="581">Search availability and bookings</text>
+  <text class="detail" x="358" y="602">Enforce ownership and booking policy</text>
+
+  <text class="heading" x="49" y="229">Gemma</text>
+  <text class="detail" x="49" y="251">Transcribe the full recording</text>
+  <text class="detail" x="49" y="272">before the scheduling turn</text>
+
+  <text class="heading" x="49" y="346">Gemma</text>
+  <text class="detail" x="49" y="368">Rewrite the sanitized text</text>
+  <text class="detail" x="49" y="389">and extract booking facts</text>
+
+  <text class="heading" x="49" y="439">Laya</text>
+  <text class="detail" x="49" y="466">Propose the next action</text>
+
+  <text class="heading" x="49" y="557">Redis</text>
+  <text class="detail" x="49" y="581">Temporary draft, offered slots</text>
+  <text class="detail" x="49" y="602">and conversation history</text>
+
+  <text class="heading" x="739" y="361">PostgreSQL</text>
+  <text class="detail" x="739" y="385">Catalog, schedules, bookings</text>
+  <text class="detail" x="739" y="406">Telegram receipts and replies</text>
+  <text class="detail" x="739" y="427">Reminder jobs and demo inbox</text>
+
+  <text class="heading" x="739" y="557">Demo operations</text>
+  <text class="detail" x="739" y="581">Worker delivers reminders</text>
+  <text class="detail" x="739" y="602">CLI shows agenda and inbox</text>
+</svg>
