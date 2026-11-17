@@ -68,8 +68,6 @@ Run the [bilingual evaluation](#evaluate-with-and-without-laya) to check routing
 
 Availability results are references, not reservations. Booking writes revalidate policy inside their transaction. PostgreSQL rejects overlapping active bookings; idempotency protects retries. Booking and reminder changes commit atomically. Redis holds a bounded, temporary conversation draft, offered slots and history. Telegram receipts preserve update deduplication and saved replies across restarts.
 
-See the [database guide](docs/database.md) for the PostgreSQL tables, their relationships and the booking transaction.
-
 ## Evaluate with and without Laya
 
 ```bash
@@ -81,7 +79,7 @@ uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understandi
 
 Use `--gemma-revision` and `--laya-revision` to identify checkpoints. Reports include dataset/asset hashes, predictions, errors, per-stage latency and language/modality summaries. Failed cases cause a nonzero exit. `--layer extraction`, `--layer routing` and `--layer workflow` isolate different questions; fixed-input routing uses each turn's labelled `interpreted_message` and draft context without invoking Gemma.
 
-The seed corpus has 16 English/Portuguese text task cases and two synthetic speech cases. It checks the evaluation pipeline and common regressions. A larger grouped train/dev/test dataset will support fine-tuning and held-out comparisons. [Evaluation guide](docs/evaluation.md) · [Case study](docs/case-study.md)
+The seed corpus has 16 English/Portuguese text task cases and two synthetic speech cases. It checks the evaluation pipeline and common regressions. A larger grouped train/dev/test dataset will support fine-tuning and held-out comparisons.
 
 ## Verify
 
@@ -108,4 +106,16 @@ Existing databases need a coordinated cutover: stop old workers, back up Postgre
 
 The smoke corpus exercises the local models with synthetic data. A live Telegram walkthrough requires a test bot and test chat.
 
-Read the runtime guides for [architecture](docs/architecture.md), [privacy and ownership](docs/security.md) and [idempotency](docs/idempotency.md). Project background is in the [implementation history](docs/history.md) and the [earlier simplification plan](docs/sdd/plan-portfolio-simplification.md).
+## Documentation
+
+- [Architecture](docs/architecture.md) — Telegram worker and booking walkthroughs
+- [Conversation graph](docs/graph.md) — routing, state, and workflow steps
+- [Model contracts](docs/model-contracts.md) — Gemma and Laya setup and APIs
+- [Database](docs/database.md) — tables, booking transactions, and reminders
+- [Ownership and data handling](docs/security.md) — customer identity and privacy
+- [Idempotency and recovery](docs/idempotency.md) — duplicate updates and safe retries
+- [Evaluation guide](docs/evaluation.md) — datasets, commands, and reports
+- [Case study](docs/case-study.md) — implementation and evaluation results
+- [Repository history](docs/history.md) — earlier versions and design changes
+- [Portfolio roadmap](docs/ai-engineering-portfolio-roadmap.md) — planned work
+- [Simplification plan](docs/sdd/plan-portfolio-simplification.md) — scope and implementation steps
