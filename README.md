@@ -6,63 +6,61 @@ A portfolio scheduling assistant for service businesses. Gemma rewrites text or 
 
 Customers can search, choose a slot, book, look up appointments, confirm, cancel and reschedule in private Telegram chats. Numeric Telegram identity owns the customer's bookings. A phone number is optional contact information; providing someone else's number grants no access.
 
-## Follow a booking
-
-The synthetic `en-booking` fixture checks this three-turn conversation.
-
-| Customer message | Expected decision | Expected outcome |
-| --- | --- | --- |
-| “Book Massage” | `CHECK_AVAILABILITY` | CAPY asks for the date. |
-| “tomorrow” | `CHECK_AVAILABILITY` | CAPY offers numbered times for that date. |
-| “1” | `BOOK` | CAPY selects the first offered slot and creates one booking. |
-
-The fixture expects exactly one booking write across all three turns. Follow the message through the code and its tests in the [architecture walkthrough](docs/architecture.md#how-to-read-the-code).
-
 ## Run the offline example
+
+Run the scheduling workflow locally with scripted model responses and simulated booking services. You can try it without Telegram, PostgreSQL, Redis or model downloads.
 
 ```sh
 uv sync --locked --extra dev
 uv run python -m app.evals.runner --understanding deterministic --routing deterministic
 ```
 
-The text corpus uses deterministic providers and fixture services. It runs locally without Telegram, PostgreSQL, Redis or model downloads. The runner prints a status for each case and a JSON report path. Look for `en-booking` in the report to see its decisions and write counts.
+The runner prints each case's status and the path to a JSON report. Look for `en-booking` to follow a massage booking from the initial request to choosing tomorrow and selecting the first offered time. The case checks that CAPY creates exactly one booking. [Follow the booking through the code](docs/architecture.md#how-to-read-the-code).
 
 ## Try the Telegram voice demo
 
-Set `TELEGRAM_BOT_TOKEN` in a private `.env` using `.env.example`. Start the local model service below, then start Compose in a second terminal.
+Create a private `.env` from [`.env.example`](.env.example) and set `TELEGRAM_BOT_TOKEN` for a test bot.
 
 ### Run the local models on Apple Silicon
 
-The model service runs on the Mac and exposes both [model contracts](docs/model-contracts.md) on port 8081. It uses the 2.59 GB Gemma 4 E2B IT LiteRT bundle for voice and text, and the 678 MB Laya Multilingual MLX checkpoint for routing. The download stores the pinned model files in the ignored `.local-models/` directory. Run it once on a fresh checkout.
+Use `uv` to download Gemma (2.59 GB) and Laya (678 MB) once into `.local-models/`, then start the model server.
 
 ```bash
-uv run --locked --with litert-lm-api==0.19.1 --with laya-mlx==0.6.0 \
+uv run --locked \
+  --with litert-lm-api==0.19.1 \
+  --with laya-mlx==0.6.0 \
   python -m app.local_models download
-uv run --locked --with litert-lm-api==0.19.1 --with laya-mlx==0.6.0 \
+uv run --locked \
+  --with litert-lm-api==0.19.1 \
+  --with laya-mlx==0.6.0 \
   python -m app.local_models serve
 ```
 
-Check the model service at `http://localhost:8081/health`. To use fine-tuned models later, pass `--gemma-model /path/to/model.litertlm` and `--laya-model /path/to/laya-mlx-checkpoint` to `serve`. To use separate servers, set `GEMMA_BASE_URL` and `LAYA_BASE_URL` to endpoints reachable by the Telegram worker.
+Check `http://localhost:8081/health`. [Model setup options](docs/model-contracts.md#local-model-service)
 
 ### Start the Telegram demo
 
-Use a test bot and synthetic appointments with the untuned checkpoints. Run the [bilingual evaluation](#evaluate-with-and-without-laya) to check routing and booking writes before enabling the service for customers.
+In a second terminal, start the demo with Docker Compose.
 
 ```bash
-docker compose --profile telegram up --build
+docker compose --profile telegram \
+  up --build
 ```
 
-Compose starts PostgreSQL, Redis, a health API, the reminder worker and Telegram polling. It migrates the schema and seeds a synthetic studio. The worker reaches the Mac model service at `host.docker.internal:8081` by default. Open the app health endpoint at `http://localhost:8000/health`.
+Compose sets up the demo studio and connects the bot to `host.docker.internal:8081`. Check `http://localhost:8000/health`.
 
-In a private chat with the test bot, send a voice note asking for available massage times tomorrow. If the bot needs more details, answer its question. Reply with a number from the offered times to try the booking path. Use the owner agenda to check the result.
+### Make a test booking
 
-The app requires Gemma and Laya. A failed model request produces a retry response and makes no booking change. Deterministic providers are explicit evaluation baselines. To inspect the owner agenda and demo reminder inbox locally:
+In a private Telegram chat with the test bot, send a voice note asking for massage times tomorrow. Answer any follow-up, then reply with an offered number to book it.
+
+Check the booking and the demo reminder inbox in the owner CLI.
 
 ```bash
-docker compose run --rm api python -m app.cli
+docker compose run --rm api \
+  python -m app.cli
 ```
 
-Reminders currently deliver into a database demo inbox, not Telegram. Telegram supports both voice notes and audio attachments. A recording is fully transcribed before one scheduling turn; a failed chunk prevents that turn. Size, decode, chunk and total processing budgets are configurable.
+Run the [bilingual evaluation](#evaluate-with-and-without-laya) to check routing and booking writes before using the bot with customers.
 
 ## Flow and guarantees
 

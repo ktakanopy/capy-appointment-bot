@@ -4,7 +4,13 @@ The application uses this flow for both English and Portuguese:
 
 `Text or full audio transcript → Gemma interpretation → Laya routing → Python services`
 
-The [local model service](../README.md#run-the-local-models-on-apple-silicon) implements both endpoints. Separate model servers can implement the same contracts by setting `GEMMA_BASE_URL` and `LAYA_BASE_URL`. Invalid responses raise a provider error. Temporary conversations use the Redis namespace `lg:v3`.
+Invalid responses raise a provider error. Temporary conversations use the Redis namespace `lg:v3`.
+
+## Local model service
+
+The [Apple Silicon demo](../README.md#run-the-local-models-on-apple-silicon) serves both endpoints on port 8081. It downloads the pinned Gemma 4 E2B IT LiteRT bundle for text and audio and the Laya Multilingual MLX checkpoint for routing. To use different checkpoints, pass `--gemma-model /path/to/model.litertlm` and `--laya-model /path/to/laya-mlx-checkpoint` to `serve`.
+
+To use separate model servers, set `GEMMA_BASE_URL` and `LAYA_BASE_URL` to endpoints the Telegram worker can reach.
 
 ## Gemma interprets meaning
 
