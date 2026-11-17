@@ -204,27 +204,39 @@ class TelegramWorker:
         audio = self.api.get_file(file_id, settings.telegram_audio_max_bytes)
         transcript = self.runtime.audio_understanding.transcribe_recording(
             audio,
-            self._business_context(),
+            self._audio_transcription_context(),
             chunker=self.runtime.audio_chunker,
             processing_timeout_seconds=settings.telegram_audio_processing_timeout_seconds,
         )
         return transcript, "audio"
 
-    def _business_context(self) -> dict:
+    def _audio_transcription_context(self) -> dict:
+        """Give Gemma active catalog names and the local date to interpret speech."""
         catalog = self.runtime.repository.catalog(self.business_id)
         if catalog is None:
             raise DomainError(
                 "business_not_found", "The business is not available.", 404
             )
-        today = datetime.now(ZoneInfo(catalog.business.timezone)).date()
         return {
             "service_names": [service.name for service in catalog.services],
             "professional_names": [person.name for person in catalog.professionals],
-            "today": today.isoformat(),
+            "today": _today_in_timezone(catalog.business.timezone),
         }
 
+    def _business_local_date(self) -> str:
+        """Resolve relative dates in the business timezone using only its row.
+
+        The graph loads the catalog when it needs the services and professionals.
+        """
+        business = self.runtime.repository.business(self.business_id)
+        if business is None:
+            raise DomainError(
+                "business_not_found", "The business is not available.", 404
+            )
+        return _today_in_timezone(business.timezone)
+
     def _run_turn(self, row: dict, identity: dict, message: str, modality: str) -> str:
-        context = self._business_context()
+        """Run the workflow with the trusted sender and a stable key for retries."""
         conversation_id = _conversation_id(
             self.business_id, self.bot_id, identity["telegram_user_id"]
         )
@@ -238,7 +250,7 @@ class TelegramWorker:
             conversation_id=conversation_id,
             business_id=self.business_id,
             message=sanitize_message(message, identity.get("display_name")),
-            today=context["today"],
+            today=self._business_local_date(),
             customer_id=identity["customer_id"],
             idempotency_key=f"telegram:{self.bot_id}:{row['update_id']}",
             input_modality=modality,
@@ -277,6 +289,11 @@ class TelegramWorker:
                 # Preserve delivery order when Telegram is rate limiting or
                 # temporarily unavailable; the next poll cycle retries it.
                 break
+
+
+def _today_in_timezone(timezone: str) -> str:
+    """Use the business's local calendar day for phrases such as tomorrow."""
+    return datetime.now(ZoneInfo(timezone)).date().isoformat()
 
 
 def _reply_retry_delay(attempts: int, retry_after: int | None) -> int:

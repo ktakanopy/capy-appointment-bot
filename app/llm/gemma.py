@@ -19,7 +19,7 @@ class ProviderError(RuntimeError):
 
 
 class GemmaUnderstanding:
-    """Text and audio understanding through a local Gemma 3n E2B server.
+    """Text and audio understanding through a compatible Gemma server.
 
     The model rewrites the customer's meaning in simple terms and extracts
     booking facts for Python. It does not label intent or choose the next step.

@@ -75,7 +75,8 @@ def load_context(state: dict, actions: SchedulingActions) -> dict:
     }
 
 
-def interpret(state: dict, actions: SchedulingActions, interpreter) -> dict:
+def interpret(state: dict, interpreter) -> dict:
+    """Extract booking facts from the message and sanitize them before checkpointing."""
     message = state.get("message", "")
     history = list(state.get("messages") or [])
     if history and history[-1].get("content") == message:
@@ -594,8 +595,8 @@ def execute(state: dict, actions: SchedulingActions) -> dict:
     return clarify(state, actions)
 
 
-def help_reply(state: dict, actions: SchedulingActions) -> dict:
-    _ = actions
+def help_reply(state: dict) -> dict:
+    """Answer scheduling questions from the catalog already loaded for this turn."""
     catalog = _catalog(state)
     message = state.get("message", "")
     lowered = message.lower()
@@ -653,8 +654,8 @@ def escalate(state: dict, actions: SchedulingActions) -> dict:
     )
 
 
-def persist(state: dict, actions: SchedulingActions) -> dict:
-    _ = actions
+def persist(state: dict) -> dict:
+    """Finalize the reply and draft so the checkpointer can carry context forward."""
     draft = _draft(state)
     result = dict(
         state.get("result")

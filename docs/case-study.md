@@ -1,5 +1,31 @@
 # Portfolio cleanup: implementation evidence
 
+## Local voice evaluation
+
+Both synthetic confirmation clips passed with the pinned Gemma and Laya checkpoints on Apple Silicon. Gemma transcribed the recordings without word errors against their reference transcripts. Laya chose `CONFIRM` for each clip and the workflow recorded one confirmation per case using fixture services.
+
+| Case and clip | Gemma’s interpreted message | Labeled and observed route | Transcription word errors | Workflow confirmation writes |
+| --- | --- | --- | --- | --- |
+| [en-audio-confirm](../evals/data/audio/en-confirm.wav) | “Please confirm my booking.” | `CONFIRM` | 0 of 4 words | 1 |
+| [pt-audio-confirm](../evals/data/audio/pt-confirm.wav) | “Por favor, confirme meu agendamento.” | `CONFIRM` | 0 of 5 words | 1 |
+
+Both cases start with an existing booking and expect no new booking facts. Extraction alone passed with the same interpreted messages and zero labeled fields. Routing alone passed for both human-labeled messages and their draft contexts. A harder next case is a voice note that names a service and corrects the appointment date at the end. That would exercise fact extraction and the effect of the correction on availability. The results above describe two synthetic clips using untuned checkpoints.
+
+The run used `evals/data/smoke-audio.jsonl` and its two audio files. The evaluator’s combined SHA-256 was `2560d233435210da9a0a3e70123609d73bd2e9beadcf58dd06c0388764a80c31`. The local service used its default model paths, with revisions matching the download metadata for the Gemma bundle and Laya checkpoint. Start the pinned local server before reproducing the runs. [Model setup](../README.md#run-the-local-models-on-apple-silicon) · [Dataset labels](../evals/data/smoke-audio.jsonl)
+
+```sh
+for layer in workflow extraction routing; do
+  GEMMA_BASE_URL=http://127.0.0.1:8081 LAYA_BASE_URL=http://127.0.0.1:8081 \
+    uv run python -m app.evals.runner --dataset evals/data/smoke-audio.jsonl \
+      --understanding gemma --routing laya --layer "$layer" \
+      --gemma-revision 2d74ac41a33d7da82f39f7d5720a04c68514a103 \
+      --laya-revision f2b4faf51023039425946074e2cf1361d2db11d5 \
+      --output ".eval_runs/portfolio-audio-$layer.json"
+done
+```
+
+## Earlier implementation checks
+
 Verified locally during the simplification work. Normal application behavior retains Gemma text/audio and requires Laya routing. Evaluation explicitly selects Laya or deterministic routing through the same construction contracts.
 
 ## What changed
@@ -40,13 +66,11 @@ The next contract change removes Gemma intent classification and the normalized 
 
 The disposable Python 3.11/PostgreSQL 17/Redis 7 suite passed **112 tests**, including **98 unit/API/evaluation tests** and **14 integration tests**, with the same upstream warning. Contract tests verify the actual HTTP payload shape, rejection of Gemma intent/action fields, sanitization of rewritten text, ambiguous-request clarification, numbered booking choices, and full audio transcription before one interpretation/routing/action sequence.
 
-All **16 text cases** passed in offline workflow and extraction modes. All **18 labelled text/audio cases** passed in fixed-input routing mode without invoking Gemma or audio transcription. Those routing results measure the supplied interpretation/context labels, not speech recognition. The corpus now includes human-written interpreted-message labels and no Gemma intent labels; old receipt hashes and schema-version-1 measurements above describe the earlier contract. Model and Telegram live evidence remain pending.
+All **16 text cases** passed in offline workflow and extraction modes. All **18 labelled text/audio cases** passed in fixed-input routing mode without invoking Gemma or audio transcription. Those routing results measure the supplied interpretation/context labels, not speech recognition. The corpus now includes human-written interpreted-message labels and no Gemma intent labels; old receipt hashes and schema-version-1 measurements above describe the earlier contract.
 
 ## Remaining live evidence
 
-The configured host and Compose-resolved Gemma/Laya endpoints were unreachable during verification. Live model comparisons and a Telegram text/audio walkthrough were not performed. The corpus includes two synthesized English/Portuguese speech recordings, but their actual Gemma transcription accuracy remains unmeasured. No Telegram messages were sent by the cleanup.
-
-Use the commands in [evaluation](evaluation.md) with available model endpoints and labelled revisions, then an explicitly authorized synthetic-data test chat. Report per-language/modality samples, errors, transcription quality and task outcomes. Large dataset expansion and fine-tuning remain future work.
+A live Telegram text and audio walkthrough is still open. The local model runs above use fixture services. Larger datasets, fine-tuning and held-out quality comparisons are future work. [Evaluation guide](evaluation.md)
 
 ## Cutover
 

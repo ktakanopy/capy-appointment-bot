@@ -4,7 +4,7 @@ The application uses this flow for both English and Portuguese:
 
 `Text or full audio transcript → Gemma interpretation → Laya routing → Python services`
 
-This repository contains HTTP clients, not model servers or weights. The external Gemma and Laya servers must implement these contracts. Servers using the old Gemma `intent` response or Laya `request`/`draft` input need a coordinated update. Invalid responses raise a provider error; there is no silent compatibility fallback. Redis uses `lg:v3` so temporary conversations start fresh with this contract. PostgreSQL records are unchanged.
+The [local model service](../README.md#run-the-local-models-on-apple-silicon) implements both endpoints. Separate model servers can implement the same contracts by setting `GEMMA_BASE_URL` and `LAYA_BASE_URL`. Invalid responses raise a provider error. Temporary conversations use the Redis namespace `lg:v3`.
 
 ## Gemma interprets meaning
 

@@ -125,7 +125,7 @@ def build_interpreter(
     raise ValueError(f"Unsupported understanding provider: {provider}")
 
 
-def build_decision(provider: str, base_url: str = "http://localhost:8082"):
+def build_decision(provider: str, base_url: str = "http://localhost:8081"):
     if provider == "deterministic":
         return DeterministicDecision()
     if provider == "laya":

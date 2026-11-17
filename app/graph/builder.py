@@ -23,13 +23,15 @@ from app.graph.steps import (
 
 
 def build_graph(interpreter, decision=None, threshold: float = 0.55, checkpointer=None):
+    """Wire interpretation and routing to workflow steps with optional checkpoints."""
     decision_engine = decision or DeterministicDecision()
 
     def load_context_node(state: SchedulingGraphState) -> dict:
         return load_context(state, current_actions())
 
     def interpret_node(state: SchedulingGraphState) -> dict:
-        return interpret(state, current_actions(), interpreter)
+        """Interpret the turn with the configured provider."""
+        return interpret(state, interpreter)
 
     def decide_node(state: SchedulingGraphState) -> dict:
         return route_turn(state, decision_engine, threshold)
@@ -49,17 +51,11 @@ def build_graph(interpreter, decision=None, threshold: float = 0.55, checkpointe
     def execute_node(state: SchedulingGraphState) -> dict:
         return execute(state, current_actions())
 
-    def help_node(state: SchedulingGraphState) -> dict:
-        return help_reply(state, current_actions())
-
     def lookup_node(state: SchedulingGraphState) -> dict:
         return lookup(state, current_actions())
 
     def escalate_node(state: SchedulingGraphState) -> dict:
         return escalate(state, current_actions())
-
-    def persist_node(state: SchedulingGraphState) -> dict:
-        return persist(state, current_actions())
 
     graph = StateGraph(SchedulingGraphState)
     graph.add_node("load_context", load_context_node)
@@ -71,10 +67,10 @@ def build_graph(interpreter, decision=None, threshold: float = 0.55, checkpointe
     graph.add_node("select", select_node)
     graph.add_node("prepare_action", prepare_node)
     graph.add_node("execute", execute_node)
-    graph.add_node("help", help_node)
+    graph.add_node("help", help_reply)
     graph.add_node("lookup", lookup_node)
     graph.add_node("escalate", escalate_node)
-    graph.add_node("persist", persist_node)
+    graph.add_node("persist", persist)
     graph.add_edge(START, "load_context")
     graph.add_edge("load_context", "interpret")
     graph.add_edge("interpret", "merge_draft")

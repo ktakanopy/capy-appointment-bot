@@ -18,7 +18,7 @@ class Settings:
     understanding_provider: str = "gemma"
     decision_provider: str = "laya"
     gemma_base_url: str = "http://localhost:8081"
-    laya_base_url: str = "http://localhost:8082"
+    laya_base_url: str = "http://localhost:8081"
     telegram_bot_token: str | None = None
     telegram_poll_seconds: int = 20
     telegram_audio_max_bytes: int = 20_000_000
@@ -73,7 +73,7 @@ def load_settings() -> Settings:
         understanding_provider=os.getenv("UNDERSTANDING_PROVIDER", "gemma").lower(),
         decision_provider=os.getenv("DECISION_PROVIDER", "laya").lower(),
         gemma_base_url=os.getenv("GEMMA_BASE_URL", "http://localhost:8081"),
-        laya_base_url=os.getenv("LAYA_BASE_URL", "http://localhost:8082"),
+        laya_base_url=os.getenv("LAYA_BASE_URL", "http://localhost:8081"),
         telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN") or None,
         telegram_poll_seconds=int(os.getenv("TELEGRAM_POLL_SECONDS", "20")),
         telegram_audio_max_bytes=int(os.getenv("TELEGRAM_AUDIO_MAX_BYTES", "20000000")),

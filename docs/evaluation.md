@@ -23,4 +23,4 @@ Results under `.eval_runs/` use schema version 2 and contain a hash of dataset a
 
 CI is configured to run offline cases, provider contracts, real audio decoding/chunk failure tests and real PostgreSQL/Redis integration checks. Integration tests cover populated legacy migration, account separation, scoped booking operations, overlap protection, concurrency, idempotency, atomic reminders, receipts, restart and expiry.
 
-Live Gemma/Laya evaluations and a real Telegram walkthrough remain pending until compatible servers and an authorized synthetic-data test chat are available. Use examples with long recordings, noise and late corrections before claiming voice readiness. Preserve raw results with a case-study summary and sample counts; a tiny smoke corpus must not be presented as general model accuracy.
+The case study records local Gemma and Laya results for the two synthetic confirmation clips. A live Telegram walkthrough and evaluation with long, noisy recordings and late corrections are open. Record checkpoint revisions, sample counts and per-case results when extending the study. [Local voice evaluation](case-study.md#local-voice-evaluation)

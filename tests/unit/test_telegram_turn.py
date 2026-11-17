@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -25,7 +26,7 @@ def test_failed_laya_produces_retry_and_no_booking_write(monkeypatch):
     runtime = SimpleNamespace(
         settings=SimpleNamespace(demo_business_id="demo-studio"),
         logger=logging.getLogger("test"),
-        repository=SimpleNamespace(catalog=lambda _: sample_catalog()),
+        repository=SimpleNamespace(business=lambda _: sample_catalog().business),
         workflow=LangGraphWorkflow(
             build_graph(DeterministicInterpreter(), BrokenLaya())
         ),
@@ -71,7 +72,10 @@ def worker():
             telegram_audio_max_bytes=20000000,
             telegram_audio_processing_timeout_seconds=900,
         ),
-        repository=SimpleNamespace(catalog=lambda _: sample_catalog()),
+        repository=SimpleNamespace(
+            business=Mock(return_value=sample_catalog().business),
+            catalog=Mock(return_value=sample_catalog()),
+        ),
         workflow=SimpleNamespace(
             handle_turn=Mock(return_value=SimpleNamespace(text="Done."))
         ),
@@ -134,6 +138,8 @@ def test_text_turn_keeps_identity_idempotency_and_privacy(worker):
     assert turn.idempotency_key == "telegram:42:10"
     assert "Ada" not in turn.message and "+5511999998888" not in turn.message
     assert turn.input_modality == "text"
+    worker.runtime.repository.business.assert_called_once_with("demo-studio")
+    worker.runtime.repository.catalog.assert_not_called()
     worker.repository.save_reply.assert_called_once_with(42, 10, "Done.")
 
 
@@ -141,7 +147,12 @@ def test_text_turn_keeps_identity_idempotency_and_privacy(worker):
 def test_audio_finishes_transcription_before_one_workflow_turn(worker, kind):
     events = []
 
-    def transcribe(*args, **kwargs):
+    def transcribe(audio, context, **kwargs):
+        catalog = worker.runtime.repository.catalog.return_value
+        assert context["service_names"] == [item.name for item in catalog.services]
+        assert context["professional_names"] == [
+            item.name for item in catalog.professionals
+        ]
         events.append("transcription-complete")
         return "Book Massage tomorrow"
 
@@ -156,7 +167,36 @@ def test_audio_finishes_transcription_before_one_workflow_turn(worker, kind):
     worker.api.get_file.assert_called_once_with("file-1", 20000000)
     turn = worker.runtime.workflow.handle_turn.call_args.args[0]
     assert turn.input_modality == "audio"
+    worker.runtime.repository.catalog.assert_called_once_with("demo-studio")
     worker.runtime.workflow.handle_turn.assert_called_once()
+
+
+def test_turn_resolves_date_in_the_business_timezone(worker, monkeypatch):
+    class FixedDatetime:
+        @staticmethod
+        def now(tz):
+            return datetime(2026, 11, 18, 1, tzinfo=timezone.utc).astimezone(tz)
+
+    monkeypatch.setattr("app.telegram_worker.datetime", FixedDatetime)
+    worker.runtime.repository.business.return_value = SimpleNamespace(
+        timezone="America/Sao_Paulo"
+    )
+
+    worker._process_one(claimed_update(text="Book Massage tomorrow"))
+
+    turn = worker.runtime.workflow.handle_turn.call_args.args[0]
+    assert turn.today == "2026-11-17"
+
+
+def test_missing_business_stops_turn_and_returns_domain_message(worker):
+    worker.runtime.repository.business.return_value = None
+
+    worker._process_one(claimed_update(text="Book Massage tomorrow"))
+
+    worker.runtime.workflow.handle_turn.assert_not_called()
+    worker.repository.save_reply.assert_called_once_with(
+        42, 10, "The business is not available."
+    )
 
 
 def test_audio_provider_failure_never_runs_partial_turn(worker):

@@ -5,6 +5,7 @@ __pycache__
 .mypy_cache
 .ruff_cache
 .data
+.local-models
 .archived
 docs
 specs
