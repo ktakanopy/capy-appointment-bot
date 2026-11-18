@@ -12,12 +12,16 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 from urllib.parse import urlsplit
 
+from sqlalchemy import func, literal, select
+from sqlalchemy.dialects.postgresql import insert
+
 from app.channels.bots import BotRegistry, TelegramBot
 from app.channels.telegram_broker import OUTGOING_QUEUE, consume_wakeups, incoming_queue, relay_publications
 from app.channels.telegram_delivery import TelegramOutbox
 from app.channels.telegram_intake import save_update
 from app.channels.telegram_turns import TelegramTurns
-from app.database import connect
+from app.database import database_session
+from app.db_models import TelegramBotRow, TelegramConversation, TelegramOutboxRow
 from app.seed import seed
 
 
@@ -46,9 +50,8 @@ def main() -> None:
         parser.error("Use a fresh migrated _test database and bounded rate, duration and idle-chat counts.")
     os.environ["DATABASE_URL"] = url
     os.environ["DEMO_BUSINESS_ID"] = "demo-studio"
-    with connect(url) as connection:
-        existing = connection.execute("SELECT 1 FROM telegram_bots LIMIT 1").fetchone()
-        if existing:
+    with database_session(url) as session:
+        if session.scalar(select(TelegramBotRow.bot_id).limit(1)) is not None:
             parser.error("Use a fresh test database without registered bots.")
     seed(include_second_business=True)
     bots = [
@@ -61,12 +64,12 @@ def main() -> None:
                           webhook_route=f"synthetic_webhook_{bot.bot_id}",
                           webhook_secret_env="STUB_WEBHOOK")
     if args.idle_chats:
-        with connect(url) as connection:
-            connection.execute(
-                """INSERT INTO telegram_conversations (bot_id,chat_id,business_id)
-                   SELECT %s,g,%s FROM generate_series(1,%s) AS g""",
-                (bots[0].bot_id, bots[0].business_id, args.idle_chats),
-            )
+        chat_ids = func.generate_series(1, args.idle_chats).column_valued("chat_id")
+        idle_chats = select(literal(bots[0].bot_id), chat_ids, literal(bots[0].business_id))
+        with database_session(url) as session:
+            session.execute(insert(TelegramConversation).from_select(
+                ["bot_id", "chat_id", "business_id"], idle_chats,
+            ))
     stop = Event()
     turns, outbox = TelegramTurns(url), TelegramOutbox(url)
 
@@ -147,10 +150,10 @@ def main() -> None:
                 for future in workers:
                     if future.done():
                         future.result()
-                with connect(url) as connection:
-                    sent = connection.execute(
-                        "SELECT count(*) AS total FROM telegram_outbox WHERE status='sent'"
-                    ).fetchone()["total"]
+                with database_session(url) as session:
+                    sent = session.scalar(select(func.count()).select_from(TelegramOutboxRow).where(
+                        TelegramOutboxRow.status == "sent",
+                    ))
                 if sent == total:
                     break
                 stop.wait(0.1)

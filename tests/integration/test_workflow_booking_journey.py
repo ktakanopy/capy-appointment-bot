@@ -5,13 +5,12 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from app.channels.telegram_repository import TelegramRepository
 from app.customer_scheduling_actions import CustomerSchedulingActions
-from app.database import connect
 from app.graph.builder import build_graph
 from app.graph.contracts import TurnContext
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import DeterministicInterpreter
 from app.reminders import ReminderWorker
-from tests.integration.helpers import next_open_day
+from tests.integration.helpers import connect, next_open_day
 
 
 def test_real_workflow_booking_reminder_reschedule_cancel(scheduling_db, caplog):

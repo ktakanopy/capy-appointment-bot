@@ -24,7 +24,8 @@ from app.channels.telegram_delivery import TelegramOutbox
 from app.channels.telegram_intake import save_update
 from app.channels.telegram_publications import backfill_publications, publish_due, schedule_publication
 from app.channels.telegram_turns import ClaimLost, TelegramTurns
-from app.database import connect
+from app.database import database_session
+from tests.integration.helpers import connect
 from tests.integration.test_telegram_production import register, update
 
 PARTITIONS = 2
@@ -197,8 +198,8 @@ def test_relay_preserves_replacement_wakeup_written_during_confirmation(scheduli
 
     def replace_publication(row):
         """Simulate a worker deferring the same chat while the broker confirms."""
-        with connect(url) as connection:
-            schedule_publication(connection, bot_id=row["bot_id"], chat_id=row["chat_id"], delay=60)
+        with database_session(url) as session:
+            schedule_publication(session, bot_id=row["bot_id"], chat_id=row["chat_id"], delay=60)
 
     assert publish_due(url, replace_publication, "process")
     assert not publish_due(url, replace_publication, "process")

@@ -8,10 +8,10 @@ from urllib.parse import urlparse
 import pytest
 
 from app.booking import BookingService
-from app.database import connect
 from app.repositories import PostgresRepository
 from app.scheduling import AvailabilityService
 from app.seed import seed
+from tests.integration.helpers import connect
 
 
 @pytest.fixture

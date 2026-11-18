@@ -3,8 +3,11 @@ from __future__ import annotations
 import uuid
 
 import psycopg
+from sqlalchemy import func, update
+from sqlalchemy.dialects.postgresql import insert
 
-from app.database import connect, psycopg_url
+from app.database import database_session, psycopg_url
+from app.db_models import CustomerRow, TelegramIdentity
 from app.observability import debug_event
 
 
@@ -44,48 +47,44 @@ class TelegramRepository:
         The identity row is locked until creation and linking commit together.
         A phone number never selects an existing customer.
         """
-        with connect(self.database_url) as connection:
+        with database_session(self.database_url) as session:
             if self.turn_guard:
-                self.turn_guard(connection)
-            connection.execute(
-                """INSERT INTO telegram_identities (business_id,bot_id,telegram_user_id,username,display_name)
-                   VALUES (%s,%s,%s,%s,%s)
-                   ON CONFLICT (business_id,bot_id,telegram_user_id) DO UPDATE
-                   SET username=EXCLUDED.username,display_name=EXCLUDED.display_name,updated_at=now()""",
-                (business_id, bot_id, user_id, username, display_name),
+                self.turn_guard(session)
+            sender = insert(TelegramIdentity).values(
+                business_id=business_id, bot_id=bot_id, telegram_user_id=user_id,
+                username=username, display_name=display_name,
             )
-            identity = connection.execute(
-                """SELECT * FROM telegram_identities
-                   WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s FOR UPDATE""",
-                (business_id, bot_id, user_id),
-            ).fetchone()
-            created_customer = identity["customer_id"] is None
+            identity = session.scalars(sender.on_conflict_do_update(
+                index_elements=["business_id", "bot_id", "telegram_user_id"],
+                set_={
+                    "username": sender.excluded.username,
+                    "display_name": sender.excluded.display_name,
+                    "updated_at": func.now(),
+                },
+            ).returning(TelegramIdentity)).one()
+            created_customer = identity.customer_id is None
             if created_customer:
-                customer_id = str(uuid.uuid4())
-                connection.execute(
-                    "INSERT INTO customers (id,business_id,full_name,phone) VALUES (%s,%s,%s,%s)",
-                    (
-                        customer_id,
-                        business_id,
-                        identity["display_name"] or display_name,
-                        identity["contact_phone"],
-                    ),
+                customer = CustomerRow(
+                    id=str(uuid.uuid4()),
+                    business_id=business_id,
+                    full_name=identity.display_name or display_name,
+                    phone=identity.contact_phone,
                 )
-                connection.execute(
-                    """UPDATE telegram_identities SET customer_id=%s,updated_at=now()
-                       WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s""",
-                    (customer_id, business_id, bot_id, user_id),
-                )
-                identity["customer_id"] = customer_id
+                session.add(customer)
+                session.flush()
+                identity.customer_id = customer.id
+                identity.updated_at = func.now()
+                session.flush()
+                session.refresh(identity)
+            result = {column.name: getattr(identity, column.name) for column in TelegramIdentity.__table__.c}
         debug_event("telegram.identity.linked", created_customer=created_customer)
-        return dict(identity)
+        return result
 
     def save_contact(self, business_id: str, customer_id: str, phone: str) -> None:
-        with connect(self.database_url) as connection:
+        with database_session(self.database_url) as session:
             if self.turn_guard:
-                self.turn_guard(connection)
-            connection.execute(
-                "UPDATE customers SET phone=%s WHERE business_id=%s AND id=%s",
-                (phone, business_id, customer_id),
-            )
+                self.turn_guard(session)
+            session.execute(update(CustomerRow).where(
+                CustomerRow.business_id == business_id, CustomerRow.id == customer_id,
+            ).values(phone=phone))
         debug_event("telegram.contact.saved")

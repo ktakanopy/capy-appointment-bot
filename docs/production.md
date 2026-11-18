@@ -4,7 +4,7 @@ The Telegram demo uses PostgreSQL for accepted updates and delivery state, Redis
 
 ## Hosted configuration
 
-Deploy the same tested application image for each role. Run `alembic upgrade head` before the API or workers start. Set `DATABASE_URL`, `CHAT_REDIS_URL`, `GEMMA_BASE_URL` and `LAYA_BASE_URL` to trusted endpoints as required by each role. Budget PostgreSQL connections across replicas and set `CAPY_DB_POOL_MAX` if pooling is needed. A value of zero uses direct connections.
+Deploy the same tested application image for each role. Run `alembic upgrade head` before the API or workers start. Set `DATABASE_URL`, `CHAT_REDIS_URL`, `GEMMA_BASE_URL` and `LAYA_BASE_URL` to trusted endpoints as required by each role. Budget PostgreSQL connections across replicas. `CAPY_DB_POOL_MAX=0` opens a connection per operation. A positive value caps each process’s SQLAlchemy pool with no overflow. Bot registration uses a separate connection until it releases its advisory lock.
 
 | Role | Command | Configuration |
 | --- | --- | --- |

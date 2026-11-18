@@ -3,7 +3,15 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+import psycopg
+from psycopg.rows import dict_row
+
+from app.database import psycopg_url
 from app.models import AvailabilitySearchRequest, BookingCreateRequest
+
+
+def connect(database_url: str):
+    return psycopg.connect(psycopg_url(database_url), row_factory=dict_row, connect_timeout=3)
 
 
 def next_open_day() -> date:
@@ -47,8 +55,6 @@ def create_booking(runtime, slot, *, key: str, phone: str):
 
 
 def test_customer(runtime, phone):
-    from app.database import connect
-
     customer_id = "test-" + phone
     with connect(runtime["url"]) as connection:
         connection.execute(

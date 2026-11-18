@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime
+from collections.abc import Mapping
 from typing import Any
 
-import psycopg
+from sqlalchemy import case, func, select, update
+from sqlalchemy.orm import Session
 
-from app.database import connect
+from app.database import database_session
+from app.db_models import (
+    BlockedPeriod, BookingRow, BusinessRow, CustomerRow, ProfessionalRow,
+    ProfessionalService, ReminderRow, ServiceRow, WeeklyAvailabilityRule,
+)
 from app.models import (
     Booking,
     BookingStatus,
@@ -19,19 +25,7 @@ from app.models import (
 from app.observability import debug_event
 
 
-def _business(row: dict[str, Any]) -> Business:
-    return Business.model_validate(row)
-
-
-def _service(row: dict[str, Any]) -> Service:
-    return Service.model_validate(row)
-
-
-def _professional(row: dict[str, Any]) -> Professional:
-    return Professional.model_validate(row)
-
-
-def booking_from_row(row: dict[str, Any]) -> Booking:
+def booking_from_row(row: Mapping[str, Any]) -> Booking:
     customer = Customer(
         id=row["customer_id"],
         business_id=row["business_id"],
@@ -53,65 +47,78 @@ def booking_from_row(row: dict[str, Any]) -> Booking:
     )
 
 
-BOOKING_SELECT = """
-    SELECT b.*, c.full_name AS customer_name, c.phone AS customer_phone, c.email AS customer_email
-    FROM bookings b JOIN customers c ON c.id=b.customer_id
-"""
+def booking_query():
+    """Keep the customer projection shared by booking reads and write results."""
+    return select(
+        *BookingRow.__table__.c,
+        CustomerRow.full_name.label("customer_name"),
+        CustomerRow.phone.label("customer_phone"),
+        CustomerRow.email.label("customer_email"),
+    ).join(CustomerRow, CustomerRow.id == BookingRow.customer_id)
 
 
 class PostgresRepository:
     def __init__(self, database_url: str):
         self.database_url = database_url
 
-    def connection(self):
-        return connect(self.database_url)
-
     def business(self, business_id: str) -> Business | None:
-        with self.connection() as connection:
-            row = connection.execute(
-                "SELECT * FROM businesses WHERE id=%s", (business_id,)
-            ).fetchone()
-        return _business(row) if row else None
+        with database_session(self.database_url) as session:
+            business = session.get(BusinessRow, business_id)
+            return Business.model_validate(business, from_attributes=True) if business else None
 
     def catalog(self, business_id: str) -> CatalogResponse | None:
-        with self.connection() as connection:
-            business = connection.execute(
-                "SELECT * FROM businesses WHERE id=%s", (business_id,)
-            ).fetchone()
-            if not business:
+        with database_session(self.database_url) as session:
+            business = session.get(BusinessRow, business_id)
+            if business is None:
                 return None
-            services = connection.execute(
-                "SELECT * FROM services WHERE business_id=%s AND active ORDER BY name",
-                (business_id,),
-            ).fetchall()
-            professionals = connection.execute(
-                "SELECT * FROM professionals WHERE business_id=%s AND active ORDER BY name",
-                (business_id,),
-            ).fetchall()
-        debug_event("postgres.catalog.loaded", services=len(services), professionals=len(professionals))
-        return CatalogResponse(
-            business=_business(business),
-            services=[_service(row) for row in services],
-            professionals=[_professional(row) for row in professionals],
-        )
+            services = session.scalars(
+                select(ServiceRow)
+                .where(ServiceRow.business_id == business_id, ServiceRow.active)
+                .order_by(ServiceRow.name)
+            ).all()
+            professionals = session.scalars(
+                select(ProfessionalRow)
+                .where(ProfessionalRow.business_id == business_id, ProfessionalRow.active)
+                .order_by(ProfessionalRow.name)
+            ).all()
+            catalog = CatalogResponse(
+                business=Business.model_validate(business, from_attributes=True),
+                services=[Service.model_validate(row, from_attributes=True) for row in services],
+                professionals=[
+                    Professional.model_validate(row, from_attributes=True) for row in professionals
+                ],
+            )
+        debug_event("postgres.catalog.loaded", services=len(catalog.services),
+                    professionals=len(catalog.professionals))
+        return catalog
 
     def service(self, business_id: str, service_id: str) -> Service | None:
-        with self.connection() as connection:
-            row = connection.execute(
-                "SELECT * FROM services WHERE business_id=%s AND id=%s AND active",
-                (business_id, service_id),
-            ).fetchone()
-        return _service(row) if row else None
+        with database_session(self.database_url) as session:
+            service = session.scalar(self._active_service(business_id, service_id))
+            return Service.model_validate(service, from_attributes=True) if service else None
+
+    @staticmethod
+    def _active_service(business_id: str, service_id: str):
+        return select(ServiceRow).where(
+            ServiceRow.business_id == business_id, ServiceRow.id == service_id, ServiceRow.active,
+        )
 
     def service_named(self, business_id: str, phrase: str) -> Service | None:
-        with self.connection() as connection:
-            row = connection.execute(
-                """SELECT s.* FROM services s WHERE s.business_id=%s AND s.active
-                   ORDER BY CASE WHEN lower(s.name)=lower(%s) THEN 0
-                     WHEN lower(s.name) LIKE lower(%s) THEN 1 ELSE 2 END, s.name LIMIT 1""",
-                (business_id, phrase, f"%{phrase}%"),
-            ).fetchone()
-        return _service(row) if row else None
+        name = func.lower(ServiceRow.name)
+        match_rank = case(
+            (name == func.lower(phrase), 0),
+            (name.like(func.lower(f"%{phrase}%")), 1),
+            else_=2,
+        )
+        statement = (
+            select(ServiceRow)
+            .where(ServiceRow.business_id == business_id, ServiceRow.active)
+            .order_by(match_rank, ServiceRow.name)
+            .limit(1)
+        )
+        with database_session(self.database_url) as session:
+            service = session.scalar(statement)
+            return Service.model_validate(service, from_attributes=True) if service else None
 
     def scheduling_data(
         self,
@@ -122,129 +129,100 @@ class PostgresRepository:
         until_utc: datetime,
         exclude_booking_id: str | None = None,
     ) -> tuple[Business | None, Service | None, list[dict[str, Any]]]:
-        with self.connection() as connection:
-            business_row = connection.execute(
-                "SELECT * FROM businesses WHERE id=%s", (business_id,)
-            ).fetchone()
-            service_row = connection.execute(
-                "SELECT * FROM services WHERE id=%s AND business_id=%s AND active",
-                (service_id, business_id),
-            ).fetchone()
-            if not business_row or not service_row:
-                return (
-                    _business(business_row) if business_row else None,
-                    _service(service_row) if service_row else None,
-                    [],
+        with database_session(self.database_url) as session:
+            business_row = session.get(BusinessRow, business_id)
+            service_row = session.scalar(self._active_service(business_id, service_id))
+            business = Business.model_validate(business_row, from_attributes=True) if business_row else None
+            service = Service.model_validate(service_row, from_attributes=True) if service_row else None
+            if business is None or service is None:
+                return business, service, []
+            statement = (
+                select(*ProfessionalRow.__table__.c)
+                .join(ProfessionalService, ProfessionalService.professional_id == ProfessionalRow.id)
+                .where(
+                    ProfessionalRow.business_id == business_id,
+                    ProfessionalService.service_id == service_id,
+                    ProfessionalRow.active,
                 )
-            params: list[Any] = [business_id, service_id]
-            filter_professional = ""
-            if professional_id:
-                filter_professional = " AND p.id=%s"
-                params.append(professional_id)
-            professionals = connection.execute(
-                """SELECT p.* FROM professionals p JOIN professional_services ps ON ps.professional_id=p.id
-                   WHERE p.business_id=%s AND ps.service_id=%s AND p.active"""
-                + filter_professional
-                + " ORDER BY p.name",
-                params,
-            ).fetchall()
-            schedule = []
-            for professional in professionals:
-                rules = connection.execute(
-                    "SELECT weekday,opens_at,closes_at FROM weekly_availability_rules WHERE professional_id=%s ORDER BY opens_at",
-                    (professional["id"],),
-                ).fetchall()
-                blocks = connection.execute(
-                    """SELECT starts_at,ends_at FROM blocked_periods WHERE professional_id=%s
-                       AND starts_at < %s AND ends_at > %s""",
-                    (professional["id"], until_utc, from_utc),
-                ).fetchall()
-                exclusion = " AND id <> %s" if exclude_booking_id else ""
-                booking_params: list[Any] = [professional["id"], until_utc, from_utc]
-                if exclude_booking_id:
-                    booking_params.append(exclude_booking_id)
-                bookings = connection.execute(
-                    """SELECT occupied_from,occupied_until FROM bookings WHERE professional_id=%s
-                       AND status IN ('scheduled','confirmed') AND occupied_from < %s AND occupied_until > %s"""
-                    + exclusion,
-                    booking_params,
-                ).fetchall()
-                schedule.append(
-                    {
-                        "professional": professional,
-                        "rules": rules,
-                        "blocks": blocks,
-                        "bookings": bookings,
-                    }
-                )
-        debug_event("postgres.schedules.loaded", professionals=len(schedule))
-        return _business(business_row), _service(service_row), schedule
-
-    def customer_by_phone(self, business_id: str, phone: str) -> Customer | None:
-        with self.connection() as connection:
-            row = connection.execute(
-                "SELECT * FROM customers WHERE business_id=%s AND phone=%s",
-                (business_id, phone),
-            ).fetchone()
-        if row is None:
-            return None
-        return Customer.model_validate(row)
-
-    def list_customer_bookings(
-        self, business_id: str, customer_id: str
-    ) -> list[Booking]:
-        with self.connection() as connection:
-            rows = connection.execute(
-                BOOKING_SELECT
-                + " WHERE b.business_id=%s AND b.customer_id=%s AND b.status IN ('scheduled','confirmed') AND b.starts_at > now() ORDER BY b.starts_at",
-                (business_id, customer_id),
-            ).fetchall()
-        return [booking_from_row(row) for row in rows]
-
-    def update_reminder_lead(self, business_id: str, minutes: int) -> Business | None:
-        with self.connection() as connection:
-            row = connection.execute(
-                "UPDATE businesses SET reminder_lead_minutes=%s WHERE id=%s RETURNING *",
-                (minutes, business_id),
-            ).fetchone()
-        return _business(row) if row else None
-
-    def booking(self, booking_id: str) -> Booking | None:
-        with self.connection() as connection:
-            row = connection.execute(
-                BOOKING_SELECT + " WHERE b.id=%s", (booking_id,)
-            ).fetchone()
-        return booking_from_row(row) if row else None
-
-    def list_owner_bookings(
-        self, business_id: str, start: datetime, end: datetime
-    ) -> list[OwnerBooking]:
-        with self.connection() as connection:
-            rows = connection.execute(
-                """SELECT b.*,c.full_name AS customer_name,c.phone AS customer_phone,
-                          c.email AS customer_email,r.status AS reminder_status
-                   FROM bookings b JOIN customers c ON c.id=b.customer_id
-                   LEFT JOIN LATERAL (
-                       SELECT status FROM reminders WHERE booking_id=b.id
-                       ORDER BY created_at DESC LIMIT 1
-                   ) r ON true
-                   WHERE b.business_id=%s AND b.starts_at >= %s AND b.starts_at < %s
-                   ORDER BY b.starts_at""",
-                (business_id, start, end),
-            ).fetchall()
-        return [
-            OwnerBooking(
-                **booking_from_row(row).model_dump(),
-                reminder_status=row["reminder_status"],
+                .order_by(ProfessionalRow.name)
             )
-            for row in rows
-        ]
+            if professional_id:
+                statement = statement.where(ProfessionalRow.id == professional_id)
+            professionals = session.execute(statement).mappings().all()
+            schedule = self._load_schedules(session, professionals, from_utc, until_utc, exclude_booking_id)
+        debug_event("postgres.schedules.loaded", professionals=len(schedule))
+        return business, service, schedule
 
     @staticmethod
-    def row_booking(
-        connection: psycopg.Connection, booking_id: str, *, for_update: bool = False
-    ):
-        suffix = " FOR UPDATE OF b" if for_update else ""
-        return connection.execute(
-            BOOKING_SELECT + " WHERE b.id=%s" + suffix, (booking_id,)
-        ).fetchone()
+    def _load_schedules(session: Session, professionals, from_utc, until_utc, exclude_booking_id):
+        """Batch the calendar reads so each extra professional adds rows instead of queries."""
+        by_professional = {
+            row["id"]: {"professional": dict(row), "rules": [], "blocks": [], "bookings": []}
+            for row in professionals
+        }
+        if not by_professional:
+            return []
+        rules = select(
+            WeeklyAvailabilityRule.professional_id, WeeklyAvailabilityRule.weekday,
+            WeeklyAvailabilityRule.opens_at, WeeklyAvailabilityRule.closes_at,
+        ).where(WeeklyAvailabilityRule.professional_id.in_(by_professional)).order_by(
+            WeeklyAvailabilityRule.opens_at
+        )
+        blocks = select(BlockedPeriod.professional_id, BlockedPeriod.starts_at, BlockedPeriod.ends_at).where(
+            BlockedPeriod.professional_id.in_(by_professional),
+            BlockedPeriod.starts_at < until_utc, BlockedPeriod.ends_at > from_utc,
+        )
+        bookings = select(BookingRow.professional_id, BookingRow.occupied_from, BookingRow.occupied_until).where(
+            BookingRow.professional_id.in_(by_professional),
+            BookingRow.status.in_(("scheduled", "confirmed")),
+            BookingRow.occupied_from < until_utc, BookingRow.occupied_until > from_utc,
+        )
+        if exclude_booking_id:
+            bookings = bookings.where(BookingRow.id != exclude_booking_id)
+        for name, statement in (("rules", rules), ("blocks", blocks), ("bookings", bookings)):
+            for row in session.execute(statement).mappings():
+                entry = dict(row)
+                by_professional[entry.pop("professional_id")][name].append(entry)
+        return list(by_professional.values())
+
+    def customer_by_phone(self, business_id: str, phone: str) -> Customer | None:
+        with database_session(self.database_url) as session:
+            customer = session.scalars(select(CustomerRow).where(
+                CustomerRow.business_id == business_id, CustomerRow.phone == phone,
+            )).first()
+            return Customer.model_validate(customer, from_attributes=True) if customer else None
+
+    def list_customer_bookings(self, business_id: str, customer_id: str) -> list[Booking]:
+        statement = booking_query().where(
+            BookingRow.business_id == business_id, BookingRow.customer_id == customer_id,
+            BookingRow.status.in_(("scheduled", "confirmed")), BookingRow.starts_at > func.now(),
+        ).order_by(BookingRow.starts_at)
+        with database_session(self.database_url) as session:
+            return [booking_from_row(row) for row in session.execute(statement).mappings()]
+
+    def update_reminder_lead(self, business_id: str, minutes: int) -> Business | None:
+        statement = update(BusinessRow).where(BusinessRow.id == business_id).values(
+            reminder_lead_minutes=minutes
+        ).returning(BusinessRow)
+        with database_session(self.database_url) as session:
+            business = session.scalar(statement)
+            return Business.model_validate(business, from_attributes=True) if business else None
+
+    def booking(self, booking_id: str) -> Booking | None:
+        with database_session(self.database_url) as session:
+            row = session.execute(booking_query().where(BookingRow.id == booking_id)).mappings().first()
+            return booking_from_row(row) if row else None
+
+    def list_owner_bookings(self, business_id: str, start: datetime, end: datetime) -> list[OwnerBooking]:
+        latest_reminder = (
+            select(ReminderRow.status).where(ReminderRow.booking_id == BookingRow.id)
+            .order_by(ReminderRow.created_at.desc()).limit(1).scalar_subquery()
+        )
+        statement = booking_query().add_columns(latest_reminder.label("reminder_status")).where(
+            BookingRow.business_id == business_id, BookingRow.starts_at >= start, BookingRow.starts_at < end,
+        ).order_by(BookingRow.starts_at)
+        with database_session(self.database_url) as session:
+            return [
+                OwnerBooking(**booking_from_row(row).model_dump(), reminder_status=row["reminder_status"])
+                for row in session.execute(statement).mappings()
+            ]

@@ -8,9 +8,9 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 
 import pika
-import psycopg
 
 from app.channels.telegram_publications import publish_due
+from app.database import DATABASE_ERRORS
 from app.observability import log_event
 
 EXCHANGE = "capy.telegram.v1"
@@ -84,7 +84,7 @@ def relay_publications(url, partitions, database_url, stop, logger, maintenance,
                     maintenance()
                     if not publish_due(database_url, lambda row: publish_wakeup(channel, row, partitions), role):
                         connection.process_data_events(time_limit=0.05)
-        except (pika.exceptions.AMQPError, psycopg.Error, OSError) as error:
+        except (pika.exceptions.AMQPError, *DATABASE_ERRORS, OSError) as error:
             log_event(logger, "telegram.relay.retry", failure_type=type(error).__name__)
             stop.wait(1)
 
@@ -128,7 +128,7 @@ def _handle_delivery(connection, channel, executor, delivery, handle, id_count, 
         channel.basic_ack(tag)
         return
     attempts = 1 + (properties.headers or {}).get("x-delivery-count", 0)
-    retry = isinstance(error, (psycopg.Error, OSError)) or attempts < HANDLER_ATTEMPTS
+    retry = isinstance(error, (*DATABASE_ERRORS, OSError)) or attempts < HANDLER_ATTEMPTS
     log_event(logger, "telegram.broker.handler_failed", failure_type=type(error).__name__, retry=retry)
     stop.wait(1)
     channel.basic_reject(tag, requeue=retry)

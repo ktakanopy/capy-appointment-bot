@@ -3,6 +3,10 @@ from __future__ import annotations
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+from sqlalchemy import select
+
+from app.database import database_session
+from app.db_models import BookingRow, CustomerRow, ReminderInboxRow, ServiceRow
 from app.models import (
     DemoReminder,
     DemoRemindersResponse,
@@ -48,14 +52,20 @@ def owner_agenda(
 def demo_reminders(
     repository: PostgresRepository, business_id: str
 ) -> DemoRemindersResponse:
-    with repository.connection() as connection:
-        rows = connection.execute(
-            """SELECT i.id,i.reminder_id,i.booking_id,c.full_name AS customer_name,
-                      s.name AS service_name,b.starts_at,i.message,i.delivered_at
-               FROM reminder_inbox i JOIN bookings b ON b.id=i.booking_id
-               JOIN customers c ON c.id=b.customer_id JOIN services s ON s.id=b.service_id
-               WHERE i.business_id=%s ORDER BY i.delivered_at DESC LIMIT 100""",
-            (business_id,),
-        ).fetchall()
+    statement = (
+        select(
+            ReminderInboxRow.id, ReminderInboxRow.reminder_id, ReminderInboxRow.booking_id,
+            CustomerRow.full_name.label("customer_name"), ServiceRow.name.label("service_name"),
+            BookingRow.starts_at, ReminderInboxRow.message, ReminderInboxRow.delivered_at,
+        )
+        .join(BookingRow, BookingRow.id == ReminderInboxRow.booking_id)
+        .join(CustomerRow, CustomerRow.id == BookingRow.customer_id)
+        .join(ServiceRow, ServiceRow.id == BookingRow.service_id)
+        .where(ReminderInboxRow.business_id == business_id)
+        .order_by(ReminderInboxRow.delivered_at.desc())
+        .limit(100)
+    )
+    with database_session(repository.database_url) as session:
+        rows = session.execute(statement).mappings().all()
     debug_event("owner.reminder_inbox.loaded", reminders=len(rows))
     return DemoRemindersResponse(reminders=[DemoReminder(**row) for row in rows])

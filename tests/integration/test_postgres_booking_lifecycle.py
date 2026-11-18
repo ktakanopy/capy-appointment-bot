@@ -7,7 +7,6 @@ from uuid import uuid4
 import psycopg
 import pytest
 
-from app.database import connect
 from app.models import (
     BookingCreateRequest,
     BookingRescheduleRequest,
@@ -16,6 +15,7 @@ from app.models import (
 )
 from app.seed import seed
 from tests.integration.helpers import (
+    connect,
     create_booking,
     offered_slots,
     slot_at_offset,
@@ -318,6 +318,7 @@ def test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once(
 
 def test_booking_and_reminder_creation_roll_back_together(scheduling_db):
     import psycopg
+    from sqlalchemy.exc import DBAPIError
 
     slot = offered_slots(scheduling_db)[0]
     request = BookingCreateRequest(
@@ -334,8 +335,9 @@ def test_booking_and_reminder_creation_roll_back_together(scheduling_db):
         connection.execute("""CREATE TRIGGER fail_booking_reminder_insert_trigger
             BEFORE INSERT ON reminders FOR EACH ROW EXECUTE FUNCTION fail_booking_reminder_insert()""")
     try:
-        with pytest.raises(psycopg.errors.RaiseException):
+        with pytest.raises(DBAPIError) as error:
             scheduling_db["bookings"].create(request, "rollback-create")
+        assert isinstance(error.value.orig, psycopg.errors.RaiseException)
         with connect(scheduling_db["url"]) as connection:
             assert (
                 connection.execute("SELECT count(*) AS n FROM customers").fetchone()[

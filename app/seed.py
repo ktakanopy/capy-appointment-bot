@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import argparse
+from datetime import time
+
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
 
 from app.config import load_settings
-from app.database import connect
+from app.database import database_session
+from app.db_models import BusinessRow, ProfessionalRow, ProfessionalService, ServiceRow, WeeklyAvailabilityRule
 from app.observability import debug_event
 
 
 def _seed_business(
-    connection,
+    session: Session,
     *,
     business_id: str,
     name: str,
@@ -22,62 +27,45 @@ def _seed_business(
     price_minor: int,
     professionals: list[tuple[str, str]],
 ):
-    connection.execute(
-        """INSERT INTO businesses (id,name,category,timezone,minimum_notice_minutes,booking_horizon_days,reminder_lead_minutes)
-           VALUES (%s,%s,%s,%s,5,60,5)
-           ON CONFLICT (id) DO UPDATE SET name=excluded.name, category=excluded.category, timezone=excluded.timezone,
-             minimum_notice_minutes=excluded.minimum_notice_minutes, booking_horizon_days=excluded.booking_horizon_days,
-             reminder_lead_minutes=excluded.reminder_lead_minutes""",
-        (business_id, name, category, timezone_name),
-    )
+    _upsert_seed_row(session, BusinessRow, {
+        "id": business_id, "name": name, "category": category, "timezone": timezone_name,
+        "minimum_notice_minutes": 5, "booking_horizon_days": 60, "reminder_lead_minutes": 5,
+    })
     service_id = f"service-{suffix}"
-    connection.execute(
-        """INSERT INTO services (id,business_id,name,description,duration_minutes,buffer_before_minutes,buffer_after_minutes,price_minor,currency)
-           VALUES (%s,%s,%s,%s,%s,0,%s,%s,'BRL')
-           ON CONFLICT (id) DO UPDATE SET business_id=excluded.business_id, name=excluded.name,
-             description=excluded.description, duration_minutes=excluded.duration_minutes,
-             buffer_before_minutes=excluded.buffer_before_minutes, buffer_after_minutes=excluded.buffer_after_minutes,
-             price_minor=excluded.price_minor, currency=excluded.currency, active=true""",
-        (
-            service_id,
-            business_id,
-            service_name,
-            service_description,
-            duration_minutes,
-            buffer_after_minutes,
-            price_minor,
-        ),
-    )
+    _upsert_seed_row(session, ServiceRow, {
+        "id": service_id, "business_id": business_id, "name": service_name,
+        "description": service_description, "duration_minutes": duration_minutes,
+        "buffer_before_minutes": 0, "buffer_after_minutes": buffer_after_minutes,
+        "price_minor": price_minor, "currency": "BRL", "active": True,
+    })
     for professional_id, professional_name in professionals:
-        connection.execute(
-            """INSERT INTO professionals (id,business_id,name,active) VALUES (%s,%s,%s,true)
-               ON CONFLICT (id) DO UPDATE SET business_id=excluded.business_id,name=excluded.name,active=true""",
-            (professional_id, business_id, professional_name),
-        )
-        connection.execute(
-            """INSERT INTO professional_services (business_id,professional_id,service_id) VALUES (%s,%s,%s)
-               ON CONFLICT DO NOTHING""",
-            (business_id, professional_id, service_id),
-        )
+        _upsert_seed_row(session, ProfessionalRow, {
+            "id": professional_id, "business_id": business_id, "name": professional_name, "active": True,
+        })
+        session.execute(insert(ProfessionalService).values(
+            business_id=business_id, professional_id=professional_id, service_id=service_id,
+        ).on_conflict_do_nothing())
         for weekday in range(6):
-            connection.execute(
-                """INSERT INTO weekly_availability_rules (id,business_id,professional_id,weekday,opens_at,closes_at)
-                   VALUES (%s,%s,%s,%s,'09:00','17:00') ON CONFLICT (id) DO UPDATE SET
-                   opens_at=excluded.opens_at,closes_at=excluded.closes_at""",
-                (
-                    f"hours-{professional_id}-{weekday}",
-                    business_id,
-                    professional_id,
-                    weekday,
-                ),
-            )
+            _upsert_seed_row(session, WeeklyAvailabilityRule, {
+                "id": f"hours-{professional_id}-{weekday}", "business_id": business_id,
+                "professional_id": professional_id, "weekday": weekday,
+                "opens_at": time(9), "closes_at": time(17),
+            }, update_fields=("opens_at", "closes_at"))
+
+
+def _upsert_seed_row(session: Session, model, values: dict, *, update_fields=None) -> None:
+    row = insert(model).values(**values)
+    fields = update_fields if update_fields is not None else tuple(name for name in values if name != "id")
+    session.execute(row.on_conflict_do_update(
+        index_elements=["id"], set_={name: row.excluded[name] for name in fields},
+    ))
 
 
 def seed(include_second_business: bool = False) -> None:
     settings = load_settings()
-    with connect(settings.database_url) as connection:
+    with database_session(settings.database_url) as session:
         _seed_business(
-            connection,
+            session,
             business_id=settings.demo_business_id,
             name="Capy Wellness Studio",
             category="Wellness studio",
@@ -95,7 +83,7 @@ def seed(include_second_business: bool = False) -> None:
         )
         if include_second_business:
             _seed_business(
-                connection,
+                session,
                 business_id="second-demo-studio",
                 name="Northside Bike Repair",
                 category="Bicycle repair",

@@ -3,12 +3,21 @@ from __future__ import annotations
 import argparse
 import time
 import uuid
-from datetime import timezone
+from datetime import timedelta, timezone
 from zoneinfo import ZoneInfo
+
+from sqlalchemy import and_, func, select
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.orm import Session
 
 from app.channels.telegram_publications import schedule_publication
 from app.config import load_settings
-from app.database import connect
+from app.database import database_session
+from app.db_models import (
+    BookingRow, BusinessRow, ReminderInboxRow, ReminderRow, ServiceRow,
+    TelegramBotRow, TelegramIdentity, TelegramOutboxRow,
+)
 from app.observability import debug_event
 
 
@@ -25,54 +34,70 @@ def reminder_message(booking: dict) -> str:
     )
 
 
+def _due_telegram_reminders(limit: int):
+    return (
+        select(
+            ReminderRow, BookingRow.starts_at, BookingRow.status.label("booking_status"),
+            ServiceRow.name.label("service_name"), BusinessRow.timezone.label("business_timezone"),
+            TelegramIdentity.customer_id.is_not(None).label("authorized"),
+        )
+        .join(BookingRow, and_(
+            BookingRow.id == ReminderRow.booking_id, BookingRow.business_id == ReminderRow.business_id,
+        ))
+        .join(BusinessRow, BusinessRow.id == ReminderRow.business_id)
+        .join(ServiceRow, ServiceRow.id == BookingRow.service_id)
+        .outerjoin(TelegramBotRow, and_(
+            TelegramBotRow.bot_id == ReminderRow.telegram_bot_id,
+            TelegramBotRow.business_id == ReminderRow.business_id,
+            TelegramBotRow.enabled, TelegramBotRow.reminder_delivery,
+        ))
+        .outerjoin(TelegramIdentity, and_(
+            TelegramIdentity.business_id == ReminderRow.business_id,
+            TelegramIdentity.bot_id == TelegramBotRow.bot_id,
+            TelegramIdentity.telegram_user_id == ReminderRow.telegram_chat_id,
+            TelegramIdentity.customer_id == BookingRow.customer_id,
+        ))
+        .where(
+            ReminderRow.status == "pending", ReminderRow.send_at <= func.clock_timestamp(),
+            ReminderRow.telegram_bot_id.is_not(None),
+            ReminderRow.queued_generation.is_distinct_from(ReminderRow.generation),
+        )
+        .order_by(ReminderRow.send_at, ReminderRow.id)
+        .limit(limit)
+        .with_for_update(of=ReminderRow, skip_locked=True)
+    )
+
+
 def enqueue_telegram_reminders(database_url: str, limit: int = 25) -> int:
     """Queue each due generation and record the result in the same transaction."""
-    with connect(database_url) as connection:
-        rows = connection.execute(
-            """SELECT r.id,r.business_id,r.generation,r.telegram_bot_id,r.telegram_chat_id,
-                      b.starts_at,b.status AS booking_status,s.name AS service_name,
-                      biz.timezone AS business_timezone,i.customer_id IS NOT NULL AS authorized
-               FROM reminders r
-               JOIN bookings b ON b.id=r.booking_id AND b.business_id=r.business_id
-               JOIN businesses biz ON biz.id=r.business_id
-               JOIN services s ON s.id=b.service_id
-               LEFT JOIN telegram_bots t ON t.bot_id=r.telegram_bot_id
-                 AND t.business_id=r.business_id AND t.enabled AND t.reminder_delivery
-               LEFT JOIN telegram_identities i ON i.business_id=r.business_id AND i.bot_id=t.bot_id
-                 AND i.telegram_user_id=r.telegram_chat_id AND i.customer_id=b.customer_id
-               WHERE r.status='pending' AND r.send_at <= clock_timestamp()
-                 AND r.telegram_bot_id IS NOT NULL
-                 AND r.queued_generation IS DISTINCT FROM r.generation
-               ORDER BY r.send_at,r.id LIMIT %s FOR UPDATE OF r SKIP LOCKED""",
-            (limit,),
-        ).fetchall()
+    with database_session(database_url) as session:
+        rows = session.execute(_due_telegram_reminders(limit)).mappings().all()
         for row in rows:
+            reminder = row[ReminderRow]
             if not row["authorized"] or row["booking_status"] == "canceled":
                 debug_event("reminder.telegram.skipped", reason="invalid_delivery_route")
-                connection.execute(
-                    """UPDATE reminders SET status='failed',last_error='invalid_delivery_route'
-                       WHERE id=%s""",
-                    (row["id"],),
-                )
+                reminder.status = "failed"
+                reminder.last_error = "invalid_delivery_route"
                 continue
-            outgoing = connection.execute(
-                """INSERT INTO telegram_outbox
-                       (business_id,bot_id,chat_id,reminder_id,reminder_generation,message)
-                   VALUES (%s,%s,%s,%s,%s,%s)
-                   ON CONFLICT (reminder_id,reminder_generation) DO NOTHING RETURNING id""",
-                (row["business_id"], row["telegram_bot_id"], row["telegram_chat_id"],
-                 row["id"], row["generation"], reminder_message(row)),
-            ).fetchone()
-            if outgoing:
-                schedule_publication(connection, outgoing_id=outgoing["id"])
-            connection.execute(
-                "UPDATE reminders SET queued_generation=%s WHERE id=%s",
-                (row["generation"], row["id"]),
-            )
-            debug_event("reminder.telegram.outbox_staged")
+            _queue_telegram_reminder(session, reminder, reminder_message(row))
     if rows:
         debug_event("reminder.telegram.batch_handled", count=len(rows))
     return len(rows)
+
+
+def _queue_telegram_reminder(session: Session, reminder: ReminderRow, message: str) -> None:
+    """Use the reminder generation to deduplicate wake-ups after rescheduling."""
+    outgoing_id = session.scalar(insert(TelegramOutboxRow).values(
+        business_id=reminder.business_id, bot_id=reminder.telegram_bot_id,
+        chat_id=reminder.telegram_chat_id, reminder_id=reminder.id,
+        reminder_generation=reminder.generation, message=message,
+    ).on_conflict_do_nothing(
+        index_elements=["reminder_id", "reminder_generation"],
+    ).returning(TelegramOutboxRow.id))
+    if outgoing_id is not None:
+        schedule_publication(session, outgoing_id=outgoing_id)
+    reminder.queued_generation = reminder.generation
+    debug_event("reminder.telegram.outbox_staged")
 
 
 class ReminderWorker:
@@ -82,73 +107,56 @@ class ReminderWorker:
         self.database_url = database_url
 
     def deliver_due(self, limit: int = 25) -> int:
-        with connect(self.database_url) as connection:
-            rows = connection.execute(
-                """SELECT id,business_id,booking_id,attempts FROM reminders
-                   WHERE status='pending' AND send_at <= now() AND telegram_bot_id IS NULL
-                   ORDER BY send_at LIMIT %s FOR UPDATE SKIP LOCKED""",
-                (limit,),
-            ).fetchall()
-            for reminder in rows:
+        statement = select(ReminderRow).where(
+            ReminderRow.status == "pending", ReminderRow.send_at <= func.now(),
+            ReminderRow.telegram_bot_id.is_(None),
+        ).order_by(ReminderRow.send_at).limit(limit).with_for_update(skip_locked=True)
+        with database_session(self.database_url) as session:
+            reminders = session.scalars(statement).all()
+            for reminder in reminders:
                 try:
-                    with connection.transaction():
-                        booking = connection.execute(
-                            """SELECT b.status,b.starts_at,biz.timezone AS business_timezone,
-                                      s.name AS service_name
-                               FROM bookings b JOIN services s ON s.id=b.service_id
-                               JOIN businesses biz ON biz.id=b.business_id WHERE b.id=%s""",
-                            (reminder["booking_id"],),
-                        ).fetchone()
-                        if booking is None or booking["status"] == "canceled":
-                            debug_event("reminder.demo.skipped", reason="booking_unavailable")
-                            connection.execute(
-                                "UPDATE reminders SET status='canceled' WHERE id=%s",
-                                (reminder["id"],),
-                            )
-                            continue
-                        message = reminder_message(booking)
-                        connection.execute(
-                            """INSERT INTO reminder_inbox (id,reminder_id,booking_id,business_id,message)
-                               VALUES (%s,%s,%s,%s,%s) ON CONFLICT (reminder_id) DO NOTHING""",
-                            (
-                                str(uuid.uuid4()),
-                                reminder["id"],
-                                reminder["booking_id"],
-                                reminder["business_id"],
-                                message,
-                            ),
-                        )
-                        connection.execute(
-                            "UPDATE reminders SET status='delivered',delivered_at=now(),last_error=NULL WHERE id=%s",
-                            (reminder["id"],),
-                        )
+                    with session.begin_nested():
+                        self._deliver_to_demo_inbox(session, reminder)
                 except Exception as exc:
-                    # The demo worker's retry budget counts failed deliveries only.
-                    attempts = reminder["attempts"] + 1
-                    should_retry = attempts < 3
-                    debug_event(
-                        "reminder.demo.delivery_failed", attempt=attempts, will_retry=should_retry,
-                        error_type=type(exc).__name__,
-                    )
-                    connection.execute(
-                        """UPDATE reminders
-                           SET status=%s, attempts=%s, last_error=%s,
-                               send_at=CASE
-                                   WHEN %s THEN now() + interval '30 seconds'
-                                   ELSE send_at
-                               END
-                           WHERE id=%s""",
-                        (
-                            "pending" if should_retry else "failed",
-                            attempts,
-                            type(exc).__name__,
-                            should_retry,
-                            reminder["id"],
-                        ),
-                    )
-        if rows:
-            debug_event("reminder.demo.batch_handled", count=len(rows))
-        return len(rows)
+                    self._record_failed_delivery(reminder, exc)
+                    session.flush()
+        if reminders:
+            debug_event("reminder.demo.batch_handled", count=len(reminders))
+        return len(reminders)
+
+    @staticmethod
+    def _deliver_to_demo_inbox(session: Session, reminder: ReminderRow) -> None:
+        booking = session.execute(
+            select(BookingRow.status, BookingRow.starts_at, BusinessRow.timezone.label("business_timezone"),
+                   ServiceRow.name.label("service_name"))
+            .join(ServiceRow, ServiceRow.id == BookingRow.service_id)
+            .join(BusinessRow, BusinessRow.id == BookingRow.business_id)
+            .where(BookingRow.id == reminder.booking_id)
+        ).mappings().first()
+        if booking is None or booking["status"] == "canceled":
+            debug_event("reminder.demo.skipped", reason="booking_unavailable")
+            reminder.status = "canceled"
+            return
+        session.execute(insert(ReminderInboxRow).values(
+            id=str(uuid.uuid4()), reminder_id=reminder.id, booking_id=reminder.booking_id,
+            business_id=reminder.business_id, message=reminder_message(booking),
+        ).on_conflict_do_nothing(index_elements=["reminder_id"]))
+        reminder.status = "delivered"
+        reminder.delivered_at = func.now()
+        reminder.last_error = None
+
+    @staticmethod
+    def _record_failed_delivery(reminder: ReminderRow, error: Exception) -> None:
+        # The demo worker's retry budget counts failed deliveries only.
+        reminder.attempts += 1
+        should_retry = reminder.attempts < 3
+        reason = type(error.orig if isinstance(error, DBAPIError) else error).__name__
+        debug_event("reminder.demo.delivery_failed", attempt=reminder.attempts,
+                    will_retry=should_retry, error_type=reason)
+        reminder.status = "pending" if should_retry else "failed"
+        reminder.last_error = reason
+        if should_retry:
+            reminder.send_at = func.now() + timedelta(seconds=30)
 
     def run_forever(self, poll_seconds: float = 2.0) -> None:
         debug_event("reminder.demo.worker_started", poll_seconds=poll_seconds)

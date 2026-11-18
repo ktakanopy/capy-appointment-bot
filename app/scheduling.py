@@ -4,6 +4,13 @@ from datetime import datetime, time, timedelta, timezone
 from uuid import NAMESPACE_URL, uuid5
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.db_models import (
+    BlockedPeriod, BookingRow, BusinessRow, ProfessionalRow, ProfessionalService,
+    ServiceRow, WeeklyAvailabilityRule,
+)
 from app.models import AvailabilitySearchRequest, AvailabilitySlot, DomainError
 from app.observability import debug_event
 from app.repositories import PostgresRepository
@@ -34,7 +41,7 @@ def _overlaps(
 
 
 def validate_slot_in_transaction(
-    connection,
+    session: Session,
     *,
     business_id: str,
     service_id: str,
@@ -45,22 +52,29 @@ def validate_slot_in_transaction(
 ) -> AvailabilitySlot:
     """Recheck current policy and conflicts in the same transaction as a booking write."""
     debug_event("availability.slot.checking", is_move=exclude_booking_id is not None)
-    professional = connection.execute(
-        "SELECT id FROM professionals WHERE id=%s AND business_id=%s AND active FOR UPDATE",
-        (professional_id, business_id),
-    ).fetchone()
+    professional = session.scalar(select(ProfessionalRow.id).where(
+        ProfessionalRow.id == professional_id, ProfessionalRow.business_id == business_id,
+        ProfessionalRow.active,
+    ).with_for_update())
     if professional is None:
         raise DomainError("professional_not_found", "Professional not found.", 404)
-    row = connection.execute(
-        """SELECT b.timezone,b.minimum_notice_minutes,b.booking_horizon_days,
-                  s.duration_minutes,s.buffer_before_minutes,s.buffer_after_minutes,s.price_minor,s.currency,
-                  p.name AS professional_name
-           FROM businesses b JOIN services s ON s.business_id=b.id
-           JOIN professional_services ps ON ps.business_id=b.id AND ps.service_id=s.id
-           JOIN professionals p ON p.id=ps.professional_id
-           WHERE b.id=%s AND s.id=%s AND s.active AND p.id=%s AND p.active""",
-        (business_id, service_id, professional_id),
-    ).fetchone()
+    policy = (
+        select(
+            BusinessRow.timezone, BusinessRow.minimum_notice_minutes, BusinessRow.booking_horizon_days,
+            ServiceRow.duration_minutes, ServiceRow.buffer_before_minutes, ServiceRow.buffer_after_minutes,
+            ServiceRow.price_minor, ServiceRow.currency, ProfessionalRow.name.label("professional_name"),
+        )
+        .select_from(BusinessRow)
+        .join(ServiceRow, ServiceRow.business_id == BusinessRow.id)
+        .join(ProfessionalService, (ProfessionalService.business_id == BusinessRow.id)
+              & (ProfessionalService.service_id == ServiceRow.id))
+        .join(ProfessionalRow, ProfessionalRow.id == ProfessionalService.professional_id)
+        .where(
+            BusinessRow.id == business_id, ServiceRow.id == service_id, ServiceRow.active,
+            ProfessionalRow.id == professional_id, ProfessionalRow.active,
+        )
+    )
+    row = session.execute(policy).mappings().first()
     if row is None:
         raise DomainError(
             "service_or_professional_not_found",
@@ -88,10 +102,10 @@ def validate_slot_in_transaction(
         raise DomainError(
             "invalid_slot", "Choose one of the listed availability slots.", 409
         )
-    rules = connection.execute(
-        "SELECT opens_at,closes_at FROM weekly_availability_rules WHERE professional_id=%s AND weekday=%s",
-        (professional_id, local_start.weekday()),
-    ).fetchall()
+    rules = session.execute(select(WeeklyAvailabilityRule.opens_at, WeeklyAvailabilityRule.closes_at).where(
+        WeeklyAvailabilityRule.professional_id == professional_id,
+        WeeklyAvailabilityRule.weekday == local_start.weekday(),
+    )).mappings().all()
     start_wall = local_start.timetz().replace(tzinfo=None)
     occupied_from_local = occupied_from.astimezone(zone)
     occupied_until_local = occupied_until.astimezone(zone)
@@ -120,22 +134,22 @@ def validate_slot_in_transaction(
             "That time is outside the professional's working hours.",
             409,
         )
-    blocked = connection.execute(
-        """SELECT 1 FROM blocked_periods WHERE professional_id=%s
-           AND starts_at < %s AND ends_at > %s LIMIT 1""",
-        (professional_id, occupied_until, occupied_from),
-    ).fetchone()
+    blocked = session.scalar(select(BlockedPeriod.id).where(
+        BlockedPeriod.professional_id == professional_id,
+        BlockedPeriod.starts_at < occupied_until, BlockedPeriod.ends_at > occupied_from,
+    ).limit(1))
     if blocked:
         raise DomainError(
             "slot_blocked", "That time has been blocked. Choose another slot.", 409
         )
-    conflict_sql = """SELECT 1 FROM bookings WHERE professional_id=%s AND status IN ('scheduled','confirmed')
-                      AND occupied_from < %s AND occupied_until > %s"""
-    conflict_params = [professional_id, occupied_until, occupied_from]
+    conflicts = select(BookingRow.id).where(
+        BookingRow.professional_id == professional_id,
+        BookingRow.status.in_(("scheduled", "confirmed")),
+        BookingRow.occupied_from < occupied_until, BookingRow.occupied_until > occupied_from,
+    )
     if exclude_booking_id:
-        conflict_sql += " AND id <> %s"
-        conflict_params.append(exclude_booking_id)
-    if connection.execute(conflict_sql + " LIMIT 1", conflict_params).fetchone():
+        conflicts = conflicts.where(BookingRow.id != exclude_booking_id)
+    if session.scalar(conflicts.limit(1)) is not None:
         raise DomainError(
             "slot_unavailable",
             "That time is no longer available. Choose another slot.",

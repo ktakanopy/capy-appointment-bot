@@ -134,6 +134,8 @@ For multiple bots, CAPY supports a shared webhook, conversation workers, and a r
 
 ## Documentation
 
+To follow a PostgreSQL query from the repository to a mapped class, start with the service lookup. [SQLAlchemy example](docs/database.md#read-a-service-with-sqlalchemy)
+
 - [Source map](docs/source-map.md) — where to find each part of the app, the tests, and the tools
 - [Architecture](docs/architecture.md) — Telegram workers, booking flow, and [where to start reading the code](docs/architecture.md#how-to-read-the-code)
 - [Conversation graph](docs/graph.md) — routing, state, and workflow steps

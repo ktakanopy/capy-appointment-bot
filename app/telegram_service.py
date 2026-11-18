@@ -12,8 +12,8 @@ from dataclasses import replace
 from threading import Event, Thread
 from urllib.parse import urlsplit
 
-import psycopg
 from redis.exceptions import RedisError
+from sqlalchemy import func, select, text
 
 from app.booking import BookingService
 from app.channels.bots import BotRegistry, TelegramBot
@@ -27,7 +27,8 @@ from app.channels.telegram_turns import (
     LEASE_SECONDS, REFRESH_OFFER, UNKNOWN_OUTCOME, ClaimLost, TelegramTurns, TurnClaim,
 )
 from app.config import load_settings
-from app.database import connect
+from app.database import DATABASE_ERRORS, database_session
+from app.db_models import TelegramOutboxRow
 from app.observability import debug_event, debug_turn, get_logger, log_event
 from app.reminders import enqueue_telegram_reminders
 from app.runtime import close_runtime, create_runtime
@@ -36,14 +37,14 @@ from app.telegram_worker import TelegramWorker, _conversation_id
 
 def reconcile_replies(database_url: str, bot: TelegramBot) -> None:
     """Copy legacy ready replies once. The caller holds the legacy worker lock."""
-    with connect(database_url) as connection:
-        outgoing = connection.execute(
-            """WITH queued AS (
+    with database_session(database_url) as session:
+        outgoing = session.execute(
+            text("""WITH queued AS (
                    INSERT INTO telegram_outbox
                        (business_id,bot_id,chat_id,update_id,message,reply_markup,attempts,ready_at)
                    SELECT business_id,bot_id,chat_id,update_id,reply_text,reply_markup,
                           greatest(attempts-1,0),next_attempt_at
-                   FROM telegram_updates WHERE bot_id=%s AND business_id=%s
+                   FROM telegram_updates WHERE bot_id=:bot_id AND business_id=:business_id
                      AND status='reply_ready' AND chat_id>0 AND chat_id=telegram_user_id
                      AND reply_text IS NOT NULL
                    ORDER BY received_at, update_id
@@ -51,13 +52,13 @@ def reconcile_replies(database_url: str, bot: TelegramBot) -> None:
                ), finished AS (
                    UPDATE telegram_updates SET status='delivered', payload=NULL,
                        reply_text=NULL,reply_markup=NULL,expires_at=now()+interval '30 days'
-                   WHERE bot_id=%s AND business_id=%s AND status='reply_ready'
+                   WHERE bot_id=:bot_id AND business_id=:business_id AND status='reply_ready'
                )
-               SELECT id,ready_at FROM queued""",
-            (bot.bot_id, bot.business_id, bot.bot_id, bot.business_id),
-        ).fetchall()
+               SELECT id,ready_at FROM queued"""),
+            {"bot_id": bot.bot_id, "business_id": bot.business_id},
+        ).mappings().all()
         for row in outgoing:
-            schedule_publication(connection, outgoing_id=row["id"], due_at=row["ready_at"])
+            schedule_publication(session, outgoing_id=row["id"], due_at=row["ready_at"])
 
 
 def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
@@ -94,7 +95,7 @@ def _process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
             try:
                 if not turns.renew(claim):
                     return
-            except psycopg.Error:
+            except DATABASE_ERRORS:
                 # Booking and reply transactions still verify the lease before writing.
                 return
 
@@ -227,7 +228,7 @@ def run_worker(settings, args, stop: Event, logger) -> None:
                         prune_history(settings.database_url)
                         next_prune = time.monotonic() + 60
                     did_work = send_next(outbox, delivery, logger)
-            except (psycopg.Error, ClaimLost) as error:
+            except (*DATABASE_ERRORS, ClaimLost) as error:
                 log_event(logger, "telegram.worker.retry", role=args.role, failure_type=type(error).__name__)
                 stop.wait(1)
             if not did_work:
@@ -238,34 +239,34 @@ def run_worker(settings, args, stop: Event, logger) -> None:
 
 def prune_history(database_url: str, limit: int = 500) -> None:
     """Delete old terminal records in bounded batches while retaining active jobs."""
-    with connect(database_url) as connection:
-        connection.execute(
-            """DELETE FROM telegram_updates WHERE (bot_id,update_id) IN (
+    with database_session(database_url) as session:
+        session.execute(
+            text("""DELETE FROM telegram_updates WHERE (bot_id,update_id) IN (
                    SELECT u.bot_id,u.update_id FROM telegram_updates u
                    WHERE u.status='delivered' AND u.expires_at<clock_timestamp()
                      AND NOT EXISTS (SELECT 1 FROM telegram_outbox o
                          WHERE o.bot_id=u.bot_id AND o.update_id=u.update_id
                            AND o.status IN ('ready','dispatching'))
-                   ORDER BY u.expires_at LIMIT %s FOR UPDATE OF u SKIP LOCKED
-               )""",
-            (limit,),
+                   ORDER BY u.expires_at LIMIT :limit FOR UPDATE OF u SKIP LOCKED
+               )"""),
+            {"limit": limit},
         )
-        connection.execute(
-            """DELETE FROM telegram_outbox WHERE id IN (
+        session.execute(
+            text("""DELETE FROM telegram_outbox WHERE id IN (
                    SELECT o.id FROM telegram_outbox o
                    WHERE o.finished_at<clock_timestamp()-interval '30 days'
                      AND o.status IN ('sent','failed','canceled','ambiguous')
-                   ORDER BY o.finished_at LIMIT %s FOR UPDATE OF o SKIP LOCKED
-               )""",
-            (limit,),
+                   ORDER BY o.finished_at LIMIT :limit FOR UPDATE OF o SKIP LOCKED
+               )"""),
+            {"limit": limit},
         )
 
 
 def queue_stats(database_url: str, logger) -> None:
     """Show the age of ready work and the database connection budget."""
-    with connect(database_url) as connection:
-        ages = connection.execute(
-            """SELECT
+    with database_session(database_url) as session:
+        ages = session.execute(
+            text("""SELECT
                 (SELECT extract(epoch FROM clock_timestamp()-min(received_at))::float8
                  FROM telegram_updates WHERE status='received' AND ready_at<=clock_timestamp())
                     AS oldest_ready_turn_seconds,
@@ -278,13 +279,14 @@ def queue_stats(database_url: str, logger) -> None:
                 (SELECT count(*) FROM pg_stat_activity WHERE datname=current_database())
                     AS database_connections,
                 (SELECT count(*) FROM pg_stat_activity WHERE datname=current_database()
-                   AND wait_event_type='Lock') AS database_lock_waiters"""
-        ).fetchone()
-        backlog = connection.execute(
-            """SELECT bot_id,count(*) AS pending FROM telegram_outbox
-               WHERE status IN ('ready','dispatching') GROUP BY bot_id ORDER BY bot_id"""
-        ).fetchall()
-    log_event(logger, "telegram.queue.snapshot", outbound_by_bot=backlog, **ages)
+                   AND wait_event_type='Lock') AS database_lock_waiters""")
+        ).mappings().one()
+        backlog = session.execute(
+            select(TelegramOutboxRow.bot_id, func.count().label("pending"))
+            .where(TelegramOutboxRow.status.in_(("ready", "dispatching")))
+            .group_by(TelegramOutboxRow.bot_id).order_by(TelegramOutboxRow.bot_id)
+        ).mappings().all()
+    log_event(logger, "telegram.queue.snapshot", outbound_by_bot=[dict(row) for row in backlog], **ages)
 
 
 def register(settings, args) -> None:

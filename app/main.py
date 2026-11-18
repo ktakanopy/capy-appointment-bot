@@ -6,7 +6,6 @@ import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
-import psycopg
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
@@ -15,7 +14,7 @@ from redis import Redis
 from app.channels.bots import BotRegistry
 from app.channels.telegram_intake import save_update
 from app.config import Settings, load_settings
-from app.database import database_is_ready
+from app.database import DATABASE_ERRORS, database_is_ready
 from app.models import HealthResponse
 from app.observability import debug_event, get_logger, log_event
 
@@ -101,7 +100,7 @@ async def telegram_webhook(
             save_update, database_url, bot, update
         ):
             raise HTTPException(status_code=400, detail="Invalid Telegram update")
-    except psycopg.Error as exc:
+    except DATABASE_ERRORS as exc:
         debug_event("telegram.webhook.rejected", reason="database_unavailable")
         raise HTTPException(status_code=503, detail="Intake unavailable") from exc
     log_event(get_logger(), "telegram.webhook.accepted",

@@ -18,7 +18,7 @@ from app.channels.telegram_intake import save_update
 from app.channels.telegram_repository import TelegramRepository
 from app.channels.telegram_turns import ClaimLost, TelegramTurns
 from app.config import load_settings
-from app.database import connect
+from app.database import database_session
 from app.graph.builder import build_graph
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import DeterministicInterpreter
@@ -29,7 +29,7 @@ from app.runtime import close_runtime, create_runtime
 from app.seed import seed
 from app.telegram_service import process_turn, reconcile_replies
 from app.telegram_service import register as register_bot
-from tests.integration.helpers import next_open_day, offered_slots
+from tests.integration.helpers import connect, next_open_day, offered_slots
 
 
 def update(number, chat=101, **content):
@@ -262,8 +262,8 @@ def test_reschedule_and_cancel_supersede_materialized_reminders(scheduling_db, t
     force_due()
     assert ReminderWorker(url).deliver_due() == 0
     with ThreadPoolExecutor(max_workers=1) as workers:
-        with connect(url) as connection:
-            service._lock_business_and_check_retry(connection, bot.business_id, "cancel", "race", "hash")
+        with database_session(url) as session:
+            service._lock_business_and_check_retry(session, bot.business_id, "cancel", "race", "hash")
             # A scheduler must be able to insert its FK while the booking
             # transaction holds the write-serialization lock on the business.
             assert workers.submit(enqueue_telegram_reminders, url).result(timeout=3) == 1

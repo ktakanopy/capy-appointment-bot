@@ -6,49 +6,52 @@ from contextlib import contextmanager
 from threading import Lock
 from typing import Iterator
 
-import psycopg
-from psycopg.rows import dict_row
+from sqlalchemy import create_engine, select
+from sqlalchemy.engine import Engine
+from sqlalchemy.exc import DBAPIError, TimeoutError
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import NullPool
 
-from app.observability import debug_event
-
-_pools = {}
-_pools_lock = Lock()
+_engines_lock = Lock()
+_engines: dict[tuple[str, int], Engine] = {}
+DATABASE_ERRORS = (DBAPIError, TimeoutError)
 
 
 def psycopg_url(url: str) -> str:
     return url.replace("postgresql+psycopg://", "postgresql://", 1)
 
 
-@contextmanager
-def connect(database_url: str) -> Iterator[psycopg.Connection]:
+def _engine(database_url: str) -> Engine:
     maximum = int(os.getenv("CAPY_DB_POOL_MAX", "0"))
     if not 0 <= maximum <= 64:
         raise ValueError("CAPY_DB_POOL_MAX must be between 0 and 64.")
-    url = psycopg_url(database_url)
-    if not maximum:
-        with psycopg.connect(url, row_factory=dict_row, connect_timeout=3) as connection:
-            yield connection
-        return
-    with _pools_lock:
-        pool = _pools.get((url, maximum))
-        if pool is None:
-            from psycopg_pool import ConnectionPool
-
-            pool = ConnectionPool(
-                url, min_size=0, max_size=maximum, timeout=3,
-                kwargs={"row_factory": dict_row, "connect_timeout": 3}, open=True,
+    url = psycopg_url(database_url).replace("postgresql://", "postgresql+psycopg://", 1)
+    key = (url, maximum)
+    with _engines_lock:
+        if key not in _engines:
+            pooling = (
+                {"pool_size": maximum, "max_overflow": 0, "pool_timeout": 3}
+                if maximum else {"poolclass": NullPool}
             )
-            _pools[(url, maximum)] = pool
-            atexit.register(pool.close)
-            debug_event("postgres.pool.opened", max_connections=maximum)
-    with pool.connection() as connection:
-        yield connection
+            engine = create_engine(
+                url, connect_args={"connect_timeout": 3}, hide_parameters=True, **pooling,
+            )
+            _engines[key] = engine
+            atexit.register(engine.dispose)
+    return _engines[key]
+
+
+@contextmanager
+def database_session(database_url: str) -> Iterator[Session]:
+    """Give each operation its own session so concurrent workers never share a transaction."""
+    with Session(_engine(database_url)) as session, session.begin():
+        yield session
 
 
 def database_is_ready(database_url: str) -> bool:
     try:
-        with connect(database_url) as connection:
-            connection.execute("SELECT 1")
+        with database_session(database_url) as session:
+            session.scalar(select(1))
         return True
     except Exception:
         return False

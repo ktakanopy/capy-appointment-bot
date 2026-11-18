@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from app.database import connect
 from app.reminders import ReminderWorker
-from tests.integration.helpers import create_booking, offered_slots
+from tests.integration.helpers import connect, create_booking, offered_slots
 
 
 def test_due_reminder_is_delivered_once_to_demo_inbox(scheduling_db):

@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
+from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
+
 from app.channels.bots import TelegramBot
 from app.channels.telegram_publications import schedule_publication
-from app.database import connect
+from app.database import database_session
+from app.db_models import TelegramBotRow, TelegramConversation, TelegramUpdate
 from app.observability import debug_event
-from psycopg.types.json import Jsonb
 
 
 def telegram_integer(value: object) -> bool:
@@ -59,39 +64,39 @@ def save_update(
         }}
     message_date = message.get("date")
     date = message_date if telegram_integer(message_date) else None
-    with connect(database_url) as connection:
-        registered = connection.execute(
-            """SELECT bot_id FROM telegram_bots
-               WHERE bot_id=%s AND business_id=%s AND enabled
-                 AND webhook_route IS NOT NULL FOR SHARE""",
-            (bot.bot_id, bot.business_id),
-        ).fetchone()
-        if not registered:
+    with database_session(database_url) as session:
+        registered = session.scalar(select(TelegramBotRow.bot_id).where(
+            TelegramBotRow.bot_id == bot.bot_id,
+            TelegramBotRow.business_id == bot.business_id,
+            TelegramBotRow.enabled,
+            TelegramBotRow.webhook_route.is_not(None),
+        ).with_for_update(read=True))
+        if registered is None:
             debug_event("telegram.inbox.ignored", bot_id=bot.bot_id, update_id=update_id,
                         reason="bot_not_registered_for_intake")
             return False
-        receipt = connection.execute(
-            """INSERT INTO telegram_updates
-                   (bot_id, update_id, business_id, chat_id, telegram_user_id, payload, status,
-                    message_date, ready_at, expires_at)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,
-                       clock_timestamp() + interval '0.3 seconds',
-                       clock_timestamp() + interval '30 days')
-               ON CONFLICT (bot_id, update_id) DO NOTHING""",
-            (bot.bot_id, update_id, bot.business_id, chat_id if supported else None,
-             user_id if supported else None, Jsonb(payload) if supported else None,
-             "received" if supported else "delivered", date),
-        )
-        if supported and receipt.rowcount:
-            connection.execute(
-                """INSERT INTO telegram_conversations (bot_id, chat_id, business_id)
-                   VALUES (%s,%s,%s) ON CONFLICT DO NOTHING""",
-                (bot.bot_id, chat_id, bot.business_id),
-            )
-            schedule_publication(connection, bot_id=bot.bot_id, chat_id=chat_id, delay=0.3)
+        receipt_id = session.scalar(insert(TelegramUpdate).values(
+            bot_id=bot.bot_id,
+            update_id=update_id,
+            business_id=bot.business_id,
+            chat_id=chat_id if supported else None,
+            telegram_user_id=user_id if supported else None,
+            payload=payload,
+            status="received" if supported else "delivered",
+            message_date=date,
+            ready_at=func.clock_timestamp() + timedelta(seconds=0.3),
+            expires_at=func.clock_timestamp() + timedelta(days=30),
+        ).on_conflict_do_nothing(
+            index_elements=["bot_id", "update_id"],
+        ).returning(TelegramUpdate.update_id))
+        if supported and receipt_id is not None:
+            session.execute(insert(TelegramConversation).values(
+                bot_id=bot.bot_id, chat_id=chat_id, business_id=bot.business_id,
+            ).on_conflict_do_nothing())
+            schedule_publication(session, bot_id=bot.bot_id, chat_id=chat_id, delay=0.3)
     debug_event(
         "telegram.inbox.recorded", bot_id=bot.bot_id, update_id=update_id,
         source="webhook",
-        is_private=bool(supported), inserted=receipt.rowcount == 1,
+        is_private=bool(supported), inserted=receipt_id is not None,
     )
     return True

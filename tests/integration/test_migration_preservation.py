@@ -9,7 +9,7 @@ from uuid import uuid4
 import psycopg
 from psycopg import sql
 
-from app.database import connect
+from tests.integration.helpers import connect
 
 
 def test_populated_legacy_database_preserves_booking_and_verified_link(scheduling_db):
