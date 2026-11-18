@@ -17,7 +17,12 @@ uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understandi
 
 Field accuracy does not establish whether a rewritten message preserved its meaning. Before a real quality benchmark or fine-tuning run, review interpretations for omitted constraints, negations, late corrections, ambiguity and English/Portuguese paraphrases. The small current corpus is a regression seed, not a semantic rewrite-quality benchmark.
 
-Audio workflow and extraction evaluations require Gemma transcription. Deterministic text understanding cannot silently stand in for an audio model. Every complete recording is transcribed before its interpreted message can reach Laya; failures are errors. Word-level edit distance and reference-word counts are included when audio is transcribed. A routing-only result for an audio case measures routing of its labelled meaning, not transcription quality. No successful fallback is counted as a model prediction; the runner has no automatic fallback.
+Audio workflow and extraction evaluations require Gemma to transcribe the complete recording.
+The runner reports transcription failures as errors. For successful transcripts, `word_errors`
+is the fewest word insertions, deletions, or substitutions needed to match the reference.
+The comparison ignores case and treats sequences of letters, digits, and underscores as words.
+`reference_words` counts the words in the reference. Routing-only audio cases use the labelled
+meaning directly.
 
 Results under `.eval_runs/` use schema version 2 and contain a hash of dataset and audio assets, requested providers, model revision labels, interpretations, actions, errors and transcription/understanding/routing latency. Per-case provider fields describe what ran: fixed-input understanding is `labelled`, and extraction-only routing is `not_run`. Summaries group language and source modality. Nonzero exit means a failed case, provider error or invalid dataset. Use labelled revision identifiers: the runner cannot infer the checkpoint actually served by an external endpoint. Older intent-labelled datasets and schema-version-1 receipts describe the earlier contract.
 

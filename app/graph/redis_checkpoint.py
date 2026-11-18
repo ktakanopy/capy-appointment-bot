@@ -149,15 +149,15 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
         key = self._writes_key(thread_id, checkpoint_ns, checkpoint_id)
         existing = self._read_json(key) or []
         seen = {(row["task_id"], row["idx"]) for row in existing}
-        for idx, (channel, value) in enumerate(writes):
-            write_idx = WRITES_IDX_MAP.get(channel, idx)
-            identity = (task_id, write_idx)
-            if write_idx >= 0 and identity in seen:
+        for index, (channel, value) in enumerate(writes):
+            write_index = WRITES_IDX_MAP.get(channel, index)
+            identity = (task_id, write_index)
+            if write_index >= 0 and identity in seen:
                 continue
             existing.append(
                 {
                     "task_id": task_id,
-                    "idx": write_idx,
+                    "idx": write_index,
                     "channel": channel,
                     "value": _encode(self.serde.dumps_typed(value)),
                     "task_path": task_path,

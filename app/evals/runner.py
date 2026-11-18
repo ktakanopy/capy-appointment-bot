@@ -56,7 +56,7 @@ def load_dataset(path):
         for line in path.read_text().splitlines()
         if line.strip()
     ]
-    if not cases or len({c.scenario_id for c in cases}) != len(cases):
+    if not cases or len({case.scenario_id for case in cases}) != len(cases):
         raise ValueError("Dataset must be nonempty with unique case IDs")
     groups = {}
     for case in cases:
@@ -80,18 +80,23 @@ def load_dataset(path):
 
 
 def _word_errors(reference, observed):
-    # Word-level edit distance; punctuation/case normalized for this small corpus.
-    ref, obs = (
+    reference_words, observed_words = (
         re.findall(r"\w+", reference.casefold()),
         re.findall(r"\w+", observed.casefold()),
     )
-    row = list(range(len(obs) + 1))
-    for i, word in enumerate(ref, 1):
-        new = [i]
-        for j, other in enumerate(obs, 1):
-            new.append(min(new[-1] + 1, row[j] + 1, row[j - 1] + (word != other)))
-        row = new
-    return {"word_errors": row[-1], "reference_words": len(ref)}
+    previous_row = list(range(len(observed_words) + 1))
+    for reference_index, reference_word in enumerate(reference_words, 1):
+        current_row = [reference_index]
+        for observed_index, observed_word in enumerate(observed_words, 1):
+            current_row.append(
+                min(
+                    current_row[-1] + 1,
+                    previous_row[observed_index] + 1,
+                    previous_row[observed_index - 1] + (reference_word != observed_word),
+                )
+            )
+        previous_row = current_row
+    return {"word_errors": previous_row[-1], "reference_words": len(reference_words)}
 
 
 def run_scenarios(
@@ -134,12 +139,12 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
             EvaluationTurn(utterance=case.utterance, expected=case.expected)
         ]
         counters["labelled_fields"] = (
-            sum(len(t.expected) for t in turns) if layer != "routing" else 0
+            sum(len(turn.expected) for turn in turns) if layer != "routing" else 0
         )
         counters["labelled_actions"] = (
-            sum(bool(t.expected_action) for t in turns) if layer != "extraction" else 0
+            sum(bool(turn.expected_action) for turn in turns) if layer != "extraction" else 0
         )
-        for i, turn in enumerate(turns):
+        for turn_index, turn in enumerate(turns):
             turn_context = {**context, **turn.context}
             if layer == "routing":
                 if not turn.interpreted_message:
@@ -164,7 +169,7 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
                         message=message,
                         today=turn_context["today"],
                         customer_id="fixture-customer" if case.authenticated else None,
-                        idempotency_key=f"eval:{case.scenario_id}:{i}",
+                        idempotency_key=f"eval:{case.scenario_id}:{turn_index}",
                         input_modality="audio" if turn.audio_path else "text",
                     ),
                     actions,
@@ -176,7 +181,7 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
                 action = state["decision"]["next_action"]
                 if turn.expected_intent and reply.intent != turn.expected_intent:
                     mismatches.append(
-                        f"turn {i}: intent expected {turn.expected_intent}, observed {reply.intent}"
+                        f"turn {turn_index}: intent expected {turn.expected_intent}, observed {reply.intent}"
                     )
             elif layer == "routing":
                 interpretation = SchedulingInterpretation(message=message)
@@ -185,7 +190,7 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
                 interpretation = interpreter.interpret(message, turn_context)
                 action = None
             fields = interpretation.model_dump(mode="json")
-            _score_turn(turn, i, fields, action, layer, counters, mismatches)
+            _score_turn(turn, turn_index, fields, action, layer, counters, mismatches)
             observed["turns"].append(
                 {
                     "interpretation": fields,
@@ -197,21 +202,21 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
                 }
             )
         if layer == "workflow":
-            for op, count in case.expected_writes.items():
-                if actions.writes.get(op) != count:
+            for operation, count in case.expected_writes.items():
+                if actions.writes.get(operation) != count:
                     mismatches.append(
-                        f"{op}: expected {count} writes, observed {actions.writes.get(op)}"
+                        f"{operation}: expected {count} writes, observed {actions.writes.get(operation)}"
                     )
         observed["writes"] = actions.writes
         status = "fail" if mismatches else "pass"
     except Exception as error:
-        # Exception messages may contain private provider payloads/URLs.
+        # Keep provider payloads and private URLs out of evaluation reports.
         observed["error_type"] = type(error).__name__
         status = "error"
     observed["metrics"] = counters
     observed.update(
         language=case.language,
-        modality="audio" if any(t.audio_path for t in case.turns) else "text",
+        modality="audio" if any(turn.audio_path for turn in case.turns) else "text",
         elapsed_ms=(perf_counter() - started) * 1000,
         understanding="labelled" if layer == "routing" else understanding,
         routing="not_run" if layer == "extraction" else routing,
@@ -267,10 +272,10 @@ def summarize(results):
         groups[f"{item.observed['language']}/{item.observed['modality']}"].append(item)
     summary = {}
     for group, items in groups.items():
-        durations = sorted(i.observed["elapsed_ms"] for i in items)
+        durations = sorted(item.observed["elapsed_ms"] for item in items)
         totals = {
-            k: sum(i.observed["metrics"][k] for i in items)
-            for k in items[0].observed["metrics"]
+            metric: sum(item.observed["metrics"][metric] for item in items)
+            for metric in items[0].observed["metrics"]
         }
         fields, actions = totals["labelled_fields"], totals["labelled_actions"]
         summary[group] = {
@@ -279,10 +284,10 @@ def summarize(results):
             "routing_accuracy": totals["correct_actions"] / actions
             if actions
             else None,
-            "task_success": sum(i.status == "pass" for i in items) / len(items),
+            "task_success": sum(item.status == "pass" for item in items) / len(items),
             "cases": len(items),
-            "passes": sum(i.status == "pass" for i in items),
-            "errors": sum(i.status == "error" for i in items),
+            "passes": sum(item.status == "pass" for item in items),
+            "errors": sum(item.status == "error" for item in items),
             "p50_ms": statistics.median(durations),
             "p95_ms": durations[
                 min(len(durations) - 1, int((len(durations) - 1) * 0.95 + 0.5))
@@ -334,7 +339,7 @@ def main(argv=None):
         "gemma_revision": args.gemma_revision,
         "laya_revision": args.laya_revision,
         "summary": summarize(results),
-        "results": [r.model_dump(mode="json") for r in results],
+        "results": [result.model_dump(mode="json") for result in results],
     }
     output = (
         args.output
@@ -346,7 +351,7 @@ def main(argv=None):
     for item in results:
         print(f"{item.status.upper():5} {item.scenario_id}")
     print(f"Results: {output}")
-    return int(any(r.status != "pass" for r in results))
+    return int(any(result.status != "pass" for result in results))
 
 
 if __name__ == "__main__":

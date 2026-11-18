@@ -29,16 +29,16 @@ class LangGraphWorkflow:
         config = {"configurable": {"thread_id": checkpoint_thread or turn.conversation_id}}
         binding = bind_actions(actions)
         try:
-            result = (
+            graph_state = (
                 self.graph.invoke(state, config)
                 if self.graph.checkpointer
                 else self.graph.invoke(state)
             )
         finally:
             reset_actions(binding)
-        payload = dict(result["result"])
-        payload["booking"] = actions.last_booking
-        return TurnResult.model_validate(payload)
+        turn_result = dict(graph_state["result"])
+        turn_result["booking"] = actions.last_booking
+        return TurnResult.model_validate(turn_result)
 
     def draft(self, conversation_id: str) -> WorkflowDraft:
         return WorkflowDraft.model_validate(

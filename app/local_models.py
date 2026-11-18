@@ -193,12 +193,12 @@ def create_app(gemma, laya, litert) -> FastAPI:
                     TRANSCRIBE_PROMPT, litert.Content.AudioBytes(audio)
                 )
                 return {"transcript": complete(content, "You transcribe speech.")}
-            data = json.dumps(
+            model_input = json.dumps(
                 {"context": turn.context, "latest_customer_message": turn.message},
                 ensure_ascii=False,
             )
-            result = complete(data, REWRITE_PROMPT, structured=True)
-            return SchedulingInterpretation.model_validate_json(result)
+            model_output = complete(model_input, REWRITE_PROMPT, structured=True)
+            return SchedulingInterpretation.model_validate_json(model_output)
         except (ValueError, RuntimeError, KeyError, TypeError) as error:
             logger.warning("Gemma inference failed (%s)", type(error).__name__)
             raise HTTPException(502, "Gemma inference failed") from None

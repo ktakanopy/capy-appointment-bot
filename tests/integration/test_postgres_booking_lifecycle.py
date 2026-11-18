@@ -126,7 +126,6 @@ def test_create_idempotency_and_postgres_overlap_constraint(scheduling_db):
 def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_both(
     scheduling_db,
 ):
-    """Reject a conflicting move, then verify the successful move and its replay."""
     slots = offered_slots(scheduling_db)
     first_slot = slots[0]
     second_slot = slot_at_offset(
@@ -223,7 +222,6 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
 
 
 def test_cancel_cancels_reminder_and_releases_slot(scheduling_db):
-    """Replay a cancellation and verify that its reminder is canceled and slot freed."""
     slot = offered_slots(scheduling_db)[0]
     created = create_booking(
         scheduling_db, slot, key="cancel-booking", phone="+5511999930001"

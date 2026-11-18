@@ -19,7 +19,7 @@ def build_tracer(settings: Settings):
     ):
         return None
     try:
-        # Import the optional tracer only when enabled; failures must not prevent startup.
+        # Keep the optional import inside the guard so tracing failures cannot block startup.
         from langfuse import Langfuse
 
         return Langfuse(

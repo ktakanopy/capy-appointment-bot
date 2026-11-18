@@ -33,7 +33,7 @@ class TurnClaim:
         return (self.bot.bot_id, self.row["chat_id"], self.row["update_id"], self.generation)
 
     def assert_owned(self, connection) -> None:
-        """A mutation holds this claim row lock until it commits."""
+        """Lock the conversation until commit so a replacement worker cannot take over mid-write."""
         found = connection.execute(
             """SELECT 1 FROM telegram_conversations c
                JOIN telegram_bots b ON b.bot_id=c.bot_id
@@ -80,8 +80,7 @@ class TelegramTurns:
             ).fetchone()
             if not row:
                 return None
-            # Serialize the quota check only, so replicas cannot both consume
-            # the last slot for a business. The lock ends at claim commit.
+            # Serialize the quota check so workers cannot both claim the last slot for a business.
             quota = connection.execute(
                 "SELECT pg_try_advisory_xact_lock(hashtextextended(%s, 0)) AS acquired",
                 (f"capy.turn.quota:{row['business_id']}",),
@@ -96,8 +95,7 @@ class TelegramTurns:
             ).fetchone()
             if active["total"] >= per_business:
                 return None
-            # The head query may have started before another worker completed
-            # this receipt. Check its state again under the conversation lock.
+            # The first query could have read this receipt before another worker finished it.
             receipt = connection.execute(
                 """UPDATE telegram_updates SET status='processing', attempts=attempts+1
                    WHERE bot_id=%s AND update_id=%s AND status=%s
@@ -115,10 +113,10 @@ class TelegramTurns:
                    WHERE bot_id=%s AND chat_id=%s""",
                 (generation, row["update_id"], LEASE_SECONDS, row["bot_id"], row["chat_id"]),
             )
-        date, previous = row["message_date"], row["last_message_date"]
-        late = date is not None and previous is not None and (
-            date, row["update_id"]
-        ) < (previous, row["last_update_id"])
+        message_date, last_message_date = row["message_date"], row["last_message_date"]
+        late = message_date is not None and last_message_date is not None and (
+            message_date, row["update_id"]
+        ) < (last_message_date, row["last_update_id"])
         bot = TelegramBot(row["bot_id"], row["business_id"], row["token_env"])
         return TurnClaim(bot, row, generation, row["checkpoint_thread"],
                          row["status"] == "processing", late)
@@ -167,13 +165,14 @@ class TelegramTurns:
                    WHERE bot_id=%s AND update_id=%s""",
                 (row["bot_id"], row["update_id"]),
             )
-            advance = not claim.late and row["message_date"] is not None
+            advance_message_order = not claim.late and row["message_date"] is not None
             connection.execute(
                 """UPDATE telegram_conversations SET active_update_id=NULL, lease_until=NULL,
                        checkpoint_thread=%s,
                        last_message_date=CASE WHEN %s THEN %s ELSE last_message_date END,
                        last_update_id=CASE WHEN %s THEN %s ELSE last_update_id END
                    WHERE bot_id=%s AND chat_id=%s""",
-                (checkpoint, advance, row["message_date"], advance, row["update_id"],
+                (checkpoint, advance_message_order, row["message_date"],
+                 advance_message_order, row["update_id"],
                  row["bot_id"], row["chat_id"]),
             )

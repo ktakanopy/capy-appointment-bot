@@ -46,7 +46,6 @@ class BookingService:
         turn_guard: Callable | None = None,
         telegram_destination: tuple[int, int] | None = None,
     ):
-        """Use the repository's database URL to keep reads and writes together."""
         self.repository = repository
         self.database_url = repository.database_url
         self.turn_guard = turn_guard
@@ -86,15 +85,10 @@ class BookingService:
         idempotency_key: str,
         request_hash: str,
     ):
-        """Decide whether to run this write or reuse an earlier result.
+        """Serialize retry checks so concurrent writes cannot both see an unused key.
 
-        A booking can commit before the caller gets its reply. If the caller
-        sends the same request with the same key again, return the saved record
-        so it can get the outcome without writing again. That is idempotency.
-
-        Look up the key for this business and operation, then compare the
-        request hash to catch a key reused for different details. Lock the
-        business first so two concurrent attempts cannot both see an unused key.
+        The request hash binds the key to the original booking details, even if
+        the caller lost the response after commit.
         """
         if self.turn_guard:
             self.turn_guard(connection)
@@ -243,13 +237,7 @@ class BookingService:
     def _require_customer_in_business(
         connection, business_id: str, customer_id: str
     ) -> None:
-        """Check that the customer account belongs to the business taking the booking.
-
-        The customer ID comes from the account linked to the Telegram sender.
-        That account will own the appointment and be able to look it up or
-        change it later. Query by both IDs so an account from another business
-        cannot be attached to this booking.
-        """
+        """Prevent a customer from one business from owning another business's booking."""
         customer = connection.execute(
             "SELECT id FROM customers WHERE id=%s AND business_id=%s",
             (customer_id, business_id),
@@ -260,7 +248,6 @@ class BookingService:
     def _insert_scheduled_booking(
         self, connection, slot: AvailabilitySlot, customer_id: str
     ) -> str:
-        """Insert a scheduled booking with the full interval used to detect overlaps."""
         booking_id = str(uuid.uuid4())
         occupied_from, occupied_until = self._calculate_occupied_interval(
             connection, slot
@@ -299,10 +286,7 @@ class BookingService:
 
     @staticmethod
     def _calculate_reminder_time(connection, slot: AvailabilitySlot) -> datetime:
-        """Use the same reminder policy for new and moved bookings.
-
-        Subtract the business's lead time from the appointment's start time.
-        """
+        """Use the same reminder policy for new and moved bookings."""
         business = connection.execute(
             "SELECT reminder_lead_minutes FROM businesses WHERE id=%s",
             (slot.business_id,),
@@ -313,12 +297,7 @@ class BookingService:
     def _queue_booking_reminder(
         connection, business_id: str, booking_id: str, send_at: datetime
     ) -> None:
-        """Schedule a reminder by saving a pending job with its due time.
-
-        CAPY can reply as soon as the booking commits. A separate worker picks
-        up the job when it is due and writes the reminder to the demo inbox.
-        Save the job with the booking so a failed booking leaves no reminder.
-        """
+        """Share the booking transaction so a rollback also removes the reminder."""
         connection.execute(
             """INSERT INTO reminders
                    (id,business_id,booking_id,send_at,status,telegram_bot_id,telegram_chat_id)
@@ -395,7 +374,7 @@ class BookingService:
                 if record:
                     return booking_from_row(row), record["result_code"]
                 self._require_upcoming_booking(row["starts_at"])
-                result = self._write_booking_status(
+                outcome = self._write_booking_status(
                     connection, booking_id, BookingStatus(row["status"]), operation
                 )
                 self._save_retry_result(
@@ -405,12 +384,12 @@ class BookingService:
                     idempotency_key,
                     request_hash,
                     booking_id,
-                    result,
+                    outcome,
                 )
                 updated = self._load_customer_booking(
                     connection, business_id, customer_id, booking_id
                 )
-                return booking_from_row(updated), result
+                return booking_from_row(updated), outcome
         except psycopg.errors.ExclusionViolation as exc:
             raise DomainError(
                 "booking_conflict",
@@ -420,7 +399,6 @@ class BookingService:
 
     @staticmethod
     def _require_upcoming_booking(starts_at: datetime) -> None:
-        """Enforce the change cutoff by comparing the start time with the UTC clock."""
         if starts_at <= datetime.now(UTC):
             raise DomainError(
                 "booking_started", "This booking can no longer be changed.", 409

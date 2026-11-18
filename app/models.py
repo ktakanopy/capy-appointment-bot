@@ -170,11 +170,11 @@ class CustomerInput(Contract):
     def validate_phone(cls, value: str | None) -> str | None:
         if value is None:
             return None
-        if any(not (ch.isdigit() or ch in "+(). -") for ch in value):
+        if any(not (char.isdigit() or char in "+(). -") for char in value):
             raise ValueError(
                 "phone may contain digits and standard phone punctuation only"
             )
-        normalized = "".join(ch for ch in value if ch.isdigit() or ch == "+")
+        normalized = "".join(char for char in value if char.isdigit() or char == "+")
         if normalized.count("+") > 1 or (
             "+" in normalized and not normalized.startswith("+")
         ):
@@ -188,7 +188,7 @@ class CustomerInput(Contract):
     @classmethod
     def normalize_name(cls, value: str) -> str:
         value = " ".join(value.split())
-        if not any(ch.isalpha() for ch in value):
+        if not any(char.isalpha() for char in value):
             raise ValueError("full_name must contain letters")
         return value
 

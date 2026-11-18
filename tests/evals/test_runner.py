@@ -54,8 +54,8 @@ def test_live_provider_failure_is_reported_as_error_without_fallback(monkeypatch
 
 def test_smoke_task_dataset_passes_and_languages_are_explicit():
     cases = load_dataset("evals/data/smoke-text.jsonl")
-    assert {c.language for c in cases} == {"en", "pt"}
-    assert all(r.status == "pass" for r in run_scenarios(cases))
+    assert {case.language for case in cases} == {"en", "pt"}
+    assert all(result.status == "pass" for result in run_scenarios(cases))
 
 
 def test_duplicate_ids_and_split_leakage_are_rejected(tmp_path):

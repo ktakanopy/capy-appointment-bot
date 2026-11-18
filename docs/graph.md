@@ -35,6 +35,13 @@ flowchart TD
 
 The arrows mirror the graph edges in [builder.py](../app/graph/builder.py). `decide` calls Laya and applies deterministic constraints in `route_turn`. Preparation helpers run inside `prepare_action`; they are not separate graph nodes. Redis checkpoints state throughout graph execution; the `persist` node appends the reply to history.
 
+Use the compiled graph to check the arrows against the implementation after changing a route.
+This prints Mermaid using the offline providers.
+
+```sh
+uv run --locked python scripts/generate_graph_diagram.py
+```
+
 Laya's HTTP body has exactly two keys: `message` (Gemma's interpreted text) and `context` (the current `WorkflowDraft`). The original message, Gemma facts object, intent labels, confidence guesses and customer identity are not additional routing inputs. Laya owns the action decision, including `CLARIFY` when the meaning remains ambiguous. Python checks ownership, offered slots and current booking policy. See the [model contracts](model-contracts.md) for seed-based payload examples.
 
 Text and complete audio transcripts enter the same interpretation path. Audio chunk outputs never reach execution. Gemma and Laya are required for normal turns; evaluations explicitly substitute deterministic implementations. Neither provider can authorize an account, invent an offered slot or bypass booking policy.

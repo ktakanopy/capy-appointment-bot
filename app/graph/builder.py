@@ -30,7 +30,6 @@ def build_graph(interpreter, decision=None, threshold: float = 0.55, checkpointe
         return load_context(state, current_actions())
 
     def interpret_node(state: SchedulingGraphState) -> dict:
-        """Interpret the turn with the configured provider."""
         return interpret(state, interpreter)
 
     def decide_node(state: SchedulingGraphState) -> dict:

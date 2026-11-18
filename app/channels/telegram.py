@@ -39,23 +39,23 @@ class TelegramBotApi:
         )
         try:
             with request.urlopen(api_request, timeout=timeout) as response:
-                result = _decode_response(response)
+                response_body = _decode_response(response)
         except HTTPError as error:
             raise _http_failure(error) from None
         except (URLError, TimeoutError, OSError, ValueError):
             raise TelegramApiError("telegram_transport_error") from None
 
-        if not isinstance(result, dict):
+        if not isinstance(response_body, dict):
             raise TelegramApiError("telegram_api_error")
-        if not result.get("ok"):
-            error_code = result.get("error_code")
+        if not response_body.get("ok"):
+            error_code = response_body.get("error_code")
             code = (
                 f"telegram_api_{error_code}"
                 if isinstance(error_code, int)
                 else "telegram_api_error"
             )
-            raise TelegramApiError(code, retry_after=_retry_after(result))
-        return result.get("result")
+            raise TelegramApiError(code, retry_after=_retry_after(response_body))
+        return response_body.get("result")
 
     def get_me(self) -> dict:
         result = self.call("getMe")
@@ -94,12 +94,12 @@ class TelegramBotApi:
         url = f"{self._api_base_url}/file/bot{self._token}/{relative_path}"
         try:
             with request.urlopen(url, timeout=45) as response:
-                data = response.read(max_bytes + 1)
+                file_bytes = response.read(max_bytes + 1)
         except (HTTPError, URLError, TimeoutError, OSError):
             raise TelegramApiError("telegram_file_download_failed") from None
-        if len(data) > max_bytes:
+        if len(file_bytes) > max_bytes:
             raise TelegramApiError("telegram_file_too_large")
-        return data
+        return file_bytes
 
     def get_file(self, file_id: str, max_bytes: int) -> bytes:
         result = self.call("getFile", {"file_id": file_id})

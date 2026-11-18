@@ -59,7 +59,6 @@ def test_failed_laya_produces_retry_and_no_booking_write(monkeypatch):
     assert actions.created == actions.canceled == actions.rescheduled == []
 
 
-# These exercise the worker boundary without Telegram, model, or database calls.
 from app.channels.telegram import TelegramApiError
 
 

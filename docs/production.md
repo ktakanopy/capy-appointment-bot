@@ -10,7 +10,15 @@ Set the test bot token and start the models as described in the README. Run the 
 
 - Build a tested image and set `CAPY_IMAGE` to its tag or digest. Set `CAPY_ENV_FILE` to a private runtime environment file. Set `DATABASE_URL`, `CHAT_REDIS_URL`, `GEMMA_BASE_URL`, and `LAYA_BASE_URL` to reachable services. Set `CAPY_DB_POOL_MAX` to a small per-process maximum. Budget the sum across replicas, release jobs, and operators. A value of zero uses direct connections.
 - Give each bot its own environment variables for its Bot API token and webhook secret. Set `CAPY_BOT_ENV_FILE` to the private token file and `CAPY_WEBHOOK_ENV_FILE` to the private webhook-secret file. The reference Compose config supplies them to different roles. Use a random URL-safe webhook secret of at least 16 characters. The registry stores environment variable names. Use an opaque URL-safe route ID for each bot. Provision businesses and their catalogs through a controlled data import or administrative process before registering a bot.
-- Terminate HTTPS in front of the API. Route `POST /telegram/<route>` to CAPY. Use `GET /live` for process liveness and `GET /health` for PostgreSQL and Redis readiness. Keep the models on private endpoints. Set proxy body limits for the webhook and omit request bodies and secret headers from proxy logs.
+- Terminate HTTPS in front of the API and route `POST /telegram/<route>` to CAPY. Keep the models on private endpoints. Set proxy body limits for the webhook and omit request bodies and secret headers from proxy logs.
+
+| Endpoint | Response |
+| --- | --- |
+| `GET /live` | `200` when the API process responds. |
+| `GET /health` | `200` when PostgreSQL and Redis respond, or `503` when either is unavailable. |
+| `POST /telegram/<route>` | `204` after committing the receipt or recognizing a duplicate. `403` rejects an invalid route or secret, `400` rejects an invalid update, `413` rejects a body over 256 KiB, and `503` signals a database error. |
+
+The webhook's `204` acknowledges receipt. A separate worker handles the booking and queues the reply. [API handlers](../app/main.py#L71) · [Turn processing](architecture.md#how-the-telegram-worker-works)
 
 ## Release and register a test bot
 

@@ -114,7 +114,7 @@ class ReminderWorker:
                             (reminder["id"],),
                         )
                 except Exception as exc:
-                    # attempts counts failed deliveries, not successful claims.
+                    # The demo worker's retry budget counts failed deliveries only.
                     attempts = reminder["attempts"] + 1
                     should_retry = attempts < 3
                     connection.execute(

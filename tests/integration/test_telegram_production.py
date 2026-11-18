@@ -264,7 +264,7 @@ def test_locked_reminder_does_not_block_another_bot(scheduling_db):
         )
     with ThreadPoolExecutor(max_workers=1) as workers:
         with connect(url) as connection:
-            # Make the reminder the first candidate and leave its booking locked.
+            # The earlier readiness timestamp puts this locked reminder ahead of the other bot's reply.
             connection.execute("SELECT id FROM bookings WHERE id=%s FOR UPDATE", (booking.id,))
             job = workers.submit(TelegramOutbox(url).claim).result(timeout=3)
             assert job["bot_id"] == other.bot_id

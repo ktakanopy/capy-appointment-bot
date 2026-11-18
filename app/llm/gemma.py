@@ -141,8 +141,7 @@ def _join_transcripts(previous: str, current: str, overlap_seconds: float) -> st
         return current
     previous_words = previous.split()
     current_words = current.split()
-    # Restrict matching to the audio overlap. Never globally deduplicate text:
-    # repetition elsewhere in a message can be intentional.
+    # Match only across the clip boundary to preserve intentional repetition elsewhere.
     max_words = min(
         len(previous_words), len(current_words), math.ceil(overlap_seconds * 6)
     )

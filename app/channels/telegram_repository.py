@@ -91,8 +91,7 @@ class TelegramRepository:
             ).fetchone()
 
     def recover_interrupted(self, bot_id: int) -> None:
-        # A crash may have happened after a booking commit but before its reply
-        # was saved. Never rerun that graph turn; tell the user to check first.
+        # Ask the customer to check their bookings because the interrupted turn may have committed.
         with connect(self.database_url) as connection:
             connection.execute(
                 """UPDATE telegram_updates

@@ -48,8 +48,7 @@ def poll(settings, stop: Event, logger) -> None:
         log_event(logger, "telegram.poll.started", bot_id=bot_id)
         while not stop.is_set():
             try:
-                # Re-read after a long idle period so Telegram can resume with
-                # a new sequence even when no process has restarted.
+                # After a long idle period Telegram can resume below the stored offset.
                 with lock.cursor() as cursor:
                     cursor.execute(
                         """SELECT next_update_id FROM telegram_poll_offsets
@@ -105,15 +104,15 @@ def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
     if claim.late:
         turns.finish(claim, REFRESH_OFFER, claim.checkpoint_thread)
         return
-    keep_renewing = Event()
+    stop_heartbeat = Event()
 
     def heartbeat():
-        while not keep_renewing.wait(LEASE_SECONDS / 3):
+        while not stop_heartbeat.wait(LEASE_SECONDS / 3):
             try:
                 if not turns.renew(claim):
                     return
             except psycopg.Error:
-                # The database remains the final authority on ownership.
+                # Booking and reply transactions still verify the lease before writing.
                 return
 
     renewal = Thread(target=heartbeat, daemon=True)
@@ -136,8 +135,8 @@ def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
         handler = TelegramWorker(scoped_runtime, api, repository)
         handler.bot_id = claim.bot.bot_id
         handler.business_id = claim.bot.business_id
-        thread = _conversation_id(claim.bot.business_id, claim.bot.bot_id, claim.row["chat_id"])
-        handler.checkpoint_thread = f"{thread}:attempt:{claim.generation}:{uuid.uuid4().hex}"
+        conversation_id = _conversation_id(claim.bot.business_id, claim.bot.bot_id, claim.row["chat_id"])
+        handler.checkpoint_thread = f"{conversation_id}:attempt:{claim.generation}:{uuid.uuid4().hex}"
         try:
             if claim.checkpoint_thread and not runtime.workflow.graph.checkpointer.fork_completed(
                     claim.checkpoint_thread, handler.checkpoint_thread
@@ -151,13 +150,15 @@ def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
             return
         identity = handler._ensure_customer(message["from"], claim.row["telegram_user_id"])
         reply = handler._reply_to_message(claim.row, identity, message)
-        checkpoint = handler.checkpoint_thread if handler.checkpoint_completed else claim.checkpoint_thread
-        turns.finish(claim, reply, checkpoint)
+        checkpoint_to_publish = (
+            handler.checkpoint_thread if handler.checkpoint_completed else claim.checkpoint_thread
+        )
+        turns.finish(claim, reply, checkpoint_to_publish)
         log_event(runtime.logger, "telegram.turn.finished", bot_id=claim.bot.bot_id,
                   queue_ms=round((time.time() - claim.row["received_at"].timestamp()) * 1000),
                   processing_ms=round((time.monotonic() - started) * 1000))
     finally:
-        keep_renewing.set()
+        stop_heartbeat.set()
         renewal.join(timeout=1)
 
 

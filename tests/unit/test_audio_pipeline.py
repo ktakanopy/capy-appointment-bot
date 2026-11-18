@@ -21,11 +21,11 @@ def recording(seconds):
             for i in range(seconds * 16000)
         ),
     )
-    out = io.BytesIO()
-    with wave.open(out, "wb") as f:
-        f.setparams((1, 2, 16000, 0, "NONE", "not compressed"))
-        f.writeframes(samples.tobytes())
-    return out.getvalue()
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav_file:
+        wav_file.setparams((1, 2, 16000, 0, "NONE", "not compressed"))
+        wav_file.writeframes(samples.tobytes())
+    return buffer.getvalue()
 
 
 def test_complete_long_recording_preserves_late_correction(monkeypatch):
@@ -48,7 +48,7 @@ def test_complete_long_recording_preserves_late_correction(monkeypatch):
     assert len(calls) == 3
     assert "Actually cancel my appointment instead" in transcript
     assert transcript.endswith("Please cancel it")
-    assert all(c["modality"] == "audio" for c in calls)
+    assert all(call["modality"] == "audio" for call in calls)
 
 
 def test_failed_middle_chunk_returns_no_partial_transcript(monkeypatch):

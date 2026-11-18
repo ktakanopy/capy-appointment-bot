@@ -19,8 +19,6 @@ REPLY_BURST = 5
 
 
 class TelegramDelivery:
-    """The channel adapter deals only with handing one message to Telegram."""
-
     def send(self, job: dict) -> None:
         bot = TelegramBot(job["bot_id"], job["business_id"], job["token_env"])
         bot.client().send_message(job["chat_id"], job["message"], job["reply_markup"])
@@ -60,8 +58,7 @@ class TelegramOutbox:
             try:
                 claimed = self._authorize(job)
             except LockNotAvailable:
-                # Another transaction owns this booking, reminder, or bot
-                # budget. Check another chat without waiting for its lock.
+                # Skip contended rows so other chats can still receive messages.
                 continue
             if claimed:
                 return claimed
@@ -111,8 +108,7 @@ class TelegramOutbox:
 
     @staticmethod
     def _lock_current_reminder(connection, job: dict) -> bool:
-        # Match booking cancellation's lock order. Never take an outbox lock
-        # before a booking or reminder lock when dispatching a reminder.
+        # Match cancellation's booking, reminder, outbox lock order to avoid deadlocks.
         booking = connection.execute(
             """SELECT b.id, b.status, b.customer_id FROM reminders r
                JOIN bookings b ON b.id=r.booking_id AND b.business_id=r.business_id
@@ -171,8 +167,7 @@ class TelegramOutbox:
         bot_cooldown: int | None = None,
     ) -> bool:
         with connect(self.database_url) as connection:
-            # Keep the same reminder -> outbox lock order used by booking
-            # writes. Completion for an old generation cannot change the schedule.
+            # Lock the reminder first so completion and booking changes acquire locks in the same order.
             if job["reminder_id"]:
                 connection.execute(
                     "SELECT id FROM reminders WHERE id=%s FOR UPDATE",

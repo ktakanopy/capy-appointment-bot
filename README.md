@@ -8,7 +8,9 @@ Customers can search, choose a slot, book, look up appointments, confirm, cancel
 
 ## Run the offline example
 
-Run the scheduling workflow locally with scripted model responses and simulated booking services. You can try it without Telegram, PostgreSQL, Redis or model downloads.
+With Python 3.11 or later and `uv`, run the scheduling workflow locally with scripted model
+responses and simulated booking services. The example runs without Telegram, PostgreSQL,
+Redis, or model downloads.
 
 ```sh
 uv sync --locked --extra dev
@@ -110,7 +112,8 @@ For multiple bots, CAPY supports a shared webhook, conversation workers, and a r
 
 ## Documentation
 
-- [Architecture](docs/architecture.md) — Telegram worker and booking walkthroughs
+- [Source map](docs/source-map.md) — where to find each part of the app, the tests, and the tools
+- [Architecture](docs/architecture.md) — Telegram workers, booking flow, and [where to start reading the code](docs/architecture.md#how-to-read-the-code)
 - [Conversation graph](docs/graph.md) — routing, state, and workflow steps
 - [Model contracts](docs/model-contracts.md) — Gemma and Laya setup and APIs
 - [Database](docs/database.md) — tables, booking transactions, and reminders
