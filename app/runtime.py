@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import partial
 
 from redis import Redis
 
@@ -27,8 +28,6 @@ class RuntimeContext:
     bookings: BookingService
     workflow: LangGraphWorkflow
     redis: Redis
-    audio_understanding: GemmaUnderstanding
-    audio_chunker: AudioChunker
 
 
 def create_runtime(settings: Settings | None = None) -> RuntimeContext:
@@ -53,9 +52,23 @@ def create_runtime(settings: Settings | None = None) -> RuntimeContext:
     )
     interpreter = build_interpreter("gemma", settings.gemma_base_url)
     decision = build_decision("laya", settings.laya_base_url)
+    audio_understanding = GemmaUnderstanding(
+        settings.gemma_base_url,
+        timeout_seconds=settings.telegram_audio_chunk_timeout_seconds,
+    )
+    transcribe = partial(
+        audio_understanding.transcribe_recording,
+        chunker=AudioChunker(
+            max_input_bytes=settings.telegram_audio_max_bytes,
+            max_decoded_bytes=settings.telegram_audio_max_decoded_bytes,
+            decode_timeout_seconds=settings.telegram_audio_decode_timeout_seconds,
+        ),
+        processing_timeout_seconds=settings.telegram_audio_processing_timeout_seconds,
+    )
     graph = build_graph(
         interpreter,
         decision,
+        transcribe=transcribe,
         checkpointer=RedisCheckpointSaver(
             redis_client,
             ttl_seconds=settings.session_ttl_minutes * 60,
@@ -71,15 +84,6 @@ def create_runtime(settings: Settings | None = None) -> RuntimeContext:
         bookings=bookings,
         workflow=LangGraphWorkflow(graph),
         redis=redis_client,
-        audio_understanding=GemmaUnderstanding(
-            settings.gemma_base_url,
-            timeout_seconds=settings.telegram_audio_chunk_timeout_seconds,
-        ),
-        audio_chunker=AudioChunker(
-            max_input_bytes=settings.telegram_audio_max_bytes,
-            max_decoded_bytes=settings.telegram_audio_max_decoded_bytes,
-            decode_timeout_seconds=settings.telegram_audio_decode_timeout_seconds,
-        ),
     )
 
 

@@ -16,7 +16,7 @@ from app.runtime import RuntimeContext
 
 
 class CustomerSchedulingActions:
-    """Execute scheduling operations for a trusted customer in one conversation.
+    """Execute scheduling operations for a trusted customer during one turn.
 
     Implements the SchedulingActions protocol through its methods. The workflow
     selects the operation; this object calls services with the trusted identity.
@@ -34,14 +34,17 @@ class CustomerSchedulingActions:
         self.customer_id = customer_id
         self.conversation_id = conversation_id
         self.last_booking: Booking | None = None
+        self._turn_catalog: CatalogResponse | None = None
 
     def catalog(self, business_id: str) -> CatalogResponse:
+        """Load the catalog once so date resolution, transcription, and the graph share it."""
         if business_id != self.business_id:
             raise DomainError("business_not_found", "Business not found.", 404)
-        catalog = self.runtime.repository.catalog(business_id)
-        if catalog is None:
-            raise DomainError("business_not_found", "Business not found.", 404)
-        return catalog
+        if self._turn_catalog is None:
+            self._turn_catalog = self.runtime.repository.catalog(business_id)
+            if self._turn_catalog is None:
+                raise DomainError("business_not_found", "The business is not available.", 404)
+        return self._turn_catalog
 
     def search(self, request: AvailabilitySearchRequest) -> list[AvailabilitySlot]:
         if request.business_id != self.business_id:

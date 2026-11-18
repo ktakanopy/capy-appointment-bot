@@ -99,7 +99,7 @@ def test_compiled_graph_has_routing_nodes():
     names = set(build_graph(DeterministicInterpreter()).get_graph().nodes)
     assert {
         "load_context",
-        "interpret",
+        "understand_input",
         "merge_draft",
         "decide",
         "search",

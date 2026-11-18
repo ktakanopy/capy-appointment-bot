@@ -64,7 +64,7 @@ class TurnContext(BaseModel):
 
     conversation_id: str
     business_id: str
-    message: str
+    message: str | None = None
     today: str
     selected_slot_id: str | None = None
     customer_id: str | None = None

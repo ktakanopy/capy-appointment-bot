@@ -1,7 +1,10 @@
 import json
 
+import pytest
+
 from app.evals.models import EvaluationScenario, EvaluationTurn
 from app.evals.runner import load_dataset, main, run_scenarios
+from app.llm.schemas import SchedulingInterpretation
 
 
 def test_failed_extraction_makes_cli_exit_nonzero(tmp_path):
@@ -117,3 +120,36 @@ def test_fixed_input_routing_requires_a_labelled_interpreted_message():
     result = run_scenarios([case], layer="routing")[0]
     assert result.status == "error"
     assert result.observed["fallback_used"] is False
+
+
+@pytest.mark.parametrize("layer", ["workflow", "extraction"])
+def test_audio_eval_measures_the_transcript_once(monkeypatch, tmp_path, layer):
+    recordings = []
+
+    def transcribe(self, recording, context, *, chunker):
+        if layer == "workflow":
+            from app.graph.context import current_input
+
+            assert current_input().recording == recording
+        recordings.append(recording)
+        return "Cancel my booking."
+
+    def interpret(self, message, context):
+        assert message == "Cancel my booking."
+        return SchedulingInterpretation(message=message)
+
+    monkeypatch.setattr("app.llm.gemma.GemmaUnderstanding.transcribe_recording", transcribe)
+    monkeypatch.setattr("app.llm.gemma.GemmaUnderstanding.interpret", interpret)
+    (tmp_path / "voice.wav").write_bytes(b"fixture")
+    case = EvaluationScenario(
+        scenario_id="voice",
+        title="Cancel by voice",
+        turns=[EvaluationTurn(audio_path="voice.wav", reference_transcript="Cancel my booking.")],
+    )
+
+    result = run_scenarios([case], understanding="gemma", layer=layer, dataset_dir=tmp_path)[0]
+
+    assert result.status == "pass"
+    assert recordings == [b"fixture"]
+    assert result.observed["turns"][0]["word_errors"] == 0
+    assert result.observed["turns"][0]["reference_words"] == 3

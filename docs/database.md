@@ -23,7 +23,7 @@ SQLAlchemy binds the lookup values and uses Psycopg to send the query to Postgre
 
 A session owns one operation’s transaction. Exiting the context commits successful writes and rolls back on failure. Booking changes pass that session through validation, the booking write, the reminder and the saved retry result. Telegram turns use a single conditional update to renew a live lease. Turn completion commits the reply and the next checkpoint reference together before broker acknowledgement. [Session context](../app/database.py#L45) · [Booking transaction](../app/booking.py#L152) · [Lease renewal](../app/channels/telegram_turns.py#L194) · [Turn completion](../app/channels/telegram_turns.py#L221)
 
-The fallback turn search and some maintenance queries use fixed SQL to make PostgreSQL’s locking and statement boundaries visible. The bot registration command holds a separate physical connection for its advisory lock and closes it when registration ends. [Fallback query](../app/channels/telegram_turns.py#L26) · [Worker maintenance](../app/telegram_service.py#L240) · [Registration lock](../app/channels/telegram_repository.py#L21)
+The fallback turn search and some maintenance queries use fixed SQL to make PostgreSQL’s locking and statement boundaries visible. The bot registration command holds a separate physical connection for its advisory lock and closes it when registration ends. [Fallback query](../app/channels/telegram_turns.py#L26) · [Worker maintenance](../app/telegram_service.py#L297) · [Registration lock](../app/channels/telegram_repository.py#L21)
 
 ## Tables and relationships
 

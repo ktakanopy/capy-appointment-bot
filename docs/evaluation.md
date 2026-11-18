@@ -17,7 +17,9 @@ uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understandi
 
 Field accuracy does not establish whether a rewritten message preserved its meaning. Before a real quality benchmark or fine-tuning run, review interpretations for omitted constraints, negations, late corrections, ambiguity and English/Portuguese paraphrases. The small current corpus is a regression seed, not a semantic rewrite-quality benchmark.
 
-Audio workflow and extraction evaluations require Gemma to transcribe the complete recording.
+Audio workflow evaluations pass fixture recordings through the same `understand_input` node
+as Telegram. Extraction-only evaluations call Gemma independently to measure its output.
+Both paths score the single completed transcript against the synthetic reference.
 The runner reports transcription failures as errors. For successful transcripts, `word_errors`
 is the fewest word insertions, deletions, or substitutions needed to match the reference.
 The comparison ignores case and treats sequences of letters, digits, and underscores as words.

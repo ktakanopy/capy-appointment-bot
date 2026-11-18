@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from typing import Annotated, Any, TypedDict
 
+HISTORY_LIMIT = 24
+
 
 def _append_messages(
     existing: list[dict[str, str]] | None, new: list[dict[str, str]] | None
 ) -> list[dict[str, str]]:
-    return [*(existing or []), *(new or [])][-24:]
+    return [*(existing or []), *(new or [])][-HISTORY_LIMIT:]
 
 
 class SchedulingGraphState(TypedDict, total=False):

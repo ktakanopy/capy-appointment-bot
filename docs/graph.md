@@ -1,12 +1,12 @@
 # Conversation graph
 
-A turn loads its catalog and checkpoint draft. Gemma rewrites the sanitized message in simple terms and extracts booking facts without classifying intent. Python merges those facts into the draft, then asks Laya to route using only the interpreted message and conversation context. Deterministic constraints enforce required details and valid references before execution. Execution calls owned domain operations through `SchedulingActions`; persistence adds the reply to bounded history.
+A turn loads its catalog and checkpoint draft. The `understand_input` node accepts typed text or asks Gemma to transcribe a complete recording. It redacts the resulting text, then uses Gemma to rewrite the message in simple terms and extract booking facts. Python merges those facts into the draft, then asks Laya to choose the next action from the interpreted message and draft context. Deterministic checks enforce required details and valid references before execution. Execution calls owned domain operations through `SchedulingActions`, and persistence adds the reply to bounded history.
 
 ```mermaid
 flowchart TD
     START([Start turn]) --> load_context["load_context<br/>Load business catalog"]
-    load_context --> interpret["interpret<br/>Gemma simplifies the message;<br/>extracts facts for Python"]
-    interpret --> merge_draft["merge_draft<br/>Update the conversation draft"]
+    load_context --> understand_input["understand_input<br/>Transcribe audio when present<br/>Redact text and extract booking facts"]
+    understand_input --> merge_draft["merge_draft<br/>Update the conversation draft"]
     merge_draft --> decide{"decide<br/>Laya proposes an action;<br/>Python constrains the route"}
 
     decide --> clarify["clarify<br/>Ask for missing details"]
@@ -44,10 +44,10 @@ uv run --locked python scripts/generate_graph_diagram.py
 
 Laya's HTTP body has exactly two keys: `message` (Gemma's interpreted text) and `context` (the current `WorkflowDraft`). The original message, Gemma facts object, intent labels, confidence guesses and customer identity are not additional routing inputs. Laya owns the action decision, including `CLARIFY` when the meaning remains ambiguous. Python checks ownership, offered slots and current booking policy. See the [model contracts](model-contracts.md) for seed-based payload examples.
 
-Text and complete audio transcripts enter the same interpretation path. Audio chunk outputs never reach execution. Gemma and Laya are required for normal turns; evaluations explicitly substitute deterministic implementations. Neither provider can authorize an account, invent an offered slot or bypass booking policy.
+Telegram downloads a bounded recording and passes it to the workflow in memory. The graph waits for all chunks before interpreting a voice message, so a late correction can change the request Laya sees. A failed transcription stops the turn before routing. Gemma and Laya are required for normal turns. Offline text evaluations use deterministic test providers.
 
 `prepare_action` dispatches to `_prepare_create`, `_prepare_reschedule` or `_prepare_booking_status_change`. These functions check the required slot and booking references before routing to `execute`. `CustomerSchedulingActions` connects those workflow operations to services for the trusted customer; `SchedulingActions` is the protocol also implemented by evaluation fixtures.
 
-Redis holds the draft, offered slots, sanitized interpretation/decision fields and at most 24 messages. Each worker attempt writes to a separate thread. A successful turn publishes the thread reference on the PostgreSQL conversation row. Tokens and private customer and booking objects are absent. The workflow requires a valid result.
+Redis holds the draft, offered slots, sanitized interpretation and decision fields, and at most 24 messages. Raw inputs and the display name used for redaction are scoped to the invocation. The node appends one sanitized user message after interpretation succeeds. Each worker attempt writes to a separate thread. A successful turn publishes the thread reference on the PostgreSQL conversation row.
 
 An unsupported response is not an operational human handoff; there is no staffed handoff queue.

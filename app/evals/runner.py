@@ -38,6 +38,24 @@ class TimedInterpreter:
             self.milliseconds = (perf_counter() - start) * 1000
 
 
+class TimedTranscriber:
+    """Measure and score fixture transcription without putting it in graph state."""
+
+    def __init__(self, provider):
+        self.provider = provider
+        self.chunker = AudioChunker()
+        self.milliseconds = 0.0
+        self.transcript = ""
+
+    def __call__(self, recording, context):
+        started = perf_counter()
+        self.transcript = self.provider.transcribe_recording(
+            recording, context, chunker=self.chunker
+        )
+        self.milliseconds = (perf_counter() - started) * 1000
+        return self.transcript
+
+
 class TimedDecision:
     def __init__(self, provider):
         self.provider, self.milliseconds = provider, 0.0
@@ -122,8 +140,11 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
         build_interpreter(understanding, settings.gemma_base_url)
     )
     decision = TimedDecision(build_decision(routing, settings.laya_base_url))
+    transcribe = TimedTranscriber(GemmaUnderstanding(settings.gemma_base_url))
     workflow = LangGraphWorkflow(
-        build_graph(interpreter, decision, checkpointer=InMemorySaver())
+        build_graph(
+            interpreter, decision, checkpointer=InMemorySaver(), transcribe=transcribe
+        )
     )
     context = {"today": "2026-10-19", "service_names": ["Massage"], **case.context}
     actions = ScenarioSchedulingActions(context, case.existing_booking)
@@ -148,20 +169,19 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
         for turn_index, turn in enumerate(turns):
             debug_event("eval.turn.started", number=turn_index + 1, layer=layer)
             turn_context = {**context, **turn.context}
+            message = turn.utterance
+            recording = None
             if layer == "routing":
                 if not turn.interpreted_message:
                     raise ValueError(
                         "Fixed-input routing requires an interpreted_message label"
                     )
-                message, transcript_ms, audio_metrics = (
-                    sanitize_message(turn.interpreted_message),
-                    0.0,
-                    {},
-                )
-            else:
-                message, transcript_ms, audio_metrics = _read_turn_input(
-                    turn, turn_context, settings, understanding, dataset_dir
-                )
+                message = sanitize_message(turn.interpreted_message)
+            elif turn.audio_path:
+                if understanding != "gemma":
+                    raise ValueError("Audio evaluations require Gemma understanding")
+                recording = (Path(dataset_dir) / turn.audio_path).read_bytes()
+                message = None
             actions.last_booking = None
             if layer == "workflow":
                 reply = workflow.handle_turn(
@@ -172,9 +192,9 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
                         today=turn_context["today"],
                         customer_id="fixture-customer" if case.authenticated else None,
                         idempotency_key=f"eval:{case.scenario_id}:{turn_index}",
-                        input_modality="audio" if turn.audio_path else "text",
                     ),
                     actions,
+                    recording=recording,
                 )
                 state = workflow.state(case.scenario_id)
                 interpretation = SchedulingInterpretation.model_validate(
@@ -189,8 +209,15 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
                 interpretation = SchedulingInterpretation(message=message)
                 action = decision.decide(message, turn.draft).next_action
             else:
-                interpretation = interpreter.interpret(message, turn_context)
+                if recording is not None:
+                    message = transcribe(recording, turn_context)
+                interpretation = interpreter.interpret(sanitize_message(message), turn_context)
                 action = None
+            transcript_ms = 0.0
+            audio_metrics = {}
+            if recording is not None:
+                transcript_ms = transcribe.milliseconds
+                audio_metrics = _word_errors(turn.reference_transcript, transcribe.transcript)
             fields = interpretation.model_dump(mode="json")
             _score_turn(turn, turn_index, fields, action, layer, counters, mismatches)
             observed["turns"].append(
@@ -233,21 +260,6 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
         observed=observed,
         mismatches=mismatches,
     )
-
-
-def _read_turn_input(turn, context, settings, understanding, dataset_dir):
-    if not turn.audio_path:
-        return sanitize_message(turn.utterance), 0.0, {}
-    if understanding != "gemma":
-        raise ValueError("Audio evaluations require Gemma understanding")
-    started = perf_counter()
-    recording = (Path(dataset_dir) / turn.audio_path).read_bytes()
-    transcript = GemmaUnderstanding(settings.gemma_base_url).transcribe_recording(
-        recording, context, chunker=AudioChunker()
-    )
-    elapsed_ms = (perf_counter() - started) * 1000
-    metrics = _word_errors(turn.reference_transcript, transcript)
-    return sanitize_message(transcript), elapsed_ms, metrics
 
 
 def _score_turn(turn, index, fields, action, layer, counters, mismatches):

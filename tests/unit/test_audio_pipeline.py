@@ -2,6 +2,7 @@ import io
 import math
 import wave
 from array import array
+from unittest.mock import Mock
 
 import pytest
 
@@ -51,7 +52,7 @@ def test_complete_long_recording_preserves_late_correction(monkeypatch):
     assert all(call["modality"] == "audio" for call in calls)
 
 
-def test_failed_middle_chunk_returns_no_partial_transcript(monkeypatch):
+def test_failed_middle_chunk_stops_before_interpretation_and_routing(monkeypatch):
     model = GemmaUnderstanding("http://fixture")
     calls = []
 
@@ -62,9 +63,17 @@ def test_failed_middle_chunk_returns_no_partial_transcript(monkeypatch):
         return {"transcript": "Book a massage"}
 
     monkeypatch.setattr(model, "_post", post)
+    interpreter, router = Mock(), Mock()
+    actions = FakeSchedulingActions()
+    workflow = LangGraphWorkflow(
+        build_graph(interpreter, router, transcribe=model.transcribe_recording)
+    )
     with pytest.raises(ProviderError):
-        model.transcribe_recording(recording(61), {}, chunker=AudioChunker())
+        workflow.handle_turn(_turn(None), actions, recording=recording(61))
     assert len(calls) == 2
+    interpreter.interpret.assert_not_called()
+    router.decide.assert_not_called()
+    assert actions.created == actions.canceled == actions.rescheduled == []
 
 
 def test_corrupt_audio_is_rejected():
@@ -104,13 +113,14 @@ def test_full_audio_is_interpreted_before_one_laya_route_and_booking_action(
             return DecisionOutput(next_action="CANCEL", confidence=0.9)
 
     monkeypatch.setattr(model, "_post", post)
-    transcript = model.transcribe_recording(recording(61), {}, chunker=AudioChunker())
     actions = FakeSchedulingActions(
         refs=[BookingRef(id="booking-1", service_id="massage", label="later")]
     )
-    workflow = LangGraphWorkflow(build_graph(model, RouteMeaning()))
+    workflow = LangGraphWorkflow(
+        build_graph(model, RouteMeaning(), transcribe=model.transcribe_recording)
+    )
     result = workflow.handle_turn(
-        _turn(transcript, customer_id="customer-1", input_modality="audio"), actions
+        _turn(None, customer_id="customer-1"), actions, recording=recording(61)
     )
     assert calls == ["audio", "audio", "audio", "text", "route"]
     assert result.intent == "cancel"

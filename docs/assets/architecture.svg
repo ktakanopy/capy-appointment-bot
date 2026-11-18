@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="652" viewBox="0 0 1000 652" role="img" aria-labelledby="title description">
   <title id="title">CAPY runtime architecture</title>
-  <desc id="description">The webhook stores Telegram updates in PostgreSQL. A relay signals the Telegram worker through RabbitMQ. It calls Gemma for complete audio transcription, sanitizes the input and runs a LangGraph turn. LangGraph calls Gemma for interpretation, gives Laya the interpreted message and draft context, and applies workflow rules to the proposed action. Python services enforce availability and booking policy in PostgreSQL. Redis checkpoints conversation state. PostgreSQL also stores Telegram receipts, saved replies and demo reminders, and is accessed by the reminder worker and owner CLI.</desc>
+  <desc id="description">The webhook stores Telegram updates in PostgreSQL. A relay signals the Telegram worker through RabbitMQ. The worker verifies the sender and passes text or a downloaded recording to LangGraph. One graph node uses Gemma to transcribe recordings, redacts the resulting text and calls Gemma to interpret the message. LangGraph gives Laya the interpreted message and draft context, then validates the proposed action. Python services enforce availability and booking policy in PostgreSQL. Redis checkpoints sanitized conversation state. PostgreSQL also stores Telegram receipts, saved replies and demo reminders, and is accessed by the reminder worker and owner CLI.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 Z" fill="#536b64"/>
@@ -29,7 +29,6 @@
   <path class="link" d="M 718 225 H 664"/>
   <path class="link two-way" d="M 500 290 V 322"/>
   <path class="link two-way" d="M 500 488 V 525"/>
-  <path class="link two-way" d="M 336 245 H 282"/>
   <path class="link two-way" d="M 336 361 H 282"/>
   <path class="link two-way" d="M 336 454 H 282"/>
   <path class="link two-way" d="M 336 477 H 309 V 573 H 282"/>
@@ -44,7 +43,6 @@
     <rect x="340" y="529" width="320" height="92" rx="12"/>
   </g>
   <g class="card model">
-    <rect x="32" y="202" width="246" height="84" rx="12"/>
     <rect x="32" y="319" width="246" height="84" rx="12"/>
     <rect x="32" y="412" width="246" height="84" rx="12"/>
   </g>
@@ -66,11 +64,11 @@
   <text class="detail" x="739" y="272">or an outgoing message ID</text>
 
   <text class="heading" x="358" y="229">Telegram worker</text>
-  <text class="detail" x="358" y="251">Verify sender and sanitize text</text>
-  <text class="detail" x="358" y="272">Save replies before sending</text>
+  <text class="detail" x="358" y="251">Verify sender and download audio</text>
+  <text class="detail" x="358" y="272">Pass typed text or recording</text>
 
   <text class="heading" x="358" y="356">LangGraph workflow</text>
-  <text class="detail" x="358" y="385">Interpret text and update the draft</text>
+  <text class="detail" x="358" y="385">Understand input and update the draft</text>
   <text class="detail" x="358" y="408">Send message and context to Laya</text>
   <text class="detail" x="358" y="431">Validate the action and its references</text>
   <text class="detail" x="358" y="454">Return a reply to the worker</text>
@@ -79,13 +77,9 @@
   <text class="detail" x="358" y="581">Search availability and bookings</text>
   <text class="detail" x="358" y="602">Enforce ownership and booking policy</text>
 
-  <text class="heading" x="49" y="229">Gemma</text>
-  <text class="detail" x="49" y="251">Transcribe the full recording</text>
-  <text class="detail" x="49" y="272">before the scheduling turn</text>
-
   <text class="heading" x="49" y="346">Gemma</text>
-  <text class="detail" x="49" y="368">Rewrite the sanitized text</text>
-  <text class="detail" x="49" y="389">and extract booking facts</text>
+  <text class="detail" x="49" y="368">Transcribe recordings</text>
+  <text class="detail" x="49" y="389">Interpret and extract facts</text>
 
   <text class="heading" x="49" y="439">Laya</text>
   <text class="detail" x="49" y="466">Propose the next action</text>

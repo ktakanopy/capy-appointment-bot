@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from langgraph.graph import END, START, StateGraph
 
-from app.graph.context import current_actions
+from app.graph.context import current_actions, current_input
 from app.graph.decision import DeterministicDecision
 from app.graph.state import SchedulingGraphState
 from app.graph.steps import (
@@ -10,7 +12,6 @@ from app.graph.steps import (
     escalate,
     execute,
     help_reply,
-    interpret,
     load_context,
     lookup,
     merge_draft,
@@ -19,18 +20,26 @@ from app.graph.steps import (
     route_turn,
     search,
     select,
+    understand_input,
 )
 
 
-def build_graph(interpreter, decision=None, threshold: float = 0.55, checkpointer=None):
+def build_graph(
+    interpreter,
+    decision=None,
+    threshold: float = 0.55,
+    checkpointer=None,
+    *,
+    transcribe: Callable[[bytes, dict], str] | None = None,
+):
     """Wire interpretation and routing to workflow steps with optional checkpoints."""
     decision_engine = decision or DeterministicDecision()
 
     def load_context_node(state: SchedulingGraphState) -> dict:
         return load_context(state, current_actions())
 
-    def interpret_node(state: SchedulingGraphState) -> dict:
-        return interpret(state, interpreter)
+    def understand_input_node(state: SchedulingGraphState) -> dict:
+        return understand_input(state, current_input(), interpreter, transcribe)
 
     def decide_node(state: SchedulingGraphState) -> dict:
         return route_turn(state, decision_engine, threshold)
@@ -58,7 +67,7 @@ def build_graph(interpreter, decision=None, threshold: float = 0.55, checkpointe
 
     graph = StateGraph(SchedulingGraphState)
     graph.add_node("load_context", load_context_node)
-    graph.add_node("interpret", interpret_node)
+    graph.add_node("understand_input", understand_input_node)
     graph.add_node("merge_draft", merge_draft)
     graph.add_node("decide", decide_node)
     graph.add_node("clarify", clarify_node)
@@ -71,8 +80,8 @@ def build_graph(interpreter, decision=None, threshold: float = 0.55, checkpointe
     graph.add_node("escalate", escalate_node)
     graph.add_node("persist", persist)
     graph.add_edge(START, "load_context")
-    graph.add_edge("load_context", "interpret")
-    graph.add_edge("interpret", "merge_draft")
+    graph.add_edge("load_context", "understand_input")
+    graph.add_edge("understand_input", "merge_draft")
     graph.add_edge("merge_draft", "decide")
     graph.add_conditional_edges(
         "decide",

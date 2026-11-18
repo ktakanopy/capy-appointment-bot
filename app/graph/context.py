@@ -1,24 +1,37 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from contextvars import ContextVar
+from dataclasses import dataclass
 
 from app.graph.actions import SchedulingActions
 
-_ACTIONS: ContextVar[SchedulingActions | None] = ContextVar(
-    "scheduling_actions", default=None
-)
+
+@dataclass(frozen=True, repr=False)
+class TurnInput:
+    """Hold sensitive input only for the lifetime of a graph invocation."""
+
+    text: str | None
+    recording: bytes | None
+    display_name: str | None
+
+
+_TURN: ContextVar[tuple[SchedulingActions, TurnInput]] = ContextVar("scheduling_turn")
 
 
 def current_actions() -> SchedulingActions:
-    actions = _ACTIONS.get()
-    if actions is None:
-        raise RuntimeError("scheduling actions are not bound")
-    return actions
+    return _TURN.get()[0]
 
 
-def bind_actions(actions: SchedulingActions):
-    return _ACTIONS.set(actions)
+def current_input() -> TurnInput:
+    return _TURN.get()[1]
 
 
-def reset_actions(token) -> None:
-    _ACTIONS.reset(token)
+@contextmanager
+def bind_turn(actions: SchedulingActions, turn_input: TurnInput):
+    """Keep request data available to nodes without adding it to checkpoints."""
+    token = _TURN.set((actions, turn_input))
+    try:
+        yield
+    finally:
+        _TURN.reset(token)

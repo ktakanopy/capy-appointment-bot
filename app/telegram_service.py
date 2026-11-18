@@ -8,6 +8,8 @@ import re
 import signal
 import time
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import replace
 from threading import Event, Thread
 from urllib.parse import urlsplit
@@ -31,7 +33,7 @@ from app.database import DATABASE_ERRORS, database_session
 from app.db_models import TelegramOutboxRow
 from app.observability import debug_event, debug_turn, get_logger, log_event
 from app.reminders import enqueue_telegram_reminders
-from app.runtime import close_runtime, create_runtime
+from app.runtime import RuntimeContext, close_runtime, create_runtime
 from app.telegram_worker import TelegramWorker, _conversation_id
 
 
@@ -62,12 +64,18 @@ def reconcile_replies(database_url: str, bot: TelegramBot) -> None:
 
 
 def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
+    """Tie work and log events to the same Telegram update."""
     with debug_turn(claim.bot.bot_id, claim.row["update_id"]):
         debug_event("telegram.turn.claimed", attempt=claim.generation)
         _process_turn(turns, claim, runtime)
 
 
 def _process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
+    """Handle skipped turns before starting model work and lease renewal.
+
+    An interrupted attempt may have committed a booking. Ask the customer to
+    check their appointments before retrying the request.
+    """
     started = time.monotonic()
     message = private_message(claim.row)
     if message is None:
@@ -82,69 +90,118 @@ def _process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
         debug_event("telegram.turn.skipped", reason="out_of_order")
         turns.finish(claim, REFRESH_OFFER, claim.checkpoint_thread)
         return
-    stop_heartbeat = Event()
 
-    def heartbeat():
-        """Keep this worker's claim on the chat while it processes a message.
+    with _keep_turn_claim_alive(turns, claim):
+        _process_private_message(turns, claim, runtime, message, started)
 
-        A slow model call can outlast the original lease. This background thread
-        renews it every third of its lifetime so another worker cannot take over
-        while the lease is valid. It stops when processing ends or renewal fails.
-        """
-        while not stop_heartbeat.wait(LEASE_SECONDS / 3):
-            try:
-                if not turns.renew(claim):
-                    return
-            except DATABASE_ERRORS:
-                # Booking and reply transactions still verify the lease before writing.
-                return
 
-    renewal = Thread(target=heartbeat, daemon=True)
+def _process_private_message(
+    turns: TelegramTurns, claim: TurnClaim, runtime: RuntimeContext, message: dict, started: float
+) -> None:
+    """Resolve the sender for booking ownership and publish the reply with completed state."""
+    worker = _prepare_turn_worker(turns, claim, runtime)
+    if worker is None or not _restore_turn_checkpoint(turns, claim, worker):
+        return
+
+    identity = worker._ensure_customer(message["from"], claim.row["telegram_user_id"])
+    debug_event("telegram.turn.customer_resolved")
+    reply = worker._reply_to_message(claim.row, identity, message)
+    checkpoint_to_publish = (
+        worker.checkpoint_thread if worker.checkpoint_completed else claim.checkpoint_thread
+    )
+    turns.finish(claim, reply, checkpoint_to_publish)
+    log_event(
+        runtime.logger, "telegram.turn.finished", bot_id=claim.bot.bot_id,
+        queue_ms=round((time.time() - claim.row["received_at"].timestamp()) * 1000),
+        processing_ms=round((time.monotonic() - started) * 1000),
+    )
+
+
+def _prepare_turn_worker(
+    turns: TelegramTurns, claim: TurnClaim, runtime: RuntimeContext
+) -> TelegramWorker | None:
+    """Scope writes to the current claim and isolate the attempt's checkpoint.
+
+    Guard customer and booking writes with the same claim. Use a separate
+    checkpoint thread so a superseded attempt's draft stays private.
+    """
+    scoped_runtime = replace(
+        runtime,
+        bookings=BookingService(
+            runtime.repository,
+            turn_guard=claim.assert_owned,
+            telegram_destination=(claim.bot.bot_id, claim.row["chat_id"]),
+        ),
+    )
+    repository = TelegramRepository(turns.database_url, turn_guard=claim.assert_owned)
+    try:
+        api = claim.bot.client()
+    except RuntimeError:
+        _defer_turn(turns, claim, runtime, "bot_credentials")
+        return None
+
+    worker = TelegramWorker(scoped_runtime, api, repository)
+    worker.bot_id = claim.bot.bot_id
+    worker.business_id = claim.bot.business_id
+    conversation_id = _conversation_id(claim.bot.business_id, claim.bot.bot_id, claim.row["chat_id"])
+    worker.checkpoint_thread = f"{conversation_id}:attempt:{claim.generation}:{uuid.uuid4().hex}"
+    return worker
+
+
+def _restore_turn_checkpoint(turns: TelegramTurns, claim: TurnClaim, worker: TelegramWorker) -> bool:
+    """Load the previous draft so a reply like '1' refers to the right offer.
+
+    An expired draft requires a fresh offer. A Redis outage defers execution
+    so the worker can try to recover the draft on its next attempt.
+    """
+    if not claim.checkpoint_thread:
+        return True
+    try:
+        if worker.runtime.workflow.graph.checkpointer.fork_completed(
+            claim.checkpoint_thread, worker.checkpoint_thread
+        ):
+            return True
+        turns.finish(claim, "Your previous offer expired. Please ask for available times again.", None)
+    except RedisError:
+        _defer_turn(turns, claim, worker.runtime, "checkpoint_unavailable")
+    return False
+
+
+def _defer_turn(turns: TelegramTurns, claim: TurnClaim, runtime: RuntimeContext, reason: str) -> None:
+    """Reschedule a setup failure before the turn has made any customer or booking changes."""
+    turns.defer_before_execution(claim, reason)
+    log_event(runtime.logger, "telegram.turn.deferred", bot_id=claim.bot.bot_id, failure_type=reason)
+
+
+@contextmanager
+def _keep_turn_claim_alive(turns: TelegramTurns, claim: TurnClaim) -> Iterator[None]:
+    """Keep the claim valid during inference, which can outlast the lease.
+
+    Renew in the background while the turn blocks on models. Stop renewal
+    when the turn exits, including when processing raises an error.
+    """
+    stop_renewal = Event()
+    renewal = Thread(target=_renew_turn_claim, args=(turns, claim, stop_renewal), daemon=True)
     renewal.start()
     try:
-        scoped_runtime = replace(
-            runtime, bookings=BookingService(
-                runtime.repository, turn_guard=claim.assert_owned,
-                telegram_destination=(claim.bot.bot_id, claim.row["chat_id"]),
-            ),
-        )
-        repository = TelegramRepository(turns.database_url, turn_guard=claim.assert_owned)
-        try:
-            api = claim.bot.client()
-        except RuntimeError:
-            turns.defer_before_execution(claim, "bot_credentials")
-            log_event(runtime.logger, "telegram.turn.deferred", bot_id=claim.bot.bot_id,
-                      failure_type="bot_credentials")
-            return
-        handler = TelegramWorker(scoped_runtime, api, repository)
-        handler.bot_id = claim.bot.bot_id
-        handler.business_id = claim.bot.business_id
-        conversation_id = _conversation_id(claim.bot.business_id, claim.bot.bot_id, claim.row["chat_id"])
-        handler.checkpoint_thread = f"{conversation_id}:attempt:{claim.generation}:{uuid.uuid4().hex}"
-        try:
-            if claim.checkpoint_thread and not runtime.workflow.graph.checkpointer.fork_completed(
-                    claim.checkpoint_thread, handler.checkpoint_thread
-            ):
-                turns.finish(claim, "Your previous offer expired. Please ask for available times again.", None)
-                return
-        except RedisError:
-            turns.defer_before_execution(claim, "checkpoint_unavailable")
-            log_event(runtime.logger, "telegram.turn.deferred", bot_id=claim.bot.bot_id,
-                      failure_type="checkpoint_unavailable")
-            return
-        identity = handler._ensure_customer(message["from"], claim.row["telegram_user_id"])
-        debug_event("telegram.turn.customer_resolved")
-        reply = handler._reply_to_message(claim.row, identity, message)
-        checkpoint_to_publish = (
-            handler.checkpoint_thread if handler.checkpoint_completed else claim.checkpoint_thread
-        )
-        turns.finish(claim, reply, checkpoint_to_publish)
-        log_event(runtime.logger, "telegram.turn.finished", bot_id=claim.bot.bot_id,
-                  queue_ms=round((time.time() - claim.row["received_at"].timestamp()) * 1000),
-                  processing_ms=round((time.monotonic() - started) * 1000))
+        yield
     finally:
-        stop_heartbeat.set()
+        stop_renewal.set()
         renewal.join(timeout=1)
+
+
+def _renew_turn_claim(turns: TelegramTurns, claim: TurnClaim, stop: Event) -> None:
+    """Refresh the lease while ownership holds.
+
+    If renewal fails, booking and reply transactions still verify the claim
+    before writing.
+    """
+    while not stop.wait(LEASE_SECONDS / 3):
+        try:
+            if not turns.renew(claim):
+                return
+        except DATABASE_ERRORS:
+            return
 
 
 def _maintain_deliveries(database_url: str):

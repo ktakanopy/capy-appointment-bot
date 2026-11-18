@@ -4,7 +4,10 @@ from datetime import date, time
 
 from app.chat_helpers import _choose_professional, _choose_service, _slot_message
 from app.graph.actions import SchedulingActions
+from app.graph.context import TurnInput
 from app.graph.contracts import DecisionOutput, TurnResult, WorkflowDraft
+from app.graph.state import HISTORY_LIMIT
+from app.llm.gemma import ProviderError
 from app.llm.schemas import SchedulingInterpretation
 from app.models import (
     AvailabilitySearchRequest,
@@ -80,26 +83,41 @@ def load_context(state: dict, actions: SchedulingActions) -> dict:
     }
 
 
-def interpret(state: dict, interpreter) -> dict:
-    """Extract booking facts from the message and sanitize them before checkpointing."""
-    message = state.get("message", "")
-    history = list(state.get("messages") or [])
-    if history and history[-1].get("content") == message:
-        history = history[:-1]
+def understand_input(state: dict, turn_input: TurnInput, interpreter, transcribe) -> dict:
+    """Interpret one complete message so routing can account for late corrections.
+
+    Keep one history slot for the current message and redact it before it
+    reaches the interpreter or checkpoint.
+    """
+    catalog_context = {
+        "service_names": state["service_names"],
+        "professional_names": state["professional_names"],
+        "today": state["today"],
+    }
+    if turn_input.recording is None:
+        message = turn_input.text
+        if message is None:
+            raise ValueError("Missing turn input")
+    else:
+        if transcribe is None:
+            raise ProviderError("transcription_unavailable")
+        message = transcribe(turn_input.recording, catalog_context)
+        if not message or not message.strip():
+            raise ProviderError("empty_audio_transcript")
+
+    message = sanitize_message(message, turn_input.display_name)
     interpretation = interpreter.interpret(
         message,
         {
-            "service_names": state.get("service_names", []),
-            "professional_names": state.get("professional_names", []),
-            "today": state.get("today"),
+            **catalog_context,
             "has_slots": bool(
                 state.get("offered_slots") or _draft(state).candidate_booking_ids
             ),
-            "history": history,
+            "history": (state.get("messages") or [])[-(HISTORY_LIMIT - 1):],
         },
     )
     safe = {
-        key: sanitize_message(value) if isinstance(value, str) else value
+        key: sanitize_message(value, turn_input.display_name) if isinstance(value, str) else value
         for key, value in interpretation.model_dump(mode="json").items()
     }
     debug_event(
@@ -107,7 +125,11 @@ def interpret(state: dict, interpreter) -> dict:
         has_date=bool(interpretation.local_date), has_time=bool(interpretation.local_time),
         has_numbered_choice=interpretation.slot_index is not None,
     )
-    return {"interpretation": safe}
+    return {
+        "message": message,
+        "messages": [{"role": "user", "content": message}],
+        "interpretation": safe,
+    }
 
 
 def merge_draft(state: dict) -> dict:

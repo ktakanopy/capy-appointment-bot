@@ -1,8 +1,7 @@
 from app.graph.actions import SchedulingActions
-from app.graph.context import bind_actions, reset_actions
+from app.graph.context import TurnInput, bind_turn
 from app.graph.contracts import TurnContext, TurnResult, WorkflowDraft
 from app.observability import debug_event
-from app.privacy import sanitize_message
 
 
 class LangGraphWorkflow:
@@ -12,32 +11,30 @@ class LangGraphWorkflow:
         self.graph = graph
 
     def handle_turn(
-        self, turn: TurnContext, actions: SchedulingActions, *, checkpoint_thread: str | None = None
+        self,
+        turn: TurnContext,
+        actions: SchedulingActions,
+        *,
+        checkpoint_thread: str | None = None,
+        recording: bytes | None = None,
+        display_name: str | None = None,
     ) -> TurnResult:
-        debug_event("workflow.turn.started", modality=turn.input_modality, identified=bool(turn.customer_id))
-        message = sanitize_message(turn.message)
-        state = {
-            "conversation_id": turn.conversation_id,
-            "business_id": turn.business_id,
-            "message": message,
-            "today": turn.today,
-            "selected_slot_id": turn.selected_slot_id,
-            "customer_id": turn.customer_id,
-            "booking_id": turn.booking_id,
-            "idempotency_key": turn.idempotency_key,
-            "input_modality": turn.input_modality,
-            "messages": [{"role": "user", "content": message}],
-        }
+        """Bind raw input in memory so checkpoints receive only sanitized text."""
+        if (turn.message is None) == (recording is None):
+            raise ValueError("A turn requires exactly one message or recording")
+        modality = "audio" if recording is not None else turn.input_modality
+        debug_event(
+            "workflow.turn.started", modality=modality, identified=bool(turn.customer_id)
+        )
+        state = turn.model_dump(mode="json", exclude={"message"})
+        state["input_modality"] = modality
         config = {"configurable": {"thread_id": checkpoint_thread or turn.conversation_id}}
-        binding = bind_actions(actions)
-        try:
+        with bind_turn(actions, TurnInput(turn.message, recording, display_name)):
             graph_state = (
                 self.graph.invoke(state, config)
                 if self.graph.checkpointer
                 else self.graph.invoke(state)
             )
-        finally:
-            reset_actions(binding)
         turn_result = dict(graph_state["result"])
         turn_result["booking"] = actions.last_booking
         result = TurnResult.model_validate(turn_result)
