@@ -9,6 +9,7 @@ from app.models import (
     DomainError,
     OwnerBookingsResponse,
 )
+from app.observability import debug_event
 from app.repositories import PostgresRepository
 
 
@@ -39,10 +40,9 @@ def owner_agenda(
     zone = ZoneInfo(catalog.business.timezone)
     start_at = datetime.combine(start, time.min, zone)
     end_at = datetime.combine(end + timedelta(days=1), time.min, zone)
-    return OwnerBookingsResponse(
-        business=catalog.business,
-        bookings=repository.list_owner_bookings(business_id, start_at, end_at),
-    )
+    bookings = repository.list_owner_bookings(business_id, start_at, end_at)
+    debug_event("owner.agenda.loaded", bookings=len(bookings))
+    return OwnerBookingsResponse(business=catalog.business, bookings=bookings)
 
 
 def demo_reminders(
@@ -57,4 +57,5 @@ def demo_reminders(
                WHERE i.business_id=%s ORDER BY i.delivered_at DESC LIMIT 100""",
             (business_id,),
         ).fetchall()
+    debug_event("owner.reminder_inbox.loaded", reminders=len(rows))
     return DemoRemindersResponse(reminders=[DemoReminder(**row) for row in rows])

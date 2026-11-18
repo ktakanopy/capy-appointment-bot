@@ -19,6 +19,8 @@ uv run python -m app.evals.runner --understanding deterministic --routing determ
 
 The runner prints each case's status and the path to a JSON report. Look for `en-booking` to follow a massage booking from the initial request to choosing tomorrow and selecting the first offered time. The case checks that CAPY creates exactly one booking. [Follow the booking through the code](docs/architecture.md#how-to-read-the-code).
 
+To see how CAPY branches at each step, [follow one booking in the debug logs](docs/architecture.md#follow-one-booking-in-the-debug-logs).
+
 ## Try the Telegram voice demo
 
 Create a private `.env` from [`.env.example`](.env.example) and set `TELEGRAM_BOT_TOKEN` for a test bot.

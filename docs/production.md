@@ -18,7 +18,7 @@ Set the test bot token and start the models as described in the README. Run the 
 | `GET /health` | `200` when PostgreSQL and Redis respond, or `503` when either is unavailable. |
 | `POST /telegram/<route>` | `204` after committing the receipt or recognizing a duplicate. `403` rejects an invalid route or secret, `400` rejects an invalid update, `413` rejects a body over 256 KiB, and `503` signals a database error. |
 
-The webhook's `204` acknowledges receipt. A separate worker handles the booking and queues the reply. [API handlers](../app/main.py#L71) · [Turn processing](architecture.md#how-the-telegram-worker-works)
+The webhook's `204` acknowledges receipt. A separate worker handles the booking and queues the reply. [Webhook handler](../app/main.py#L78) · [Turn processing](architecture.md#how-the-telegram-worker-works)
 
 ## Release and register a test bot
 
@@ -48,6 +48,7 @@ Configure the bot's webhook with `setWebhook`, its HTTPS URL, the matching `secr
 
 - Scale text and audio independently with `docker compose -f docker-compose.production.yml up -d --scale text=2 --scale audio=2 --scale sender=2` or the equivalent in your orchestrator. The starting per-business limit is four active turns. Measure queue age, model concurrency and database connections before raising it. Sender replicas share a starting budget of 20 sends per second per bot and one send per second per chat. The actual allowed throughput depends on Telegram responses.
 - Run `python -m app.telegram_service stats` in the runtime environment to see ready-turn age, due-reminder age, outbound backlog per bot, and database connections and lock waiters.
+- Set `CAPY_LOG_LEVEL=DEBUG` in the runtime environment to inspect decisions during a test. The default is `INFO`. [Debug log walkthrough](architecture.md#follow-one-booking-in-the-debug-logs)
 - Collect intake, turn, model, booking, and outbound timing events. Measure p95 text receipt-to-acceptance, voice latency by duration, and reminder lateness separately. Measure PostgreSQL lock waits, backlog, sender 429s, and the size of Redis checkpoints. A send marked ambiguous or a reply that reports an unknown booking outcome is a failed customer journey for availability reporting.
 - Run a sustained test with a Telegram stub at 1, 5, and 20 incoming turns per second. Include mixed bots, one busy business, slow voice requests, simultaneous due reminders, and worker restarts. Use controlled live tests to measure the Telegram delivery limit. Repeat the backup, failover, and reverse-cutover checks before expanding the canary. The 100,000-user and five-second p95 targets require these measurements.
 - Consider RabbitMQ after measuring the PostgreSQL delivery path. If a broker is justified, PostgreSQL will still own reminder schedules and the authoritative outbox. Adopt a relay only after verifying publisher confirms, redelivery handling, and rollback against the same rate budgets. [Implementation plan](sdd/plan-multi-bot-production.md)

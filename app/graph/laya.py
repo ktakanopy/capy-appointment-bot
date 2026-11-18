@@ -6,7 +6,7 @@ from urllib.error import URLError
 
 from app.graph.contracts import DecisionOutput, WorkflowDraft
 from app.llm.gemma import ProviderError
-from app.observability import timed_event
+from app.observability import debug_event, timed_event
 
 
 class LayaDecision:
@@ -21,6 +21,7 @@ class LayaDecision:
         self.timeout_seconds = timeout_seconds
 
     def decide(self, message: str, context: WorkflowDraft) -> DecisionOutput:
+        debug_event("model.laya.decide.started")
         body = {
             "message": message,
             "context": context.model_dump(mode="json"),

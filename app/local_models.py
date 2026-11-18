@@ -20,6 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.channels.audio_chunks import MAX_CHUNK_FRAMES, SAMPLE_RATE
 from app.graph.contracts import DecisionOutput, WorkflowDraft
 from app.llm.schemas import SchedulingInterpretation
+from app.observability import debug_event
 
 GEMMA_REPO = "litert-community/gemma-4-E2B-it-litert-lm"
 GEMMA_REVISION = "2d74ac41a33d7da82f39f7d5720a04c68514a103"
@@ -181,6 +182,7 @@ def create_app(gemma, laya, litert) -> FastAPI:
     async def understand(
         turn: Annotated[TextTurn | AudioChunk, Field(discriminator="modality")],
     ):
+        debug_event("model.server.understand.requested", modality=turn.modality)
         try:
             if isinstance(turn, AudioChunk):
                 try:
@@ -205,6 +207,7 @@ def create_app(gemma, laya, litert) -> FastAPI:
 
     @app.post("/decide")
     async def decide(turn: RoutingTurn):
+        debug_event("model.server.decide.requested")
         try:
             return route(laya, turn)
         except (ValueError, RuntimeError, KeyError, TypeError) as error:

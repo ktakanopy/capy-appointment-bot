@@ -12,7 +12,7 @@ from app.graph.redis_checkpoint import RedisCheckpointSaver
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.gemma import GemmaUnderstanding
 from app.llm.provider import build_decision, build_interpreter
-from app.observability import build_tracer, get_logger
+from app.observability import build_tracer, debug_event, get_logger
 from app.repositories import PostgresRepository
 from app.scheduling import AvailabilityService
 
@@ -61,6 +61,7 @@ def create_runtime(settings: Settings | None = None) -> RuntimeContext:
             ttl_seconds=settings.session_ttl_minutes * 60,
         ),
     )
+    debug_event("app.runtime.configured", tracing=tracer is not None)
     return RuntimeContext(
         settings=settings,
         logger=logger,

@@ -19,7 +19,7 @@ from app.models import (
     BookingSummary,
     DomainError,
 )
-from app.observability import timed_event
+from app.observability import debug_event, timed_event
 from app.repositories import BOOKING_SELECT, PostgresRepository, booking_from_row
 from app.scheduling import validate_slot_in_transaction
 
@@ -110,11 +110,13 @@ class BookingService:
             (business_id, operation, idempotency_key),
         ).fetchone()
         if record and record["request_hash"] != request_hash:
+            debug_event("booking.retry.rejected", operation=operation)
             raise DomainError(
                 "idempotency_key_reused",
                 "This idempotency key was already used for a different request.",
                 409,
             )
+        debug_event("booking.retry.checked", operation=operation, replay=record is not None)
         return record
 
     def _save_retry_result(
@@ -204,7 +206,9 @@ class BookingService:
                 row = self._load_customer_booking(
                     connection, request.business_id, request.customer_id, booking_id
                 )
-                return BookingSummary(booking=booking_from_row(row), outcome="created")
+                result = BookingSummary(booking=booking_from_row(row), outcome="created")
+            debug_event("booking.saved", operation="create", outcome="created")
+            return result
         except psycopg.errors.ExclusionViolation as exc:
             raise DomainError(
                 "slot_unavailable",
@@ -308,6 +312,7 @@ class BookingService:
                WHERE b.id=%s AND b.business_id=%s""",
             (str(uuid.uuid4()), send_at, booking_id, business_id),
         )
+        debug_event("reminder.write.staged", operation="schedule")
 
     def read(
         self, business_id: str, customer_id: str | None, booking_id: str
@@ -389,7 +394,9 @@ class BookingService:
                 updated = self._load_customer_booking(
                     connection, business_id, customer_id, booking_id
                 )
-                return booking_from_row(updated), outcome
+                result = booking_from_row(updated), outcome
+            debug_event("booking.saved", operation=operation, outcome=outcome)
+            return result
         except psycopg.errors.ExclusionViolation as exc:
             raise DomainError(
                 "booking_conflict",
@@ -443,6 +450,7 @@ class BookingService:
                        (SELECT id FROM reminders WHERE booking_id=%s)""",
                 (booking_id,),
             )
+            debug_event("reminder.write.staged", operation="cancel")
         return target.value
 
     def reschedule(
@@ -502,7 +510,9 @@ class BookingService:
                 updated = self._load_customer_booking(
                     connection, business_id, customer_id, booking_id
                 )
-                return booking_from_row(updated), "rescheduled"
+                result = booking_from_row(updated), "rescheduled"
+            debug_event("booking.saved", operation="reschedule", outcome="rescheduled")
+            return result
         except psycopg.errors.ExclusionViolation as exc:
             raise DomainError(
                 "slot_unavailable",
@@ -556,6 +566,7 @@ class BookingService:
                    WHERE reminder_id=%s AND status='ready'""",
                 (pending["id"],),
             )
+            debug_event("reminder.write.staged", operation="move")
         else:
             self._queue_booking_reminder(
                 connection, slot.business_id, booking_id, send_at

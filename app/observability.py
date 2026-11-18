@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from contextlib import contextmanager
+from contextvars import ContextVar
 from time import monotonic
 from typing import Any
 
 from app.config import Settings
 
 _TOKEN_PATTERN = re.compile(r"\bbk1\.[0-9a-fA-F-]{36}\.\d+\.[0-9a-f]{64}\b")
+
+_update_context: ContextVar[tuple[int, int] | None] = ContextVar("update_context", default=None)
 
 
 def build_tracer(settings: Settings):
@@ -37,7 +41,8 @@ def get_logger() -> logging.Logger:
         handler = logging.StreamHandler()
         handler.setFormatter(logging.Formatter("%(message)s"))
         logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
+        level = os.getenv("CAPY_LOG_LEVEL", "INFO").strip().upper()
+        logger.setLevel(logging.DEBUG if level == "DEBUG" else logging.INFO)
     return logger
 
 
@@ -63,6 +68,27 @@ def redact(value: Any, key: str = "") -> Any:
 def log_event(logger: logging.Logger, event: str, **fields: Any) -> None:
     safe = redact(fields)
     logger.info({"event": event, **safe})
+
+
+@contextmanager
+def debug_turn(bot_id: int, update_id: int):
+    binding = _update_context.set((bot_id, update_id))
+    try:
+        yield
+    finally:
+        _update_context.reset(binding)
+
+
+def debug_event(event: str, **fields: Any) -> None:
+    logger = get_logger()
+    if not logger.isEnabledFor(logging.DEBUG):
+        return
+    context = _update_context.get()
+    if context is not None:
+        bot_id, update_id = context
+        fields.setdefault("bot_id", bot_id)
+        fields.setdefault("update_id", update_id)
+    logger.debug({"level": "debug", "event": event, **redact(fields)})
 
 
 @contextmanager

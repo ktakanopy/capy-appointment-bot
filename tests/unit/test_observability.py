@@ -1,6 +1,6 @@
 import logging
 
-from app.observability import log_event, redact
+from app.observability import debug_event, debug_turn, get_logger, log_event, redact
 
 
 def test_sensitive_fields_and_capability_tokens_are_redacted(caplog):
@@ -24,3 +24,26 @@ def test_sensitive_fields_and_capability_tokens_are_redacted(caplog):
         "email": "[redacted]",
         "nested": {"token": "[redacted]"},
     }
+
+
+def test_debug_events_require_debug_level_and_scope_update_ids(caplog):
+    logger = get_logger()
+    with caplog.at_level(logging.INFO, logger=logger.name):
+        debug_event("workflow.hidden")
+    assert not caplog.records
+
+    with caplog.at_level(logging.DEBUG, logger=logger.name):
+        with debug_turn(42, 9):
+            debug_event("workflow.example", phone="+5511999999999")
+        debug_event("workflow.outside_turn")
+
+    assert [record.msg for record in caplog.records] == [
+        {
+            "level": "debug",
+            "event": "workflow.example",
+            "phone": "[redacted]",
+            "bot_id": 42,
+            "update_id": 9,
+        },
+        {"level": "debug", "event": "workflow.outside_turn"},
+    ]

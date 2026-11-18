@@ -16,6 +16,8 @@ from langgraph.checkpoint.base import (
     get_checkpoint_metadata,
 )
 
+from app.observability import debug_event
+
 
 def _encode(typed: tuple[str, bytes]) -> list[str]:
     type_name, payload = typed
@@ -43,13 +45,16 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
         """Seed a private attempt from the last published completed checkpoint."""
         checkpoint_id = self._latest_id(source_thread, "")
         if not checkpoint_id:
+            debug_event("workflow.checkpoint.forked", found=False)
             return False
         item = self._read_json(self._item_key(source_thread, "", checkpoint_id))
         if item is None:
+            debug_event("workflow.checkpoint.forked", found=False)
             return False
         item["parent"] = None
         self._write_json(self._item_key(attempt_thread, "", checkpoint_id), item)
         self.redis.set(self._latest_key(attempt_thread, ""), checkpoint_id, ex=self.ttl_seconds)
+        debug_event("workflow.checkpoint.forked", found=True)
         return True
 
     def get_tuple(self, config) -> CheckpointTuple | None:

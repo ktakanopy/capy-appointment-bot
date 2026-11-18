@@ -4,6 +4,8 @@ import json
 from urllib import parse, request
 from urllib.error import HTTPError, URLError
 
+from app.observability import debug_event
+
 
 class TelegramApiError(RuntimeError):
     def __init__(self, code: str, *, retry_after: int | None = None):
@@ -32,6 +34,8 @@ class TelegramBotApi:
         self._api_base_url = api_base_url.rstrip("/")
 
     def call(self, method: str, payload: dict | None = None, *, timeout: float = 30):
+        if method in {"getMe", "getWebhookInfo", "getFile", "sendMessage"}:
+            debug_event("telegram.api.requested", method=method)
         url = f"{self._api_base_url}/bot{self._token}/{method}"
         request_body = json.dumps(payload or {}).encode()
         api_request = request.Request(

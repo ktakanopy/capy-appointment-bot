@@ -14,6 +14,8 @@ from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from app.observability import debug_event
+
 SAMPLE_RATE = 16_000
 SAMPLE_BYTES = 2
 MAX_CHUNK_FRAMES = 30 * SAMPLE_RATE
@@ -159,6 +161,7 @@ class AudioChunker:
 
     def _read_chunks(self, decoded: Path) -> Iterator[AudioChunk]:
         total_frames = decoded.stat().st_size // SAMPLE_BYTES
+        debug_event("audio.decoded", duration_seconds=round(total_frames / SAMPLE_RATE, 2))
         start = 0
         previous_end = 0
         with decoded.open("rb") as source:

@@ -5,6 +5,7 @@ from uuid import NAMESPACE_URL, uuid5
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.models import AvailabilitySearchRequest, AvailabilitySlot, DomainError
+from app.observability import debug_event
 from app.repositories import PostgresRepository
 
 UTC = timezone.utc
@@ -43,6 +44,7 @@ def validate_slot_in_transaction(
     exclude_booking_id: str | None = None,
 ) -> AvailabilitySlot:
     """Recheck current policy and conflicts in the same transaction as a booking write."""
+    debug_event("availability.slot.checking", is_move=exclude_booking_id is not None)
     professional = connection.execute(
         "SELECT id FROM professionals WHERE id=%s AND business_id=%s AND active FOR UPDATE",
         (professional_id, business_id),
@@ -150,6 +152,7 @@ def validate_slot_in_transaction(
             "invalid_slot", "Choose one of the listed availability slots.", 409
         )
     label = local_start.strftime("%a %d %b, %H:%M %Z (UTC%z)")
+    debug_event("availability.slot.validated")
     return AvailabilitySlot(
         slot_id=expected_slot_id,
         business_id=business_id,
@@ -176,6 +179,10 @@ class AvailabilityService:
         *,
         exclude_booking_id: str | None = None,
     ) -> list[AvailabilitySlot]:
+        debug_event(
+            "availability.search.started", specific_professional=bool(request.professional_id),
+            is_move=exclude_booking_id is not None,
+        )
         business = self.repository.business(request.business_id)
         service = self.repository.service(request.business_id, request.service_id)
         if business is None:
@@ -197,6 +204,7 @@ class AvailabilityService:
             local_today + timedelta(days=business.booking_horizon_days),
         )
         if upper_date < lower_date:
+            debug_event("availability.search.completed", slots=0, reason="outside_booking_window")
             return []
         from_local = datetime.combine(lower_date, time.min, zone) - timedelta(days=1)
         until_local = datetime.combine(
@@ -307,6 +315,7 @@ class AvailabilityService:
                             )
                         cursor += timedelta(minutes=CANDIDATE_STEP_MINUTES)
         unique_slots = {slot.slot_id: slot for slot in slots}
+        debug_event("availability.search.completed", slots=len(unique_slots))
         return sorted(
             unique_slots.values(),
             key=lambda slot: (slot.starts_at, slot.professional_name),

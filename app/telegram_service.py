@@ -24,7 +24,7 @@ from app.channels.telegram_turns import (
 )
 from app.config import load_settings
 from app.database import connect
-from app.observability import get_logger, log_event
+from app.observability import debug_event, debug_turn, get_logger, log_event
 from app.reminders import enqueue_telegram_reminders
 from app.runtime import close_runtime, create_runtime
 from app.telegram_worker import TelegramWorker, _conversation_id
@@ -57,6 +57,8 @@ def poll(settings, stop: Event, logger) -> None:
                     )
                     offset = cursor.fetchone()
                 updates = api.get_updates(offset[0] if offset else None, settings.telegram_poll_seconds)
+                if updates:
+                    debug_event("telegram.poll.received", bot_id=bot_id, updates=len(updates))
                 for update in sorted(
                     (update for update in updates if telegram_integer(update.get("update_id"))),
                     key=lambda update: update["update_id"],
@@ -93,15 +95,24 @@ def reconcile_replies(database_url: str, bot: TelegramBot) -> None:
 
 
 def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
+    with debug_turn(claim.bot.bot_id, claim.row["update_id"]):
+        debug_event("telegram.turn.claimed", attempt=claim.generation)
+        _process_turn(turns, claim, runtime)
+
+
+def _process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
     started = time.monotonic()
     message = private_message(claim.row)
     if message is None:
+        debug_event("telegram.turn.skipped", reason="unsupported_message")
         turns.finish(claim, None, claim.checkpoint_thread)
         return
     if claim.interrupted:
+        debug_event("telegram.turn.skipped", reason="interrupted_attempt")
         turns.finish(claim, UNKNOWN_OUTCOME, None)
         return
     if claim.late:
+        debug_event("telegram.turn.skipped", reason="out_of_order")
         turns.finish(claim, REFRESH_OFFER, claim.checkpoint_thread)
         return
     stop_heartbeat = Event()
@@ -149,6 +160,7 @@ def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
                       failure_type="checkpoint_unavailable")
             return
         identity = handler._ensure_customer(message["from"], claim.row["telegram_user_id"])
+        debug_event("telegram.turn.customer_resolved")
         reply = handler._reply_to_message(claim.row, identity, message)
         checkpoint_to_publish = (
             handler.checkpoint_thread if handler.checkpoint_completed else claim.checkpoint_thread
@@ -169,6 +181,7 @@ def run_worker(settings, args, stop: Event, logger) -> None:
     delivery = TelegramDelivery()
     next_maintenance = 0.0
     next_prune = 0.0
+    debug_event("telegram.worker.started", role=args.role, lane=args.lane)
     try:
         while not stop.is_set():
             did_work = False

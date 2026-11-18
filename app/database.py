@@ -9,6 +9,8 @@ from typing import Iterator
 import psycopg
 from psycopg.rows import dict_row
 
+from app.observability import debug_event
+
 _pools = {}
 _pools_lock = Lock()
 
@@ -38,6 +40,7 @@ def connect(database_url: str) -> Iterator[psycopg.Connection]:
             )
             _pools[(url, maximum)] = pool
             atexit.register(pool.close)
+            debug_event("postgres.pool.opened", max_connections=maximum)
     with pool.connection() as connection:
         yield connection
 

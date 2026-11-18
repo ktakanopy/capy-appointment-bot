@@ -1,5 +1,6 @@
 """Exercise the multi-bot boundaries with disposable PostgreSQL and Redis."""
 
+import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -123,7 +124,7 @@ def test_claims_isolate_chats_and_reject_stale_booking_and_checkpoint(scheduling
 
 @pytest.mark.parametrize("outcome", ["success", "worker_crash", "draft_expired"])
 def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
-    scheduling_db, monkeypatch, outcome
+    scheduling_db, monkeypatch, caplog, outcome
 ):
     redis_url = os.environ.get("TEST_REDIS_URL")
     if not redis_url:
@@ -135,6 +136,7 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
     runtime.workflow = LangGraphWorkflow(build_graph(
         DeterministicInterpreter(), checkpointer=runtime.workflow.graph.checkpointer
     ))
+    caplog.set_level(logging.DEBUG, logger=runtime.logger.name)
     turns = TelegramTurns(url)
     chat = time.time_ns() % 1_000_000_000
     try:
@@ -142,7 +144,9 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
         ready_updates(url)
         first = turns.claim()
         process_turn(turns, first, runtime)
-        save_update(url, bot, update(2, chat=chat, text="1"))
+        selection = update(2, chat=chat, text="1")
+        selection["message"]["from"]["first_name"] = "DebugExamplePrivateName"
+        save_update(url, bot, selection)
         ready_updates(url)
         second = turns.claim()
         assert second.checkpoint_thread
@@ -181,6 +185,22 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
                 assert "expired" in jobs[-1]["message"]
             if outcome == "worker_crash":
                 assert "check your appointments" in jobs[-1]["message"]
+        if outcome == "success":
+            expected = [
+                "telegram.inbox.recorded", "telegram.turn.claimed",
+                "workflow.checkpoint.forked", "workflow.slot.matched",
+                "availability.slot.validated", "reminder.write.staged",
+                "booking.saved", "telegram.turn.saved",
+            ]
+            events = [
+                event["event"] for record in caplog.records
+                if isinstance(event := record.msg, dict)
+                and event.get("event") in expected
+                and event.get("bot_id") == 42 and event.get("update_id") == 2
+            ]
+            assert events == expected
+        assert "DebugExamplePrivateName" not in caplog.text
+        assert "42:synthetic" not in caplog.text
     finally:
         close_runtime(runtime)
 

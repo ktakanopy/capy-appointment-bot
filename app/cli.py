@@ -4,6 +4,7 @@ import argparse
 from zoneinfo import ZoneInfo
 
 from app.config import load_settings
+from app.observability import debug_event
 from app.owner import demo_reminders, owner_agenda
 from app.repositories import PostgresRepository
 
@@ -43,6 +44,7 @@ def main():
         parser.error("Reminder lead must be between 0 and 10080 minutes")
     settings = load_settings()
     repository = PostgresRepository(settings.database_url)
+    debug_event("owner.cli.started", changes_reminder_lead=args.reminder_lead_minutes is not None)
     if args.reminder_lead_minutes is not None:
         updated = repository.update_reminder_lead(
             settings.demo_business_id, args.reminder_lead_minutes

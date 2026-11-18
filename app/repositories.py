@@ -16,6 +16,7 @@ from app.models import (
     Professional,
     Service,
 )
+from app.observability import debug_event
 
 
 def _business(row: dict[str, Any]) -> Business:
@@ -87,6 +88,7 @@ class PostgresRepository:
                 "SELECT * FROM professionals WHERE business_id=%s AND active ORDER BY name",
                 (business_id,),
             ).fetchall()
+        debug_event("postgres.catalog.loaded", services=len(services), professionals=len(professionals))
         return CatalogResponse(
             business=_business(business),
             services=[_service(row) for row in services],
@@ -175,6 +177,7 @@ class PostgresRepository:
                         "bookings": bookings,
                     }
                 )
+        debug_event("postgres.schedules.loaded", professionals=len(schedule))
         return _business(business_row), _service(service_row), schedule
 
     def customer_by_phone(self, business_id: str, phone: str) -> Customer | None:

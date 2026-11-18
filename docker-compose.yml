@@ -38,6 +38,7 @@ services:
       context: .
     command: sh -c "alembic upgrade head && python -m app.seed && python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
     environment:
+      CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
       UNDERSTANDING_PROVIDER: gemma
@@ -70,6 +71,7 @@ services:
       context: .
     command: python -m app.reminders --poll-seconds 2
     environment:
+      CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
     depends_on:
       api:
@@ -83,6 +85,7 @@ services:
     command: python -m app.telegram_service process
     stop_grace_period: 16m
     environment:
+      CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
       CHAT_REDIS_URL: redis://chat-redis:6379/0
@@ -110,6 +113,7 @@ services:
     command: python -m app.telegram_service poll
     stop_grace_period: 65s
     environment:
+      CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
@@ -126,6 +130,7 @@ services:
     command: python -m app.telegram_service send
     stop_grace_period: 45s
     environment:
+      CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     depends_on:

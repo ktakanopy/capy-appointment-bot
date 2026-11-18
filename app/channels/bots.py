@@ -9,6 +9,7 @@ from hmac import compare_digest
 
 from app.channels.telegram import TelegramBotApi
 from app.database import connect
+from app.observability import debug_event
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,7 @@ class BotRegistry:
                    FROM telegram_bots WHERE enabled AND webhook_route=%s""",
                 (route,),
             ).fetchone()
+        debug_event("telegram.bot.lookup", found=row is not None)
         return TelegramBot(**row) if row else None
 
     def contains(self, bot_id: int) -> bool:
@@ -91,6 +93,7 @@ class BotRegistry:
             if not existing:
                 raise ValueError("This bot is already registered to a different business.")
             self._backfill_conversations(connection, bot_id, business_id)
+        debug_event("telegram.bot.registered", bot_id=bot_id, reminders=reminder_delivery)
 
     def local_bot(self, bot_id: int, business_id: str) -> None:
         """Bootstrap the Compose bot without overwriting hosted settings."""

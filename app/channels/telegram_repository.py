@@ -7,6 +7,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from app.database import connect, psycopg_url
+from app.observability import debug_event
 
 
 class TelegramRepository:
@@ -211,7 +212,8 @@ class TelegramRepository:
                    WHERE business_id=%s AND bot_id=%s AND telegram_user_id=%s FOR UPDATE""",
                 (business_id, bot_id, user_id),
             ).fetchone()
-            if identity["customer_id"] is None:
+            created_customer = identity["customer_id"] is None
+            if created_customer:
                 customer_id = str(uuid.uuid4())
                 connection.execute(
                     "INSERT INTO customers (id,business_id,full_name,phone) VALUES (%s,%s,%s,%s)",
@@ -228,7 +230,8 @@ class TelegramRepository:
                     (customer_id, business_id, bot_id, user_id),
                 )
                 identity["customer_id"] = customer_id
-            return dict(identity)
+        debug_event("telegram.identity.linked", created_customer=created_customer)
+        return dict(identity)
 
     def save_contact(self, business_id: str, customer_id: str, phone: str) -> None:
         with connect(self.database_url) as connection:
@@ -238,6 +241,7 @@ class TelegramRepository:
                 "UPDATE customers SET phone=%s WHERE business_id=%s AND id=%s",
                 (phone, business_id, customer_id),
             )
+        debug_event("telegram.contact.saved")
 
     def mark_ignored(self, bot_id: int, update_id: int) -> None:
         with connect(self.database_url) as connection:

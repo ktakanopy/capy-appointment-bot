@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from app.channels.bots import TelegramBot
 from app.database import connect
+from app.observability import debug_event
 from psycopg.types.json import Jsonb
 
 
@@ -37,6 +38,7 @@ def save_update(
     """Return whether the update has a valid receipt ID and an active bot."""
     update_id = update.get("update_id")
     if not telegram_integer(update_id):
+        debug_event("telegram.inbox.ignored", reason="invalid_update_id")
         return False
     message = update.get("message")
     message = message if isinstance(message, dict) else {}
@@ -64,8 +66,10 @@ def save_update(
             (bot.bot_id, bot.business_id, polling),
         ).fetchone()
         if not registered:
+            debug_event("telegram.inbox.ignored", bot_id=bot.bot_id, update_id=update_id,
+                        reason="bot_not_registered_for_intake")
             return False
-        connection.execute(
+        receipt = connection.execute(
             """INSERT INTO telegram_updates
                    (bot_id, update_id, business_id, chat_id, telegram_user_id, payload, status,
                     message_date, ready_at, expires_at)
@@ -90,4 +94,9 @@ def save_update(
                    SET next_update_id=EXCLUDED.next_update_id, updated_at=now()""",
                 (bot.bot_id, update_id + 1),
             )
+    debug_event(
+        "telegram.inbox.recorded", bot_id=bot.bot_id, update_id=update_id,
+        source="poll" if polling else "webhook",
+        is_private=bool(supported), inserted=receipt.rowcount == 1,
+    )
     return True

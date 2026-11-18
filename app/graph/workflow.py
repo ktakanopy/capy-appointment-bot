@@ -1,6 +1,7 @@
 from app.graph.actions import SchedulingActions
 from app.graph.context import bind_actions, reset_actions
 from app.graph.contracts import TurnContext, TurnResult, WorkflowDraft
+from app.observability import debug_event
 from app.privacy import sanitize_message
 
 
@@ -13,6 +14,7 @@ class LangGraphWorkflow:
     def handle_turn(
         self, turn: TurnContext, actions: SchedulingActions, *, checkpoint_thread: str | None = None
     ) -> TurnResult:
+        debug_event("workflow.turn.started", modality=turn.input_modality, identified=bool(turn.customer_id))
         message = sanitize_message(turn.message)
         state = {
             "conversation_id": turn.conversation_id,
@@ -38,7 +40,9 @@ class LangGraphWorkflow:
             reset_actions(binding)
         turn_result = dict(graph_state["result"])
         turn_result["booking"] = actions.last_booking
-        return TurnResult.model_validate(turn_result)
+        result = TurnResult.model_validate(turn_result)
+        debug_event("workflow.turn.completed", intent=result.intent, has_booking=result.booking is not None)
+        return result
 
     def draft(self, conversation_id: str) -> WorkflowDraft:
         return WorkflowDraft.model_validate(

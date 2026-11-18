@@ -4,6 +4,7 @@ import argparse
 
 from app.config import load_settings
 from app.database import connect
+from app.observability import debug_event
 
 
 def _seed_business(
@@ -110,6 +111,8 @@ def seed(include_second_business: bool = False) -> None:
                     ("professional-second-sam", "Sam Rocha"),
                 ],
             )
+
+    debug_event("postgres.demo_seed.completed", businesses=2 if include_second_business else 1)
 
 
 if __name__ == "__main__":

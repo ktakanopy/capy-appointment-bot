@@ -8,6 +8,7 @@ from app.graph.decision import DeterministicDecision
 from app.graph.laya import LayaDecision
 from app.llm.gemma import GemmaUnderstanding
 from app.llm.schemas import SchedulingInterpretation
+from app.observability import debug_event
 
 
 class Interpreter(Protocol):
@@ -119,15 +120,19 @@ def build_interpreter(
 ) -> Interpreter:
     """Construct the requested provider; never silently substitute predictions."""
     if provider == "deterministic":
+        debug_event("model.interpreter.configured", provider=provider)
         return DeterministicInterpreter()
     if provider == "gemma":
+        debug_event("model.interpreter.configured", provider=provider)
         return GemmaUnderstanding(base_url)
     raise ValueError(f"Unsupported understanding provider: {provider}")
 
 
 def build_decision(provider: str, base_url: str = "http://localhost:8081"):
     if provider == "deterministic":
+        debug_event("model.router.configured", provider=provider)
         return DeterministicDecision()
     if provider == "laya":
+        debug_event("model.router.configured", provider=provider)
         return LayaDecision(base_url)
     raise ValueError(f"Unsupported routing provider: {provider}")

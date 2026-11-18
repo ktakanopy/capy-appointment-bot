@@ -12,6 +12,7 @@ from app.models import (
     CatalogResponse,
     Service,
 )
+from app.observability import debug_event
 from app.privacy import sanitize_message
 
 
@@ -67,6 +68,10 @@ def load_context(state: dict, actions: SchedulingActions) -> dict:
         else WorkflowDraft()
     )
     catalog = actions.catalog(state["business_id"])
+    debug_event(
+        "workflow.context.loaded", services=len(catalog.services),
+        professionals=len(catalog.professionals), resumed=bool(state.get("draft")),
+    )
     return {
         "draft": draft.model_dump(mode="json"),
         "catalog": catalog.model_dump(mode="json"),
@@ -97,6 +102,11 @@ def interpret(state: dict, interpreter) -> dict:
         key: sanitize_message(value) if isinstance(value, str) else value
         for key, value in interpretation.model_dump(mode="json").items()
     }
+    debug_event(
+        "workflow.message.interpreted", has_service=bool(interpretation.service_name),
+        has_date=bool(interpretation.local_date), has_time=bool(interpretation.local_time),
+        has_numbered_choice=interpretation.slot_index is not None,
+    )
     return {"interpretation": safe}
 
 
@@ -135,6 +145,10 @@ def merge_draft(state: dict) -> dict:
         "booking"
         if draft.candidate_booking_ids and interpretation.slot_index
         else _missing(draft, interpretation, catalog)
+    )
+    debug_event(
+        "workflow.draft.merged", operation=draft.operation, missing=draft.missing,
+        invalid_date=invalid_date,
     )
     return {
         "draft": draft.model_dump(mode="json"),
@@ -213,6 +227,10 @@ def route_turn(state: dict, decision_engine, threshold: float) -> dict:
         if selected_booking_id
         else _constrain(decision, draft, state, threshold)
     )
+    debug_event(
+        "workflow.route.selected", action=decision.next_action, confidence=decision.confidence,
+        needs_human=decision.needs_human, route=route,
+    )
     return {
         "interpretation": interpretation.model_dump(mode="json"),
         "decision": decision.model_dump(mode="json"),
@@ -262,6 +280,7 @@ def _constrain(
 
 def clarify(state: dict, actions: SchedulingActions) -> dict:
     draft = _draft(state)
+    debug_event("workflow.clarification.requested", missing=draft.missing, operation=draft.operation)
     interpretation = _interpretation(state)
     catalog = _catalog(state)
     if state.get("decision", {}).get("next_action") == "CLARIFY":
@@ -353,6 +372,7 @@ def search(state: dict, actions: SchedulingActions) -> dict:
     if draft.operation != "reschedule":
         draft.operation = "create"
     draft.missing = "slot" if slots else "date"
+    debug_event("workflow.slots.offered", count=len(slots), operation=draft.operation)
     intent = "reschedule" if draft.operation == "reschedule" else "search"
     update = _result(
         _slot_message(slots),
@@ -369,8 +389,11 @@ def select(state: dict, actions: SchedulingActions) -> dict:
     draft = _draft(state)
     interpretation = _interpretation(state)
     slots = _offered_slots(state)
-    chosen = _chosen_slot(
-        slots, state.get("selected_slot_id"), interpretation.slot_index
+    selected_slot_id = state.get("selected_slot_id")
+    chosen = _chosen_slot(slots, selected_slot_id, interpretation.slot_index)
+    debug_event(
+        "workflow.slot.matched", offered=len(slots), matched=chosen is not None,
+        option_number=interpretation.slot_index if chosen and not selected_slot_id else None,
     )
     if chosen is None:
         return _result(
@@ -401,6 +424,7 @@ def select(state: dict, actions: SchedulingActions) -> dict:
 
 def prepare_action(state: dict, actions: SchedulingActions) -> dict:
     draft = _draft(state)
+    debug_event("workflow.action.preparing", operation=draft.operation)
     if draft.operation in {"confirm", "cancel", "reschedule"} and not state.get(
         "customer_id"
     ):
@@ -529,6 +553,7 @@ def _prepare_booking_status_change(
 
 def execute(state: dict, actions: SchedulingActions) -> dict:
     draft = _draft(state)
+    debug_event("workflow.action.executing", operation=draft.operation)
     key = state["idempotency_key"]
     if not key:
         raise ValueError("A stable turn idempotency key is required")
@@ -596,6 +621,7 @@ def execute(state: dict, actions: SchedulingActions) -> dict:
 
 
 def help_reply(state: dict) -> dict:
+    debug_event("workflow.help.requested")
     """Answer scheduling questions from the catalog already loaded for this turn."""
     catalog = _catalog(state)
     message = state.get("message", "")
@@ -630,6 +656,7 @@ def lookup(state: dict, actions: SchedulingActions) -> dict:
             route="persist",
         )
     refs = actions.list_booking_refs()
+    debug_event("workflow.bookings.looked_up", count=len(refs))
     if not refs:
         return _result(
             "I could not find an upcoming appointment.", "lookup", route="persist"
@@ -645,6 +672,7 @@ def lookup(state: dict, actions: SchedulingActions) -> dict:
 def escalate(state: dict, actions: SchedulingActions) -> dict:
     draft = _draft(state)
     draft.escalated = True
+    debug_event("workflow.escalated")
     actions.record_escalation(state["conversation_id"])
     return _result(
         "I can't help with that request. I can help you find a time, book, confirm, cancel, or reschedule.",
@@ -666,6 +694,7 @@ def persist(state: dict) -> dict:
     update = {"result": result, "draft": draft.model_dump(mode="json")}
     if result.get("text"):
         update["messages"] = [{"role": "assistant", "content": result["text"]}]
+    debug_event("workflow.reply.prepared", intent=result["intent"], missing=draft.missing)
     return update
 
 

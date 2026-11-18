@@ -11,7 +11,7 @@ from app.models import (
     CatalogResponse,
     DomainError,
 )
-from app.observability import log_event, trace_event
+from app.observability import debug_event, log_event, trace_event
 from app.runtime import RuntimeContext
 
 
@@ -63,6 +63,7 @@ class CustomerSchedulingActions:
             slot_id=slot.slot_id,
             starts_at=slot.starts_at,
         )
+        debug_event("booking.customer_action.authorized", operation="create")
         result = self.runtime.bookings.create(request, idempotency_key)
         self.last_booking = result.booking
         self._record("create", result.outcome)

@@ -10,7 +10,7 @@ from psycopg.errors import LockNotAvailable
 from app.channels.bots import TelegramBot
 from app.channels.telegram import TelegramApiError
 from app.database import connect
-from app.observability import log_event
+from app.observability import debug_event, log_event
 
 MAX_ATTEMPTS = 5
 SEND_LEASE_SECONDS = 45
@@ -241,6 +241,9 @@ def send_next(outbox: TelegramOutbox, delivery: TelegramDelivery, logger) -> boo
     if job is None:
         return False
     started = time.monotonic()
+    kind = "reminder" if job["reminder_id"] else "reply"
+    debug_event("telegram.outbox.claimed", bot_id=job["bot_id"], update_id=job.get("update_id"),
+                kind=kind, attempt=job["attempts"])
     try:
         delivery.send(job)
     except TelegramApiError as error:
@@ -259,9 +262,11 @@ def send_next(outbox: TelegramOutbox, delivery: TelegramDelivery, logger) -> boo
     else:
         outcome = "sent"
         recorded = outbox.finish(job, outcome)
+    debug_event("telegram.outbox.result", bot_id=job["bot_id"], update_id=job.get("update_id"),
+                kind=kind, outcome=outcome if recorded else "claim_lost")
     log_event(logger, "telegram.outbox.finished", bot_id=job["bot_id"],
               outcome=outcome if recorded else "claim_lost", provider_outcome=outcome,
-              kind="reminder" if job["reminder_id"] else "reply",
+              kind=kind,
               elapsed_since_origin_ms=round((time.time() - job["origin_at"].timestamp()) * 1000),
               duration_ms=round((time.monotonic() - started) * 1000))
     return True

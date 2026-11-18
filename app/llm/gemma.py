@@ -10,7 +10,7 @@ from urllib.error import URLError
 
 from app.channels.audio_chunks import AudioChunker, AudioError
 from app.llm.schemas import SchedulingInterpretation
-from app.observability import timed_event
+from app.observability import debug_event, timed_event
 
 _MAX_RESPONSE_BYTES = 1_000_000
 
@@ -32,6 +32,7 @@ class GemmaUnderstanding:
 
     def interpret(self, message: str, context: dict) -> SchedulingInterpretation:
         with timed_event("model.gemma.interpret"):
+            debug_event("model.gemma.interpret.started")
             payload = self._post(
                 {"modality": "text", "message": message, "context": _safe_context(context)}
             )
@@ -68,6 +69,7 @@ class GemmaUnderstanding:
             decode_timeout_seconds=min(120, processing_timeout_seconds),
         )
         transcript = ""
+        chunk_count = 0
         try:
             decode_budget = deadline - monotonic()
             if decode_budget <= 0:
@@ -78,7 +80,8 @@ class GemmaUnderstanding:
                     chunker.decode_timeout_seconds, decode_budget
                 ),
             ) as chunks:
-                for chunk in chunks:
+                for chunk_count, chunk in enumerate(chunks, start=1):
+                    debug_event("model.gemma.audio_chunk.started", chunk_number=chunk_count)
                     remaining = deadline - monotonic()
                     if remaining <= 0:
                         raise ProviderError("audio_processing_timeout")
@@ -108,6 +111,7 @@ class GemmaUnderstanding:
             raise ProviderError(str(exc)) from None
         if not transcript:
             raise ProviderError("empty_audio_transcript")
+        debug_event("model.gemma.transcription.completed", chunks=chunk_count)
         return transcript
 
     def _post(self, body: dict, *, timeout_seconds: float | None = None) -> dict:

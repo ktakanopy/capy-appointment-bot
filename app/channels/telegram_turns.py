@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from app.channels.bots import TelegramBot
 from app.database import connect
+from app.observability import debug_event
 
 LEASE_SECONDS = 90
 UNKNOWN_OUTCOME = (
@@ -147,6 +148,7 @@ class TelegramTurns:
                    WHERE bot_id=%s AND chat_id=%s""",
                 (claim.bot.bot_id, claim.row["chat_id"]),
             )
+        debug_event("telegram.turn.retry_scheduled", reason=failure)
 
     def finish(self, claim: TurnClaim, reply: str | None, checkpoint: str | None) -> None:
         row = claim.row
@@ -176,3 +178,4 @@ class TelegramTurns:
                  advance_message_order, row["update_id"],
                  row["bot_id"], row["chat_id"]),
             )
+        debug_event("telegram.turn.saved", has_reply=bool(reply), has_checkpoint=checkpoint is not None)

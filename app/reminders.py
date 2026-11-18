@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 from app.config import load_settings
 from app.database import connect
+from app.observability import debug_event
 
 
 def reminder_message(booking: dict) -> str:
@@ -46,6 +47,7 @@ def enqueue_telegram_reminders(database_url: str, limit: int = 25) -> int:
         ).fetchall()
         for row in rows:
             if not row["authorized"] or row["booking_status"] == "canceled":
+                debug_event("reminder.telegram.skipped", reason="invalid_delivery_route")
                 connection.execute(
                     """UPDATE reminders SET status='failed',last_error='invalid_delivery_route'
                        WHERE id=%s""",
@@ -64,7 +66,10 @@ def enqueue_telegram_reminders(database_url: str, limit: int = 25) -> int:
                 "UPDATE reminders SET queued_generation=%s WHERE id=%s",
                 (row["generation"], row["id"]),
             )
-        return len(rows)
+            debug_event("reminder.telegram.outbox_staged")
+    if rows:
+        debug_event("reminder.telegram.batch_handled", count=len(rows))
+    return len(rows)
 
 
 class ReminderWorker:
@@ -92,6 +97,7 @@ class ReminderWorker:
                             (reminder["booking_id"],),
                         ).fetchone()
                         if booking is None or booking["status"] == "canceled":
+                            debug_event("reminder.demo.skipped", reason="booking_unavailable")
                             connection.execute(
                                 "UPDATE reminders SET status='canceled' WHERE id=%s",
                                 (reminder["id"],),
@@ -117,6 +123,10 @@ class ReminderWorker:
                     # The demo worker's retry budget counts failed deliveries only.
                     attempts = reminder["attempts"] + 1
                     should_retry = attempts < 3
+                    debug_event(
+                        "reminder.demo.delivery_failed", attempt=attempts, will_retry=should_retry,
+                        error_type=type(exc).__name__,
+                    )
                     connection.execute(
                         """UPDATE reminders
                            SET status=%s, attempts=%s, last_error=%s,
@@ -133,9 +143,12 @@ class ReminderWorker:
                             reminder["id"],
                         ),
                     )
+        if rows:
+            debug_event("reminder.demo.batch_handled", count=len(rows))
         return len(rows)
 
     def run_forever(self, poll_seconds: float = 2.0) -> None:
+        debug_event("reminder.demo.worker_started", poll_seconds=poll_seconds)
         while True:
             self.deliver_due()
             time.sleep(poll_seconds)

@@ -22,6 +22,7 @@ from app.graph.workflow import LangGraphWorkflow
 from app.llm.gemma import GemmaUnderstanding
 from app.llm.provider import build_decision, build_interpreter
 from app.llm.schemas import SchedulingInterpretation
+from app.observability import debug_event
 from app.privacy import sanitize_message
 
 
@@ -145,6 +146,7 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
             sum(bool(turn.expected_action) for turn in turns) if layer != "extraction" else 0
         )
         for turn_index, turn in enumerate(turns):
+            debug_event("eval.turn.started", number=turn_index + 1, layer=layer)
             turn_context = {**context, **turn.context}
             if layer == "routing":
                 if not turn.interpreted_message:
@@ -222,6 +224,7 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
         routing="not_run" if layer == "extraction" else routing,
         layer=layer,
     )
+    debug_event("eval.case.completed", status=status, mismatches=len(mismatches))
     return EvaluationResult(
         scenario_id=case.scenario_id,
         title=case.title,

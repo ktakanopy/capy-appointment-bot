@@ -7,12 +7,16 @@ reliably. This is not a guarantee of named-entity anonymization.
 import re
 from datetime import date
 
+from app.observability import debug_event
+
 _TOKEN = re.compile(r"\bbk1\.[0-9a-fA-F-]{36}\.\d+\.[0-9a-f]{64}\b")
 _EMAIL = re.compile(r"\b[^\s@]+@[^\s@]+\.[^\s@]+\b")
 _PHONE = re.compile(r"(?<!\w)\+?\d[\d ().-]{5,22}\d(?!\w)")
 
 
 def sanitize_message(text: str, known_name: str | None = None) -> str:
+    original = text
+
     def phone(match):
         value = match.group()
         try:
@@ -31,4 +35,6 @@ def sanitize_message(text: str, known_name: str | None = None) -> str:
             text,
             flags=re.I,
         )
+    if text != original:
+        debug_event("privacy.message.redacted")
     return text

@@ -17,7 +17,7 @@ from app.customer_scheduling_actions import CustomerSchedulingActions
 from app.graph.contracts import TurnContext
 from app.llm.gemma import ProviderError
 from app.models import DomainError
-from app.observability import log_event, timed_event
+from app.observability import debug_event, log_event, timed_event
 from app.privacy import sanitize_message
 from app.runtime import close_runtime, create_runtime
 
@@ -139,6 +139,7 @@ class TelegramWorker:
     def _reply_to_message(self, row: dict, identity: dict, message: dict) -> str:
         text = message.get("text")
         if _is_start_command(text):
+            debug_event("telegram.input.classified", kind="start")
             return (
                 "Tell me which service and date you would like. "
                 "You can type or send a voice message."
@@ -146,13 +147,16 @@ class TelegramWorker:
 
         contact = message.get("contact")
         if isinstance(contact, dict):
+            debug_event("telegram.input.classified", kind="contact")
             return self._contact_reply(identity, contact)
 
         try:
             incoming = self._message_input(message)
             if incoming is None:
+                debug_event("telegram.input.classified", kind="unsupported")
                 return "Send text or a voice message to schedule an appointment."
             content, modality = incoming
+            debug_event("telegram.input.classified", kind=modality)
             if not content.strip():
                 raise ValueError("empty_input")
             return self._run_turn(row, identity, content, modality)
@@ -167,6 +171,7 @@ class TelegramWorker:
                 "No booking change was made."
             )
         except DomainError as error:
+            debug_event("telegram.input.domain_error", code=error.code)
             return error.message
         except Exception as error:
             # A write may have committed before the failure. Do not promise rollback.
@@ -210,6 +215,7 @@ class TelegramWorker:
         duration = media.get("duration")
         with timed_event("telegram.audio.prepared", audio_seconds=duration if type(duration) is int else None):
             audio = self.api.get_file(file_id, settings.telegram_audio_max_bytes)
+            debug_event("telegram.audio.downloaded", bytes_received=len(audio))
             transcript = self.runtime.audio_understanding.transcribe_recording(
                 audio,
                 self._audio_transcription_context(),
