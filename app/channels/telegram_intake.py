@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from app.channels.bots import TelegramBot
+from app.channels.telegram_publications import schedule_publication
 from app.database import connect
 from app.observability import debug_event
 from psycopg.types.json import Jsonb
@@ -81,12 +82,13 @@ def save_update(
              user_id if supported else None, Jsonb(payload) if supported else None,
              "received" if supported else "delivered", date),
         )
-        if supported:
+        if supported and receipt.rowcount:
             connection.execute(
                 """INSERT INTO telegram_conversations (bot_id, chat_id, business_id)
                    VALUES (%s,%s,%s) ON CONFLICT DO NOTHING""",
                 (bot.bot_id, chat_id, bot.business_id),
             )
+            schedule_publication(connection, bot_id=bot.bot_id, chat_id=chat_id, delay=0.3)
     debug_event(
         "telegram.inbox.recorded", bot_id=bot.bot_id, update_id=update_id,
         source="webhook",

@@ -8,7 +8,18 @@ Migration `0004_remove_audit_events` removes the unused `audit_events` table. If
 
 ![Core PostgreSQL relationships for availability, bookings, the local reminder demo and Telegram intake.](assets/database-relationships.svg)
 
-The original diagram shows the core scheduling tables. The table below also includes the bot registry, claims, and shared sender state added in migration `0005_telegram_jobs`.
+The diagram covers the scheduling tables. The broker publication table references either the conversation or its outgoing job.
+
+```mermaid
+erDiagram
+    telegram_bots ||--o{ telegram_conversations : owns
+    telegram_conversations ||--o{ telegram_updates : groups
+    telegram_conversations |o--o| telegram_publications : wakes
+    telegram_outbox |o--o| telegram_publications : wakes
+    reminders |o--o{ telegram_outbox : stages
+```
+
+PostgreSQL enforces the publication relationships. Updates are grouped into conversations by bot and chat IDs.
 
 | Table | Role | Relationships and key constraints |
 | --- | --- | --- |
@@ -29,6 +40,7 @@ The original diagram shows the core scheduling tables. The table below also incl
 | `telegram_poll_offsets` | Historical Telegram cursor | One row per `bot_id`. The table is retained for migration compatibility after switching to webhook intake. |
 | `telegram_conversations` | One active turn and published checkpoint per chat | Each row belongs to a registered bot and its business. A claim generation authorizes booking writes and state publication. |
 | `telegram_outbox` | Replies and due hosted reminders | One reply per bot and update. One send job per reminder and generation. Dispatch status records the delivery outcome. |
+| `telegram_publications` | Pending broker wake-ups | References one conversation or one outgoing row. The unique target coalesces pending publications. The relay claims due records briefly and deletes them after confirmation. |
 | `telegram_bot_delivery` | Shared per-bot rate and priority state | One row per registered bot controls when its next send is eligible. |
 | `telegram_chat_delivery` | Shared per-chat rate state | One row per registered bot and destination chat controls its next send. |
 

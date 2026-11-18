@@ -18,8 +18,10 @@ from redis.exceptions import RedisError
 from app.booking import BookingService
 from app.channels.bots import BotRegistry, TelegramBot
 from app.channels.telegram import TelegramBotApi
-from app.channels.telegram_delivery import TelegramDelivery, TelegramOutbox, send_next
+from app.channels.telegram_broker import OUTGOING_QUEUE, consume_wakeups, incoming_queue, relay_publications
+from app.channels.telegram_delivery import TelegramDelivery, TelegramOutbox, deliver_claimed, send_next
 from app.channels.telegram_intake import private_message
+from app.channels.telegram_publications import backfill_publications, schedule_publication
 from app.channels.telegram_repository import TelegramRepository
 from app.channels.telegram_turns import (
     LEASE_SECONDS, REFRESH_OFFER, UNKNOWN_OUTCOME, ClaimLost, TelegramTurns, TurnClaim,
@@ -35,7 +37,7 @@ from app.telegram_worker import TelegramWorker, _conversation_id
 def reconcile_replies(database_url: str, bot: TelegramBot) -> None:
     """Copy legacy ready replies once. The caller holds the legacy worker lock."""
     with connect(database_url) as connection:
-        connection.execute(
+        outgoing = connection.execute(
             """WITH queued AS (
                    INSERT INTO telegram_outbox
                        (business_id,bot_id,chat_id,update_id,message,reply_markup,attempts,ready_at)
@@ -45,13 +47,17 @@ def reconcile_replies(database_url: str, bot: TelegramBot) -> None:
                      AND status='reply_ready' AND chat_id>0 AND chat_id=telegram_user_id
                      AND reply_text IS NOT NULL
                    ORDER BY received_at, update_id
-                   ON CONFLICT (bot_id,update_id) DO NOTHING
+                   ON CONFLICT (bot_id,update_id) DO NOTHING RETURNING id,ready_at
+               ), finished AS (
+                   UPDATE telegram_updates SET status='delivered', payload=NULL,
+                       reply_text=NULL,reply_markup=NULL,expires_at=now()+interval '30 days'
+                   WHERE bot_id=%s AND business_id=%s AND status='reply_ready'
                )
-               UPDATE telegram_updates SET status='delivered', payload=NULL,
-                   reply_text=NULL,reply_markup=NULL,expires_at=now()+interval '30 days'
-               WHERE bot_id=%s AND business_id=%s AND status='reply_ready'""",
+               SELECT id,ready_at FROM queued""",
             (bot.bot_id, bot.business_id, bot.bot_id, bot.business_id),
-        )
+        ).fetchall()
+        for row in outgoing:
+            schedule_publication(connection, outgoing_id=row["id"], due_at=row["ready_at"])
 
 
 def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
@@ -78,6 +84,12 @@ def _process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
     stop_heartbeat = Event()
 
     def heartbeat():
+        """Keep this worker's claim on the chat while it processes a message.
+
+        A slow model call can outlast the original lease. This background thread
+        renews it every third of its lifetime so another worker cannot take over
+        while the lease is valid. It stops when processing ends or renewal fails.
+        """
         while not stop_heartbeat.wait(LEASE_SECONDS / 3):
             try:
                 if not turns.renew(claim):
@@ -134,7 +146,61 @@ def _process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
         renewal.join(timeout=1)
 
 
+def _maintain_deliveries(database_url: str):
+    """Run bounded expiry and retention sweeps independently of broker delivery order."""
+    outbox = TelegramOutbox(database_url)
+    next_recovery = next_prune = 0.0
+
+    def maintain() -> None:
+        """Sweep periodically so the relay can publish promptly between checks."""
+        nonlocal next_recovery, next_prune
+        now = time.monotonic()
+        if now >= next_recovery:
+            outbox.recover_expired()
+            next_recovery = now + 5
+        if now >= next_prune:
+            prune_history(database_url)
+            next_prune = now + 60
+
+    return maintain
+
+
+def run_broker_worker(settings, args, stop: Event, logger) -> None:
+    """Run a relay, an incoming partition consumer, or an outgoing consumer."""
+    database_url = settings.database_url
+    broker_url = os.environ["TELEGRAM_AMQP_URL"]
+    partitions = args.partitions
+    if args.role == "relay":
+        relay_publications(broker_url, partitions, database_url, stop, logger,
+                           _maintain_deliveries(database_url), args.publication_role)
+        return
+    if args.role == "send":
+        outbox, delivery = TelegramOutbox(database_url), TelegramDelivery()
+
+        def send_outgoing(outgoing_id: int) -> None:
+            """Claim by ID so RabbitMQ selects work and PostgreSQL enforces send policy."""
+            deliver_claimed(outbox, delivery, logger, outbox.claim_by_id(outgoing_id))
+
+        consume_wakeups(broker_url, partitions, OUTGOING_QUEUE, 1, send_outgoing, stop, logger)
+        return
+    turns = TelegramTurns(database_url)
+    runtime = create_runtime(settings)
+
+    def process_chat_turn(bot_id: int, chat_id: int) -> None:
+        """Run the head turn for this chat or leave its deferred wake-up in PostgreSQL."""
+        claim = turns.claim_chat(bot_id, chat_id, per_business=args.per_business)
+        if claim:
+            process_turn(turns, claim, runtime)
+
+    try:
+        consume_wakeups(broker_url, partitions, incoming_queue(args.partition), 2,
+                        process_chat_turn, stop, logger)
+    finally:
+        close_runtime(runtime)
+
+
 def run_worker(settings, args, stop: Event, logger) -> None:
+    """Run database scheduling and the PostgreSQL rollback workers."""
     turns = TelegramTurns(settings.database_url)
     outbox = TelegramOutbox(settings.database_url)
     runtime = create_runtime(settings) if args.role == "process" else None
@@ -206,6 +272,9 @@ def queue_stats(database_url: str, logger) -> None:
                 (SELECT extract(epoch FROM clock_timestamp()-min(send_at))::float8
                  FROM reminders WHERE status='pending' AND telegram_bot_id IS NOT NULL
                    AND send_at<=clock_timestamp()) AS oldest_due_reminder_seconds,
+                (SELECT extract(epoch FROM clock_timestamp()-min(due_at))::float8
+                 FROM telegram_publications WHERE due_at<=clock_timestamp())
+                    AS oldest_due_publication_seconds,
                 (SELECT count(*) FROM pg_stat_activity WHERE datname=current_database())
                     AS database_connections,
                 (SELECT count(*) FROM pg_stat_activity WHERE datname=current_database()
@@ -266,7 +335,11 @@ def register(settings, args) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("role", choices=("process", "send", "remind", "register", "stats"))
+    parser.add_argument("role", choices=("process", "send", "relay", "backfill", "remind", "register", "stats"))
+    parser.add_argument("--transport", choices=("rabbitmq", "postgres"), default="rabbitmq")
+    parser.add_argument("--partitions", type=int, default=os.getenv("TELEGRAM_PARTITIONS", "1"))
+    parser.add_argument("--partition", type=int, default=0)
+    parser.add_argument("--publication-role", choices=("process", "send"))
     parser.add_argument("--lane", choices=("all", "text", "audio"), default="all")
     parser.add_argument("--per-business", type=int, default=4)
     parser.add_argument("--idle-seconds", type=float, default=0.2)
@@ -279,6 +352,13 @@ def main() -> None:
     args = parser.parse_args()
     if not 0.01 <= args.idle_seconds <= 60 or not 1 <= args.per_business <= 100:
         parser.error("Use idle seconds between 0.01 and 60 and a per-business cap between 1 and 100.")
+    if not 1 <= args.partitions <= 64 or not 0 <= args.partition < args.partitions:
+        parser.error("Use 1 to 64 partitions and a partition index within that range.")
+    if args.transport == "rabbitmq" and args.lane != "all":
+        parser.error("The RabbitMQ consumer combines text and audio. --lane is for PostgreSQL rollback.")
+    broker_role = args.role == "relay" or (args.role in ("process", "send") and args.transport == "rabbitmq")
+    if broker_role and not os.environ.get("TELEGRAM_AMQP_URL"):
+        parser.error("Set TELEGRAM_AMQP_URL to run a RabbitMQ worker.")
     settings = load_settings()
     if args.role == "register":
         register(settings, args)
@@ -287,10 +367,15 @@ def main() -> None:
     if args.role == "stats":
         queue_stats(settings.database_url, logger)
         return
+    if args.role == "backfill":
+        incoming, outgoing = backfill_publications(settings.database_url, args.publication_role)
+        log_event(logger, "telegram.publications.backfilled", incoming=incoming, outgoing=outgoing)
+        return
     stopping = Event()
     for name in (signal.SIGINT, signal.SIGTERM):
         signal.signal(name, lambda *_: stopping.set())
-    run_worker(settings, args, stopping, logger)
+    worker = run_broker_worker if broker_role else run_worker
+    worker(settings, args, stopping, logger)
 
 
 if __name__ == "__main__":

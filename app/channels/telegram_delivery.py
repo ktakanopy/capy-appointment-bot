@@ -9,6 +9,7 @@ from psycopg.errors import LockNotAvailable
 
 from app.channels.bots import TelegramBot
 from app.channels.telegram import TelegramApiError
+from app.channels.telegram_publications import schedule_publication
 from app.database import connect
 from app.observability import debug_event, log_event
 
@@ -16,6 +17,18 @@ MAX_ATTEMPTS = 5
 SEND_LEASE_SECONDS = 45
 BOT_SEND_INTERVAL = 0.05
 REPLY_BURST = 5
+OUTGOING_DETAILS = """
+    SELECT o.*, b.token_env, COALESCE(u.received_at,r.send_at,o.created_at) AS origin_at
+    FROM telegram_outbox o
+    JOIN telegram_bots b ON b.bot_id=o.bot_id AND b.business_id=o.business_id AND b.enabled
+    LEFT JOIN telegram_updates u ON u.bot_id=o.bot_id AND u.update_id=o.update_id
+    LEFT JOIN reminders r ON r.id=o.reminder_id AND r.generation=o.reminder_generation
+"""
+OLDER_SENDS = """
+    SELECT 1 FROM telegram_outbox older
+    WHERE older.bot_id=o.bot_id AND older.chat_id=o.chat_id
+      AND older.id<o.id AND older.status IN ('ready','dispatching')
+"""
 
 
 class TelegramDelivery:
@@ -32,23 +45,14 @@ class TelegramOutbox:
         """Authorize a ready dispatch and reserve both rate budgets atomically."""
         with connect(self.database_url) as connection:
             candidates = connection.execute(
-                """SELECT o.*, b.token_env, COALESCE(u.received_at,r.send_at,o.created_at) AS origin_at
-                   FROM telegram_outbox o
-                   JOIN telegram_bots b ON b.bot_id=o.bot_id
-                     AND b.business_id=o.business_id AND b.enabled
+                OUTGOING_DETAILS + f"""
                    LEFT JOIN telegram_bot_delivery bot ON bot.bot_id=o.bot_id
                    LEFT JOIN telegram_chat_delivery chat
                      ON chat.bot_id=o.bot_id AND chat.chat_id=o.chat_id
-                   LEFT JOIN telegram_updates u ON u.bot_id=o.bot_id AND u.update_id=o.update_id
-                   LEFT JOIN reminders r ON r.id=o.reminder_id AND r.generation=o.reminder_generation
                    WHERE o.status='ready' AND o.ready_at<=clock_timestamp()
                      AND (bot.available_at IS NULL OR bot.available_at<=clock_timestamp())
                      AND (chat.available_at IS NULL OR chat.available_at<=clock_timestamp())
-                     AND NOT EXISTS (
-                         SELECT 1 FROM telegram_outbox older
-                         WHERE older.bot_id=o.bot_id AND older.chat_id=o.chat_id
-                           AND older.id<o.id AND older.status IN ('ready','dispatching')
-                     )
+                     AND NOT EXISTS ({OLDER_SENDS})
                    ORDER BY CASE WHEN COALESCE(bot.reply_streak,0)>=%s
                                  THEN o.reminder_id IS NULL ELSE o.reminder_id IS NOT NULL END,
                             o.ready_at, o.id LIMIT 16""",
@@ -64,7 +68,44 @@ class TelegramOutbox:
                 return claimed
         return None
 
+    def claim_by_id(self, outgoing_id: int) -> dict | None:
+        """Reserve the broker-selected send or persist a wake-up if delivery is blocked."""
+        with connect(self.database_url) as connection:
+            job = connection.execute(
+                OUTGOING_DETAILS + " WHERE o.id=%s AND o.status='ready' AND o.ready_at<=clock_timestamp()",
+                (outgoing_id,),
+            ).fetchone()
+        if job:
+            try:
+                claimed = self._authorize(job)
+            except LockNotAvailable:
+                claimed = None
+            if claimed:
+                return claimed
+        self._wake_when_ready(outgoing_id)
+        return None
+
+    def _wake_when_ready(self, outgoing_id: int) -> None:
+        """Keep blocked sends pending without holding a broker delivery or retrying the API."""
+        with connect(self.database_url) as connection:
+            row = connection.execute(
+                f"""SELECT greatest(o.ready_at,bot.available_at,chat.available_at,
+                          clock_timestamp()+CASE
+                              WHEN NOT b.enabled THEN interval '1 minute'
+                              WHEN EXISTS ({OLDER_SENDS}) THEN interval '0.25 seconds'
+                              ELSE interval '0.05 seconds'
+                          END) AS due_at
+                   FROM telegram_outbox o JOIN telegram_bots b USING (bot_id,business_id)
+                   LEFT JOIN telegram_bot_delivery bot ON bot.bot_id=o.bot_id
+                   LEFT JOIN telegram_chat_delivery chat ON chat.bot_id=o.bot_id AND chat.chat_id=o.chat_id
+                   WHERE o.id=%s AND o.status='ready'""",
+                (outgoing_id,),
+            ).fetchone()
+            if row:
+                schedule_publication(connection, outgoing_id=outgoing_id, due_at=row["due_at"])
+
     def _authorize(self, job: dict) -> dict | None:
+        """Check current permissions, chat ordering and rate budgets before the HTTP call."""
         with connect(self.database_url) as connection:
             bot = connection.execute(
                 """SELECT token_env FROM telegram_bots WHERE enabled AND bot_id=%s
@@ -92,8 +133,9 @@ class TelegramOutbox:
                     )
                 return None
             locked = connection.execute(
-                """SELECT id FROM telegram_outbox WHERE id=%s AND status='ready'
-                   AND ready_at<=clock_timestamp() FOR UPDATE SKIP LOCKED""",
+                f"""SELECT o.id FROM telegram_outbox o WHERE o.id=%s AND o.status='ready'
+                   AND o.ready_at<=clock_timestamp() AND NOT EXISTS ({OLDER_SENDS})
+                   FOR UPDATE SKIP LOCKED""",
                 (job["id"],),
             ).fetchone()
             if not locked or not self._reserve(connection, job):
@@ -166,6 +208,7 @@ class TelegramOutbox:
         self, job: dict, status: str, *, error: str | None = None, retry_after: float = 0,
         bot_cooldown: int | None = None,
     ) -> bool:
+        """Record the provider outcome and schedule any safe retry before acknowledgement."""
         with connect(self.database_url) as connection:
             # Lock the reminder first so completion and booking changes acquire locks in the same order.
             if job["reminder_id"]:
@@ -180,11 +223,14 @@ class TelegramOutbox:
                        message=CASE WHEN %s='ready' THEN message END,
                        reply_markup=CASE WHEN %s='ready' THEN reply_markup END
                    WHERE id=%s AND attempts=%s AND status='dispatching'
-                     AND lease_until>clock_timestamp()""",
+                     AND lease_until>clock_timestamp() RETURNING ready_at""",
                 (status, error, retry_after, status, status, status, job["id"], job["attempts"]),
             )
-            if updated.rowcount != 1:
+            updated_row = updated.fetchone()
+            if not updated_row:
                 return False
+            if status == "ready":
+                schedule_publication(connection, outgoing_id=job["id"], due_at=updated_row["ready_at"])
             if bot_cooldown:
                 connection.execute(
                     """UPDATE telegram_bot_delivery SET available_at=GREATEST(
@@ -237,7 +283,13 @@ class TelegramOutbox:
 
 
 def send_next(outbox: TelegramOutbox, delivery: TelegramDelivery, logger) -> bool:
+    """Drain one send using the PostgreSQL rollback worker."""
     job = outbox.claim()
+    return deliver_claimed(outbox, delivery, logger, job)
+
+
+def deliver_claimed(outbox: TelegramOutbox, delivery: TelegramDelivery, logger, job: dict | None) -> bool:
+    """Call Telegram once for a reserved send and persist its classified outcome."""
     if job is None:
         return False
     started = time.monotonic()

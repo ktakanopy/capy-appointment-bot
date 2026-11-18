@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import math
 import os
 import time
@@ -12,6 +13,7 @@ from threading import Event
 from urllib.parse import urlsplit
 
 from app.channels.bots import BotRegistry, TelegramBot
+from app.channels.telegram_broker import OUTGOING_QUEUE, consume_wakeups, incoming_queue, relay_publications
 from app.channels.telegram_delivery import TelegramOutbox
 from app.channels.telegram_intake import save_update
 from app.channels.telegram_turns import TelegramTurns
@@ -24,7 +26,16 @@ def main() -> None:
     parser.add_argument("--rate", type=int, required=True)
     parser.add_argument("--seconds", type=int, default=10)
     parser.add_argument("--idle-chats", type=int, default=0)
+    parser.add_argument("--transport", choices=("postgres", "rabbitmq"), default="postgres")
+    parser.add_argument("--audio-ms", type=int, default=120)
     args = parser.parse_args()
+    broker_url = os.getenv("TEST_AMQP_URL") if args.transport == "rabbitmq" else None
+    if args.transport == "rabbitmq" and (
+        not broker_url or not urlsplit(broker_url).path.endswith("_test")
+    ):
+        parser.error("Set TEST_AMQP_URL to a disposable broker vhost ending in _test.")
+    if not 0 <= args.audio_ms <= 15_000:
+        parser.error("Use an audio duration from 0 to 15000 ms.")
     url = os.environ["TEST_DATABASE_URL"]
     if (
         not urlsplit(url).path.endswith("_test")
@@ -59,30 +70,64 @@ def main() -> None:
     stop = Event()
     turns, outbox = TelegramTurns(url), TelegramOutbox(url)
 
+    durations = []
+    logger = logging.getLogger(__name__)
+    partitions = 4
+
+    def finish_turn(claim):
+        """Simulate inference with the same text and audio delays in either mode."""
+        audio = "voice" in claim.row["payload"]["message"]
+        time.sleep(args.audio_ms / 1000 if audio else 0.03)
+        turns.finish(claim, "Synthetic response", None)
+
+    def finish_send(job):
+        """Record a stubbed provider success using the real sender transaction."""
+        if job and outbox.finish(job, "sent"):
+            durations.append(time.time() - job["origin_at"].timestamp())
+
     def process(lane):
+        """Measure the original PostgreSQL queue under its normal lane layout."""
         while not stop.is_set():
             claim = turns.claim(lane=lane)
             if claim is None:
                 stop.wait(0.01)
                 continue
-            time.sleep(0.12 if lane == "audio" else 0.03)
-            turns.finish(claim, "Synthetic response", None)
+            finish_turn(claim)
 
     def send():
-        durations = []
+        """Measure the original database sender."""
         while not stop.is_set():
             job = outbox.claim()
             if job is None:
                 stop.wait(0.01)
                 continue
-            if outbox.finish(job, "sent"):
-                durations.append(time.time() - job["origin_at"].timestamp())
-        return durations
+            finish_send(job)
+
+    def process_chat(bot_id, chat_id):
+        """Exercise scoped turn selection through a real broker delivery."""
+        claim = turns.claim_chat(bot_id, chat_id)
+        if claim:
+            finish_turn(claim)
+
+    def send_outgoing(outgoing_id):
+        """Exercise sends selected by real broker deliveries."""
+        finish_send(outbox.claim_by_id(outgoing_id))
 
     total = args.rate * args.seconds
-    with ThreadPoolExecutor(max_workers=6) as pool:
-        processors = [pool.submit(process, lane) for lane in ("text", "text", "text", "audio")]
-        senders = [pool.submit(send) for _ in range(2)]
+    with ThreadPoolExecutor(max_workers=7) as pool:
+        if broker_url:
+            workers = [pool.submit(relay_publications, broker_url, partitions, url, stop, logger, lambda: None)]
+            workers += [
+                pool.submit(consume_wakeups, broker_url, partitions, incoming_queue(i), 2, process_chat, stop, logger)
+                for i in range(partitions)
+            ]
+            workers += [
+                pool.submit(consume_wakeups, broker_url, partitions, OUTGOING_QUEUE, 1, send_outgoing, stop, logger)
+                for _ in range(2)
+            ]
+        else:
+            workers = [pool.submit(process, lane) for lane in ("text", "text", "text", "audio")]
+            workers += [pool.submit(send) for _ in range(2)]
         start = time.monotonic()
         try:
             for index in range(total):
@@ -99,7 +144,7 @@ def main() -> None:
                     raise RuntimeError("Synthetic intake did not accept the update.")
             deadline = time.monotonic() + 120
             while time.monotonic() < deadline:
-                for future in (*processors, *senders):
+                for future in workers:
                     if future.done():
                         future.result()
                 with connect(url) as connection:
@@ -111,10 +156,14 @@ def main() -> None:
                 stop.wait(0.1)
         finally:
             stop.set()
-        durations = sorted(item for future in senders for item in future.result())
+        for future in workers:
+            future.result()
+        durations.sort()
     if len(durations) != total:
         raise RuntimeError(f"Only {len(durations)} of {total} synthetic replies were sent.")
     print(json.dumps({
+        "transport": args.transport,
+        "stub_audio_ms": args.audio_ms,
         "offered_turns_per_second": args.rate,
         "completed_turns": total,
         "idle_chats": args.idle_chats,

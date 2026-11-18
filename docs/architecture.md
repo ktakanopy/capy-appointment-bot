@@ -1,8 +1,8 @@
 # Architecture
 
-![CAPY runtime architecture. The Telegram worker handles text and audio, then runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](assets/architecture.svg)
+![CAPY runtime architecture. The webhook commits Telegram updates and the relay publishes wake-ups through RabbitMQ. The turn worker handles text and audio and runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](assets/architecture.svg)
 
-Telegram is the customer interface. Intake saves messages to PostgreSQL. A conversation worker resolves the private-chat sender and runs the scheduling workflow. A sender delivers the saved reply. The diagram above focuses on the model and booking flow.
+Telegram is the customer interface. Intake saves messages and publication records to PostgreSQL. The relay publishes wake-ups through RabbitMQ. A conversation worker resolves the private-chat sender and runs the scheduling workflow. A sender delivers the saved reply. The diagram above focuses on the model and booking flow.
 
 `app/llm/gemma.py` rewrites a message in simple language and extracts booking facts for Python, without assigning an intent or next action. It also transcribes full recordings. `app/channels/audio_chunks.py` splits decoded audio near pauses with overlap and enforces size/time budgets. No chunk can execute a booking. The completed transcript enters the same interpreter as typed text.
 
@@ -20,20 +20,16 @@ See the [database guide](database.md) for table relationships and reminder deliv
 
 `app/evals/` runs the real workflow with synthetic service boundaries or isolates extraction/routing. It does not establish database correctness: PostgreSQL/Redis integration tests cover that separately. The local model server implements both inference contracts. Training is future work.
 
-### Proposed RabbitMQ migration
-
-Today the Telegram workers select work from PostgreSQL. The proposed design moves work distribution to RabbitMQ while PostgreSQL records accepted updates, booking changes and delivery outcomes. The migration starts with incoming messages and then moves outgoing replies and hosted reminders. [Migration plan and acceptance tests](sdd/plan-telegram-rabbitmq.md)
-
 ## How to read the code
 
 Start with `process_turn()` and follow the reply “1.” The example conversation starts with “Book Massage,”
 asks for a date, and offers times after “tomorrow.” The offline `en-booking` case supplies the model
-outputs and checks that choosing “1” creates exactly one booking. [Worker](../app/telegram_service.py#L57) · [Offline case](../evals/data/smoke-text.jsonl#L1)
+outputs and checks that choosing “1” creates exactly one booking. [Worker](../app/telegram_service.py#L63) · [Offline case](../evals/data/smoke-text.jsonl#L1)
 
-1. **Receive “1.”** The webhook saves the update in PostgreSQL. The worker claims the chat, verifies the sender, and loads the last saved conversation state. [Save the update](../app/channels/telegram_intake.py#L35) · [Claim the chat](../app/channels/telegram_turns.py#L54)
+1. **Receive “1.”** The webhook saves the update in PostgreSQL. The worker claims the chat, verifies the sender, and loads the last saved conversation state. [Save the update](../app/channels/telegram_intake.py#L36) · [Claim the chat](../app/channels/telegram_turns.py#L96)
 2. **Match the number to an offered time.** Gemma interprets the message and Laya proposes the next action. The workflow uses the conversation state from Redis to resolve “1” to the first offered time. [Interpret](../app/graph/steps.py#L83) · [Choose an action](../app/graph/steps.py#L184) · [Select the time](../app/graph/steps.py#L388)
 3. **Write the booking.** The booking service checks the customer and whether the slot still fits the schedule. PostgreSQL commits the booking and pending reminder together. [Execute the action](../app/graph/steps.py#L554) · [Create the booking](../app/booking.py#L149)
-4. **Send the reply.** `finish()` marks the incoming turn complete, publishes its Redis state reference, and saves the reply in the outbound queue. The sender reads the saved reply and delivers it through the same bot. [Finish the turn](../app/channels/telegram_turns.py#L153) · [Send the reply](../app/channels/telegram_delivery.py#L239)
+4. **Send the reply.** `finish()` marks the incoming turn complete, publishes its Redis state reference, and saves the reply in the outbound queue. The sender reads the saved reply and delivers it through the same bot. [Finish the turn](../app/channels/telegram_turns.py#L214) · [Send the reply](../app/channels/telegram_delivery.py#L291)
 
 | Question | Executable example |
 | --- | --- |
@@ -89,30 +85,27 @@ the services again.
 
 ## How the Telegram worker works
 
-```mermaid
-flowchart LR
-    T0[Telegram] --> W[CAPY webhook]
-    W --> I[(PostgreSQL inbox)]
-    I --> C[Conversation worker]
-    C <--> R[(Redis conversation checkpoint)]
-    C --> B[Booking service]
-    B --> S[(Reminder schedules)]
-    C --> O[(Outbound queue)]
-    S --> M[Reminder scheduler]
-    M --> O
-    O --> T[Telegram sender]
-```
+![Telegram sequence from webhook receipt to RabbitMQ processing and reply or hosted reminder delivery, labeled Q01 through Q15.](assets/telegram-broker-sequence.svg)
 
-| Process | Job |
+| Call | What runs and why |
 | --- | --- |
-| Intake | The webhook verifies the configured bot route and secret, then saves the update before acknowledging it. |
-| Conversation worker | Claim the next update for one chat, resolve the sender, run Gemma and Laya, and save the reply. |
-| Reminder scheduler | Turn a due, authorized appointment reminder into an outbound job. |
-| Sender | Deliver saved replies and reminders through the correct bot while sharing bot and chat rate limits across replicas. |
+| **Q01** | Telegram posts the update to the registered webhook. The webhook checks the bot route and secret. [Webhook](../app/main.py#L78) |
+| **Q02** | The API commits the receipt and a publication record together. Telegram can repeat a webhook call, so the receipt key includes both bot and update ID. [Intake](../app/channels/telegram_intake.py#L36) |
+| **Q03** | The relay reads a due publication and holds a short database lease on that publication record. [Relay storage](../app/channels/telegram_publications.py#L27) |
+| **Q04** | The relay publishes the bot and chat IDs. It clears the PostgreSQL record after a broker confirmation. An interruption between confirmation and deletion can produce a duplicate wake-up. [Publishing](../app/channels/telegram_broker.py#L62) |
+| **Q05** | RabbitMQ delivers the wake-up to one active worker for its partition. A partition is a queue for a fixed group of bot/chat pairs. Chats in other partitions can make progress during a slow voice turn. [Partition routing](../app/channels/telegram_broker.py#L27) |
+| **Q06** | The worker selects the next turn for that chat and tries to reserve a business slot. Message date and update ID resolve ordering within the reorder window. A late message gets an offer-refresh reply. A blocked head gets a new wake-up. [Claim](../app/channels/telegram_turns.py#L96) |
+| **Q07** | The worker commits the reply, checkpoint reference and next publications. [Finish](../app/channels/telegram_turns.py#L214) |
+| **Q08** | After durable work succeeds, the worker acknowledges the broker delivery. RabbitMQ can redeliver a wake-up if the consumer disconnects before the acknowledgement. An expired attempt cannot change a booking or publish a checkpoint. [Acknowledgement](../app/channels/telegram_broker.py#L105) · [Write guard](../app/channels/telegram_turns.py#L37) |
+| **Q09** | For the reminder path, the scheduler selects the current due generation and saves its outgoing job and publication together. [Hosted scheduling](../app/reminders.py#L28) |
+| **Q10** | The same relay publishes the outgoing ID to a separate queue so inference cannot occupy sender capacity. [Outgoing route](../app/channels/telegram_broker.py#L62) |
+| **Q11** | RabbitMQ delivers the ID to an available sender. Senders can run independently of the turn workers. [Sender loop](../app/telegram_service.py#L179) |
+| **Q12** | The sender looks up the outgoing ID, checks chat ordering and limits, and checks whether the reminder generation still matches the booking. [Authorize delivery](../app/channels/telegram_delivery.py#L71) |
+| **Q13** | The sender calls Telegram once for the reserved attempt. If Telegram may have accepted the message and its response is lost, the sender records an ambiguous outcome. [Send and classify](../app/channels/telegram_delivery.py#L291) |
+| **Q14** | The sender records the outcome or a safe retry in PostgreSQL. [Finish dispatch](../app/channels/telegram_delivery.py#L207) |
+| **Q15** | The sender acknowledges after the outcome or replacement wake-up is durable. A repeat wake-up observes the existing delivery status. [Acknowledgement](../app/channels/telegram_broker.py#L105) |
 
-A **claim** gives one worker temporary ownership of the chat. A generation distinguishes successive claims. Booking mutations and reply publication verify that ownership in PostgreSQL. Redis writes from a superseded attempt stay private. The worker keeps a bounded webhook reorder window and asks the customer to refresh an offer when it detects a late turn. [Conversation claims](../app/channels/telegram_turns.py) · [Recovery](idempotency.md)
-
-A **queue** is a table of work waiting to happen. The inbox stores incoming turns. The outbound queue stores replies and due reminders. A saved reply can wait for Telegram without occupying a model worker. A stalled send for one chat leaves unrelated chats eligible. [Outbound delivery](../app/channels/telegram_delivery.py) · [Deployment and cutover](production.md)
+The worker renews its PostgreSQL **turn lease** during inference. The lease gives one attempt temporary ownership of the chat. Its generation identifies the attempt that may write a booking or update the checkpoint reference. A later worker can recover an expired lease and ask the customer to check their appointments. [Recovery](idempotency.md) · [Deployment and cutover](production.md)
 
 ## Booking sequence diagrams
 
@@ -151,7 +144,7 @@ Follow “Book a relaxation massage tomorrow,” then “1.” Read the arrows f
 | **C18** | The service returns the owned booking and outcome after the transaction exits. This gives the workflow the result of the verified write. | [Read and return the booking · L206–209](../app/booking.py#L206-L209) |
 | **C19** | The workflow returns a booking reply with the selected local time and professional, so the customer can check what was booked. | [Build the booking reply · L573–582](../app/graph/steps.py#L573-L582) · [Return reply text](../app/telegram_worker.py) |
 | **C20** | Completing the turn atomically saves the reply and clears the inbox payload. An expired, interrupted claim asks the customer to check their appointments. | [Turn recovery and completion](../app/telegram_service.py) · [Outbox insert](../app/channels/telegram_turns.py) |
-| **C21** | The sender attempts the saved reply. Retries for retryable Telegram errors reuse the saved message. If the HTTP response is lost, the sender marks the outcome `ambiguous` for review because Telegram may have accepted it. | [Outbound sender](../app/channels/telegram_delivery.py#L239) |
+| **C21** | The sender attempts the saved reply. Retries for retryable Telegram errors reuse the saved message. If the HTTP response is lost, the sender marks the outcome `ambiguous` for review because Telegram may have accepted it. | [Outbound sender](../app/channels/telegram_delivery.py#L291) |
 
 ### Confirm, cancel or reschedule
 

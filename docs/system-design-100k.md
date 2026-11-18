@@ -1,5 +1,8 @@
 # CAPY system design for 100,000 monthly active users
 
+The capacity figures and process layout below describe the original PostgreSQL queue design. The current demo uses RabbitMQ to distribute identifier-only work to chat-partition workers and a separate sender. PostgreSQL still owns accepted updates, deliveries and due reminder schedules. Scale by giving each partition an active consumer. Replicas on the same partition provide failover and share its serial capacity. Measure queue age by partition and slow-audio effects before choosing a partition count. [Current runbook and measurements](production.md) · [Telegram sequence](architecture.md#how-the-telegram-worker-works)
+
+
 This document describes an earlier design or implementation phase. See the architecture guide for the current webhook intake and worker flow. [Current Telegram architecture](architecture.md#how-the-telegram-worker-works)
 
 Status: proposed architecture, not implemented or load-tested. Based on the repository and the supplied requirements image, reviewed November 12, 2026.

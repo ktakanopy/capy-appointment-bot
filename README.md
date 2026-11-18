@@ -46,7 +46,7 @@ Check `http://localhost:8081/health`. [Model setup options](docs/model-contracts
 
 ### Start the Telegram demo
 
-Start the web API, conversation worker, and sender in a second terminal.
+Start the web API, RabbitMQ, relay, conversation worker, and sender in a second terminal.
 
 ```bash
 docker compose --profile telegram up -d --build --wait
@@ -87,9 +87,9 @@ Run the [bilingual evaluation](#evaluate-with-and-without-laya) to check routing
 
 ## Flow and guarantees
 
-![CAPY runtime architecture. The Telegram worker handles text and audio, then runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](docs/assets/architecture.svg)
+![CAPY runtime architecture. The webhook commits Telegram updates and the relay publishes wake-ups through RabbitMQ. The turn worker handles text and audio and runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](docs/assets/architecture.svg)
 
-Availability results are references, not reservations. Booking writes revalidate policy inside their transaction. PostgreSQL rejects overlapping active bookings; idempotency protects retries. Booking and reminder changes commit atomically. Redis holds a bounded, temporary conversation draft, offered slots and history. Telegram receipts preserve update deduplication and saved replies across restarts.
+Availability results are references, not reservations. Booking writes revalidate policy inside their transaction. PostgreSQL rejects overlapping active bookings; idempotency protects retries. Booking and reminder changes commit atomically. Redis holds a bounded, temporary conversation draft, offered slots and history. PostgreSQL keeps update receipts and saved replies across restarts. RabbitMQ sends identifier-only wake-ups to the workers. [Follow a Telegram message](docs/architecture.md#how-the-telegram-worker-works)
 
 ## Evaluate with and without Laya
 
@@ -113,7 +113,7 @@ docker compose -p capy-simplification-test -f docker-compose.test.yml run --buil
 docker compose -p capy-simplification-test -f docker-compose.test.yml down
 ```
 
-For host tests, provide a disposable PostgreSQL `TEST_DATABASE_URL` ending in `_test` and `TEST_REDIS_URL`, then run `uv run --extra dev pytest -q`. Without those variables, integration tests skip. CI sets them and requires integration checks. ffmpeg is required for audio tests.
+For host tests, set `TEST_DATABASE_URL` and `TEST_AMQP_URL` to a disposable PostgreSQL database and RabbitMQ virtual host ending in `_test`, and set `TEST_REDIS_URL`. Run `uv run --extra dev pytest -q`. CI requires all three services. ffmpeg is required for audio tests.
 
 Optional self-hosted Langfuse:
 

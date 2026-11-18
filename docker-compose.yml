@@ -1,4 +1,39 @@
+x-telegram-broker: &telegram-broker
+  TELEGRAM_AMQP_URL: ${TELEGRAM_AMQP_URL:-amqp://capy:capy@telegram-rabbitmq:5672/%2F}
+  TELEGRAM_PARTITIONS: ${TELEGRAM_PARTITIONS:-1}
+
 services:
+  telegram-rabbitmq:
+    profiles: ["telegram"]
+    image: rabbitmq:4.2
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: capy
+      RABBITMQ_DEFAULT_PASS: ${TELEGRAM_RABBITMQ_PASSWORD:-capy}
+    volumes:
+      - telegram_rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  telegram-relay:
+    profiles: ["telegram"]
+    restart: unless-stopped
+    build:
+      context: .
+    command: python -m app.telegram_service relay
+    environment:
+      <<: *telegram-broker
+      CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
+    depends_on:
+      api:
+        condition: service_healthy
+      telegram-rabbitmq:
+        condition: service_healthy
+
   app-postgres:
     image: docker.io/postgres:17
     restart: unless-stopped
@@ -86,6 +121,7 @@ services:
     command: python -m app.telegram_service process
     stop_grace_period: 16m
     environment:
+      <<: *telegram-broker
       CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
@@ -102,6 +138,8 @@ services:
       TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS:-60}
       TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS:-900}
     depends_on:
+      telegram-rabbitmq:
+        condition: service_healthy
       api:
         condition: service_healthy
 
@@ -113,10 +151,13 @@ services:
     command: python -m app.telegram_service send
     stop_grace_period: 45s
     environment:
+      <<: *telegram-broker
       CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     depends_on:
+      telegram-rabbitmq:
+        condition: service_healthy
       api:
         condition: service_healthy
 
@@ -136,3 +177,4 @@ services:
 volumes:
   app_postgres_data:
   app_redis_data:
+  telegram_rabbitmq_data:

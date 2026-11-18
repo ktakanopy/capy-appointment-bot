@@ -1,4 +1,5 @@
-# Reference for a single application host behind an HTTPS reverse proxy.
+# Deprecated. Retained as a reference for existing hosted deployments.
+# Use docker-compose.yml for the local demo described in README.md.
 # Supply external PostgreSQL and Redis through CAPY_ENV_FILE.
 x-capy: &capy
   image: ${CAPY_IMAGE:?Set CAPY_IMAGE to the tested application image}
@@ -38,14 +39,14 @@ services:
       - ${CAPY_ENV_FILE:?Set CAPY_ENV_FILE to a private runtime environment file}
       - ${CAPY_BOT_ENV_FILE:?Set CAPY_BOT_ENV_FILE to the bot token environment file}
     restart: unless-stopped
-    command: python -m app.telegram_service process --lane text
+    command: python -m app.telegram_service process --transport postgres --lane text
     stop_grace_period: 2m
 
   audio:
     <<: *capy
     env_file: *with-bot-tokens
     restart: unless-stopped
-    command: python -m app.telegram_service process --lane audio
+    command: python -m app.telegram_service process --transport postgres --lane audio
     stop_grace_period: 16m
 
   reminders:
@@ -57,5 +58,5 @@ services:
     <<: *capy
     env_file: *with-bot-tokens
     restart: unless-stopped
-    command: python -m app.telegram_service send --idle-seconds 0.05
+    command: python -m app.telegram_service send --transport postgres --idle-seconds 0.05
     stop_grace_period: 45s

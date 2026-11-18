@@ -239,7 +239,8 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
         close_runtime(runtime)
 
 
-def test_reschedule_and_cancel_supersede_materialized_reminders(scheduling_db):
+@pytest.mark.parametrize("transport", ["postgres", "rabbitmq"])
+def test_reschedule_and_cancel_supersede_materialized_reminders(scheduling_db, transport):
     url = scheduling_db["url"]
     bot = register(url, reminders=True)
     identity = TelegramRepository(url).ensure_customer_for_sender(
@@ -278,7 +279,17 @@ def test_reschedule_and_cancel_supersede_materialized_reminders(scheduling_db):
     force_due()
     assert enqueue_telegram_reminders(url) == 1
     outbox = TelegramOutbox(url)
-    job = outbox.claim()
+    if transport == "rabbitmq":
+        with connect(url) as connection:
+            outgoing = connection.execute(
+                """SELECT o.id,o.reminder_generation FROM telegram_publications p
+                   JOIN telegram_outbox o ON o.id=p.outgoing_id ORDER BY o.id"""
+            ).fetchall()
+        assert [row["reminder_generation"] for row in outgoing] == [1, 2]
+        assert outbox.claim_by_id(outgoing[0]["id"]) is None
+        job = outbox.claim_by_id(outgoing[1]["id"])
+    else:
+        job = outbox.claim()
     assert job["reminder_generation"] == 2
     service.cancel(bot.business_id, identity["customer_id"], created.booking.id, "cancel")
     assert outbox.finish(job, "sent")  # Telegram may already have accepted it.

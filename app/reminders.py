@@ -6,6 +6,7 @@ import uuid
 from datetime import timezone
 from zoneinfo import ZoneInfo
 
+from app.channels.telegram_publications import schedule_publication
 from app.config import load_settings
 from app.database import connect
 from app.observability import debug_event
@@ -54,14 +55,16 @@ def enqueue_telegram_reminders(database_url: str, limit: int = 25) -> int:
                     (row["id"],),
                 )
                 continue
-            connection.execute(
+            outgoing = connection.execute(
                 """INSERT INTO telegram_outbox
                        (business_id,bot_id,chat_id,reminder_id,reminder_generation,message)
                    VALUES (%s,%s,%s,%s,%s,%s)
-                   ON CONFLICT (reminder_id,reminder_generation) DO NOTHING""",
+                   ON CONFLICT (reminder_id,reminder_generation) DO NOTHING RETURNING id""",
                 (row["business_id"], row["telegram_bot_id"], row["telegram_chat_id"],
                  row["id"], row["generation"], reminder_message(row)),
-            )
+            ).fetchone()
+            if outgoing:
+                schedule_publication(connection, outgoing_id=outgoing["id"])
             connection.execute(
                 "UPDATE reminders SET queued_generation=%s WHERE id=%s",
                 (row["generation"], row["id"]),
