@@ -1,9 +1,11 @@
 import json
 
 import pytest
+from langgraph.runtime import get_runtime
 
 from app.evals.models import EvaluationScenario, EvaluationTurn
 from app.evals.runner import load_dataset, main, run_scenarios
+from app.graph.context import TurnRuntime
 from app.llm.schemas import SchedulingInterpretation
 
 
@@ -128,9 +130,7 @@ def test_audio_eval_measures_the_transcript_once(monkeypatch, tmp_path, layer):
 
     def transcribe(self, recording, context, *, chunker):
         if layer == "workflow":
-            from app.graph.context import current_input
-
-            assert current_input().recording == recording
+            assert get_runtime(TurnRuntime).context.turn_input.recording == recording
         recordings.append(recording)
         return "Cancel my booking."
 

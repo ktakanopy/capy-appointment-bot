@@ -44,7 +44,9 @@ uv run --locked python scripts/generate_graph_diagram.py
 
 Laya's HTTP body has exactly two keys: `message` (Gemma's interpreted text) and `context` (the current `WorkflowDraft`). The original message, Gemma facts object, intent labels, confidence guesses and customer identity are not additional routing inputs. Laya owns the action decision, including `CLARIFY` when the meaning remains ambiguous. Python checks ownership, offered slots and current booking policy. See the [model contracts](model-contracts.md) for seed-based payload examples.
 
-Telegram downloads a bounded recording and passes it to the workflow in memory. The graph waits for all chunks before interpreting a voice message, so a late correction can change the request Laya sees. A failed transcription stops the turn before routing. Gemma and Laya are required for normal turns. Offline text evaluations use deterministic test providers.
+Telegram downloads a bounded recording and passes it to the workflow in memory. The workflow passes raw text, audio, the display name and scheduling actions through LangGraph’s per-run `context`. Nodes that need them declare a `Runtime[TurnRuntime]` argument. The input node writes sanitized text to graph state, and the checkpointer saves that state using the thread ID passed in `config`. [Runtime context](../app/graph/context.py) · [Graph builder](../app/graph/builder.py) · [Invocation](../app/graph/workflow.py)
+
+The graph waits for all chunks before interpreting a voice message, so a late correction can change the request Laya sees. A failed transcription stops the turn before routing. Gemma and Laya are required for normal turns. Offline text evaluations use deterministic test providers.
 
 `prepare_action` dispatches to `_prepare_create`, `_prepare_reschedule` or `_prepare_booking_status_change`. These functions check the required slot and booking references before routing to `execute`. `CustomerSchedulingActions` connects those workflow operations to services for the trusted customer; `SchedulingActions` is the protocol also implemented by evaluation fixtures.
 

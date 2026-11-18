@@ -1,5 +1,5 @@
 from app.graph.actions import SchedulingActions
-from app.graph.context import TurnInput, bind_turn
+from app.graph.context import TurnInput, TurnRuntime
 from app.graph.contracts import TurnContext, TurnResult, WorkflowDraft
 from app.observability import debug_event
 
@@ -19,7 +19,7 @@ class LangGraphWorkflow:
         recording: bytes | None = None,
         display_name: str | None = None,
     ) -> TurnResult:
-        """Bind raw input in memory so checkpoints receive only sanitized text."""
+        """Pass raw input through runtime context so checkpoints receive only sanitized text."""
         if (turn.message is None) == (recording is None):
             raise ValueError("A turn requires exactly one message or recording")
         modality = "audio" if recording is not None else turn.input_modality
@@ -28,13 +28,11 @@ class LangGraphWorkflow:
         )
         state = turn.model_dump(mode="json", exclude={"message"})
         state["input_modality"] = modality
-        config = {"configurable": {"thread_id": checkpoint_thread or turn.conversation_id}}
-        with bind_turn(actions, TurnInput(turn.message, recording, display_name)):
-            graph_state = (
-                self.graph.invoke(state, config)
-                if self.graph.checkpointer
-                else self.graph.invoke(state)
-            )
+        config = None
+        if self.graph.checkpointer is not None:
+            config = {"configurable": {"thread_id": checkpoint_thread or turn.conversation_id}}
+        context = TurnRuntime(actions, TurnInput(turn.message, recording, display_name))
+        graph_state = self.graph.invoke(state, config=config, context=context)
         turn_result = dict(graph_state["result"])
         turn_result["booking"] = actions.last_booking
         result = TurnResult.model_validate(turn_result)

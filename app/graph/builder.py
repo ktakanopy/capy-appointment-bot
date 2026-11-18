@@ -3,8 +3,9 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from langgraph.graph import END, START, StateGraph
+from langgraph.runtime import Runtime
 
-from app.graph.context import current_actions, current_input
+from app.graph.context import TurnRuntime
 from app.graph.decision import DeterministicDecision
 from app.graph.state import SchedulingGraphState
 from app.graph.steps import (
@@ -35,37 +36,37 @@ def build_graph(
     """Wire interpretation and routing to workflow steps with optional checkpoints."""
     decision_engine = decision or DeterministicDecision()
 
-    def load_context_node(state: SchedulingGraphState) -> dict:
-        return load_context(state, current_actions())
+    def load_context_node(state: SchedulingGraphState, runtime: Runtime[TurnRuntime]) -> dict:
+        return load_context(state, runtime.context.actions)
 
-    def understand_input_node(state: SchedulingGraphState) -> dict:
-        return understand_input(state, current_input(), interpreter, transcribe)
+    def understand_input_node(state: SchedulingGraphState, runtime: Runtime[TurnRuntime]) -> dict:
+        return understand_input(state, runtime.context.turn_input, interpreter, transcribe)
 
     def decide_node(state: SchedulingGraphState) -> dict:
         return route_turn(state, decision_engine, threshold)
 
-    def clarify_node(state: SchedulingGraphState) -> dict:
-        return clarify(state, current_actions())
+    def clarify_node(state: SchedulingGraphState, runtime: Runtime[TurnRuntime]) -> dict:
+        return clarify(state, runtime.context.actions)
 
-    def search_node(state: SchedulingGraphState) -> dict:
-        return search(state, current_actions())
+    def search_node(state: SchedulingGraphState, runtime: Runtime[TurnRuntime]) -> dict:
+        return search(state, runtime.context.actions)
 
-    def select_node(state: SchedulingGraphState) -> dict:
-        return select(state, current_actions())
+    def select_node(state: SchedulingGraphState, runtime: Runtime[TurnRuntime]) -> dict:
+        return select(state, runtime.context.actions)
 
-    def prepare_node(state: SchedulingGraphState) -> dict:
-        return prepare_action(state, current_actions())
+    def prepare_node(state: SchedulingGraphState, runtime: Runtime[TurnRuntime]) -> dict:
+        return prepare_action(state, runtime.context.actions)
 
-    def execute_node(state: SchedulingGraphState) -> dict:
-        return execute(state, current_actions())
+    def execute_node(state: SchedulingGraphState, runtime: Runtime[TurnRuntime]) -> dict:
+        return execute(state, runtime.context.actions)
 
-    def lookup_node(state: SchedulingGraphState) -> dict:
-        return lookup(state, current_actions())
+    def lookup_node(state: SchedulingGraphState, runtime: Runtime[TurnRuntime]) -> dict:
+        return lookup(state, runtime.context.actions)
 
-    def escalate_node(state: SchedulingGraphState) -> dict:
-        return escalate(state, current_actions())
+    def escalate_node(state: SchedulingGraphState, runtime: Runtime[TurnRuntime]) -> dict:
+        return escalate(state, runtime.context.actions)
 
-    graph = StateGraph(SchedulingGraphState)
+    graph = StateGraph(SchedulingGraphState, context_schema=TurnRuntime)
     graph.add_node("load_context", load_context_node)
     graph.add_node("understand_input", understand_input_node)
     graph.add_node("merge_draft", merge_draft)
