@@ -20,6 +20,10 @@ See the [database guide](database.md) for table relationships and reminder deliv
 
 `app/evals/` runs the real workflow with synthetic service boundaries or isolates extraction/routing. It does not establish database correctness: PostgreSQL/Redis integration tests cover that separately. The local model server implements both inference contracts. Training is future work.
 
+### Proposed RabbitMQ migration
+
+Today the Telegram workers select work from PostgreSQL. The proposed design moves work distribution to RabbitMQ while PostgreSQL records accepted updates, booking changes and delivery outcomes. The migration starts with incoming messages and then moves outgoing replies and hosted reminders. [Migration plan and acceptance tests](sdd/plan-telegram-rabbitmq.md)
+
 ## How to read the code
 
 Start with `process_turn()` and follow the reply “1.” The example conversation starts with “Book Massage,”
