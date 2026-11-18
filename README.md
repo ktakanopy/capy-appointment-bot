@@ -85,6 +85,17 @@ docker compose run --rm api \
 
 Run the [bilingual evaluation](#evaluate-with-and-without-laya) to check routing and booking writes before using the bot with customers.
 
+### Add Langfuse to the demo
+
+Set `TRACING_ENABLED=true` in the private `.env` file and start the demo with the Langfuse add-on.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.observability.yml \
+  --profile telegram up -d --build --wait
+```
+
+Open `http://localhost:3000` and make a test booking to generate a trace. Langfuse uses separate storage from CAPY's booking database.
+
 ## Flow and guarantees
 
 ![CAPY runtime architecture. The webhook commits Telegram updates and the relay publishes wake-ups through RabbitMQ. The turn worker handles text and audio and runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](docs/assets/architecture.svg)
@@ -115,14 +126,6 @@ docker compose -p capy-simplification-test -f docker-compose.test.yml down
 
 For host tests, set `TEST_DATABASE_URL` and `TEST_AMQP_URL` to a disposable PostgreSQL database and RabbitMQ virtual host ending in `_test`, and set `TEST_REDIS_URL`. Run `uv run --extra dev pytest -q`. CI requires all three services. ffmpeg is required for audio tests.
 
-Optional self-hosted Langfuse:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.observability.yml --profile telegram up --build
-```
-
-Set `TRACING_ENABLED=true` when configuring tracing. Observability services have separate storage from business data.
-
 ## Migration and current limits
 
 Existing databases need a coordinated cutover: stop old workers, back up PostgreSQL, then upgrade with the new application. Migration `0003_telegram_ownership` preserves bookings and verified identity links while retiring token columns. Legacy customers without a trusted link remain owner-visible. It never claims them by phone. Reverting token removal requires restoring the matching backup and application. The message/context model contract starts temporary conversations fresh under checkpoint namespace `lg:v3`; business records are unchanged.
@@ -130,7 +133,7 @@ Existing databases need a coordinated cutover: stop old workers, back up Postgre
 The smoke corpus exercises the local models with synthetic data. A live Telegram walkthrough
 requires a test bot, a test chat, and a public HTTPS address for the webhook.
 
-For multiple bots, CAPY supports a shared webhook, conversation workers, and a rate-limited sender for replies and reminders. Start with a test bot and validate capacity before promoting the deployment. [Production deployment](docs/production.md)
+For multiple bots, CAPY supports a shared webhook, conversation workers, and a rate-limited sender for replies and reminders. The production Compose file is deprecated and retained as a deployment reference. [Deployment reference](docs/production.md)
 
 ## Documentation
 
@@ -148,4 +151,4 @@ To follow a PostgreSQL query from the repository to a mapped class, start with t
 - [Repository history](docs/history.md) — earlier versions and design changes
 - [Portfolio roadmap](docs/ai-engineering-portfolio-roadmap.md) — planned work
 - [Simplification plan](docs/sdd/plan-portfolio-simplification.md) — scope and implementation steps
-- [Multi-bot deployment](docs/production.md) — setup, cutover, and capacity checks
+- [Multi-bot deployment reference](docs/production.md) — architecture, cutover, and capacity checks

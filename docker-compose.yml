@@ -81,10 +81,6 @@ services:
       GEMMA_BASE_URL: ${GEMMA_BASE_URL:-http://host.docker.internal:8081}
       LAYA_BASE_URL: ${LAYA_BASE_URL:-http://host.docker.internal:8081}
       CHAT_REDIS_URL: redis://chat-redis:6379/0
-      TRACING_ENABLED: ${TRACING_ENABLED:-false}
-      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-lf_pk_local_dev_key}
-      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-lf_sk_local_dev_key}
-      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse-web:3000}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-60}
     depends_on:
@@ -123,6 +119,10 @@ services:
     environment:
       <<: *telegram-broker
       CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
+      TRACING_ENABLED: ${TRACING_ENABLED:-false}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-lf_pk_local_dev_key}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-lf_sk_local_dev_key}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse-web:3000}
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
       CHAT_REDIS_URL: redis://chat-redis:6379/0
