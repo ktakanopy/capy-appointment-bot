@@ -1,5 +1,7 @@
 # Make CAPY easier to learn and evaluate
 
+This document describes an earlier design or implementation phase. See the architecture guide for the current webhook intake and worker flow. [Current Telegram architecture](../architecture.md#how-the-telegram-worker-works)
+
 ## Implementation brief for Sol High
 
 Work in the existing capy-appointment-bot checkout on branch `portifolio`. The outcome is a developer who can run a synthetic booking conversation, trace how a voice note becomes an authorized booking, and reproduce an experiment that isolates Gemma understanding from Laya routing.

@@ -50,6 +50,7 @@ services:
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-lf_pk_local_dev_key}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-lf_sk_local_dev_key}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse-web:3000}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-60}
     depends_on:
       app-postgres:
@@ -95,29 +96,11 @@ services:
       GEMMA_BASE_URL: ${GEMMA_BASE_URL:-http://host.docker.internal:8081}
       LAYA_BASE_URL: ${LAYA_BASE_URL:-http://host.docker.internal:8081}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-      TELEGRAM_POLL_SECONDS: ${TELEGRAM_POLL_SECONDS:-20}
       TELEGRAM_AUDIO_MAX_BYTES: ${TELEGRAM_AUDIO_MAX_BYTES:-20000000}
       TELEGRAM_AUDIO_MAX_DECODED_BYTES: ${TELEGRAM_AUDIO_MAX_DECODED_BYTES:-536870912}
       TELEGRAM_AUDIO_DECODE_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_DECODE_TIMEOUT_SECONDS:-120}
       TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS:-60}
       TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS:-900}
-    depends_on:
-      api:
-        condition: service_healthy
-
-  telegram-poller:
-    profiles: ["telegram"]
-    restart: unless-stopped
-    build:
-      context: .
-    command: python -m app.telegram_service poll
-    stop_grace_period: 65s
-    environment:
-      CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
-      DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
-      DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-      TELEGRAM_POLL_SECONDS: ${TELEGRAM_POLL_SECONDS:-20}
     depends_on:
       api:
         condition: service_healthy
@@ -133,6 +116,19 @@ services:
       CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  telegram-register:
+    profiles: ["telegram-setup"]
+    build:
+      context: .
+    entrypoint: ["python", "-m", "app.telegram_service", "register"]
+    environment:
+      DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
     depends_on:
       api:
         condition: service_healthy

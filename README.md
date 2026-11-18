@@ -23,7 +23,9 @@ To see how CAPY branches at each step, [follow one booking in the debug logs](do
 
 ## Try the Telegram voice demo
 
-Create a private `.env` from [`.env.example`](.env.example) and set `TELEGRAM_BOT_TOKEN` for a test bot.
+Create a private `.env` from [`.env.example`](.env.example). Set `TELEGRAM_BOT_TOKEN` for
+a dedicated test bot and `TELEGRAM_WEBHOOK_SECRET` to a random value. You can generate
+the secret with `openssl rand -hex 32`.
 
 ### Run the local models on Apple Silicon
 
@@ -44,14 +46,31 @@ Check `http://localhost:8081/health`. [Model setup options](docs/model-contracts
 
 ### Start the Telegram demo
 
-In a second terminal, start the demo with Docker Compose.
+Start the web API, conversation worker, and sender in a second terminal.
 
 ```bash
-docker compose --profile telegram \
-  up --build
+docker compose --profile telegram up -d --build --wait
 ```
 
-Compose sets up the demo studio and connects the bot to `host.docker.internal:8081`. Check `http://localhost:8000/health`.
+Compose seeds the demo studio and connects the worker to the local model server. Check
+`http://localhost:8000/health`. Point a public HTTPS reverse proxy or tunnel at
+`http://127.0.0.1:8000`. Telegram will send incoming messages to that HTTPS address.
+
+Replace the example HTTPS address below with your own, then register the test bot.
+Use the same route when retrying registration. Replace `demo-studio` if you set a
+different `DEMO_BUSINESS_ID`.
+
+```bash
+docker compose run --build --rm telegram-register \
+  --business demo-studio \
+  --route demo_telegram_webhook \
+  --webhook-secret-env TELEGRAM_WEBHOOK_SECRET \
+  --webhook-base-url https://bot.example.com
+```
+
+The setup command registers the bot in CAPY and tells Telegram where to send its
+updates. Pending Telegram updates are preserved. If the public address of your tunnel
+changes, run registration again with the new address. If upgrading from an older checkout, stop its Telegram intake container before registering the webhook. [Upgrade and recovery](docs/production.md#cutover-and-recovery)
 
 ### Make a test booking
 
@@ -108,7 +127,8 @@ Set `TRACING_ENABLED=true` when configuring tracing. Observability services have
 
 Existing databases need a coordinated cutover: stop old workers, back up PostgreSQL, then upgrade with the new application. Migration `0003_telegram_ownership` preserves bookings and verified identity links while retiring token columns. Legacy customers without a trusted link remain owner-visible. It never claims them by phone. Reverting token removal requires restoring the matching backup and application. The message/context model contract starts temporary conversations fresh under checkpoint namespace `lg:v3`; business records are unchanged.
 
-The smoke corpus exercises the local models with synthetic data. A live Telegram walkthrough requires a test bot and test chat.
+The smoke corpus exercises the local models with synthetic data. A live Telegram walkthrough
+requires a test bot, a test chat, and a public HTTPS address for the webhook.
 
 For multiple bots, CAPY supports a shared webhook, conversation workers, and a rate-limited sender for replies and reminders. Start with a test bot and validate capacity before promoting the deployment. [Production deployment](docs/production.md)
 

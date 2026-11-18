@@ -1,5 +1,7 @@
 # CAPY system design study board
 
+This document describes an earlier design or implementation phase. See the architecture guide for the current webhook intake and worker flow. [Current Telegram architecture](../architecture.md#how-the-telegram-worker-works)
+
 Open `capy-system-design.excalidraw` in Excalidraw using **Open**, or drag the file onto the canvas. This is an editable scene with native text, shapes and arrows, not a screenshot. The SVG is a matching reading copy. Read the numbered sections from top to bottom and zoom into each section.
 
 The reference image informed the requirements, architecture and sequence layout. This board adds capacity calculations, the current schema, table decisions, concrete code-review findings, and study questions. Its language is English to match this discussion.

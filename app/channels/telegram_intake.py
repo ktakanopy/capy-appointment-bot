@@ -1,4 +1,4 @@
-"""Save Telegram messages before advancing a poll cursor or acknowledging a webhook."""
+"""Save Telegram webhook updates before acknowledging receipt."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ def private_message(row: dict) -> dict | None:
 
 
 def save_update(
-    database_url: str, bot: TelegramBot, update: dict, *, polling: bool = False
+    database_url: str, bot: TelegramBot, update: dict
 ) -> bool:
     """Return whether the update has a valid receipt ID and an active bot."""
     update_id = update.get("update_id")
@@ -62,8 +62,8 @@ def save_update(
         registered = connection.execute(
             """SELECT bot_id FROM telegram_bots
                WHERE bot_id=%s AND business_id=%s AND enabled
-                 AND (webhook_route IS NULL)=%s FOR SHARE""",
-            (bot.bot_id, bot.business_id, polling),
+                 AND webhook_route IS NOT NULL FOR SHARE""",
+            (bot.bot_id, bot.business_id),
         ).fetchone()
         if not registered:
             debug_event("telegram.inbox.ignored", bot_id=bot.bot_id, update_id=update_id,
@@ -74,12 +74,12 @@ def save_update(
                    (bot_id, update_id, business_id, chat_id, telegram_user_id, payload, status,
                     message_date, ready_at, expires_at)
                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,
-                       clock_timestamp() + %s * interval '1 second',
+                       clock_timestamp() + interval '0.3 seconds',
                        clock_timestamp() + interval '30 days')
                ON CONFLICT (bot_id, update_id) DO NOTHING""",
             (bot.bot_id, update_id, bot.business_id, chat_id if supported else None,
              user_id if supported else None, Jsonb(payload) if supported else None,
-             "received" if supported else "delivered", date, 0 if polling else 0.3),
+             "received" if supported else "delivered", date),
         )
         if supported:
             connection.execute(
@@ -87,16 +87,9 @@ def save_update(
                    VALUES (%s,%s,%s) ON CONFLICT DO NOTHING""",
                 (bot.bot_id, chat_id, bot.business_id),
             )
-        if polling:
-            connection.execute(
-                """INSERT INTO telegram_poll_offsets (bot_id, next_update_id)
-                   VALUES (%s,%s) ON CONFLICT (bot_id) DO UPDATE
-                   SET next_update_id=EXCLUDED.next_update_id, updated_at=now()""",
-                (bot.bot_id, update_id + 1),
-            )
     debug_event(
         "telegram.inbox.recorded", bot_id=bot.bot_id, update_id=update_id,
-        source="poll" if polling else "webhook",
+        source="webhook",
         is_private=bool(supported), inserted=receipt.rowcount == 1,
     )
     return True

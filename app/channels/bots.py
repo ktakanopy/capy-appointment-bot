@@ -49,12 +49,6 @@ class BotRegistry:
         debug_event("telegram.bot.lookup", found=row is not None)
         return TelegramBot(**row) if row else None
 
-    def contains(self, bot_id: int) -> bool:
-        with connect(self.database_url) as connection:
-            return connection.execute(
-                "SELECT 1 FROM telegram_bots WHERE bot_id=%s", (bot_id,)
-            ).fetchone() is not None
-
     def register(
         self,
         bot_id: int,
@@ -94,26 +88,6 @@ class BotRegistry:
                 raise ValueError("This bot is already registered to a different business.")
             self._backfill_conversations(connection, bot_id, business_id)
         debug_event("telegram.bot.registered", bot_id=bot_id, reminders=reminder_delivery)
-
-    def local_bot(self, bot_id: int, business_id: str) -> None:
-        """Bootstrap the Compose bot without overwriting hosted settings."""
-        with connect(self.database_url) as connection:
-            self._check_legacy_scope(connection, bot_id, business_id)
-            row = connection.execute(
-                """INSERT INTO telegram_bots (bot_id, business_id, token_env)
-                   VALUES (%s,%s,'TELEGRAM_BOT_TOKEN') ON CONFLICT (bot_id) DO NOTHING
-                   RETURNING bot_id""",
-                (bot_id, business_id),
-            ).fetchone()
-            if not row:
-                row = connection.execute(
-                    """SELECT bot_id FROM telegram_bots WHERE enabled AND bot_id=%s
-                       AND business_id=%s AND webhook_route IS NULL""",
-                    (bot_id, business_id),
-                ).fetchone()
-            if not row:
-                raise ValueError("The local bot conflicts with its registry configuration.")
-            self._backfill_conversations(connection, bot_id, business_id)
 
     @staticmethod
     def _check_legacy_scope(connection, bot_id: int, business_id: str) -> None:

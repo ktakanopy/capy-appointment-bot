@@ -3,6 +3,7 @@
 import logging
 import os
 import time
+from argparse import Namespace
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 
@@ -11,6 +12,7 @@ from fastapi.testclient import TestClient
 
 from app.booking import BookingService
 from app.channels.bots import BotRegistry, TelegramBot
+from app.channels.telegram import TelegramBotApi
 from app.channels.telegram_delivery import REPLY_BURST, TelegramOutbox
 from app.channels.telegram_intake import save_update
 from app.channels.telegram_repository import TelegramRepository
@@ -26,6 +28,7 @@ from app.reminders import ReminderWorker, enqueue_telegram_reminders
 from app.runtime import close_runtime, create_runtime
 from app.seed import seed
 from app.telegram_service import process_turn, reconcile_replies
+from app.telegram_service import register as register_bot
 from tests.integration.helpers import next_open_day, offered_slots
 
 
@@ -49,15 +52,49 @@ def ready_updates(url):
         connection.execute("UPDATE telegram_updates SET ready_at=now()-interval '1 second'")
 
 
-def test_webhook_dedupes_per_bot_and_keeps_poll_offsets(scheduling_db, monkeypatch):
+def test_register_configures_webhook_after_saving_route(scheduling_db, monkeypatch):
+    route = "local_demo_webhook"
+    secret = "synthetic-webhook-secret"
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "44:test-token")
+    monkeypatch.setenv("TELEGRAM_WEBHOOK_SECRET", secret)
+    settings = load_settings()
+    registered_webhooks = []
+
+    def call(_api, method, payload=None):
+        if method == "getMe":
+            return {"id": 44}
+        assert method == "setWebhook"
+        bot = BotRegistry(settings.database_url).by_route(route)
+        assert bot is not None and bot.bot_id == 44 and bot.accepts_webhook(secret)
+        registered_webhooks.append(payload)
+        return True
+
+    monkeypatch.setattr(TelegramBotApi, "call", call)
+    args = Namespace(
+        business="demo-studio", token_env="TELEGRAM_BOT_TOKEN", route=route,
+        webhook_secret_env="TELEGRAM_WEBHOOK_SECRET", webhook_base_url="http://example.test",
+        deliver_reminders=False,
+    )
+    with pytest.raises(ValueError, match="HTTPS origin"):
+        register_bot(settings, args)
+    assert BotRegistry(settings.database_url).by_route(route) is None
+
+    args.webhook_base_url = "https://example.test/"
+    register_bot(settings, args)
+
+    assert registered_webhooks == [{
+        "url": f"https://example.test/telegram/{route}",
+        "secret_token": secret,
+        "allowed_updates": ["message"],
+        "drop_pending_updates": False,
+    }]
+
+
+def test_webhook_dedupes_per_bot(scheduling_db, monkeypatch):
     url = scheduling_db["url"]
     seed(include_second_business=True)
     first = register(url)
     second = register(url, 43, business="second-demo-studio")
-    with connect(url) as connection:
-        offsets_before = connection.execute(
-            "SELECT * FROM telegram_poll_offsets WHERE bot_id IN (42,43) ORDER BY bot_id"
-        ).fetchall()
     for bot in (first, second):
         monkeypatch.setenv(bot.webhook_secret_env, f"test-webhook-secret-{bot.bot_id}")
     with TestClient(app) as client:
@@ -74,9 +111,6 @@ def test_webhook_dedupes_per_bot_and_keeps_poll_offsets(scheduling_db, monkeypat
             """SELECT bot_id,business_id,status,payload FROM telegram_updates
                WHERE bot_id IN (42,43) ORDER BY bot_id,update_id"""
         ).fetchall()
-        assert connection.execute(
-            "SELECT * FROM telegram_poll_offsets WHERE bot_id IN (42,43) ORDER BY bot_id"
-        ).fetchall() == offsets_before
     assert [(r["business_id"], r["status"]) for r in receipts] == [
         ("demo-studio", "received"), ("demo-studio", "delivered"),
         ("second-demo-studio", "received"), ("second-demo-studio", "delivered"),
@@ -325,20 +359,15 @@ def test_sender_cooldown_is_shared_but_other_bot_can_send(scheduling_db):
 
 def test_legacy_replies_backfill_once(scheduling_db):
     url = scheduling_db["url"]
-    repo = TelegramRepository(url)
     bot = register(url)
-    repo.save_update(
-        bot_id=42, update_id=1, business_id="demo-studio", chat_id=101,
-        telegram_user_id=101, payload=update(1, text="/start"),
-    )
-    repo.claim_update(42, 1)
-    repo.save_reply(42, 1, "Legacy reply")
-    repo.save_update(
-        bot_id=42, update_id=2, business_id="demo-studio", chat_id=-101,
-        telegram_user_id=101, payload={"message": {"chat": {"type": "group"}}},
-    )
-    repo.claim_update(42, 2)
-    repo.save_reply(42, 2, "Legacy group reply")
+    with connect(url) as connection:
+        connection.execute(
+            """INSERT INTO telegram_updates
+                   (bot_id, update_id, business_id, chat_id, telegram_user_id,
+                    status, reply_text, attempts)
+               VALUES (42, 1, 'demo-studio', 101, 101, 'reply_ready', 'Legacy reply', 1),
+                      (42, 2, 'demo-studio', -101, 101, 'reply_ready', 'Legacy group reply', 1)"""
+        )
     reconcile_replies(url, bot)
     reconcile_replies(url, bot)
     outbox = TelegramOutbox(url)

@@ -4,7 +4,10 @@ CAPY uses one application image for webhook intake, text workers, audio workers,
 
 ## Local development
 
-Set the test bot token and start the models as described in the README. Run the same `docker compose --profile telegram up --build` command. Compose starts separate polling, processing, and sending roles. Local reminders continue to appear in the owner CLI's demo inbox. Stop the old combined Telegram worker before upgrading a running checkout. Keep a PostgreSQL backup and retain any pending Telegram updates. [Local demo](../README.md#try-the-telegram-voice-demo)
+The local `telegram` Compose profile receives Telegram updates through the API webhook.
+Use a dedicated test bot and a public HTTPS reverse proxy or tunnel. The one-time
+`telegram-register` service registers the URL with Telegram. Local reminders appear
+in the owner CLI's demo inbox. [Local demo](../README.md#try-the-telegram-voice-demo)
 
 ## Hosted configuration
 
@@ -39,9 +42,9 @@ Configure the bot's webhook with `setWebhook`, its HTTPS URL, the matching `secr
 
 ## Cutover and recovery
 
-1. Back up PostgreSQL and verify you can restore it into a disposable environment. Record ready, processing, and delivered counts and check for pending demo reminders. Stop the old poller, reply sender, and demo reminder worker before hosted replacements claim their work.
+1. Back up PostgreSQL and verify you can restore it into a disposable environment. Record ready, processing, and delivered counts and check for pending demo reminders. Stop the previous intake container, reply sender, and demo reminder worker before their replacements claim work. If upgrading from a release that used Telegram polling, stop its poller before webhook registration.
 2. Apply the additive migration. Register the verified bot. Registration copies eligible legacy private-chat replies once and retains their delivery attempts and retry times. Reconcile pending and interrupted receipts, queued replies, and reminder routes before enabling delivery. Start with one test bot. Verify the first bot before adding a second business.
-3. For an intake rollback, stop webhook delivery with `deleteWebhook` while preserving pending updates. Remove the webhook route from the bot registry only after pausing ingress and reconciling unacknowledged updates. Resume the poller for that bot and rely on stored receipts for deduplication. A stored high polling cursor can skip a gap left by webhooks. Omit or clear it after confirming the bot and pending backlog if the cutover makes it unsafe.
+3. To roll back webhook intake, restore the previous compatible webhook deployment, then register its HTTPS origin for the same bot and route. Preserve pending Telegram updates and the database receipts so retransmitted updates can be deduplicated.
 4. For a sender rollback, stop new claims and drain or reconcile in-flight jobs before switching paths. A dispatch that expired or lost its HTTP response stays `ambiguous`. Investigate before re-sending it. Automatic replay of an uncertain send could create a duplicate. Keep the additive schema during the rollback window and use compatible binaries. Full downgrade requires a verified backup and a reconciliation plan for new writes.
 
 ## Capacity checks

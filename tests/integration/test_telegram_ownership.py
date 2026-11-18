@@ -60,28 +60,3 @@ def test_every_booking_operation_checks_customer_business_and_replay(scheduling_
     with pytest.raises(DomainError):
         service.confirm(booking.business_id, "stranger", booking.id, "confirm-replay")
     assert confirmed.status.value == "confirmed"
-
-
-def test_telegram_receipts_dedupe_and_recovery_never_reruns_unknown_write(
-    scheduling_db,
-):
-    repo = TelegramRepository(scheduling_db["url"])
-    update = dict(
-        bot_id=42,
-        update_id=100,
-        business_id="demo-studio",
-        chat_id=101,
-        telegram_user_id=101,
-        payload={"message": {"text": "book"}},
-    )
-    repo.save_update(**update)
-    repo.save_update(**update)
-    assert len(repo.pending_updates(42)) == 1
-    assert repo.claim_update(42, 100)
-    assert repo.claim_update(42, 100) is None
-    repo.recover_interrupted(42)
-    assert repo.pending_updates(42) == []
-    assert "check your appointments" in repo.ready_replies(42)[0]["reply_text"]
-    repo.mark_delivered(42, 100)
-    repo.save_update(**update)
-    assert repo.pending_updates(42) == []

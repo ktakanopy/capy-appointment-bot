@@ -1,5 +1,7 @@
 # CAPY system design for 100,000 monthly active users
 
+This document describes an earlier design or implementation phase. See the architecture guide for the current webhook intake and worker flow. [Current Telegram architecture](architecture.md#how-the-telegram-worker-works)
+
 Status: proposed architecture, not implemented or load-tested. Based on the repository and the supplied requirements image, reviewed November 12, 2026.
 
 ## 1. Scope and service objectives

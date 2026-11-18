@@ -34,7 +34,7 @@ class TelegramBotApi:
         self._api_base_url = api_base_url.rstrip("/")
 
     def call(self, method: str, payload: dict | None = None, *, timeout: float = 30):
-        if method in {"getMe", "getWebhookInfo", "getFile", "sendMessage"}:
+        if method in {"getMe", "getFile", "sendMessage"}:
             debug_event("telegram.api.requested", method=method)
         url = f"{self._api_base_url}/bot{self._token}/{method}"
         request_body = json.dumps(payload or {}).encode()
@@ -66,23 +66,6 @@ class TelegramBotApi:
         if not isinstance(result, dict) or not isinstance(result.get("id"), int):
             raise TelegramApiError("telegram_invalid_bot_identity")
         return result
-
-    def has_webhook(self) -> bool:
-        result = self.call("getWebhookInfo")
-        return bool(isinstance(result, dict) and result.get("url"))
-
-    def get_updates(self, offset: int | None, timeout: int) -> list[dict]:
-        payload = {"timeout": timeout, "allowed_updates": ["message"]}
-        if offset is not None:
-            payload["offset"] = offset
-        result = self.call(
-            "getUpdates",
-            payload,
-            timeout=timeout + 10,
-        )
-        if not isinstance(result, list):
-            raise TelegramApiError("telegram_invalid_updates")
-        return [item for item in result if isinstance(item, dict)]
 
     def download_file(self, file_path: str, max_bytes: int) -> bytes:
         # Telegram supplies file_path. Restrict it to a relative path so it

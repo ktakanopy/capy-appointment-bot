@@ -19,8 +19,6 @@ class Settings:
     decision_provider: str = "laya"
     gemma_base_url: str = "http://localhost:8081"
     laya_base_url: str = "http://localhost:8081"
-    telegram_bot_token: str | None = None
-    telegram_poll_seconds: int = 20
     telegram_audio_max_bytes: int = 20_000_000
     telegram_audio_max_decoded_bytes: int = 512 * 1024 * 1024
     telegram_audio_decode_timeout_seconds: float = 120
@@ -30,8 +28,6 @@ class Settings:
     def __post_init__(self):
         if self.session_ttl_minutes < 1:
             raise ValueError("SESSION_TTL_MINUTES must be positive")
-        if not 1 <= self.telegram_poll_seconds <= 50:
-            raise ValueError("TELEGRAM_POLL_SECONDS must be between 1 and 50")
         if (
             self.telegram_audio_max_bytes <= 0
             or self.telegram_audio_max_decoded_bytes < 960_000
@@ -74,8 +70,6 @@ def load_settings() -> Settings:
         decision_provider=os.getenv("DECISION_PROVIDER", "laya").lower(),
         gemma_base_url=os.getenv("GEMMA_BASE_URL", "http://localhost:8081"),
         laya_base_url=os.getenv("LAYA_BASE_URL", "http://localhost:8081"),
-        telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN") or None,
-        telegram_poll_seconds=int(os.getenv("TELEGRAM_POLL_SECONDS", "20")),
         telegram_audio_max_bytes=int(os.getenv("TELEGRAM_AUDIO_MAX_BYTES", "20000000")),
         telegram_audio_max_decoded_bytes=int(
             os.getenv("TELEGRAM_AUDIO_MAX_DECODED_BYTES", str(512 * 1024 * 1024))

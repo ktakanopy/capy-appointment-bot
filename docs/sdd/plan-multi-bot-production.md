@@ -1,5 +1,7 @@
 # CAPY multi-bot production implementation plan
 
+This document describes an earlier design or implementation phase. See the architecture guide for the current webhook intake and worker flow. [Current Telegram architecture](../architecture.md#how-the-telegram-worker-works)
+
 ## Goal and release criteria
 
 Run many businesses' Telegram bots on one CAPY backend. Share intake, conversation processing, inference, and delivery capacity across bots while keeping each business's data and each chat's turn order intact. Preserve the local Compose walkthrough, English and Portuguese text and voice input, deterministic booking policy, and the owner agenda.

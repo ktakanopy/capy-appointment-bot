@@ -1,5 +1,7 @@
 # Telegram text and audio integration — implementation plan
 
+This document describes an earlier design or implementation phase. See the architecture guide for the current webhook intake and worker flow. [Current Telegram architecture](../architecture.md#how-the-telegram-worker-works)
+
 > Historical design input, not current setup or runtime guidance. The original requirements and implementation notes below describe an earlier checkout. [Portfolio simplification](plan-portfolio-simplification.md) supersedes phone-proof, token-interface and fallback rules. Use [current architecture](../architecture.md) for the running code. Full Gemma audio and Laya routing remain supported.
 
 Status: historical implementation record. Migration and worker code are implemented and tested locally; live Telegram and real Gemma behavior remain unverified. Work-package labels below are planning references, not registered tracker tasks.

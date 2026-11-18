@@ -5,6 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from app.channels.telegram_intake import private_message
 from app.graph.builder import build_graph
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.gemma import ProviderError
@@ -31,35 +32,17 @@ def test_failed_laya_produces_retry_and_no_booking_write(monkeypatch):
             build_graph(DeterministicInterpreter(), BrokenLaya())
         ),
     )
-    replies = []
     repo = SimpleNamespace(
         ensure_customer_for_sender=lambda *args: {
             "customer_id": "customer-1",
             "telegram_user_id": 101,
         },
-        save_reply=lambda *args: replies.append(args[2]),
     )
     worker = TelegramWorker(runtime, None, repo)
     worker.bot_id = 42
-    worker._process_one(
-        dict(
-            update_id=10,
-            chat_id=101,
-            telegram_user_id=101,
-            payload={
-                "message": {
-                    "chat": {"type": "private"},
-                    "from": {"id": 101},
-                    "text": "cancel my booking",
-                }
-            },
-        )
-    )
-    assert "No booking change" in replies[0]
+    reply = reply_to_update(worker, text="cancel my booking")
+    assert "No booking change" in reply
     assert actions.created == actions.canceled == actions.rescheduled == []
-
-
-from app.channels.telegram import TelegramApiError
 
 
 @pytest.fixture
@@ -67,7 +50,6 @@ def worker():
     runtime = SimpleNamespace(
         settings=SimpleNamespace(
             demo_business_id="demo-studio",
-            telegram_poll_seconds=20,
             telegram_audio_max_bytes=20000000,
             telegram_audio_processing_timeout_seconds=900,
         ),
@@ -112,26 +94,29 @@ def claimed_update(**content):
     )
 
 
+def reply_to_update(worker, **content):
+    row = claimed_update(**content)
+    message = private_message(row)
+    assert message is not None
+    identity = worker._ensure_customer(message["from"], row["telegram_user_id"])
+    return worker._reply_to_message(row, identity, message)
+
+
 @pytest.mark.parametrize("text", ["/start", "/start@capy_bot", " /START "])
-def test_start_saves_welcome_without_running_models(worker, text):
-    worker._process_one(claimed_update(text=text))
+def test_start_returns_welcome_without_running_models(worker, text):
+    reply = reply_to_update(worker, text=text)
     worker.runtime.workflow.handle_turn.assert_not_called()
-    worker.repository.save_reply.assert_called_once()
-    assert "You can type" in worker.repository.save_reply.call_args.args[2]
+    assert "You can type" in reply
 
 
 def test_blank_text_returns_supported_input_hint(worker):
-    worker._process_one(claimed_update(text="   "))
+    reply = reply_to_update(worker, text="   ")
     worker.runtime.workflow.handle_turn.assert_not_called()
-    assert (
-        "Send text or a voice message" in worker.repository.save_reply.call_args.args[2]
-    )
+    assert "Send text or a voice message" in reply
 
 
 def test_text_turn_keeps_identity_idempotency_and_privacy(worker):
-    worker._process_one(
-        claimed_update(text="Ada wants Massage tomorrow +5511999998888")
-    )
+    reply = reply_to_update(worker, text="Ada wants Massage tomorrow +5511999998888")
     turn, actions = worker.runtime.workflow.handle_turn.call_args.args
     assert turn.customer_id == actions.customer_id == "customer-1"
     assert turn.idempotency_key == "telegram:42:10"
@@ -139,7 +124,7 @@ def test_text_turn_keeps_identity_idempotency_and_privacy(worker):
     assert turn.input_modality == "text"
     worker.runtime.repository.business.assert_called_once_with("demo-studio")
     worker.runtime.repository.catalog.assert_not_called()
-    worker.repository.save_reply.assert_called_once_with(42, 10, "Done.")
+    assert reply == "Done."
 
 
 @pytest.mark.parametrize("kind", ["voice", "audio"])
@@ -161,7 +146,7 @@ def test_audio_finishes_transcription_before_one_workflow_turn(worker, kind):
 
     worker.runtime.audio_understanding.transcribe_recording.side_effect = transcribe
     worker.runtime.workflow.handle_turn.side_effect = workflow
-    worker._process_one(claimed_update(**{kind: {"file_id": "file-1"}}))
+    reply_to_update(worker, **{kind: {"file_id": "file-1"}})
     assert events == ["transcription-complete", "workflow"]
     worker.api.get_file.assert_called_once_with("file-1", 20000000)
     turn = worker.runtime.workflow.handle_turn.call_args.args[0]
@@ -181,7 +166,7 @@ def test_turn_resolves_date_in_the_business_timezone(worker, monkeypatch):
         timezone="America/Sao_Paulo"
     )
 
-    worker._process_one(claimed_update(text="Book Massage tomorrow"))
+    reply_to_update(worker, text="Book Massage tomorrow")
 
     turn = worker.runtime.workflow.handle_turn.call_args.args[0]
     assert turn.today == "2026-11-17"
@@ -190,32 +175,26 @@ def test_turn_resolves_date_in_the_business_timezone(worker, monkeypatch):
 def test_missing_business_stops_turn_and_returns_domain_message(worker):
     worker.runtime.repository.business.return_value = None
 
-    worker._process_one(claimed_update(text="Book Massage tomorrow"))
+    reply = reply_to_update(worker, text="Book Massage tomorrow")
 
     worker.runtime.workflow.handle_turn.assert_not_called()
-    worker.repository.save_reply.assert_called_once_with(
-        42, 10, "The business is not available."
-    )
+    assert reply == "The business is not available."
 
 
 def test_audio_provider_failure_never_runs_partial_turn(worker):
     worker.runtime.audio_understanding.transcribe_recording.side_effect = ProviderError(
         "failed_chunk"
     )
-    worker._process_one(claimed_update(voice={"file_id": "file-1"}))
+    reply = reply_to_update(worker, voice={"file_id": "file-1"})
     worker.runtime.workflow.handle_turn.assert_not_called()
-    assert "No booking change" in worker.repository.save_reply.call_args.args[2]
+    assert "No booking change" in reply
 
 
 @pytest.mark.parametrize("contact_id, saves", [(101, True), (999, False)])
 def test_contact_only_updates_own_profile_without_running_workflow(
     worker, contact_id, saves
 ):
-    worker._process_one(
-        claimed_update(
-            contact={"user_id": contact_id, "phone_number": "+5511999998888"}
-        )
-    )
+    reply_to_update(worker, contact={"user_id": contact_id, "phone_number": "+5511999998888"})
     assert worker.repository.save_contact.called == saves
     if saves:
         worker.repository.save_contact.assert_called_once_with(
@@ -233,66 +212,7 @@ def test_contact_only_updates_own_profile_without_running_workflow(
         ({"type": "private"}, []),
     ],
 )
-def test_invalid_channel_or_sender_is_ignored_before_identity_lookup(
-    worker, chat, sender
-):
+def test_invalid_channel_or_sender_is_ignored(chat, sender):
     row = claimed_update(text="book")
     row["payload"]["message"].update(chat=chat, **{"from": sender})
-    worker._process_one(row)
-    worker.repository.mark_ignored.assert_called_once_with(42, 10)
-    worker.repository.ensure_customer_for_sender.assert_not_called()
-    worker.runtime.workflow.handle_turn.assert_not_called()
-
-
-def test_reply_rate_limit_preserves_order_and_does_not_rerun_workflow(worker):
-    worker.repository.ready_replies.return_value = [
-        dict(
-            update_id=i, chat_id=101, reply_text="Saved", reply_markup=None, attempts=0
-        )
-        for i in (10, 11)
-    ]
-    worker.api.send_message.side_effect = TelegramApiError(
-        "telegram_api_429", retry_after=8
-    )
-    worker._deliver_ready_replies()
-    worker.api.send_message.assert_called_once()
-    worker.repository.delay_reply.assert_called_once_with(42, 10, 8, "telegram_api_429")
-    worker.repository.mark_delivered.assert_not_called()
-    worker.runtime.workflow.handle_turn.assert_not_called()
-
-
-def test_permanently_rejected_reply_does_not_block_the_next_reply(worker):
-    worker.repository.ready_replies.return_value = [
-        dict(
-            update_id=i, chat_id=101, reply_text="Saved", reply_markup=None, attempts=0
-        )
-        for i in (10, 11)
-    ]
-    worker.api.send_message.side_effect = [TelegramApiError("telegram_api_403"), None]
-    worker._deliver_ready_replies()
-    worker.repository.discard_reply.assert_called_once_with(42, 10, "telegram_api_403")
-    worker.repository.mark_delivered.assert_called_once_with(42, 11)
-
-
-def test_polling_saves_updates_before_advancing_offset(worker):
-    worker.api.get_updates.return_value = [
-        {"update_id": "bad"},
-        {
-            "update_id": 10,
-            "message": {"chat": {"id": 101}, "from": {"id": 101}, "text": "hello"},
-        },
-    ]
-    assert worker._poll_updates(5) == 11
-    worker.repository.save_update.assert_called_once()
-    assert worker.repository.save_update.call_args.kwargs["update_id"] == 10
-
-
-def test_poll_failure_keeps_offset_and_waits_for_retry(worker, monkeypatch):
-    sleep = Mock()
-    monkeypatch.setattr("app.telegram_worker.time.sleep", sleep)
-    worker.api.get_updates.side_effect = TelegramApiError(
-        "telegram_api_429", retry_after=4
-    )
-    assert worker._poll_updates(5) == 5
-    worker.repository.save_update.assert_not_called()
-    sleep.assert_called_once_with(4)
+    assert private_message(row) is None

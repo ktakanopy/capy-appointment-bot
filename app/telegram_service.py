@@ -1,23 +1,25 @@
-"""Run the independent Telegram intake, turn, reminder, and delivery roles."""
+"""Run Telegram turn, reminder, delivery, and registration commands."""
 
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import signal
 import time
 import uuid
 from dataclasses import replace
 from threading import Event, Thread
+from urllib.parse import urlsplit
 
 import psycopg
 from redis.exceptions import RedisError
 
 from app.booking import BookingService
 from app.channels.bots import BotRegistry, TelegramBot
-from app.channels.telegram import TelegramApiError, TelegramBotApi
+from app.channels.telegram import TelegramBotApi
 from app.channels.telegram_delivery import TelegramDelivery, TelegramOutbox, send_next
-from app.channels.telegram_intake import private_message, save_update, telegram_integer
+from app.channels.telegram_intake import private_message
 from app.channels.telegram_repository import TelegramRepository
 from app.channels.telegram_turns import (
     LEASE_SECONDS, REFRESH_OFFER, UNKNOWN_OUTCOME, ClaimLost, TelegramTurns, TurnClaim,
@@ -28,48 +30,6 @@ from app.observability import debug_event, debug_turn, get_logger, log_event
 from app.reminders import enqueue_telegram_reminders
 from app.runtime import close_runtime, create_runtime
 from app.telegram_worker import TelegramWorker, _conversation_id
-
-
-def poll(settings, stop: Event, logger) -> None:
-    if not settings.telegram_bot_token:
-        raise RuntimeError("Set TELEGRAM_BOT_TOKEN before starting the local poller.")
-    api = TelegramBotApi(settings.telegram_bot_token)
-    bot_id = api.get_me()["id"]
-    if api.has_webhook():
-        raise RuntimeError("Disable the bot's webhook before starting the local poller.")
-    repository = TelegramRepository(settings.database_url)
-    lock = repository.acquire_worker_lock(bot_id)
-    if lock is None:
-        raise RuntimeError("The bot already has an active poller or legacy worker.")
-    bot = TelegramBot(bot_id, settings.demo_business_id, "TELEGRAM_BOT_TOKEN")
-    try:
-        BotRegistry(settings.database_url).local_bot(bot_id, bot.business_id)
-        reconcile_replies(settings.database_url, bot)
-        log_event(logger, "telegram.poll.started", bot_id=bot_id)
-        while not stop.is_set():
-            try:
-                # After a long idle period Telegram can resume below the stored offset.
-                with lock.cursor() as cursor:
-                    cursor.execute(
-                        """SELECT next_update_id FROM telegram_poll_offsets
-                           WHERE bot_id=%s AND updated_at>now()-interval '6 days'""",
-                        (bot_id,),
-                    )
-                    offset = cursor.fetchone()
-                updates = api.get_updates(offset[0] if offset else None, settings.telegram_poll_seconds)
-                if updates:
-                    debug_event("telegram.poll.received", bot_id=bot_id, updates=len(updates))
-                for update in sorted(
-                    (update for update in updates if telegram_integer(update.get("update_id"))),
-                    key=lambda update: update["update_id"],
-                ):
-                    if not save_update(settings.database_url, bot, update, polling=True):
-                        return
-            except TelegramApiError as error:
-                log_event(logger, "telegram.poll.failed", bot_id=bot_id, failure_type=error.code)
-                stop.wait(error.retry_after or 2)
-    finally:
-        lock.close()
 
 
 def reconcile_replies(database_url: str, bot: TelegramBot) -> None:
@@ -262,7 +222,31 @@ def register(settings, args) -> None:
     token = os.getenv(args.token_env)
     if not token or not args.business:
         raise ValueError("Supply --business and load the bot token environment variable.")
-    bot_id = TelegramBotApi(token).get_me()["id"]
+    webhook_payload = None
+    if args.webhook_base_url is not None:
+        base_url = urlsplit(args.webhook_base_url)
+        if (
+            base_url.scheme != "https"
+            or not base_url.hostname
+            or base_url.username is not None
+            or base_url.path not in {"", "/"}
+            or base_url.query
+            or base_url.fragment
+        ):
+            raise ValueError("Use an HTTPS origin such as https://bot.example.com.")
+        if not args.route or not args.webhook_secret_env:
+            raise ValueError("Supply --route and --webhook-secret-env to configure a webhook.")
+        secret = os.getenv(args.webhook_secret_env, "")
+        if not re.fullmatch(r"[A-Za-z0-9_-]{16,256}", secret):
+            raise ValueError("Set a webhook secret of 16 to 256 URL-safe characters.")
+        webhook_payload = {
+            "url": f"https://{base_url.netloc}/telegram/{args.route}",
+            "secret_token": secret,
+            "allowed_updates": ["message"],
+            "drop_pending_updates": False,
+        }
+    api = TelegramBotApi(token)
+    bot_id = api.get_me()["id"]
     repository = TelegramRepository(settings.database_url)
     lock = repository.acquire_worker_lock(bot_id)
     if lock is None:
@@ -273,13 +257,16 @@ def register(settings, args) -> None:
             webhook_secret_env=args.webhook_secret_env, reminder_delivery=args.deliver_reminders,
         )
         reconcile_replies(settings.database_url, TelegramBot(bot_id, args.business, args.token_env))
+        if webhook_payload is not None:
+            api.call("setWebhook", webhook_payload)
+            log_event(get_logger(), "telegram.webhook.configured", bot_id=bot_id)
     finally:
         lock.close()
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("role", choices=("poll", "process", "send", "remind", "register", "stats"))
+    parser.add_argument("role", choices=("process", "send", "remind", "register", "stats"))
     parser.add_argument("--lane", choices=("all", "text", "audio"), default="all")
     parser.add_argument("--per-business", type=int, default=4)
     parser.add_argument("--idle-seconds", type=float, default=0.2)
@@ -287,6 +274,7 @@ def main() -> None:
     parser.add_argument("--token-env", default="TELEGRAM_BOT_TOKEN")
     parser.add_argument("--route")
     parser.add_argument("--webhook-secret-env")
+    parser.add_argument("--webhook-base-url", help="Public HTTPS origin for registering the webhook with Telegram.")
     parser.add_argument("--deliver-reminders", action="store_true")
     args = parser.parse_args()
     if not 0.01 <= args.idle_seconds <= 60 or not 1 <= args.per_business <= 100:
@@ -302,10 +290,7 @@ def main() -> None:
     stopping = Event()
     for name in (signal.SIGINT, signal.SIGTERM):
         signal.signal(name, lambda *_: stopping.set())
-    if args.role == "poll":
-        poll(settings, stopping, logger)
-    else:
-        run_worker(settings, args, stopping, logger)
+    run_worker(settings, args, stopping, logger)
 
 
 if __name__ == "__main__":

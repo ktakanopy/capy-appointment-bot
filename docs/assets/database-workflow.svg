@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620" role="img" aria-labelledby="title description">
   <title id="title">Creating a booking from Telegram</title>
-  <desc id="description">The worker stores the update and polling offset, resolves the linked customer, and reads availability. After the customer picks a slot, the booking transaction locks the business and checks the retry key, locks the professional and revalidates the slot, and commits the booking, pending reminder and idempotency record. The Telegram worker saves and sends the reply. Separately, the reminder worker claims due jobs and writes the demo inbox row and delivered status together.</desc>
+  <desc id="description">The webhook stores the update before acknowledging it. A worker resolves the linked customer and reads availability. After the customer picks a slot, the booking transaction locks the business and checks the retry key, locks the professional and revalidates the slot, and commits the booking, pending reminder and idempotency record. The Telegram worker saves and sends the reply. Separately, the reminder worker claims due jobs and writes the demo inbox row and delivered status together.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
       <path d="M 0 0 L 10 5 L 0 10 Z" fill="#536b64"/>
@@ -52,8 +52,8 @@
   </g>
 
   <text class="heading" x="48" y="120">Receive a Telegram update</text>
-  <text class="detail" x="48" y="144">Save the receipt and advance</text>
-  <text class="detail" x="48" y="164">the polling offset together.</text>
+  <text class="detail" x="48" y="144">Save the update receipt</text>
+  <text class="detail" x="48" y="164">before acknowledging the webhook.</text>
 
   <text class="heading" x="370" y="120">Resolve the customer</text>
   <text class="detail" x="370" y="144">Look up the sender’s linked customer</text>
@@ -81,7 +81,7 @@
   <text class="detail" x="48" y="546">Persist the reply first so delivery</text>
   <text class="detail" x="48" y="566">can retry from the saved response.</text>
 
-  <text class="heading" x="370" y="521">Poll due reminders</text>
+  <text class="heading" x="370" y="521">Claim due reminders</text>
   <text class="detail" x="370" y="546">The reminder worker claims due</text>
   <text class="detail" x="370" y="566">rows with SKIP LOCKED.</text>
 

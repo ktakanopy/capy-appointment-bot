@@ -1,23 +1,22 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
 
 import psycopg
-from psycopg.types.json import Jsonb
 
 from app.database import connect, psycopg_url
 from app.observability import debug_event
 
 
 class TelegramRepository:
-    """PostgreSQL identity links, polling offsets, and Telegram reply outbox."""
+    """Keep customer identity links and coordinate bot registration."""
 
     def __init__(self, database_url: str, *, turn_guard=None):
         self.database_url = database_url
         self.turn_guard = turn_guard
 
     def acquire_worker_lock(self, bot_id: int):
+        """Serialize registration and detect old workers during webhook cutover."""
         connection = psycopg.connect(psycopg_url(self.database_url), autocommit=True)
         try:
             locked = connection.execute(
@@ -31,158 +30,6 @@ class TelegramRepository:
             connection.close()
             return None
         return connection
-
-    def poll_offset(self, bot_id: int) -> int | None:
-        with connect(self.database_url) as connection:
-            row = connection.execute(
-                "SELECT next_update_id FROM telegram_poll_offsets WHERE bot_id=%s",
-                (bot_id,),
-            ).fetchone()
-        return row["next_update_id"] if row else None
-
-    def save_update(
-        self,
-        *,
-        bot_id: int,
-        update_id: int,
-        business_id: str,
-        chat_id: int | None,
-        telegram_user_id: int | None,
-        payload: dict,
-    ) -> None:
-        with connect(self.database_url) as connection:
-            connection.execute(
-                """INSERT INTO telegram_updates
-                   (bot_id,update_id,business_id,chat_id,telegram_user_id,payload)
-                   VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT (bot_id,update_id) DO NOTHING""",
-                (
-                    bot_id,
-                    update_id,
-                    business_id,
-                    chat_id,
-                    telegram_user_id,
-                    Jsonb(payload),
-                ),
-            )
-            connection.execute(
-                """INSERT INTO telegram_poll_offsets (bot_id,next_update_id)
-                   VALUES (%s,%s)
-                   ON CONFLICT (bot_id) DO UPDATE SET
-                       next_update_id=GREATEST(telegram_poll_offsets.next_update_id,EXCLUDED.next_update_id),
-                       updated_at=now()""",
-                (bot_id, update_id + 1),
-            )
-
-    def pending_updates(self, bot_id: int, limit: int = 50) -> list[dict[str, Any]]:
-        with connect(self.database_url) as connection:
-            rows = connection.execute(
-                """SELECT * FROM telegram_updates WHERE bot_id=%s AND status='received'
-                   ORDER BY update_id LIMIT %s""",
-                (bot_id, limit),
-            ).fetchall()
-        return [dict(row) for row in rows]
-
-    def claim_update(self, bot_id: int, update_id: int) -> dict[str, Any] | None:
-        with connect(self.database_url) as connection:
-            return connection.execute(
-                """UPDATE telegram_updates SET status='processing',attempts=attempts+1
-                   WHERE bot_id=%s AND update_id=%s AND status='received'
-                   RETURNING *""",
-                (bot_id, update_id),
-            ).fetchone()
-
-    def recover_interrupted(self, bot_id: int) -> None:
-        # Ask the customer to check their bookings because the interrupted turn may have committed.
-        with connect(self.database_url) as connection:
-            connection.execute(
-                """UPDATE telegram_updates
-                   SET status='reply_ready', payload=NULL,
-                       reply_text=%s, reply_markup=NULL, last_error='worker_interrupted',
-                       next_attempt_at=now()
-                   WHERE bot_id=%s AND status='processing'""",
-                (
-                    "I couldn't confirm what happened to your previous request. "
-                    "Please check your appointments before trying it again.",
-                    bot_id,
-                ),
-            )
-
-    def save_reply(
-        self,
-        bot_id: int,
-        update_id: int,
-        text: str | None,
-        reply_markup: dict | None = None,
-    ) -> None:
-        with connect(self.database_url) as connection:
-            connection.execute(
-                """UPDATE telegram_updates
-                   SET status='reply_ready',payload=NULL,reply_text=%s,reply_markup=%s,
-                       next_attempt_at=now(),last_error=NULL
-                   WHERE bot_id=%s AND update_id=%s AND status='processing'""",
-                (
-                    text,
-                    Jsonb(reply_markup) if reply_markup is not None else None,
-                    bot_id,
-                    update_id,
-                ),
-            )
-
-    def ready_replies(self, bot_id: int, limit: int = 25) -> list[dict[str, Any]]:
-        """Return the oldest waiting reply when its retry time has arrived.
-
-        Ordering is global per bot, including across chats. A delayed older
-        reply blocks later replies; the worker deliberately preserves that rule.
-        """
-        with connect(self.database_url) as connection:
-            rows = connection.execute(
-                """SELECT u.bot_id,u.update_id,u.chat_id,u.reply_text,
-                          u.reply_markup,u.attempts
-                   FROM telegram_updates AS u
-                   WHERE u.bot_id=%s AND u.status='reply_ready'
-                     AND u.next_attempt_at <= now()
-                     AND NOT EXISTS (
-                         SELECT 1 FROM telegram_updates AS earlier
-                         WHERE earlier.bot_id=u.bot_id
-                           AND earlier.status='reply_ready'
-                           AND (earlier.received_at,earlier.update_id)
-                               < (u.received_at,u.update_id)
-                     )
-                   ORDER BY u.received_at,u.update_id LIMIT %s""",
-                (bot_id, limit),
-            ).fetchall()
-        return [dict(row) for row in rows]
-
-    def mark_delivered(self, bot_id: int, update_id: int) -> None:
-        with connect(self.database_url) as connection:
-            connection.execute(
-                """UPDATE telegram_updates SET status='delivered',reply_text=NULL,
-                   reply_markup=NULL,last_error=NULL,expires_at=now()+interval '30 days'
-                   WHERE bot_id=%s AND update_id=%s AND status='reply_ready'""",
-                (bot_id, update_id),
-            )
-
-    def discard_reply(self, bot_id: int, update_id: int, code: str) -> None:
-        """Clear a reply Telegram permanently rejected; retain its dedupe receipt."""
-        with connect(self.database_url) as connection:
-            connection.execute(
-                """UPDATE telegram_updates SET status='delivered',reply_text=NULL,
-                   reply_markup=NULL,last_error=%s,expires_at=now()+interval '30 days'
-                   WHERE bot_id=%s AND update_id=%s AND status='reply_ready'""",
-                (code[:64], bot_id, update_id),
-            )
-
-    def delay_reply(
-        self, bot_id: int, update_id: int, delay_seconds: float, code: str
-    ) -> None:
-        delay_seconds = min(max(delay_seconds, 1), 3600)
-        with connect(self.database_url) as connection:
-            connection.execute(
-                """UPDATE telegram_updates SET attempts=attempts+1,
-                   next_attempt_at=now()+(%s * interval '1 second'),last_error=%s
-                   WHERE bot_id=%s AND update_id=%s AND status='reply_ready'""",
-                (delay_seconds, code[:64], bot_id, update_id),
-            )
 
     def ensure_customer_for_sender(
         self,
@@ -242,20 +89,3 @@ class TelegramRepository:
                 (phone, business_id, customer_id),
             )
         debug_event("telegram.contact.saved")
-
-    def mark_ignored(self, bot_id: int, update_id: int) -> None:
-        with connect(self.database_url) as connection:
-            connection.execute(
-                """UPDATE telegram_updates SET status='delivered',payload=NULL,
-                   expires_at=now()+interval '30 days'
-                   WHERE bot_id=%s AND update_id=%s AND status='processing'""",
-                (bot_id, update_id),
-            )
-
-    def prune_receipts(self, bot_id: int) -> None:
-        with connect(self.database_url) as connection:
-            connection.execute(
-                """DELETE FROM telegram_updates WHERE bot_id=%s AND status='delivered'
-                   AND expires_at < now()""",
-                (bot_id,),
-            )
