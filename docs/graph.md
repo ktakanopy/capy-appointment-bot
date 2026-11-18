@@ -41,6 +41,6 @@ Text and complete audio transcripts enter the same interpretation path. Audio ch
 
 `prepare_action` dispatches to `_prepare_create`, `_prepare_reschedule` or `_prepare_booking_status_change`. These functions check the required slot and booking references before routing to `execute`. `CustomerSchedulingActions` connects those workflow operations to services for the trusted customer; `SchedulingActions` is the protocol also implemented by evaluation fixtures.
 
-The Redis checkpoint is the only conversation store. Under `lg:v3`, it contains draft, offered slots, sanitized interpretation/decision fields and at most 24 messages. Tokens and private customer/booking objects are absent. The workflow requires a valid result instead of silently inventing a fallback reply for a malformed graph result.
+Redis holds the draft, offered slots, sanitized interpretation/decision fields and at most 24 messages. Each worker attempt writes to a separate thread. A successful turn publishes the thread reference on the PostgreSQL conversation row. Tokens and private customer and booking objects are absent. The workflow requires a valid result.
 
 An unsupported response is not an operational human handoff; there is no staffed handoff queue.

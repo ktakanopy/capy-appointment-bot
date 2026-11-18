@@ -7,15 +7,17 @@ from dataclasses import replace
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from app.channels.bots import BotRegistry
 from app.channels.phone import canonical_phone
 from app.channels.telegram import TelegramApiError, TelegramBotApi
+from app.channels.telegram_intake import private_message as _private_message
 from app.channels.telegram_repository import TelegramRepository
 from app.config import load_settings
 from app.customer_scheduling_actions import CustomerSchedulingActions
 from app.graph.contracts import TurnContext
 from app.llm.gemma import ProviderError
 from app.models import DomainError
-from app.observability import log_event
+from app.observability import log_event, timed_event
 from app.privacy import sanitize_message
 from app.runtime import close_runtime, create_runtime
 
@@ -33,6 +35,8 @@ class TelegramWorker:
         self.repository = repository
         self.business_id = runtime.settings.demo_business_id
         self.bot_id: int | None = None
+        self.checkpoint_thread: str | None = None
+        self.checkpoint_completed = False
 
     def run(self) -> None:
         me = self.api.get_me()
@@ -50,6 +54,8 @@ class TelegramWorker:
                 "Another Telegram worker already holds the polling lock."
             )
         try:
+            if BotRegistry(self.repository.database_url).contains(self.bot_id):
+                raise RuntimeError("Use the separate Telegram service roles for a registered bot.")
             log_event(
                 self.runtime.logger, "telegram.worker.started", bot_id=self.bot_id
             )
@@ -201,13 +207,15 @@ class TelegramWorker:
             raise ValueError("missing_audio_file")
 
         settings = self.runtime.settings
-        audio = self.api.get_file(file_id, settings.telegram_audio_max_bytes)
-        transcript = self.runtime.audio_understanding.transcribe_recording(
-            audio,
-            self._audio_transcription_context(),
-            chunker=self.runtime.audio_chunker,
-            processing_timeout_seconds=settings.telegram_audio_processing_timeout_seconds,
-        )
+        duration = media.get("duration")
+        with timed_event("telegram.audio.prepared", audio_seconds=duration if type(duration) is int else None):
+            audio = self.api.get_file(file_id, settings.telegram_audio_max_bytes)
+            transcript = self.runtime.audio_understanding.transcribe_recording(
+                audio,
+                self._audio_transcription_context(),
+                chunker=self.runtime.audio_chunker,
+                processing_timeout_seconds=settings.telegram_audio_processing_timeout_seconds,
+            )
         return transcript, "audio"
 
     def _audio_transcription_context(self) -> dict:
@@ -255,7 +263,13 @@ class TelegramWorker:
             idempotency_key=f"telegram:{self.bot_id}:{row['update_id']}",
             input_modality=modality,
         )
-        result = self.runtime.workflow.handle_turn(turn, actions)
+        if self.checkpoint_thread:
+            result = self.runtime.workflow.handle_turn(
+                turn, actions, checkpoint_thread=self.checkpoint_thread
+            )
+            self.checkpoint_completed = True
+        else:
+            result = self.runtime.workflow.handle_turn(turn, actions)
         return result.text
 
     def _deliver_ready_replies(self) -> None:
@@ -301,25 +315,6 @@ def _reply_retry_delay(attempts: int, retry_after: int | None) -> int:
         return retry_after
     # Cap the exponent as well as the delay for repeatedly failing deliveries.
     return min(300, 2 ** min(attempts + 1, 8))
-
-
-def _private_message(row: dict) -> dict | None:
-    """Accept messages only from the private-chat sender recorded at intake."""
-    message = (row.get("payload") or {}).get("message")
-    if not isinstance(message, dict):
-        return None
-    chat = message.get("chat")
-    sender = message.get("from")
-    if not isinstance(chat, dict) or not isinstance(sender, dict):
-        return None
-    if chat.get("type") != "private" or sender.get("is_bot"):
-        return None
-    user_id = row.get("telegram_user_id")
-    if not isinstance(row.get("chat_id"), int) or not isinstance(user_id, int):
-        return None
-    if sender.get("id") != user_id:
-        return None
-    return message
 
 
 def _is_start_command(text: object) -> bool:

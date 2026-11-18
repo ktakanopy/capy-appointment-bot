@@ -6,6 +6,8 @@ Booking writes lock the business row to serialize the retry boundary, then valid
 
 Creation and reminder insertion commit together. Cancellation cancels pending reminders in the same transaction. Rescheduling changes the booking and reminder atomically; a failed move preserves the old appointment.
 
-Telegram intake stores each update once with the polling offset. A claimed turn becomes a saved reply before delivery. Delivery retries use that reply without rerunning the graph. On restart, interrupted processing is marked uncertain and asks the customer to inspect their appointments. An external send timeout can still produce a duplicate reply; business idempotency prevents a duplicate booking.
+Polling intake stores each update with the polling offset. Webhook intake stores the receipt first, then acknowledges it. Both deduplicate by bot and update ID.
 
-Reminder delivery is simulated in a database inbox with a unique reminder ID. This makes the demo delivery transactional. Connecting a real external sender would require reviewing that delivery boundary separately.
+A claim generation fences booking writes and publication of replies and Redis checkpoint references. When an interrupted claim expires, its replacement asks the customer to check their appointments. It discards the draft and preserves every committed booking. Automatic replay after an uncertain booking result remains gated on durable action commands.
+
+The shared outbox stores one logical reply per update and one send per reminder generation. A reminder moved or canceled before dispatch authorization is skipped. A later cancellation can race an authorized send. Sender replicas share bot and chat rate limits. They retry definitive transient errors and mark lost responses or expired dispatches ambiguous for inspection. [Delivery worker](../app/channels/telegram_delivery.py)

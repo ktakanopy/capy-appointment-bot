@@ -39,6 +39,19 @@ class RedisCheckpointSaver(BaseCheckpointSaver[str]):
         self.redis = redis_client
         self.ttl_seconds = ttl_seconds
 
+    def fork_completed(self, source_thread: str, attempt_thread: str) -> bool:
+        """Seed a private attempt from the last published completed checkpoint."""
+        checkpoint_id = self._latest_id(source_thread, "")
+        if not checkpoint_id:
+            return False
+        item = self._read_json(self._item_key(source_thread, "", checkpoint_id))
+        if item is None:
+            return False
+        item["parent"] = None
+        self._write_json(self._item_key(attempt_thread, "", checkpoint_id), item)
+        self.redis.set(self._latest_key(attempt_thread, ""), checkpoint_id, ex=self.ttl_seconds)
+        return True
+
     def get_tuple(self, config) -> CheckpointTuple | None:
         thread_id, checkpoint_ns = self._thread(config)
         checkpoint_id = get_checkpoint_id(config) or self._latest_id(

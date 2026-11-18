@@ -6,6 +6,8 @@ Run many businesses' Telegram bots on one CAPY backend. Share intake, conversati
 
 Use 100,000 monthly active customers, 20 incoming turns per second at peak, and a five-second p95 text response as planning targets. Measure p95 from intake receipt to Telegram accepting the final reply. Validate voice latency separately by recording length. Track the daily 99.9% success objective with synthetic journeys and real request outcomes reported separately. Confirm the reminder lateness target with the business before release. Measure lateness from `send_at` to Telegram accepting the reminder. Capacity and availability targets require evidence from staging and production.
 
+The PostgreSQL runtime and local tests are documented in the deployment runbook. Use its cutover and capacity gates for hosted rollout. [Deployment runbook](../production.md)
+
 ## 1. Establish the baseline
 
 - Start from the latest `portifolio` commit and review the working tree. The audit migration and reminder worker cleanup were verified locally. Reconcile those changes explicitly before choosing the next Alembic revision. Run migrations and race tests against disposable databases.

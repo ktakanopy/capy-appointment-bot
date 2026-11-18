@@ -12,8 +12,9 @@ from app.database import connect, psycopg_url
 class TelegramRepository:
     """PostgreSQL identity links, polling offsets, and Telegram reply outbox."""
 
-    def __init__(self, database_url: str):
+    def __init__(self, database_url: str, *, turn_guard=None):
         self.database_url = database_url
+        self.turn_guard = turn_guard
 
     def acquire_worker_lock(self, bot_id: int):
         connection = psycopg.connect(psycopg_url(self.database_url), autocommit=True)
@@ -197,6 +198,8 @@ class TelegramRepository:
         A phone number never selects an existing customer.
         """
         with connect(self.database_url) as connection:
+            if self.turn_guard:
+                self.turn_guard(connection)
             connection.execute(
                 """INSERT INTO telegram_identities (business_id,bot_id,telegram_user_id,username,display_name)
                    VALUES (%s,%s,%s,%s,%s)
@@ -230,6 +233,8 @@ class TelegramRepository:
 
     def save_contact(self, business_id: str, customer_id: str, phone: str) -> None:
         with connect(self.database_url) as connection:
+            if self.turn_guard:
+                self.turn_guard(connection)
             connection.execute(
                 "UPDATE customers SET phone=%s WHERE business_id=%s AND id=%s",
                 (phone, business_id, customer_id),

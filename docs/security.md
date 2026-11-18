@@ -1,6 +1,6 @@
 # Ownership and data handling
 
-This is a synthetic-data portfolio application. Telegram's numeric sender ID, scoped by business and bot, maps to the customer. Username and display name are metadata. A supplied phone number never grants access or merges customers.
+Telegram's numeric sender ID, scoped by business and bot, maps to the customer. Username and display name are metadata. A supplied phone number never grants access or merges customers.
 
 Booking reads and changes require trusted business/customer IDs from the transport boundary. The application checks them against the booking inside the mutation transaction, including idempotent replay. The model never supplies these trusted IDs. Customer management tokens and public customer mutation routes are retired. Owner inspection is a local CLI; it has no public HTTP surface.
 
@@ -12,4 +12,4 @@ New checkpoints contain bounded history and expire with the session TTL. Old che
 
 Logs/traces contain safe event names, IDs and outcomes, not raw messages, audio, provider exception bodies or contact values. Provider failure makes no booking write. An interrupted or otherwise ambiguous turn reports uncertainty rather than claiming rollback.
 
-Before upgrading an existing instance, stop old workers and back up the database. Token removal has no automatic downgrade; restore the matching backup and application to roll back. The cleanup does not migrate or reset the currently running demo database.
+Hosted webhooks resolve the tenant through a configured bot route and verify the bot's secret header before reading the update. Tokens and webhook secrets come from the deployment environment. The database stores references to them. Receipt and delivery outcomes have bounded retention. [Deployment and cutover](production.md)

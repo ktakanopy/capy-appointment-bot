@@ -1,12 +1,14 @@
 # Database
 
-PostgreSQL stores the catalog, working schedules, customers, bookings, reminders and Telegram update receipts. Redis holds the temporary conversation draft, offered slots and conversation history. The schema below reflects the [scheduling migration](../alembic/versions/0001_general_scheduling.py), [Telegram migration](../alembic/versions/0002_telegram_channel.py) and [ownership migration](../alembic/versions/0003_telegram_ownership.py).
+PostgreSQL stores the catalog, working schedules, customers, bookings, reminders and Telegram update receipts. Redis holds the temporary conversation draft, offered slots and conversation history. The schema below reflects the [Alembic migrations](../alembic/versions).
+
+Migration `0004_remove_audit_events` removes the unused `audit_events` table. If the table contains records, the migration stops and leaves them in place for review. Booking write results are stored in `idempotency_records`. [Audit table migration](../alembic/versions/0004_remove_audit_events.py)
 
 ## Tables and relationships
 
-![PostgreSQL entity relationships grouped by availability, bookings, reminders and Telegram. Solid arrows run from referenced tables to tables that hold foreign keys. The table below lists each relationship.](assets/database-relationships.svg)
+![Core PostgreSQL relationships for availability, bookings, the local reminder demo and Telegram intake.](assets/database-relationships.svg)
 
-Every table below except `businesses` and `telegram_poll_offsets` has a required `business_id` foreign key to `businesses.id`. The relationship column lists the other foreign keys and relevant application-level links.
+The original diagram shows the core scheduling tables. The table below also includes the bot registry, claims, and shared sender state added in migration `0005_telegram_jobs`.
 
 | Table | Role | Relationships and key constraints |
 | --- | --- | --- |
@@ -18,22 +20,26 @@ Every table below except `businesses` and `telegram_poll_offsets` has a required
 | `blocked_periods` | Explicit intervals when a professional is unavailable | Each block references one professional. |
 | `customers` | Customer records with optional phone and email | A customer can have many bookings. Telegram ownership uses an identity link. |
 | `bookings` | Appointment times, occupied interval including buffers, and status | Each booking references one customer, service and professional. An exclusion constraint prevents overlapping occupied intervals for the same professional when bookings are scheduled or confirmed. |
-| `reminders` | Reminder jobs with due time, status and retry state | Each reminder references a booking. A booking can have multiple reminder records over time and at most one pending reminder. |
+| `reminders` | Reminder schedule, generation, and delivery state | Each reminder references a booking. A booking has at most one pending reminder. A reschedule supersedes its queued generation. |
 | `reminder_inbox` | Simulated reminder deliveries | Each entry references one reminder and one booking. The unique `reminder_id` allows at most one inbox entry per reminder. |
 | `idempotency_records` | Request hash and saved result for each booking write key | The primary key is `(business_id, operation, idempotency_key)`. The app stores the booking ID in `resource_id` as plain text. |
-| `audit_events` | Schema for audit records | `booking_id` is an optional foreign key. The current booking service records write outcomes in `idempotency_records`. |
 | `telegram_identities` | Links numeric Telegram senders to customer records | The primary key is `(business_id, bot_id, telegram_user_id)`. `customer_id` is optional and unique within a business and bot when present. |
-| `telegram_updates` | Deduplicated incoming updates and saved replies | The primary key is `(bot_id, update_id)`. Reply delivery can retry from this row. |
+| `telegram_bots` | Trusted mapping from Telegram bot to business | Maps each bot to one business, a webhook route, and environment variable references for credentials. |
+| `telegram_updates` | Incoming update receipts | The primary key is `(bot_id, update_id)`. Processed message bodies are cleared. Legacy ready replies migrate to the outbox. |
 | `telegram_poll_offsets` | Next update ID to poll | One row per `bot_id`. The app stores the update receipt and advances this offset in the same transaction. |
+| `telegram_conversations` | One active turn and published checkpoint per chat | Each row belongs to a registered bot and its business. A claim generation authorizes booking writes and state publication. |
+| `telegram_outbox` | Replies and due hosted reminders | One reply per bot and update. One send job per reminder and generation. Dispatch status records the delivery outcome. |
+| `telegram_bot_delivery` | Shared per-bot rate and priority state | One row per registered bot controls when its next send is eligible. |
+| `telegram_chat_delivery` | Shared per-chat rate state | One row per registered bot and destination chat controls its next send. |
 
 ## Booking and reminder workflow
 
 ![Booking creation data flow. The Telegram worker stores the update and polling offset, resolves the customer and offers available slots. When the customer selects a slot, a transaction checks the retry key and revalidates the slot before committing the booking and pending reminder together. Reply delivery and reminder delivery run separately after the commit.](assets/database-workflow.svg)
 
-1. **Receive and resolve.** Telegram intake saves the update and advances the polling offset in one transaction. The worker claims the update and resolves the customer from the numeric sender’s identity link. [Telegram repository](../app/channels/telegram_repository.py)
+1. **Receive and resolve.** Polling intake saves the update and advances its offset in one transaction. Webhook intake saves the update before responding. The worker claims the chat and resolves its customer's identity. [Intake](../app/channels/telegram_intake.py) · [Turn claims](../app/channels/telegram_turns.py)
 2. **Read availability.** The app calculates slots from eligible professionals, working hours, blocks and active bookings. It applies service duration and buffers, minimum notice and the booking horizon. Offered slots are temporary references held in Redis. Appointment lookup reads the linked customer’s future scheduled and confirmed bookings. [Availability service](../app/scheduling.py) · [PostgreSQL repository](../app/repositories.py)
 3. **Commit a write.** The booking service locks the business row and checks the idempotency key and request hash. New bookings and moves also lock the professional and revalidate the requested slot. PostgreSQL rejects overlapping active occupied intervals. A rejected write rolls back the transaction. [Booking service](../app/booking.py) · [Idempotency and recovery](idempotency.md)
-4. **Save the reply and process reminders.** The Telegram worker saves the reply before sending it. The reminder worker independently locks due rows with `FOR UPDATE SKIP LOCKED`, writes the demo inbox entry and marks the reminder delivered in the same transaction. [Telegram worker](../app/telegram_worker.py) · [Reminder worker](../app/reminders.py)
+4. **Save the reply and queue reminders.** Completing the turn saves its reply in the outbox. The hosted scheduler locks due reminders with `FOR UPDATE SKIP LOCKED` and queues the current generation. Sender replicas authorize each send before calling Telegram. The local demo writes to its owner inbox. [Outbound delivery](../app/channels/telegram_delivery.py) · [Reminders](../app/reminders.py)
 
 | Booking write | Reminder effect in the same transaction |
 | --- | --- |

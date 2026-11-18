@@ -106,6 +106,8 @@ Existing databases need a coordinated cutover: stop old workers, back up Postgre
 
 The smoke corpus exercises the local models with synthetic data. A live Telegram walkthrough requires a test bot and test chat.
 
+For multiple bots, CAPY supports a shared webhook, conversation workers, and a rate-limited sender for replies and reminders. Start with a test bot and validate capacity before promoting the deployment. [Production deployment](docs/production.md)
+
 ## Documentation
 
 - [Architecture](docs/architecture.md) — Telegram worker and booking walkthroughs
@@ -119,3 +121,4 @@ The smoke corpus exercises the local models with synthetic data. A live Telegram
 - [Repository history](docs/history.md) — earlier versions and design changes
 - [Portfolio roadmap](docs/ai-engineering-portfolio-roadmap.md) — planned work
 - [Simplification plan](docs/sdd/plan-portfolio-simplification.md) — scope and implementation steps
+- [Multi-bot deployment](docs/production.md) — setup, cutover, and capacity checks

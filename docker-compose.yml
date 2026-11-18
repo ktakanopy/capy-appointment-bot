@@ -80,7 +80,8 @@ services:
     restart: unless-stopped
     build:
       context: .
-    command: python -m app.telegram_worker
+    command: python -m app.telegram_service process
+    stop_grace_period: 16m
     environment:
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
@@ -97,6 +98,36 @@ services:
       TELEGRAM_AUDIO_DECODE_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_DECODE_TIMEOUT_SECONDS:-120}
       TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS:-60}
       TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS:-900}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  telegram-poller:
+    profiles: ["telegram"]
+    restart: unless-stopped
+    build:
+      context: .
+    command: python -m app.telegram_service poll
+    stop_grace_period: 65s
+    environment:
+      DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
+      DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_POLL_SECONDS: ${TELEGRAM_POLL_SECONDS:-20}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  telegram-sender:
+    profiles: ["telegram"]
+    restart: unless-stopped
+    build:
+      context: .
+    command: python -m app.telegram_service send
+    stop_grace_period: 45s
+    environment:
+      DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     depends_on:
       api:
         condition: service_healthy

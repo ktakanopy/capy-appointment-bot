@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from typing import Literal
 
@@ -18,6 +19,7 @@ from app.models import (
     BookingSummary,
     DomainError,
 )
+from app.observability import timed_event
 from app.repositories import BOOKING_SELECT, PostgresRepository, booking_from_row
 from app.scheduling import validate_slot_in_transaction
 
@@ -37,10 +39,18 @@ def _hash_booking_request(value: object) -> str:
 class BookingService:
     """Keep booking authorization, writes and their side effects consistent."""
 
-    def __init__(self, repository: PostgresRepository):
+    def __init__(
+        self,
+        repository: PostgresRepository,
+        *,
+        turn_guard: Callable | None = None,
+        telegram_destination: tuple[int, int] | None = None,
+    ):
         """Use the repository's database URL to keep reads and writes together."""
         self.repository = repository
         self.database_url = repository.database_url
+        self.turn_guard = turn_guard
+        self.telegram_destination = telegram_destination
 
     @staticmethod
     def _load_customer_booking(
@@ -86,15 +96,18 @@ class BookingService:
         request hash to catch a key reused for different details. Lock the
         business first so two concurrent attempts cannot both see an unused key.
         """
+        if self.turn_guard:
+            self.turn_guard(connection)
         if not idempotency_key or len(idempotency_key) > 200:
             raise DomainError(
                 "invalid_idempotency_key",
                 "Idempotency-Key must contain 1 to 200 characters.",
                 422,
             )
-        business = connection.execute(
-            "SELECT id FROM businesses WHERE id=%s FOR UPDATE", (business_id,)
-        ).fetchone()
+        with timed_event("booking.business_lock", operation=operation):
+            business = connection.execute(
+                "SELECT id FROM businesses WHERE id=%s FOR NO KEY UPDATE", (business_id,)
+            ).fetchone()
         if business is None:
             raise DomainError("business_not_found", "Business not found.", 404)
         record = connection.execute(
@@ -149,7 +162,7 @@ class BookingService:
         """
         request_hash = _hash_booking_request(request.model_dump(mode="json"))
         try:
-            with connect(self.database_url) as connection:
+            with timed_event("booking.write", operation="create"), connect(self.database_url) as connection:
                 record = self._lock_business_and_check_retry(
                     connection,
                     request.business_id,
@@ -175,6 +188,12 @@ class BookingService:
                 booking_id = self._insert_scheduled_booking(
                     connection, slot, request.customer_id
                 )
+                if self.telegram_destination:
+                    connection.execute(
+                        """UPDATE bookings SET telegram_bot_id=%s, telegram_chat_id=%s
+                           WHERE id=%s""",
+                        (*self.telegram_destination, booking_id),
+                    )
                 send_at = self._calculate_reminder_time(connection, slot)
                 self._queue_booking_reminder(
                     connection, request.business_id, booking_id, send_at
@@ -301,9 +320,14 @@ class BookingService:
         Save the job with the booking so a failed booking leaves no reminder.
         """
         connection.execute(
-            """INSERT INTO reminders (id,business_id,booking_id,send_at,status)
-               VALUES (%s,%s,%s,%s,'pending')""",
-            (str(uuid.uuid4()), business_id, booking_id, send_at),
+            """INSERT INTO reminders
+                   (id,business_id,booking_id,send_at,status,telegram_bot_id,telegram_chat_id)
+               SELECT %s,b.business_id,b.id,%s,'pending',t.bot_id,
+                      CASE WHEN t.bot_id IS NOT NULL THEN b.telegram_chat_id END
+               FROM bookings b LEFT JOIN telegram_bots t ON t.bot_id=b.telegram_bot_id
+                   AND t.business_id=b.business_id AND t.enabled AND t.reminder_delivery
+               WHERE b.id=%s AND b.business_id=%s""",
+            (str(uuid.uuid4()), send_at, booking_id, business_id),
         )
 
     def read(
@@ -361,7 +385,7 @@ class BookingService:
             }
         )
         try:
-            with connect(self.database_url) as connection:
+            with timed_event("booking.write", operation=operation), connect(self.database_url) as connection:
                 record = self._lock_business_and_check_retry(
                     connection, business_id, operation, idempotency_key, request_hash
                 )
@@ -431,7 +455,14 @@ class BookingService:
         )
         if target == BookingStatus.CANCELED:
             connection.execute(
-                "UPDATE reminders SET status='canceled' WHERE booking_id=%s AND status='pending'",
+                """UPDATE reminders SET status='canceled', generation=generation+1
+                   WHERE booking_id=%s AND status='pending'""",
+                (booking_id,),
+            )
+            connection.execute(
+                """UPDATE telegram_outbox SET status='canceled', message=NULL, finished_at=now()
+                   WHERE status='ready' AND reminder_id IN
+                       (SELECT id FROM reminders WHERE booking_id=%s)""",
                 (booking_id,),
             )
         return target.value
@@ -460,7 +491,7 @@ class BookingService:
             }
         )
         try:
-            with connect(self.database_url) as connection:
+            with timed_event("booking.write", operation="reschedule"), connect(self.database_url) as connection:
                 record = self._lock_business_and_check_retry(
                     connection, business_id, "reschedule", idempotency_key, request_hash
                 )
@@ -538,8 +569,14 @@ class BookingService:
         ).fetchone()
         if pending:
             connection.execute(
-                "UPDATE reminders SET send_at=%s,last_error=NULL WHERE id=%s",
+                """UPDATE reminders SET send_at=%s,last_error=NULL,generation=generation+1
+                   WHERE id=%s""",
                 (send_at, pending["id"]),
+            )
+            connection.execute(
+                """UPDATE telegram_outbox SET status='canceled', message=NULL, finished_at=now()
+                   WHERE reminder_id=%s AND status='ready'""",
+                (pending["id"],),
             )
         else:
             self._queue_booking_reminder(

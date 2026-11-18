@@ -6,6 +6,7 @@ from urllib.error import URLError
 
 from app.graph.contracts import DecisionOutput, WorkflowDraft
 from app.llm.gemma import ProviderError
+from app.observability import timed_event
 
 
 class LayaDecision:
@@ -32,7 +33,9 @@ class LayaDecision:
             method="POST",
         )
         try:
-            with urlrequest.urlopen(req, timeout=self.timeout_seconds) as response:
+            with timed_event("model.laya.decide"), urlrequest.urlopen(
+                req, timeout=self.timeout_seconds
+            ) as response:
                 body = response.read(1_000_001)
                 if len(body) > 1_000_000:
                     raise ProviderError("response_limit")

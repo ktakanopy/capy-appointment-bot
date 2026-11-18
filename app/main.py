@@ -1,16 +1,25 @@
-"""Health surface. Customer operations enter exclusively through Telegram."""
+"""Health checks and durable Telegram webhook intake."""
 
+import json
 import logging
+import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
-from fastapi import Depends, FastAPI, Request
+import psycopg
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from redis import Redis
 
+from app.channels.bots import BotRegistry
+from app.channels.telegram_intake import save_update
 from app.config import Settings, load_settings
 from app.database import database_is_ready
 from app.models import HealthResponse
+from app.observability import get_logger, log_event
+
+WEBHOOK_BODY_LIMIT = 256 * 1024
 
 
 class _SuppressHealthAccess(logging.Filter):
@@ -52,11 +61,47 @@ async def lifespan(app):
         redis_client.close()
 
 
-app = FastAPI(title="CAPY scheduling health", lifespan=lifespan)
+app = FastAPI(title="CAPY scheduling", lifespan=lifespan)
 
 
 def get_health_dependencies(request: Request) -> HealthDependencies:
     return request.app.state.health_dependencies
+
+
+@app.get("/live")
+def live():
+    return {"status": "ok"}
+
+
+@app.post("/telegram/{route}", status_code=204)
+async def telegram_webhook(
+    route: str, request: Request, dependencies: HealthDependencies = Depends(get_health_dependencies)
+):
+    started = time.monotonic()
+    database_url = dependencies.settings.database_url
+    try:
+        bot = await run_in_threadpool(BotRegistry(database_url).by_route, route)
+        secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        if bot is None or not bot.accepts_webhook(secret):
+            raise HTTPException(status_code=403, detail="Webhook rejected")
+        body = bytearray()
+        async for chunk in request.stream():
+            if len(body) + len(chunk) > WEBHOOK_BODY_LIMIT:
+                raise HTTPException(status_code=413, detail="Update too large")
+            body.extend(chunk)
+        try:
+            update = json.loads(body)
+        except (ValueError, RecursionError) as exc:
+            raise HTTPException(status_code=400, detail="Invalid Telegram update") from exc
+        if not isinstance(update, dict) or not await run_in_threadpool(
+            save_update, database_url, bot, update
+        ):
+            raise HTTPException(status_code=400, detail="Invalid Telegram update")
+    except psycopg.Error as exc:
+        raise HTTPException(status_code=503, detail="Intake unavailable") from exc
+    log_event(get_logger(), "telegram.webhook.accepted",
+              duration_ms=round((time.monotonic() - started) * 1000))
+    return Response(status_code=204)
 
 
 @app.get("/health", response_model=HealthResponse)

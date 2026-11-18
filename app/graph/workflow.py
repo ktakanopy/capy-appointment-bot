@@ -10,7 +10,9 @@ class LangGraphWorkflow:
     def __init__(self, graph):
         self.graph = graph
 
-    def handle_turn(self, turn: TurnContext, actions: SchedulingActions) -> TurnResult:
+    def handle_turn(
+        self, turn: TurnContext, actions: SchedulingActions, *, checkpoint_thread: str | None = None
+    ) -> TurnResult:
         message = sanitize_message(turn.message)
         state = {
             "conversation_id": turn.conversation_id,
@@ -24,7 +26,7 @@ class LangGraphWorkflow:
             "input_modality": turn.input_modality,
             "messages": [{"role": "user", "content": message}],
         }
-        config = {"configurable": {"thread_id": turn.conversation_id}}
+        config = {"configurable": {"thread_id": checkpoint_thread or turn.conversation_id}}
         binding = bind_actions(actions)
         try:
             result = (

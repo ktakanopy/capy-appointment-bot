@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import re
+from contextlib import contextmanager
+from time import monotonic
 from typing import Any
 
 from app.config import Settings
@@ -61,6 +63,20 @@ def redact(value: Any, key: str = "") -> Any:
 def log_event(logger: logging.Logger, event: str, **fields: Any) -> None:
     safe = redact(fields)
     logger.info({"event": event, **safe})
+
+
+@contextmanager
+def timed_event(event: str, **fields: Any):
+    started = monotonic()
+    outcome = "ok"
+    try:
+        yield
+    except Exception:
+        outcome = "failed"
+        raise
+    finally:
+        log_event(get_logger(), event, outcome=outcome,
+                  duration_ms=round((monotonic() - started) * 1000), **fields)
 
 
 def trace_event(tracer, session_id: str, name: str, payload: dict[str, Any]) -> None:

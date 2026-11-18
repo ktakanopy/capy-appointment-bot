@@ -10,6 +10,7 @@ from urllib.error import URLError
 
 from app.channels.audio_chunks import AudioChunker, AudioError
 from app.llm.schemas import SchedulingInterpretation
+from app.observability import timed_event
 
 _MAX_RESPONSE_BYTES = 1_000_000
 
@@ -30,10 +31,11 @@ class GemmaUnderstanding:
         self.timeout_seconds = timeout_seconds
 
     def interpret(self, message: str, context: dict) -> SchedulingInterpretation:
-        payload = self._post(
-            {"modality": "text", "message": message, "context": _safe_context(context)}
-        )
-        return _interpretation(payload)
+        with timed_event("model.gemma.interpret"):
+            payload = self._post(
+                {"modality": "text", "message": message, "context": _safe_context(context)}
+            )
+            return _interpretation(payload)
 
     def transcribe_recording(
         self,
