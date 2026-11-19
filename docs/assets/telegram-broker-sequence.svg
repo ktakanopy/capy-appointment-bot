@@ -1,13 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="976" height="848" viewBox="0 0 976 848" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="976" height="848" viewBox="0 0 976 848" role="img" xml:lang="en" aria-labelledby="title desc">
 <title id="title">Telegram delivery through RabbitMQ</title>
 <desc id="desc">Fifteen calls show how CAPY commits Telegram updates, processes chats, and delivers replies and hosted reminders.</desc>
-<defs><marker id="tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#536b64"/></marker></defs>
 <style>
 text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
 .role { font-size: 14px; font-weight: 700; text-anchor: middle; }
-.call { font-size: 13px; text-anchor: middle; paint-order: stroke; stroke: #fbfaf5; stroke-width: 4px; }
+.call { font-size: 14px; text-anchor: middle; }
 .lifeline { stroke: #9eafa6; stroke-dasharray: 6 6; }
-.arrow { stroke: #536b64; stroke-width: 2; marker-end: url(#tip); }
+.arrow { fill: none; stroke: #536b64; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 </style>
 <rect width="976" height="848" rx="20" fill="#fbfaf5"/>
 <text x="24" y="44" font-size="27" font-weight="700">Telegram delivery through RabbitMQ</text>
@@ -35,34 +34,49 @@ text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
 <line class="lifeline" x1="901" x2="901" y1="101" y2="818"/>
 <rect x="846" y="64" width="110" height="37" rx="8" fill="#e4efdf" stroke="#8baa86"/>
 <text class="role" x="901" y="88">Sender</text>
-<line class="arrow" x1="75" x2="193" y1="145" y2="145"/>
+<path class="arrow" d="M75 145H193m-7 -5 7 5 -7 5"/>
+<rect x="68.5" y="122" width="131" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="134" y="136">Q01  Post webhook</text>
-<line class="arrow" x1="193" x2="311" y1="191" y2="191"/>
+<path class="arrow" d="M193 191H311m-7 -5 7 5 -7 5"/>
+<rect x="128" y="168" width="248" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="252" y="182">Q02  Commit receipt + publication</text>
-<line class="arrow" x1="547" x2="311" y1="237" y2="237"/>
+<path class="arrow" d="M547 237H311m7 -5 -7 5 7 5"/>
+<rect x="331" y="214" width="196" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="429" y="228">Q03  Claim due publication</text>
-<line class="arrow" x1="547" x2="665" y1="283" y2="283"/>
+<path class="arrow" d="M547 283H665m-7 -5 7 5 -7 5"/>
+<rect x="511.5" y="260" width="189" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="606" y="274">Q04  Publish chat wake-up</text>
-<line class="arrow" x1="665" x2="783" y1="329" y2="329"/>
+<path class="arrow" d="M665 329H783m-7 -5 7 5 -7 5"/>
+<rect x="629.5" y="306" width="189" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="724" y="320">Q05  Deliver by partition</text>
-<line class="arrow" x1="783" x2="311" y1="375" y2="375"/>
+<path class="arrow" d="M783 375H311m7 -5 -7 5 7 5"/>
+<rect x="470.5" y="352" width="153" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="547" y="366">Q06  Claim chat head</text>
-<line class="arrow" x1="783" x2="311" y1="421" y2="421"/>
+<path class="arrow" d="M783 421H311m7 -5 -7 5 7 5"/>
+<rect x="390.5" y="398" width="313" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="547" y="412">Q07  Commit reply and checkpoint reference</text>
-<line class="arrow" x1="783" x2="665" y1="467" y2="467"/>
+<path class="arrow" d="M783 467H665m7 -5 -7 5 7 5"/>
+<rect x="600" y="444" width="248" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="724" y="458">Q08  Acknowledge incoming wake-up</text>
-<line class="arrow" x1="429" x2="311" y1="513" y2="513"/>
+<path class="arrow" d="M429 513H311m7 -5 -7 5 7 5"/>
+<rect x="282.5" y="490" width="175" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="370" y="504">Q09  Stage due reminder</text>
-<line class="arrow" x1="547" x2="665" y1="559" y2="559"/>
+<path class="arrow" d="M547 559H665m-7 -5 7 5 -7 5"/>
+<rect x="515" y="536" width="182" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="606" y="550">Q10  Publish outgoing ID</text>
-<line class="arrow" x1="665" x2="901" y1="605" y2="605"/>
+<path class="arrow" d="M665 605H901m-7 -5 7 5 -7 5"/>
+<rect x="692" y="582" width="182" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="783" y="596">Q11  Deliver outgoing ID</text>
-<line class="arrow" x1="901" x2="311" y1="651" y2="651"/>
+<path class="arrow" d="M901 651H311m7 -5 -7 5 7 5"/>
+<rect x="456.5" y="628" width="299" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="606" y="642">Q12  Reserve send and verify permissions</text>
-<line class="arrow" x1="901" x2="75" y1="697" y2="697"/>
+<path class="arrow" d="M901 697H75m7 -5 -7 5 7 5"/>
+<rect x="360.5" y="674" width="255" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="488" y="688">Q13  Send reply or hosted reminder</text>
-<line class="arrow" x1="901" x2="311" y1="743" y2="743"/>
+<path class="arrow" d="M901 743H311m7 -5 -7 5 7 5"/>
+<rect x="533.5" y="720" width="145" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="606" y="734">Q14  Record outcome</text>
-<line class="arrow" x1="901" x2="665" y1="789" y2="789"/>
+<path class="arrow" d="M901 789H665m7 -5 -7 5 7 5"/>
+<rect x="659" y="766" width="248" height="18" rx="3" fill="#fbfaf5"/>
 <text class="call" x="783" y="780">Q15  Acknowledge outgoing wake-up</text>
 </svg>

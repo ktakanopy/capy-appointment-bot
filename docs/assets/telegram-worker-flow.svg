@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="486" viewBox="0 0 720 486" role="img" aria-labelledby="title desc">
-  <title id="title">Da mensagem à confirmação</title>
-  <desc id="desc">O webhook salva o texto do cliente no PostgreSQL. A seta A leva os IDs do bot e do chat pelo RabbitMQ. O worker recupera a oferta, processa a escolha e salva a resposta. A seta B leva o ID da resposta pelo RabbitMQ até o sender, que envia a confirmação no Telegram.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="486" viewBox="0 0 720 486" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">From message to confirmation</title>
+  <desc id="desc">The webhook saves the customer text in PostgreSQL. A sends the bot and chat IDs through RabbitMQ. The worker restores the offer, handles the choice, and saves the reply. B leads the sender to that reply so it can deliver the confirmation through Telegram.</desc>
   <style>
     text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
     .title { font-size: 30px; font-weight: 700; }
@@ -11,28 +11,28 @@
     .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   </style>
   <rect width="720" height="486" rx="20" fill="#fbfaf5"/>
-  <text class="title" x="30" y="45">Da mensagem à confirmação</text>
+  <text class="title" x="30" y="45">From message to confirmation</text>
 
   <rect x="30" y="70" width="660" height="92" rx="13" fill="#fffefa" stroke="#a4b8a8"/>
-  <text class="heading" x="52" y="106">Receber</text>
-  <text class="body" x="52" y="135">O webhook grava a mensagem no PostgreSQL.</text>
+  <text class="heading" x="52" y="106">Receive</text>
+  <text class="body" x="52" y="135">The webhook saves the message in PostgreSQL.</text>
   <rect x="540" y="94" width="125" height="44" rx="8" fill="#edf3e6" stroke="#b2c4aa"/>
-  <text class="code" x="602.5" y="122" text-anchor="middle">texto = “1”</text>
+  <text class="code" x="602.5" y="122" text-anchor="middle">text = “1”</text>
 
   <path class="arrow" d="M67 163v47m-6-7 6 7 6-7"/>
-  <text class="arrow-label" x="90" y="191">A · RabbitMQ recebe</text>
-  <text class="code" x="271" y="191">[bot_id, chat_id]</text>
+  <text class="arrow-label" x="90" y="191">A · RabbitMQ receives</text>
+  <text class="code" x="299" y="191">[bot_id, chat_id]</text>
 
   <rect x="30" y="211" width="660" height="110" rx="13" fill="#eaf2e5" stroke="#86a57e"/>
-  <text class="heading" x="52" y="247">Processar</text>
-  <text class="body" x="52" y="275">O worker lê “1” e recupera a oferta no Redis.</text>
-  <text class="body" x="52" y="299">Confere as 14h e salva a resposta no PostgreSQL.</text>
+  <text class="heading" x="52" y="247">Process</text>
+  <text class="body" x="52" y="275">The worker reads “1” and restores the offer from Redis.</text>
+  <text class="body" x="52" y="299">It checks 14:00 and saves the reply in PostgreSQL.</text>
 
   <path class="arrow" d="M67 322v47m-6-7 6 7 6-7"/>
-  <text class="arrow-label" x="90" y="350">B · RabbitMQ recebe</text>
-  <text class="code" x="271" y="350">[outgoing_id]</text>
+  <text class="arrow-label" x="90" y="350">B · RabbitMQ receives</text>
+  <text class="code" x="299" y="350">[outgoing_id]</text>
 
   <rect x="30" y="370" width="660" height="92" rx="13" fill="#fffefa" stroke="#a4b8a8"/>
-  <text class="heading" x="52" y="406">Enviar</text>
-  <text class="body" x="52" y="435">O sender lê a resposta salva e chama a API do Telegram.</text>
+  <text class="heading" x="52" y="406">Send</text>
+  <text class="body" x="52" y="435">The sender reads the saved reply and calls Telegram.</text>
 </svg>

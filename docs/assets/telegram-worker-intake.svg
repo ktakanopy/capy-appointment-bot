@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="444" viewBox="0 0 720 444" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">Why does the API return 204?</title>
+  <desc id="desc">Telegram sends “1” in the POST. I1 passes the update to save_update, which saves the incoming record and relay notification together. I2 follows the commit, when the API returns HTTP 204.</desc>
+  <style>
+    text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+    .title { font-size: 29px; font-weight: 700; }
+    .heading { font-size: 21px; font-weight: 700; }
+    .body { font-size: 18px; fill: #35544a; }
+    .label { font-size: 17px; font-weight: 700; fill: #35544a; }
+    .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 16px; }
+    .code-title { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 17px; font-weight: 700; }
+    .panel { fill: #fffefa; stroke: #a4b8a8; }
+    .green { fill: #eaf2e5; stroke: #86a57e; }
+    .pale { fill: #f1f5ec; stroke: #a4b8a8; }
+    .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="720" height="444" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="30" y="46">Why does the API return 204?</text>
+  <rect class="panel" x="30" y="75" width="660" height="74" rx="13"/>
+  <text class="code-title" x="52" y="104">POST /telegram/{route}</text>
+  <text class="body" x="52" y="130">Telegram delivers the update containing “1”.</text>
+  <path class="arrow" d="M68 150V197m-6-7 6 7 6-7"/>
+  <text class="label" x="91" y="179">I1 · save_update()</text>
+  <rect class="green" x="30" y="198" width="660" height="117" rx="13"/>
+  <text class="heading" x="52" y="228">One PostgreSQL transaction</text>
+  <rect class="panel" x="52" y="243" width="293" height="54" rx="8"/>
+  <text class="code" x="68" y="265">telegram_updates</text>
+  <text class="body" x="68" y="288">Incoming update record.</text>
+  <rect class="panel" x="371" y="243" width="297" height="54" rx="8"/>
+  <text class="code" x="387" y="265">telegram_publications</text>
+  <text class="body" x="387" y="288">Notification for the relay.</text>
+  <path class="arrow" d="M68 316V362m-6-7 6 7 6-7"/>
+  <text class="label" x="91" y="344">I2 · Commit complete</text>
+  <rect class="pale" x="30" y="363" width="660" height="57" rx="13"/>
+  <text class="heading" x="52" y="398">HTTP 204 · receipt acknowledged</text>
+</svg>

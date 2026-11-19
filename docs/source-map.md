@@ -1,7 +1,7 @@
 # Source map
 
 Start with one customer replying “1” to an offered appointment. Follow the message into the
-conversation worker, through the booking transaction, and back to Telegram. [Telegram worker guide (Português)](telegram-worker.md)
+conversation worker, through the booking transaction, and back to Telegram. [Telegram worker guide](telegram-worker.md)
 
 ## Telegram and conversation state
 

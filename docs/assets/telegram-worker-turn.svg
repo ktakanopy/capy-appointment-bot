@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="416" viewBox="0 0 720 416" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">Calls inside the turn</title>
+  <desc id="desc">_process_private_message sets up the worker and tries to restore the offer. P1 returns early if setup fails. P2 proceeds to customer lookup and reply generation. P3 passes the reply and checkpoint reference to finish.</desc>
+  <style>
+    text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+    .title { font-size: 29px; font-weight: 700; }
+    .heading { font-size: 21px; font-weight: 700; }
+    .body { font-size: 18px; fill: #35544a; }
+    .label { font-size: 17px; font-weight: 700; fill: #35544a; }
+    .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 16px; }
+    .code-title { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 17px; font-weight: 700; }
+    .panel { fill: #fffefa; stroke: #a4b8a8; }
+    .green { fill: #eaf2e5; stroke: #86a57e; }
+    .pale { fill: #f1f5ec; stroke: #a4b8a8; }
+    .waiting { fill: #faf0db; stroke: #c6ac74; }
+    .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="720" height="416" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="30" y="46">Calls inside the turn</text>
+  <text class="code" x="30" y="74">_process_private_message()</text>
+  <rect class="panel" x="30" y="95" width="413" height="94" rx="13"/>
+  <text class="heading" x="50" y="125">Prepare and restore the offer</text>
+  <text class="code" x="50" y="151">_prepare_turn_worker()</text>
+  <text class="code" x="50" y="174">_restore_turn_checkpoint()</text>
+  <rect class="waiting" x="546" y="107" width="144" height="69" rx="8"/>
+  <text class="code-title" x="618" y="134" text-anchor="middle">return</text>
+  <text class="body" x="618" y="159" text-anchor="middle">Stops here.</text>
+  <path class="arrow" d="M444 146H545m-7-6 7 6-7 6"/>
+  <text class="label" x="495" y="128" text-anchor="middle">P1 · Failure</text>
+  <path class="arrow" d="M68 190V235m-6-7 6 7 6-7"/>
+  <text class="label" x="91" y="218">P2 · Setup complete</text>
+  <rect class="green" x="30" y="236" width="660" height="69" rx="13"/>
+  <text class="heading" x="52" y="264">Identify the customer and prepare the reply</text>
+  <text class="code" x="52" y="291">_ensure_customer() · _reply_to_message()</text>
+  <path class="arrow" d="M68 306V346m-6-7 6 7 6-7"/>
+  <text class="label" x="91" y="331">P3 · Reply ready</text>
+  <rect class="pale" x="30" y="347" width="660" height="45" rx="8"/>
+  <text class="code-title" x="52" y="375">turns.finish()</text>
+  <text class="body" x="218" y="375">Saves the reply and chosen checkpoint reference.</text>
+</svg>

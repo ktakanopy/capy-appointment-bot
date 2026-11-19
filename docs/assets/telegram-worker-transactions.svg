@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="422" viewBox="0 0 720 422" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">Booking, reply, and delivery</title>
+  <desc id="desc">The booking service commits the appointment. At T1 the graph prepares a reply and the worker saves it in the outbox while marking the incoming update delivered. At T2 the relay publishes the outgoing ID. The sender records sent when Telegram accepts the reply.</desc>
+  <style>
+    text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+    .title { font-size: 29px; font-weight: 700; }
+    .heading { font-size: 21px; font-weight: 700; }
+    .body { font-size: 18px; fill: #35544a; }
+    .label { font-size: 17px; font-weight: 700; fill: #35544a; }
+    .code-title { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 17px; font-weight: 700; }
+    .panel { fill: #fffefa; stroke: #a4b8a8; }
+    .green { fill: #eaf2e5; stroke: #86a57e; }
+    .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="720" height="422" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="30" y="46">Booking, reply, and delivery</text>
+  <text class="body" x="30" y="74">Each successful stage records a separate result.</text>
+  <rect class="panel" x="30" y="91" width="660" height="65" rx="13"/>
+  <text class="code-title" x="52" y="118">BookingService.create()</text>
+  <text class="body" x="52" y="143">PostgreSQL stores the booking and reminder.</text>
+  <path class="arrow" d="M68 157V201m-6-7 6 7 6-7"/>
+  <text class="label" x="91" y="184">T1 · The graph prepares the reply</text>
+  <rect class="green" x="30" y="202" width="660" height="78" rx="13"/>
+  <text class="code-title" x="52" y="231">turns.finish()</text>
+  <text class="body" x="52" y="257">Input marked delivered · reply saved in the outbox.</text>
+  <path class="arrow" d="M68 281V327m-6-7 6 7 6-7"/>
+  <text class="label" x="91" y="309">T2 · The relay publishes the outgoing ID</text>
+  <rect class="panel" x="30" y="328" width="660" height="70" rx="13"/>
+  <text class="heading" x="52" y="358">Sender</text>
+  <text class="body" x="52" y="383">Records sent after Telegram accepts the reply.</text>
+</svg>

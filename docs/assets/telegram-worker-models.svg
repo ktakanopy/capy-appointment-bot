@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="447" viewBox="0 0 720 447" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">From text or audio to booking</title>
+  <desc id="desc">The worker reads text or downloads a recording. M1 passes the typed text. M2 passes the text that Gemma transcribed. The graph redacts recognizable sensitive details before Gemma interprets the text. M3 passes the interpreted message and draft to Laya. Python applies booking rules.</desc>
+  <style>
+    text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+    .title { font-size: 29px; font-weight: 700; }
+    .heading { font-size: 21px; font-weight: 700; }
+    .body { font-size: 18px; fill: #35544a; }
+    .label { font-size: 17px; font-weight: 700; fill: #35544a; }
+    .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 16px; }
+    .panel { fill: #fffefa; stroke: #a4b8a8; }
+    .green { fill: #eaf2e5; stroke: #86a57e; }
+    .pale { fill: #f1f5ec; stroke: #a4b8a8; }
+    .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="720" height="447" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="30" y="46">From text or audio to booking</text>
+  <rect class="panel" x="30" y="76" width="318" height="108" rx="13"/>
+  <text class="heading" x="51" y="111">Typed text</text>
+  <text class="body" x="51" y="141">The worker reads the message.</text>
+  <text class="code" x="51" y="164">TurnInput.text</text>
+  <rect class="panel" x="372" y="76" width="318" height="108" rx="13"/>
+  <text class="heading" x="393" y="111">Telegram audio</text>
+  <text class="body" x="393" y="141">The worker downloads the file.</text>
+  <text class="body" x="393" y="164">Gemma transcribes in the graph.</text>
+  <path class="arrow" d="M68 185V231m-6-7 6 7 6-7"/>
+  <text class="label" x="91" y="213">M1 · Text in memory</text>
+  <path class="arrow" d="M410 185V231m-6-7 6 7 6-7"/>
+  <text class="label" x="433" y="213">M2 · Transcribed text</text>
+  <rect class="green" x="30" y="232" width="660" height="76" rx="13"/>
+  <text class="heading" x="52" y="261">Gemma interprets the text</text>
+  <text class="body" x="52" y="288">The graph first redacts recognizable sensitive details.</text>
+  <path class="arrow" d="M68 309V354m-6-7 6 7 6-7"/>
+  <text class="label" x="91" y="337">M3 · Interpreted message + draft</text>
+  <rect class="pale" x="30" y="355" width="660" height="68" rx="13"/>
+  <text class="heading" x="52" y="383">Laya proposes the next action</text>
+  <text class="body" x="52" y="409">Python checks the customer, the choice, and availability.</text>
+</svg>

@@ -1,39 +1,42 @@
-# Worker do Telegram
+# Telegram worker
 
-Imagine que você pediu uma massagem para amanhã. O CAPY ofereceu **1. 14h** e **2. 16h**. Quando você responde **“1”**, o worker precisa lembrar qual horário ofereceu, saber de quem é o pedido e preparar a resposta. Acompanhe esse “1” desde a chegada até o envio da confirmação.
+You ask for a massage tomorrow. CAPY offers **1. 14:00** and **2. 16:00**. When you reply **“1”**, CAPY needs to recover that offer, find your customer account, and check whether 14:00 is still available. This guide follows that reply through the code.
 
-Um **worker** é um processo que pega trabalho em segundo plano. O `telegram-worker` cuida da conversa. Outros processos recebem a mensagem, passam avisos pela fila e enviam a resposta. Assim, a API pode confirmar o recebimento enquanto o worker ainda está processando um áudio ou consultando os horários.
+The `telegram-worker` is the background process that runs the conversation. The API accepts the incoming message, the relay passes queue notifications, and the sender delivers the reply. The API can confirm receipt while the worker is still processing the previous audio or checking the schedule.
 
-## O caminho da mensagem
+[Message path](#the-message-path) · [Code walkthrough](#start-reading-the-code) · [Recovery](#when-the-flow-changes) · [Logs](#follow-a-message-in-the-logs) · [Offline example](#run-the-example-without-telegram) · [Full sequence](#full-call-sequence)
 
-![Três etapas do “1”. O webhook grava a mensagem, o worker processa a escolha e o sender entrega a resposta. As setas A e B mostram os IDs que passam pelo RabbitMQ.](assets/telegram-worker-flow.svg)
+## The message path
 
-**A** leva os IDs do bot e do chat ao worker. **B** leva o ID da resposta ao sender. O relay publica esses avisos no RabbitMQ, e cada processo usa os IDs para buscar o conteúdo no PostgreSQL.
+![Three stages for “1.” The webhook saves the message, the worker handles the choice, and the sender delivers the reply. Arrows A and B show which IDs pass through RabbitMQ.](assets/telegram-worker-flow.svg)
 
-Um **turno** é o processamento de uma mensagem do cliente. Pedir horários e responder “1” são dois turnos do mesmo chat. O **checkpoint** é o estado salvo da conversa, incluindo a lista de horários que liga os dois turnos. A reserva em si fica no PostgreSQL. [Grafo da conversa](graph.md) · [Tabelas do banco](database.md)
+**A** tells the worker which bot and chat to check. **B** tells the sender which reply to deliver. The relay publishes these notifications to RabbitMQ. Both consumers use the IDs to fetch the corresponding records from PostgreSQL.
 
-## Onde começar a ler
+A **turn** is the processing of one customer message. Asking for times and replying “1” are two turns in the same chat. A **checkpoint** is saved conversation state. It includes the offered times that connect those two turns. The booking itself goes in PostgreSQL. [Conversation graph](graph.md) · [Database tables](database.md)
 
-No Docker Compose da demo, o serviço `telegram-worker` executa `python -m app.telegram_service process`. Leia `main()` até a linha 449, onde ela escolhe `run_broker_worker()` para o transporte RabbitMQ. Esse caminho cria o grafo e os clientes dos modelos uma vez por processo e registra `process_chat_turn()` para receber avisos da fila. Os serviços `relay` e `send` executam o mesmo módulo com outros argumentos. [Comando do worker no Compose](../docker-compose.yml#L112-L117) · [`main()`](../app/telegram_service.py#L408-L450) · [`run_broker_worker()`](../app/telegram_service.py#L239-L270)
+## Start reading the code
 
-| Serviço | Papel | Responsabilidade |
-| --- | --- | --- |
-| `api` | Webhook | Recebe o HTTP do Telegram e grava a entrada. [Comando no Compose](../docker-compose.yml#L70-L74) |
-| `telegram-relay` | `relay` | Lê avisos pendentes no PostgreSQL e os publica no RabbitMQ. [Comando no Compose](../docker-compose.yml#L21-L26) |
-| `telegram-worker` | `process` | Processa uma mensagem do chat e prepara a resposta. [Comando no Compose](../docker-compose.yml#L112-L117) |
-| `telegram-sender` | `send` | Entrega a resposta salva usando o bot que recebeu a mensagem. [Comando no Compose](../docker-compose.yml#L146-L151) |
+In the demo Compose file, `telegram-worker` runs `python -m app.telegram_service process`. In `main()`, line 449 selects `run_broker_worker()` for the RabbitMQ transport. [Compose command](../docker-compose.yml#L112-L117) · [Worker selection in `main()`](../app/telegram_service.py#L425-L450)
 
-`run_worker()`, no mesmo módulo, executa o agendador de lembretes e os papéis que usam o transporte alternativo `--transport postgres`. Para seguir o worker da demo, abra `run_broker_worker()`. [Seleção do transporte](../app/telegram_service.py#L408-L450) · [Loop em PostgreSQL](../app/telegram_service.py#L273-L307)
+![Compose starts three roles from the same Python module. S1 starts the relay, S2 the conversation worker, and S3 the sender. The API receives the webhook in a separate service.](assets/telegram-worker-startup.svg)
 
-### 1. O webhook grava “1” e o relay avisa o worker
+**S1** starts the relay that publishes pending notifications. **S2** creates the graph and model clients once per process and registers `process_chat_turn()` for incoming notifications. **S3** registers `send_outgoing()` for outgoing notifications. The `api` service receives Telegram's HTTP POST. [Roles in `run_broker_worker()`](../app/telegram_service.py#L239-L270) · [API in Compose](../docker-compose.yml#L70-L74)
 
-`telegram_webhook()` é a função que o CAPY executa quando o Telegram faz um POST com um novo evento. Ela valida a chamada e usa `save_update()` para salvar a entrada. Para uma mensagem privada aceita, o banco confirma o recibo em `telegram_updates` e o aviso em `telegram_publications` na mesma transação. A API então responde `204`, indicando que recebeu o evento. Se o Telegram reenviar o POST, a chave `(bot_id, update_id)` mantém um só recibo por bot e evento. [`telegram_webhook()`](../app/main.py#L76-L108) · [`save_update()`](../app/channels/telegram_intake.py#L41-L102)
+The same module also has `run_worker()`, which runs the reminder scheduler and the roles using `--transport postgres`. [Transport selection](../app/telegram_service.py#L408-L450) · [PostgreSQL worker loop](../app/telegram_service.py#L273-L307)
 
-O relay lê os avisos pendentes com `publish_due()`. Para trabalho de entrada, `publish_wakeup()` manda ao RabbitMQ o ID do bot e o ID do chat, na forma `[bot_id, chat_id]`. O texto “1” fica no recibo. O relay só apaga o aviso pendente depois de o RabbitMQ confirmar a publicação. Se o relay parar entre a confirmação e a exclusão, pode publicar o mesmo aviso novamente. [`publish_due()`](../app/channels/telegram_publications.py#L39-L70) · [`publish_wakeup()`](../app/channels/telegram_broker.py#L62-L85) · [Confirmações no RabbitMQ](https://www.rabbitmq.com/docs/confirms)
+### 1. The webhook saves “1” and the relay wakes the worker
 
-### 2. O worker pega a próxima mensagem do chat
+`telegram_webhook()` receives the POST, checks the route and bot secret, and calls `save_update()`. The figure follows a new private message. [`telegram_webhook()`](../app/main.py#L76-L108)
 
-O RabbitMQ entrega os dois IDs a `process_chat_turn()`. Neste trecho de `telegram_service.py`, a linha 262 tenta obter um `claim`. As linhas 263–264 só iniciam o turno quando o banco concede essa autorização. [`process_chat_turn()`, linhas 260–264](../app/telegram_service.py#L260-L264)
+![I1 saves the incoming update record and the relay notification in one transaction. I2 shows the API returning HTTP 204 after the commit.](assets/telegram-worker-intake.svg)
+
+**I1** saves the update in `telegram_updates` and the pending notification in `telegram_publications` so both become visible together. **I2** returns `204` to Telegram after the commit. If Telegram repeats the POST while the original record exists, the unique `(bot_id, update_id)` key prevents a second record or notification for that event. [Storage and deduplication in `save_update()`](../app/channels/telegram_intake.py#L67-L102)
+
+The relay reads pending notifications with `publish_due()`. For incoming work, `publish_wakeup()` sends `[bot_id, chat_id]` to RabbitMQ. The text “1” stays in the update record. The relay deletes the pending notification after RabbitMQ confirms the publication. If the relay stops between confirmation and deletion, it can publish the same notification again. [`publish_due()`](../app/channels/telegram_publications.py#L39-L70) · [`publish_wakeup()`](../app/channels/telegram_broker.py#L62-L85) · [RabbitMQ confirmations](https://www.rabbitmq.com/docs/confirms)
+
+### 2. The worker takes the next message in the chat
+
+RabbitMQ delivers the bot and chat IDs to `process_chat_turn()`. In this excerpt, line 262 tries to get a **claim**, which gives a worker temporary authority to process the next message. Lines 263–264 start the turn when the database grants the claim. [`process_chat_turn()`, lines 260–264](../app/telegram_service.py#L260-L264)
 
 ```python
 claim = turns.claim_chat(bot_id, chat_id, per_business=args.per_business)
@@ -41,19 +44,27 @@ if claim:
     process_turn(turns, claim, runtime)
 ```
 
-`claim_chat()` consulta o primeiro turno pendente do chat e verifica se ele pode começar. Imagine que um áudio com o pedido de horários chegou antes do “1” e ainda está em processamento. O banco mantém esse áudio na frente. Se o chat está ocupado ou a empresa atingiu o limite de turnos simultâneos, a função registra um novo aviso para tentar depois e retorna `None`. Ao conseguir a vez, `_start_attempt()` marca o recibo como `processing` e atualiza a conversa com o ID do turno, o prazo e o número da tentativa. [`claim_chat()`](../app/channels/telegram_turns.py#L157-L218) · [Ordem das mensagens](../app/channels/telegram_turns.py#L221-L247) · [`_start_attempt()`](../app/channels/telegram_turns.py#L272-L327)
+`claim_chat()` checks the first unfinished turn in that chat. A turn already in progress goes first. For waiting messages, the database orders by message time and uses the update ID to break ties. The **lease** is the time limit on the worker's authority to process a turn. [Message ordering](../app/channels/telegram_turns.py#L221-L247)
 
-**Para que serve o objeto `TurnClaim`?** Ele reúne o bot, o registro da mensagem (`row`), o número da tentativa (`generation`), a referência ao último checkpoint publicado e os indicadores `interrupted` e `late`. O worker passa esse objeto às funções que precisam saber qual tentativa está trabalhando. O número sobe a cada claim do chat, inclusive se um worker retomar o mesmo update. A autorização de fato fica na tabela `telegram_conversations` do PostgreSQL. [`TurnClaim`](../app/channels/telegram_turns.py#L67-L116)
+![An earlier audio message has an active lease and “1” waits in the same chat. O1 shows the postponed claim. O2 shows the text becoming eligible after the audio turn finishes.](assets/telegram-worker-chat-order.svg)
 
-O **lease** dá ao worker autorização por 90 segundos, e o **heartbeat** tenta renovar esse prazo a cada 30 segundos. O worker pode liberar o bloqueio inicial do banco enquanto aguarda o modelo. [Prazo do lease](../app/channels/telegram_turns.py#L28) · [Renovação em segundo plano](../app/telegram_service.py#L189-L217)
+**O1** shows what happens if `claim_chat()` runs while the audio turn holds an active lease. It schedules another check and returns `None`. It also postpones work when the business has reached its limit of concurrent turns. **O2** follows the text after the audio turn finishes. Once the text is ready and there is capacity, `_start_attempt()` marks it `processing` and stores the new lease, update ID, and attempt number. [`claim_chat()`](../app/channels/telegram_turns.py#L157-L218) · [`_start_attempt()`](../app/channels/telegram_turns.py#L272-L327)
 
-![O worker A começa com a geração 7. Na seta C, o prazo expira e B recupera o mesmo update com a geração 8. Na seta D, uma escrita posterior de A recebe ClaimLost.](assets/telegram-worker-claim.svg)
+**What does `TurnClaim` carry?** The bot, the message record (`row`), the attempt number (`generation`), the last published checkpoint reference, and the `interrupted` and `late` flags. The worker passes this object to functions that need to know which attempt is running. The generation increases with each claim in the same chat, including when a worker takes over the same update. The database keeps the current authority in `telegram_conversations`. [`TurnClaim`](../app/channels/telegram_turns.py#L67-L116)
 
-**C** mostra B recuperando o mesmo update após o vencimento do lease. **D** mostra A tentando gravar mais tarde. `claim.assert_owned(session)` compara bot, chat, update, geração e prazo dentro da transação. Como a geração atual é 8, a tentativa 7 recebe `ClaimLost`. [Verificação antes de gravar](../app/channels/telegram_turns.py#L88-L116)
+The initial lease lasts 90 seconds. A **heartbeat** tries to renew it every 30 seconds. The initial database transaction has already closed while the worker waits for the model. [Lease duration](../app/channels/telegram_turns.py#L28) · [Background renewal](../app/telegram_service.py#L189-L217)
 
-### 3. O worker recupera os horários e roda o grafo
+![Worker A starts with generation 7. At C the lease expires and B takes over the same update with generation 8. At D a later write by A raises ClaimLost.](assets/telegram-worker-claim.svg)
 
-`process_turn()` associa os logs ao bot e ao update. `_process_turn()` confere se a mensagem pode seguir, inicia a renovação do lease e chama `_process_private_message()`. Este é o trecho principal em `telegram_service.py`. [`process_turn()`](../app/telegram_service.py#L66-L95) · [Trecho abaixo, linhas 102–112](../app/telegram_service.py#L102-L112)
+**C** shows B taking over the same update after the lease expires. **D** shows A trying to write later. `claim.assert_owned(session)` checks the bot, chat, update, generation, and expiry inside the transaction. With generation 8 in the database, attempt 7 raises `ClaimLost`. [Write authorization](../app/channels/telegram_turns.py#L88-L116)
+
+### 3. The worker restores the offer and runs the graph
+
+`process_turn()` associates the logs with the bot and update. `_process_turn()` checks whether the message can proceed, starts the lease renewal, and calls `_process_private_message()`. [`process_turn()`](../app/telegram_service.py#L66-L95)
+
+![Calls inside _process_private_message. P1 returns early if setup fails. P2 proceeds to customer lookup and reply generation. P3 passes the result to turns.finish.](assets/telegram-worker-turn.svg)
+
+**P1** returns from the current attempt before calling the models if setup or restoration fails. **P2** uses the prepared worker to resolve the customer and generate the reply. **P3** passes the reply and the chosen checkpoint reference to `turns.finish()`. [Excerpt below, lines 102–112](../app/telegram_service.py#L102-L112)
 
 ```python
 worker = _prepare_turn_worker(turns, claim, runtime)
@@ -69,117 +80,147 @@ checkpoint_to_publish = (
 turns.finish(claim, reply, checkpoint_to_publish)
 ```
 
-1. **Linhas 102–104. Preparar uma tentativa.** `_prepare_turn_worker()` cria um objeto `TelegramWorker` para este turno. Ele reaproveita o grafo e os clientes dos modelos e passa `claim.assert_owned` aos serviços que gravam o cliente e o agendamento. [Preparar o worker](../app/telegram_service.py#L120-L161)
+1. **Lines 102–104. Prepare an attempt.** `_prepare_turn_worker()` creates a `TelegramWorker` for this turn. It reuses the graph and model clients and passes `claim.assert_owned` to the services that write customer and booking data. [Prepare the worker](../app/telegram_service.py#L120-L161)
 
-   A tentativa recebe uma chave de checkpoint própria. `_restore_turn_checkpoint()` copia para ela o último estado concluído, onde consta que a opção 1 é às 14h. Assim, uma tentativa interrompida pode deixar um estado parcial em sua própria chave e a referência publicada continua apontando para a oferta anterior. `thread_id` é o nome dessa chave no LangGraph. [Copiar o estado no Redis](../app/graph/redis_checkpoint.py#L44-L58) · [Persistência do LangGraph](https://docs.langchain.com/oss/python/langgraph/persistence)
+   The attempt gets its own LangGraph `thread_id` for checkpoints. This protects the last published offer from changes in an attempt still in progress. [Copy the checkpoint in Redis](../app/graph/redis_checkpoint.py#L44-L58) · [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence)
 
-2. **Linhas 106–108. Identificar o cliente e gerar a resposta.** `_ensure_customer()` associa o remetente do Telegram ao cliente daquele bot e empresa, criando o vínculo quando necessário. Esse `customer_id` permite ao serviço gravar o agendamento em nome da pessoa certa. `_reply_to_message()` trata `/start` e cartões de contato ali mesmo. Para “1”, chama `_run_turn()`. [Vincular o cliente](../app/channels/telegram_repository.py#L37-L81) · [`_reply_to_message()`](../app/telegram_worker.py#L43-L88)
-3. **Linhas 109–112. Escolher o estado que o próximo turno poderá ler.** Quando o grafo termina, o worker entrega a chave da tentativa atual para `finish()`. Em um caminho como `/start`, a resposta sai com a referência anterior, pois o grafo ficou fora desse turno. [Escolha do checkpoint](../app/telegram_service.py#L109-L112) · [Marcação ao terminar o grafo](../app/telegram_worker.py#L160-L168)
+2. **Lines 106–108. Identify the customer and generate the reply.** `_ensure_customer()` resolves the sender to a customer for this bot and business, creating the link if needed. The `customer_id` ties the booking to that customer. `_reply_to_message()` handles `/start` and contact cards directly. For “1”, it calls `_run_turn()`. [Link the customer](../app/channels/telegram_repository.py#L37-L81) · [`_reply_to_message()`](../app/telegram_worker.py#L43-L88)
+3. **Lines 109–112. Choose which checkpoint the next turn can read.** When the graph completes, the worker passes the current attempt's key to `finish()`. A direct reply such as `/start` keeps the previous reference because it bypasses the graph. [Choose the checkpoint](../app/telegram_service.py#L109-L112) · [Record graph completion](../app/telegram_worker.py#L160-L168)
 
-![Dois turnos do chat. A oferta anterior guarda as opções 1 às 14h e 2 às 16h. Na seta E, o worker copia essa oferta. Na seta F, o grafo usa a cópia para associar “1” às 14h.](assets/telegram-worker-checkpoint.svg)
+#### How “1” finds the earlier offer
 
-**E** é a cópia que `_restore_turn_checkpoint()` faz para o `thread_id` da tentativa atual. **F** é o nó `select()` usando a lista de horários para resolver a escolha. [Restaurar a oferta](../app/telegram_service.py#L164-L180) · [Ler a opção escolhida](../app/graph/steps.py#L569-L578)
+![The previous offer lists option 1 at 14:00 and option 2 at 16:00. E copies the offer. F uses the copy to match the new message “1” to 14:00.](assets/telegram-worker-checkpoint.svg)
 
-Dentro de `_run_turn()`, `_message_input()` devolve texto ou baixa a gravação indicada no update. O worker carrega o **catálogo** (serviços, profissionais e dados da empresa) e monta `TurnContext` com o cliente, a modalidade de entrada e a data local da empresa. Para operações de agendamento, usa a chave `telegram:{bot_id}:{update_id}`. Reutilizar essa chave com os mesmos dados permite recuperar o resultado de uma gravação anterior. Essa propriedade se chama **idempotência**. [`_message_input()`](../app/telegram_worker.py#L104-L125) · [`_run_turn()`](../app/telegram_worker.py#L127-L168) · [Idempotência e recuperação](idempotency.md)
+**E** copies the published checkpoint to the current attempt's `thread_id` in `_restore_turn_checkpoint()`. **F** is the graph's `select()` node reading the offered times to resolve the choice. [Restore the offer](../app/telegram_service.py#L164-L180) · [Read the selected option](../app/graph/steps.py#L569-L578)
 
-`handle_turn()` passa o conteúdo bruto ao grafo pelo contexto em memória. Se a entrada for áudio, Gemma transcreve. O grafo remove dados sensíveis reconhecíveis do texto antes da interpretação e passa a mensagem interpretada e o rascunho da conversa a Laya. Para a escolha “1”, o grafo consulta os horários do checkpoint. O serviço de agendamento verifica se as 14h continuam livres e grava a reserva para o cliente. `_run_turn()` devolve `result.text` para o worker. [`handle_turn()`](../app/graph/workflow.py#L13-L40) · [Nó de interpretação](../app/graph/steps.py#L97-L135) · [Escolha do horário](../app/graph/steps.py#L569-L604) · [Gravação do agendamento](../app/booking.py#L152-L214)
+#### How text and audio reach the models
 
-### 4. O worker salva a resposta e libera o chat
+Inside `_run_turn()`, the worker gets the **catalog** of services, staff, and business settings. It builds `TurnContext` with the customer, input type, and local date. It uses `telegram:{bot_id}:{update_id}` as the booking **idempotency key**. Reusing the same key and request data lets the booking service return the result of an earlier write. [`_run_turn()`](../app/telegram_worker.py#L127-L168) · [Idempotency and recovery](idempotency.md)
 
-`turns.finish(claim, reply, checkpoint_to_publish)` valida a autorização mais uma vez. Em uma única transação no PostgreSQL, grava a resposta em `telegram_outbox`, registra um aviso para o sender e publica a referência ao checkpoint na conversa. Também libera o lease, marca o recibo como `delivered`, descarta seu conteúdo bruto e deixa um aviso se houver outro turno pendente. O ID do recibo fica disponível para reconhecer um reenvio do webhook. [`finish()`](../app/channels/telegram_turns.py#L384-L454)
+![Typed text and audio converge before interpretation. M1 passes the typed text. M2 passes the transcription. M3 passes the interpreted message and the draft to Laya.](assets/telegram-worker-models.svg)
 
-O estado `telegram_updates.status = "delivered"` indica que CAPY terminou de tratar a entrada. A entrega externa ainda depende do sender. O consumidor confirma o aviso de entrada ao RabbitMQ com `basic_ack()` quando o callback termina com sucesso, inclusive se a chamada apenas gravou um aviso para tentar mais tarde. [Confirmação ao broker](../app/channels/telegram_broker.py#L105-L134)
+**M1** uses the text read by `_message_input()`. **M2** uses the recording the worker downloaded and Gemma transcribed. `handle_turn()` passes the raw input to the graph in memory, and the graph redacts recognizable sensitive details from the text before interpretation. **M3** gives Laya the interpreted message and the **draft**, which holds details collected so far, such as the service and date. [Read the input](../app/telegram_worker.py#L104-L125) · [`handle_turn()`](../app/graph/workflow.py#L13-L40) · [Interpretation node](../app/graph/steps.py#L97-L135) · [Laya contract](model-contracts.md)
 
-### 5. O sender entrega a resposta
+For a successful “1”, the booking service checks that 14:00 is still available and saves the booking for the customer. `_run_turn()` gives the worker `result.text`. [Booking write](../app/booking.py#L152-L214)
 
-O relay publica o ID da resposta em uma fila de saída. O callback `send_outgoing()` passa esse ID a `claim_by_id()`. Essa função reserva a entrega se a resposta estiver pronta, respeitando a ordem do chat e os limites de envio. `deliver_claimed()` chama `TelegramDelivery.send()`, que usa `send_message()` para falar com o Telegram. [`send_outgoing()`](../app/telegram_service.py#L248-L256) · [Reserva do envio](../app/channels/telegram_delivery.py#L111-L124) · [`send_message()`](../app/channels/telegram_delivery.py#L77-L80)
+### 4. The worker saves the reply and releases the chat
 
-O sender registra `sent` quando o Telegram aceita a chamada e `ambiguous` quando perde a resposta e não consegue saber se ela foi aceita. Em caso de erro temporário que permite reenvio, reagenda a mesma resposta. A fila separada permite entregar respostas enquanto o worker de conversa está ocupado analisando áudio. [`deliver_claimed()`](../app/channels/telegram_delivery.py#L350-L383)
+`turns.finish(claim, reply, checkpoint_to_publish)` checks the claim again. The **outbox** is the `telegram_outbox` table where the sender finds the reply that the worker prepared. Saving it there lets the sender retry delivery without running the booking workflow again. [Saving the reply in `finish()`](../app/channels/telegram_turns.py#L384-L416)
 
-## Quando o caminho muda
+![The booking transaction commits first. T1 leads to the worker marking the input delivered and saving the reply in the outbox. T2 leads to the sender recording sent after Telegram accepts the message.](assets/telegram-worker-transactions.svg)
 
-| Situação | O que ler no código |
+**T1** connects two transactions. The booking service commits the appointment before the graph prepares the reply. Then `finish()` saves the reply and a notification for the sender, publishes the checkpoint reference, releases the lease, and marks the incoming update `delivered`. **T2** takes the reply ID to the sender. The outbox records `sent` after Telegram accepts the message. [Booking transaction](../app/booking.py#L152-L214) · [Complete the turn](../app/channels/telegram_turns.py#L384-L454)
+
+`finish()` discards the raw incoming payload and keeps the ID to recognize a repeated webhook. Cleanup can remove the completed record after 30 days once its reply has no pending send. If another turn is waiting, `finish()` also saves a notification for that chat. The consumer calls `basic_ack()` after the callback completes successfully, including when the callback only scheduled another check. [Retain the ID and notify the next turn](../app/channels/telegram_turns.py#L417-L454) · [Cleanup eligibility](../app/telegram_service.py#L310-L323) · [Broker acknowledgement](../app/channels/telegram_broker.py#L105-L134)
+
+### 5. The sender delivers the reply
+
+The relay publishes the reply ID to an outgoing queue. The `send_outgoing()` callback passes that ID to `claim_by_id()`, which reserves an eligible delivery and enforces chat order and rate limits. `deliver_claimed()` calls `TelegramDelivery.send()`, which uses `send_message()` to contact Telegram. [`send_outgoing()`](../app/telegram_service.py#L248-L256) · [Reserve the delivery](../app/channels/telegram_delivery.py#L111-L124) · [`send_message()`](../app/channels/telegram_delivery.py#L77-L80)
+
+![Four outcomes for a Telegram send. D1 records sent, D2 schedules a retry with ready, D3 records failed, and D4 records ambiguous when acceptance is uncertain.](assets/telegram-worker-delivery.svg)
+
+- **D1** records `sent` when Telegram accepts the message.
+- **D2** returns the same reply to `ready` after a retryable error and sets the time for the next attempt.
+- **D3** records `failed` for a permanent rejection, a configuration error, or exhausted attempts.
+- **D4** records `ambiguous` when a transport error leaves the result unknown.
+
+The outgoing queue lets the sender deliver replies while a conversation worker handles audio. If the sender tries to record a result after its lease expires, the result log shows `claim_lost`. [Classify the outcome](../app/channels/telegram_delivery.py#L350-L383) · [Check the send lease](../app/channels/telegram_delivery.py#L260-L300)
+
+## When the flow changes
+
+| Situation | What to read |
 | --- | --- |
-| O cliente respondeu “1”, mas a oferta expirou no Redis. | `_restore_turn_checkpoint()` encerra o turno com um pedido para consultar novos horários. [Restauração do checkpoint](../app/telegram_service.py#L164-L180) |
-| O Redis está indisponível durante a restauração, ou faltam credenciais do bot. | O worker adia o turno por um minuto e libera o chat antes de alterar cliente ou agendamento. [Adiar o turno](../app/channels/telegram_turns.py#L349-L381) |
-| Um novo worker recupera uma tentativa interrompida. | A reserva pode ter sido gravada antes da falha, pois o agendamento e `finish()` usam duas transações. O novo worker limpa a referência do checkpoint e pede ao cliente que consulte seus agendamentos. [`claim.interrupted`](../app/telegram_service.py#L85-L88) · [Teste da queda entre as gravações](../tests/integration/test_telegram_production.py#L187-L221) |
-| O “1” chegou depois de o chat já ter processado uma mensagem mais nova. | `claim.late` pede uma nova oferta para evitar aplicar o número à lista errada. [`claim.late`](../app/telegram_service.py#L89-L92) |
-| RabbitMQ entregou de novo o mesmo aviso. | O worker consulta o que ainda está pendente. Se o turno original terminou, o aviso pode ser consumido sem trabalho ou acordar o próximo turno do chat. [Teste da fila e de avisos duplicados](../tests/integration/test_telegram_broker.py#L61) |
+| The customer replies “1” after the offer expires in Redis. | `_restore_turn_checkpoint()` ends the turn with a prompt to ask for new times. [Restore the checkpoint](../app/telegram_service.py#L164-L180) |
+| Redis is unavailable during restoration, or the bot credentials are missing. | The worker defers the turn for one minute and releases the chat before touching customer or booking data. [Defer the turn](../app/channels/telegram_turns.py#L349-L381) |
+| A new worker takes over an interrupted attempt. | The booking may already have committed because the booking write and `finish()` use separate transactions. The worker clears the checkpoint reference and asks the customer to check their bookings. [`claim.interrupted`](../app/telegram_service.py#L85-L88) · [Test the gap between commits](../tests/integration/test_telegram_production.py#L187-L221) |
+| “1” arrives after the chat has already processed a newer message. | `claim.late` prompts the customer to ask for a fresh offer so the number is applied to the right list. [`claim.late`](../app/telegram_service.py#L89-L92) |
+| RabbitMQ delivers the same notification again. | The worker checks what is still pending. If the original turn finished, the notification can wake the next turn or find the chat empty. [Queue and duplicate notification test](../tests/integration/test_telegram_broker.py#L61) |
+| The sender stops after reserving a reply and its lease expires. | `recover_expired()` marks the send `ambiguous` with `dispatch_expired`. Automatic retries stop because Telegram may already have accepted the reply. [Recover an expired send](../app/channels/telegram_delivery.py#L302-L331) |
 
-Há dois sinais periódicos durante um turno demorado. A `Thread` de `_keep_turn_claim_alive()` renova o prazo do claim no PostgreSQL. No consumidor da fila, o callback roda em um `ThreadPoolExecutor` para que a conexão principal continue respondendo ao heartbeat do RabbitMQ. [Renovação do claim](../app/telegram_service.py#L189-L217) · [Conexão com o RabbitMQ](../app/channels/telegram_broker.py#L122-L149)
+### What keeps running while the model responds
 
-## Acompanhe uma mensagem nos logs
+![While the callback waits for a model, H1 renews the PostgreSQL lease and H2 services the RabbitMQ connection.](assets/telegram-worker-heartbeats.svg)
 
-Depois de configurar um [bot de teste](../README.md#try-the-telegram-voice-demo), rode a demo com logs de depuração e responda “1” a uma oferta de horários.
+**H1** runs in a `Thread` created by `_keep_turn_claim_alive()` and tries to keep the claim valid. **H2** runs on the thread that owns the RabbitMQ connection. The callback can wait for the models in a `ThreadPoolExecutor` while the connection continues to process network events. The LangGraph `thread_id` identifies stored checkpoint state. [Renew the claim](../app/telegram_service.py#L189-L217) · [RabbitMQ connection](../app/channels/telegram_broker.py#L122-L149) · [Checkpoint key](../app/graph/workflow.py#L29-L35)
+
+## Follow a message in the logs
+
+Set up a test bot. Then start the demo with debug logs and reply “1” to an offer. [Telegram demo setup](../README.md#try-the-telegram-voice-demo)
 
 ```bash
 CAPY_LOG_LEVEL=DEBUG docker compose --profile telegram up -d --build
 docker compose --profile telegram logs -f api telegram-worker telegram-sender
 ```
 
-Procure `telegram.inbox.recorded` e use o par `bot_id` e `update_id` do “1” para seguir a mesma entrada nos outros serviços. O pedido de horários tem outro `update_id`. [Como os IDs entram nos logs](../app/observability.py#L73-L91)
+![The API, worker, and sender log events with the same bot_id and update_id. L1 connects the receipt to the claim. L2 connects the saved reply to the send outcome.](assets/telegram-worker-trace.svg)
 
-| Evento | O que você acabou de ver |
+**L1** starts at `telegram.inbox.recorded`. Take the `bot_id` and `update_id` for “1” and look for the same pair in the worker logs. **L2** uses this pair to find the outcome in the sender logs. The initial request for times has its own `update_id`. [How logs get these IDs](../app/observability.py#L73-L91)
+
+| Event | What to check |
 | --- | --- |
-| `telegram.inbox.recorded` com `inserted=True` | A API gravou um novo recibo. |
-| `telegram.turn.claimed` | O worker iniciou uma tentativa. `attempt` traz a geração daquela tentativa. |
-| `workflow.checkpoint.forked` com `found=True` | O worker copiou o estado da oferta anterior. |
-| `workflow.slot.matched` com `option_number=1` | O grafo encontrou o horário associado à escolha. |
-| `availability.slot.validated` | O horário passou pela verificação atual de disponibilidade. |
-| `booking.saved` | A gravação da reserva foi confirmada no banco. |
-| `telegram.turn.saved` com `has_reply=True` | A resposta foi salva para o sender. |
-| `telegram.outbox.result` com `outcome=sent` | O Telegram aceitou a resposta e o sender registrou o resultado. |
+| `telegram.inbox.recorded` | `inserted=True` marks a new update record. |
+| `telegram.turn.claimed` | `attempt` is the claim generation. |
+| `workflow.checkpoint.forked` | `found=True` means the worker copied the previous offer. |
+| `workflow.slot.matched` | `option_number=1` is the selected option. |
+| `availability.slot.validated` | The time passed the current availability check. |
+| `booking.saved` | The booking transaction committed. |
+| `telegram.turn.saved` | `has_reply=True` means the worker saved a reply for the sender. |
+| `telegram.outbox.result` | `outcome=sent` means Telegram accepted the reply and the sender recorded the result. |
 
-Esses eventos registram etapas, IDs e resultados. Para voltar ao nível padrão, reinicie os serviços com `CAPY_LOG_LEVEL=INFO`.
+Run `CAPY_LOG_LEVEL=INFO docker compose --profile telegram up -d` to restore the default logging level. Compose recreates the containers whose environment changes.
 
-## Rode o exemplo sem Telegram
+## Run the example without Telegram
 
-A avaliação usa modelos simulados e serviços de agendamento de teste. Você acompanha a interpretação e a criação de um agendamento no grafo local. Para observar o webhook, o lease e o sender, use o roteiro de logs da demo.
+This example uses scripted model outputs and simulated booking services to exercise the local graph. The Telegram demo above lets you observe the webhook, lease, and sender.
 
 ```bash
 CAPY_LOG_LEVEL=DEBUG uv run --locked python -m app.evals.runner \
   --understanding deterministic --routing deterministic
 ```
 
-No primeiro caso, `en-booking`, o cliente escreve “Book Massage”, depois “tomorrow” e por fim “1”. A partir de `eval.turn.started` com `number: 3`, acompanhe os eventos deste turno. [Conversa de teste](../evals/data/smoke-text.jsonl#L1) · [Como preparar o ambiente](../README.md#run-the-offline-example)
+![The en-booking case starts with Book Massage. V1 supplies tomorrow and gets an offer. V2 chooses 1, and the graph creates a test booking in turn three.](assets/telegram-worker-offline.svg)
 
-| Evento | O que conferir no caso `en-booking` |
+**V1** supplies the date needed for the test to offer times. **V2** selects the first time. Find `eval.turn.started` with `number: 3` and follow the events for that turn. [Test conversation](../evals/data/smoke-text.jsonl#L1) · [Set up the local environment](../README.md#run-the-offline-example)
+
+| Event | What to check in `en-booking` |
 | --- | --- |
-| `workflow.draft.operation` | `reason: time_choice_for_new_booking` indica que a escolha faz parte de um novo agendamento. |
-| `workflow.route.booking_choice` | `reason: action_does_not_target_existing_booking` indica que a opção se refere aos horários oferecidos. |
-| `workflow.route.rule_applied` e `workflow.route.selected` | `reason: choose_from_offered_times` e `route: select` levam ao nó que lê a lista de horários. |
-| `workflow.slot.matched` e `workflow.action.executing` | `option_number: 1` identifica a escolha. `operation: create` aciona o serviço de teste para criar o agendamento. |
-| `workflow.turn.completed` | `has_booking: True` indica que o grafo devolveu um agendamento. A lista de resultados inclui `PASS  en-booking`. |
+| `workflow.draft.operation` | `reason: time_choice_for_new_booking` identifies a selection for a new booking. |
+| `workflow.route.booking_choice` | `reason: action_does_not_target_existing_booking` indicates that the choice refers to offered times. |
+| `workflow.route.rule_applied` and `workflow.route.selected` | `reason: choose_from_offered_times` and `route: select` lead to the node that reads the offer. |
+| `workflow.slot.matched` and `workflow.action.executing` | `option_number: 1` identifies the chosen time. `operation: create` triggers the simulated booking service. |
+| `workflow.turn.completed` | `has_booking: True` means the graph returned a booking. The runner prints `PASS  en-booking`. |
 
-Se a etapa de roteamento falhar na demo, o campo `stage` de `workflow.route.failed` indica onde o erro surgiu. [Código do roteamento](../app/graph/steps.py#L252)
+If routing fails during the demo, the `stage` field of `workflow.route.failed` shows where the error occurred. [Routing code](../app/graph/steps.py#L252)
 
-Para ver o mesmo “1” atravessar dois turnos com PostgreSQL e Redis, leia `test_completed_checkpoint_carries_slot_offer_into_next_attempt`. O teste cria uma oferta, processa a resposta e conta os agendamentos gravados. Também exercita uma oferta expirada e uma queda após gravar a reserva. [Teste de integração em Python](../tests/integration/test_telegram_production.py#L159-L221)
+To follow two turns with PostgreSQL and Redis, open `test_completed_checkpoint_carries_slot_offer_into_next_attempt`. It creates an offer, processes “1”, and counts the bookings saved. It also covers an expired offer and a crash after committing the booking. [Python integration test](../tests/integration/test_telegram_production.py#L159-L221)
 
-## Sequência das chamadas
+## Full call sequence
 
-Leia o SVG de cima para baixo. Q01–Q08 acompanham a entrada. Na saída, uma resposta do worker vai de Q07 para Q10. Q09 mostra outra origem para a mesma fila de saída, o agendador de lembretes hospedados.
+Read from top to bottom. Q01–Q08 cover the incoming turn. For a reply, jump from Q07 to the outgoing notification at Q10. Q09 shows how the hosted reminder scheduler adds work to the same outgoing queue.
 
-![Sequência do Telegram, do webhook ao processamento e ao envio de respostas e lembretes, com setas Q01 a Q15.](assets/telegram-broker-sequence.svg)
+![Telegram sequence from webhook receipt to processing, reply delivery, and hosted reminders, with arrows Q01 to Q15.](assets/telegram-broker-sequence.svg)
 
-| Seta | O que passa e por quê |
+| Arrow | What passes and why |
 | --- | --- |
-| **Q01** | O Telegram envia o update ao webhook registrado, que valida a rota e o segredo do bot. [Webhook](../app/main.py#L76-L108) |
-| **Q02** | A API grava o recibo e o aviso na mesma transação para que toda entrada privada nova possa chegar ao worker. [Gravação da entrada](../app/channels/telegram_intake.py#L78-L96) |
-| **Q03** | O relay reserva um aviso pronto por um prazo curto para que outro relay possa recuperá-lo se necessário. [Reserva da publicação](../app/channels/telegram_publications.py#L39-L61) |
-| **Q04** | O relay envia `[bot_id, chat_id]` à fila de entrada e espera a confirmação do broker. [Publicação](../app/channels/telegram_broker.py#L62-L85) |
-| **Q05** | O RabbitMQ entrega o aviso ao consumidor ativo da partição do chat. Uma partição é uma fila para um grupo fixo de chats. Outras partições podem progredir enquanto esta processa áudio. [Escolha da partição](../app/channels/telegram_broker.py#L22-L30) |
-| **Q06** | O worker usa os IDs para buscar a próxima mensagem no PostgreSQL e tentar obter o lease. [Claim do chat](../app/channels/telegram_turns.py#L157-L218) |
-| **Q07** | O worker salva a resposta, a referência ao checkpoint e os próximos avisos, juntos no PostgreSQL. [Conclusão do turno](../app/channels/telegram_turns.py#L384-L454) |
-| **Q08** | O consumidor confirma ao RabbitMQ que tratou o aviso. Uma desconexão antes da confirmação pode provocar nova entrega. [Confirmação](../app/channels/telegram_broker.py#L122-L134) |
-| **Q09** | O agendador de produção grava o envio de um lembrete que atingiu o horário programado e registra um aviso para o relay. [Agendar lembrete](../app/reminders.py#L71) |
-| **Q10** | O relay publica o ID da resposta ou do lembrete em uma fila reservada para envios. [Publicação de saída](../app/channels/telegram_broker.py#L68-L74) |
-| **Q11** | O RabbitMQ entrega esse ID a um sender disponível para tratá-lo. [Loop do sender](../app/telegram_service.py#L248-L256) |
-| **Q12** | O sender consulta o envio salvo, verifica limites e ordem e, para lembretes, confere se a versão do lembrete ainda é válida. [Autorização de envio](../app/channels/telegram_delivery.py#L160-L184) |
-| **Q13** | O sender usa o bot registrado para chamar a API do Telegram com a mensagem salva. [Envio](../app/channels/telegram_delivery.py#L77-L80) |
-| **Q14** | O sender grava o resultado da chamada ou uma nova tentativa segura no PostgreSQL. [Conclusão do envio](../app/channels/telegram_delivery.py#L260-L300) |
-| **Q15** | O sender confirma ao RabbitMQ que tratou o aviso. Uma nova entrega consulta o estado do mesmo envio. [Confirmação](../app/channels/telegram_broker.py#L122-L134) |
+| **Q01** | Telegram posts the update to the registered webhook, which checks the bot route and secret. [Webhook](../app/main.py#L76-L108) |
+| **Q02** | The API saves the incoming record and the notification in one transaction so the new private message can reach the worker. [Store the update](../app/channels/telegram_intake.py#L78-L96) |
+| **Q03** | The relay briefly claims a due publication so another relay can recover it if needed. [Reserve the publication](../app/channels/telegram_publications.py#L39-L61) |
+| **Q04** | The relay sends `[bot_id, chat_id]` to the incoming queue and waits for broker confirmation. [Publish](../app/channels/telegram_broker.py#L62-L85) |
+| **Q05** | RabbitMQ delivers the notification to the active consumer for the chat's partition. A partition is a queue that serves a group of chats. [Partition selection](../app/channels/telegram_broker.py#L22-L30) |
+| **Q06** | The worker uses those IDs to look up the next message in PostgreSQL and try to get its lease. [Claim the chat](../app/channels/telegram_turns.py#L157-L218) |
+| **Q07** | The worker saves the reply, checkpoint reference, and next notifications together in PostgreSQL. [Complete the turn](../app/channels/telegram_turns.py#L384-L454) |
+| **Q08** | The consumer acknowledges the notification. If the connection drops before acknowledgement, RabbitMQ can deliver it again. [Acknowledgement](../app/channels/telegram_broker.py#L122-L134) |
+| **Q09** | The hosted scheduler saves a send for a due reminder and schedules a publication for the relay. [Schedule a reminder](../app/reminders.py#L71) |
+| **Q10** | The relay publishes the reply or reminder ID to the dedicated outgoing queue. [Outgoing publication](../app/channels/telegram_broker.py#L68-L74) |
+| **Q11** | RabbitMQ delivers that ID to a sender. [Sender loop](../app/telegram_service.py#L248-L256) |
+| **Q12** | The sender looks up the saved message and checks rate limits and chat order. For a reminder, it also checks that the reminder version is current. [Authorize delivery](../app/channels/telegram_delivery.py#L160-L184) |
+| **Q13** | The sender calls Telegram with the saved message through the registered bot. [Send](../app/channels/telegram_delivery.py#L77-L80) |
+| **Q14** | The sender records the outcome or a safe retry in PostgreSQL. [Complete the send](../app/channels/telegram_delivery.py#L260-L300) |
+| **Q15** | The sender acknowledges the notification. A redelivery checks the state of the same saved send. [Acknowledgement](../app/channels/telegram_broker.py#L122-L134) |
 
-## Referências
+The demo starts with one incoming partition and one consumer. That consumer handles one notification at a time, so a long audio turn can delay another chat on the same partition. To process separate partitions in parallel, run an active consumer for each one. [Compose defaults](../docker-compose.yml#L1-L5) · [Partition option](../app/telegram_service.py#L408-L414) · [Consumer loop](../app/channels/telegram_broker.py#L137-L149)
 
-- O exemplo começa com uma tarefa concreta e segue o que o leitor consegue reconhecer no código. O Diátaxis recomenda esse caminho para ensinar e propõe ligar as etapas aos motivos das decisões. [Tutoriais](https://diataxis.fr/tutorials/) · [Explicações](https://diataxis.fr/explanation/)
-- Os detalhes de recuperação e as setas ficam disponíveis depois do fluxo principal. Essa ordem aplica a divulgação progressiva descrita no curso de escrita técnica do Google. [Organização de documentos longos](https://developers.google.com/tech-writing/two/large-docs#disclose-information-progressively)
+## References
+
+- Diátaxis recommends teaching through a concrete task and using explanations to connect steps to design decisions. [Tutorials](https://diataxis.fr/tutorials/) · [Explanation](https://diataxis.fr/explanation/)
+- Google's technical writing course describes how to introduce the main scenario before adding more detail. [Organizing large documents](https://developers.google.com/tech-writing/two/large-docs#disclose-information-progressively)

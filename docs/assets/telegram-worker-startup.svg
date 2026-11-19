@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="398" viewBox="0 0 720 398" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">Where the worker starts</title>
+  <desc id="desc">Compose runs app.telegram_service in three processes with distinct roles. S1 selects relay, S2 selects process, and S3 selects send. The api service runs Uvicorn to receive the webhook.</desc>
+  <style>
+    text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+    .title { font-size: 29px; font-weight: 700; }
+    .heading { font-size: 21px; font-weight: 700; }
+    .body { font-size: 18px; fill: #35544a; }
+    .label { font-size: 17px; font-weight: 700; fill: #35544a; }
+    .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 16px; }
+    .code-title { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 17px; font-weight: 700; }
+    .panel { fill: #fffefa; stroke: #a4b8a8; }
+    .green { fill: #eaf2e5; stroke: #86a57e; }
+    .pale { fill: #f1f5ec; stroke: #a4b8a8; }
+    .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="720" height="398" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="30" y="46">Where the worker starts</text>
+  <text class="body" x="30" y="74">Three services run the same Python module.</text>
+  <rect class="pale" x="30" y="94" width="660" height="68" rx="13"/>
+  <text class="code-title" x="52" y="123">python -m app.telegram_service &lt;role&gt;</text>
+  <text class="body" x="52" y="147">main() selects the role for each process.</text>
+  <path class="arrow" d="M78 163V212m-6-7 6 7 6-7"/>
+  <text class="label" x="101" y="193">S1 · relay</text>
+  <path class="arrow" d="M304 163V212m-6-7 6 7 6-7"/>
+  <text class="label" x="327" y="193">S2 · process</text>
+  <path class="arrow" d="M530 163V212m-6-7 6 7 6-7"/>
+  <text class="label" x="553" y="193">S3 · send</text>
+  <rect class="panel" x="30" y="213" width="208" height="98" rx="13"/>
+  <text class="heading" x="48" y="248">telegram-relay</text>
+  <text class="body" x="48" y="279">Publishes wake-ups.</text>
+  <rect class="green" x="256" y="213" width="208" height="98" rx="13"/>
+  <text class="heading" x="274" y="248">telegram-worker</text>
+  <text class="body" x="274" y="279">Loads the graph and</text>
+  <text class="body" x="274" y="300">handles the chat.</text>
+  <rect class="panel" x="482" y="213" width="208" height="98" rx="13"/>
+  <text class="heading" x="500" y="248">telegram-sender</text>
+  <text class="body" x="500" y="279">Delivers the reply.</text>
+  <rect class="pale" x="30" y="330" width="660" height="44" rx="8"/>
+  <text class="code" x="52" y="357">api · uvicorn app.main:app</text>
+  <text class="body" x="345" y="357">Receives the webhook.</text>
+</svg>

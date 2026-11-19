@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420" role="img" aria-labelledby="title desc">
-  <title id="title">Quem pode gravar este turno?</title>
-  <desc id="desc">O worker A recebe a geração 7. Na seta C, a autorização expira e o worker B recupera o mesmo update com a geração 8. Na seta D, A tenta gravar mais tarde. O PostgreSQL compara as gerações e a tentativa de A recebe ClaimLost.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">Which worker can write?</title>
+  <desc id="desc">Worker A gets generation 7. At C the lease expires and worker B takes over the same update with generation 8. At D, A tries to write. PostgreSQL has generation 8, so the earlier attempt raises ClaimLost.</desc>
   <style>
     text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
     .title { font-size: 30px; font-weight: 700; }
@@ -12,31 +12,31 @@
     .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   </style>
   <rect width="720" height="420" rx="20" fill="#fbfaf5"/>
-  <text class="title" x="30" y="45">Quem pode gravar este turno?</text>
-  <text class="body" x="30" y="74">Os dois workers tratam a resposta “1” do mesmo chat.</text>
+  <text class="title" x="30" y="45">Which worker can write?</text>
+  <text class="body" x="30" y="74">Two workers handle the same “1” from one chat.</text>
 
   <rect x="30" y="100" width="265" height="120" rx="13" fill="#fffefa" stroke="#a4b8a8"/>
   <text class="heading" x="52" y="136">Worker A</text>
   <text class="code" x="52" y="164">generation = 7</text>
-  <text class="body" x="52" y="192">Recebe a vez primeiro</text>
+  <text class="body" x="52" y="192">Claims the turn first</text>
 
   <path class="arrow" d="M295 178h129m-7-6 7 6-7 6"/>
   <text class="arrow-label" x="360" y="139" text-anchor="middle">C · Lease</text>
-  <text class="arrow-label" x="360" y="159" text-anchor="middle">expira</text>
+  <text class="arrow-label" x="360" y="159" text-anchor="middle">expires</text>
 
   <rect x="425" y="100" width="265" height="120" rx="13" fill="#eaf2e5" stroke="#86a57e"/>
   <text class="heading" x="447" y="136">Worker B</text>
   <text class="code" x="447" y="164">generation = 8</text>
-  <text class="body" x="447" y="192">Recupera o mesmo update</text>
+  <text class="body" x="447" y="192">Recovers the same update</text>
 
   <path class="arrow" d="M67 221v59m-6-7 6 7 6-7"/>
-  <text class="arrow-label" x="90" y="254">D · Mais tarde, A tenta gravar</text>
+  <text class="arrow-label" x="90" y="254">D · A attempts a later write</text>
 
   <rect x="30" y="281" width="660" height="115" rx="13" fill="#f1f5ec" stroke="#a4b8a8"/>
   <text class="heading" x="52" y="315">PostgreSQL</text>
   <text class="code" x="183" y="315">claim.assert_owned()</text>
-  <text class="body" x="52" y="347">Claim de A · geração 7</text>
-  <text class="body" x="52" y="373">Autorização atual · geração 8</text>
+  <text class="body" x="52" y="347">Claim from A · generation 7</text>
+  <text class="body" x="52" y="373">Current claim · generation 8</text>
   <rect x="520" y="322" width="145" height="46" rx="8" fill="#f8eae4" stroke="#c98776"/>
   <text class="code error" x="592.5" y="351" text-anchor="middle">ClaimLost</text>
 </svg>

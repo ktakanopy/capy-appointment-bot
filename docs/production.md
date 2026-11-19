@@ -1,6 +1,6 @@
 # Deploy CAPY for multiple Telegram bots
 
-The Telegram demo uses PostgreSQL for accepted updates and delivery state, Redis for conversation checkpoints, and RabbitMQ to wake workers. Only turn workers load Gemma and Laya. The hosted Compose file is deprecated and retains the PostgreSQL worker commands for rollback. [Local demo](../README.md#try-the-telegram-voice-demo) · [Telegram sequence](telegram-worker.md#sequência-das-chamadas)
+The Telegram demo uses PostgreSQL for accepted updates and delivery state, Redis for conversation checkpoints, and RabbitMQ to wake workers. Only turn workers load Gemma and Laya. The hosted Compose file is deprecated and retains the PostgreSQL worker commands for rollback. [Local demo](../README.md#try-the-telegram-voice-demo) · [Telegram sequence](telegram-worker.md#full-call-sequence)
 
 ## Hosted configuration
 
@@ -54,7 +54,7 @@ If the broker loses its durable data, stop publishing and consuming, recreate it
 
 - The demo runs one incoming partition. Choose a partition count before release and set it on every relay and consumer. Start one consumer process for every index from zero through count minus one. Extra consumers for the same partition provide failover. Change the partition count only after pausing and draining the old layout. A long audio turn can delay other chats mapped to its queue.
 - The default business limit is four active turns across partitions. Sender replicas share bot and chat rate reservations, initially 20 sends per second per bot and one send per second per chat. Telegram responses can require a lower rate. Outgoing jobs preserve chat order and broker readiness. The earlier PostgreSQL sender's global reply/reminder priority and incoming lane-based fairness apply to rollback workers.
-- Run `python -m app.telegram_service stats` to see ready-turn age, due-reminder age, oldest due publication, outbound backlog and database lock waiters. At the broker, monitor ready and unacknowledged deliveries per queue, redeliveries and dead-letter depth. Correlate those metrics with turn and send elapsed times in the app logs. [Debug walkthrough](telegram-worker.md#acompanhe-uma-mensagem-nos-logs)
+- Run `python -m app.telegram_service stats` to see ready-turn age, due-reminder age, oldest due publication, outbound backlog and database lock waiters. At the broker, monitor ready and unacknowledged deliveries per queue, redeliveries and dead-letter depth. Correlate those metrics with turn and send elapsed times in the app logs. [Debug walkthrough](telegram-worker.md#follow-a-message-in-the-logs)
 
 ## Local verification
 

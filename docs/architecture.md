@@ -16,7 +16,7 @@ Evaluations run the workflow with simulated scheduling services or isolate extra
 
 ## How the Telegram worker works
 
-Follow one message through the webhook, RabbitMQ, the conversation worker and the sender, with Python excerpts and the numbered sequence diagram. [Telegram worker guide (Português)](telegram-worker.md)
+Follow one message through the webhook, RabbitMQ, the conversation worker and the sender, with Python excerpts and the numbered sequence diagram. [Telegram worker guide](telegram-worker.md)
 
 ## How to read the code
 
@@ -37,14 +37,14 @@ Start with the customer replying “1” to an offer. The offline `en-booking` c
 
 ![Two Telegram turns labeled C01 through C21, from asking for available times to receiving the booking reply.](assets/booking-create-sequence.svg)
 
-Follow “Book a relaxation massage tomorrow,” then “1.” Read the arrows from top to bottom and use each label to find its explanation below. The worker guide details how the Telegram steps reach each service. [Telegram sequence](telegram-worker.md#sequência-das-chamadas)
+Follow “Book a relaxation massage tomorrow,” then “1.” Read the arrows from top to bottom and use each label to find its explanation below. The worker guide details how the Telegram steps reach each service. [Telegram sequence](telegram-worker.md#full-call-sequence)
 
 #### Find a time
 
 | Call | What happens and why | Source |
 | --- | --- | --- |
 | **C01** | The customer asks for times in a private Telegram chat. Telegram sends the message to the bot’s configured webhook. | [Webhook](../app/main.py#L77) |
-| **C02** | CAPY records the incoming update and uses the Telegram sender to identify the customer. | [Worker guide](telegram-worker.md#onde-começar-a-ler) |
+| **C02** | CAPY records the incoming update. The conversation worker uses the Telegram user ID to find the customer's account. | [Worker guide](telegram-worker.md#start-reading-the-code) |
 | **C03** | The graph uses the customer's text or complete transcript. It redacts the text, asks Gemma to interpret it and gives Laya the interpreted message and draft. Python checks the details required to proceed. | [`understand_input()` · L97](../app/graph/steps.py#L97) · [`route_turn()` · L252](../app/graph/steps.py#L252) |
 | **C04** | The workflow requests slots for the selected service and date, applying any staff or earliest-time preference. This narrows the search to choices that address the customer’s request. | [`search()` · L534](../app/graph/steps.py#L534) · [`CustomerSchedulingActions.search()` · L49](../app/customer_scheduling_actions.py#L49) |
 | **C05** | The availability service reads working hours, blocked periods and active bookings for eligible staff. These records supply the current schedule for conflict checks. | [`scheduling_data()` · L123](../app/repositories.py#L123) |
@@ -58,7 +58,7 @@ Follow “Book a relaxation massage tomorrow,” then “1.” Read the arrows f
 | Call | What happens and why | Source |
 | --- | --- | --- |
 | **C10** | The customer replies with an offered choice such as “1.” This separate turn lets the customer choose the time before CAPY attempts the booking. | [Webhook](../app/main.py#L77) |
-| **C11** | CAPY records this choice as a new update for the same chat. The worker loads the conversation state from the previous turn. | [Worker guide](telegram-worker.md#onde-começar-a-ler) |
+| **C11** | CAPY records this choice as a new update for the same chat. The worker loads the conversation state from the previous turn. | [Worker guide](telegram-worker.md#start-reading-the-code) |
 | **C12** | The workflow retrieves the offered slots and matches the selection against those choices. An unknown or expired offer requires a fresh selection. | [Workflow](../app/graph/workflow.py) · [Selection](../app/graph/steps.py#L569) |
 | **C13** | The workflow hands the selected slot, trusted customer account and stable update key to the booking service. This gives the service concrete inputs it can verify before writing. | [Create action · L735–762](../app/graph/steps.py#L735-L762) · [`create_booking()` · L54](../app/customer_scheduling_actions.py#L54) |
 | **C14** | The booking service locks the business and checks the key derived from the bot and update IDs against the request hash. If a booking committed before the caller received its reply, a matching retry can return the owned booking without creating it again. This is idempotency. The lock keeps concurrent attempts from both treating the key as new, and a changed request with that key is rejected. | [Update key · L157](../app/telegram_worker.py#L157) · [`_hash_booking_request()` · L36](../app/booking.py#L36) · [`_lock_business_and_check_retry()` · L90](../app/booking.py#L90) |

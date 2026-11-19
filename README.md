@@ -19,7 +19,7 @@ uv run python -m app.evals.runner --understanding deterministic --routing determ
 
 The runner prints each case's status and the path to a JSON report. Look for `en-booking` to follow a massage booking from the initial request to choosing tomorrow and selecting the first offered time. The case checks that CAPY creates exactly one booking. [Follow the booking through the code](docs/architecture.md#how-to-read-the-code).
 
-The worker guide shows which debug events appear as CAPY books the chosen time. [Trace the offline example](docs/telegram-worker.md#rode-o-exemplo-sem-telegram)
+The worker guide shows which debug events appear as CAPY books the chosen time. [Trace the offline example](docs/telegram-worker.md#run-the-example-without-telegram)
 
 ## Try the Telegram voice demo
 
@@ -141,7 +141,7 @@ To follow a PostgreSQL query from the repository to a mapped class, start with t
 
 - [Source map](docs/source-map.md) — where to find each part of the app, the tests, and the tools
 - [Architecture](docs/architecture.md) — components and booking sequence diagrams
-- [Telegram worker guide](docs/telegram-worker.md) — follow one message from webhook to reply, with code excerpts and logs in Portuguese
+- [Telegram worker guide](docs/telegram-worker.md) — follow one message from webhook to reply, with diagrams, code excerpts, and logs
 - [Conversation graph](docs/graph.md) — routing, state, and workflow steps
 - [Model contracts](docs/model-contracts.md) — Gemma and Laya setup and APIs
 - [Database](docs/database.md) — tables, booking transactions, and reminders
