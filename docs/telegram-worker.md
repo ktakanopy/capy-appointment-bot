@@ -6,11 +6,9 @@ Um **worker** é um processo que pega trabalho em segundo plano. O `telegram-wor
 
 ## O caminho da mensagem
 
-| Etapa | O que acontece com “1” |
-| --- | --- |
-| **Receber** | O Telegram chama o webhook do CAPY. A API guarda “1” no PostgreSQL. O relay manda ao RabbitMQ um aviso para consultar aquele chat. |
-| **Processar** | O worker pega “1” no PostgreSQL e recupera do Redis os horários oferecidos. O grafo associa a escolha às 14h, e o serviço de agendamento revalida e tenta reservar o horário. O worker salva a resposta no PostgreSQL. |
-| **Enviar** | O relay avisa o sender de que há uma resposta pronta. O sender lê a resposta salva e chama a API do Telegram. |
+![Três etapas do “1”. O webhook grava a mensagem, o worker processa a escolha e o sender entrega a resposta. As setas A e B mostram os IDs que passam pelo RabbitMQ.](assets/telegram-worker-flow.svg)
+
+**A** leva os IDs do bot e do chat ao worker. **B** leva o ID da resposta ao sender. O relay publica esses avisos no RabbitMQ, e cada processo usa os IDs para buscar o conteúdo no PostgreSQL.
 
 Um **turno** é o processamento de uma mensagem do cliente. Pedir horários e responder “1” são dois turnos do mesmo chat. O **checkpoint** é o estado salvo da conversa, incluindo a lista de horários que liga os dois turnos. A reserva em si fica no PostgreSQL. [Grafo da conversa](graph.md) · [Tabelas do banco](database.md)
 
@@ -47,7 +45,11 @@ if claim:
 
 **Para que serve o objeto `TurnClaim`?** Ele reúne o bot, o registro da mensagem (`row`), o número da tentativa (`generation`), a referência ao último checkpoint publicado e os indicadores `interrupted` e `late`. O worker passa esse objeto às funções que precisam saber qual tentativa está trabalhando. O número sobe a cada claim do chat, inclusive se um worker retomar o mesmo update. A autorização de fato fica na tabela `telegram_conversations` do PostgreSQL. [`TurnClaim`](../app/channels/telegram_turns.py#L67-L116)
 
-Por exemplo, o worker A pega o “1” com `generation=7`. Esse **lease**, ou autorização com prazo, vale por 90 segundos e o **heartbeat** tenta renová-lo a cada 30 segundos. Se o prazo expirar, um worker B pode recuperar o mesmo recibo com `generation=8`. Mesmo que A volte, `claim.assert_owned(session)` compara chat, update, geração e prazo dentro da transação de escrita. A tentativa 7 perde a autorização e recebe `ClaimLost`. Isso permite liberar o bloqueio inicial do banco durante a chamada demorada ao modelo. [Prazo do lease](../app/channels/telegram_turns.py#L28) · [Renovação em segundo plano](../app/telegram_service.py#L189-L217) · [Verificação antes de gravar](../app/channels/telegram_turns.py#L88-L116)
+O **lease** dá ao worker autorização por 90 segundos, e o **heartbeat** tenta renovar esse prazo a cada 30 segundos. O worker pode liberar o bloqueio inicial do banco enquanto aguarda o modelo. [Prazo do lease](../app/channels/telegram_turns.py#L28) · [Renovação em segundo plano](../app/telegram_service.py#L189-L217)
+
+![O worker A começa com a geração 7. Na seta C, o prazo expira e B recupera o mesmo update com a geração 8. Na seta D, uma escrita posterior de A recebe ClaimLost.](assets/telegram-worker-claim.svg)
+
+**C** mostra B recuperando o mesmo update após o vencimento do lease. **D** mostra A tentando gravar mais tarde. `claim.assert_owned(session)` compara bot, chat, update, geração e prazo dentro da transação. Como a geração atual é 8, a tentativa 7 recebe `ClaimLost`. [Verificação antes de gravar](../app/channels/telegram_turns.py#L88-L116)
 
 ### 3. O worker recupera os horários e roda o grafo
 
@@ -73,6 +75,10 @@ turns.finish(claim, reply, checkpoint_to_publish)
 
 2. **Linhas 106–108. Identificar o cliente e gerar a resposta.** `_ensure_customer()` associa o remetente do Telegram ao cliente daquele bot e empresa, criando o vínculo quando necessário. Esse `customer_id` permite ao serviço gravar o agendamento em nome da pessoa certa. `_reply_to_message()` trata `/start` e cartões de contato ali mesmo. Para “1”, chama `_run_turn()`. [Vincular o cliente](../app/channels/telegram_repository.py#L37-L81) · [`_reply_to_message()`](../app/telegram_worker.py#L43-L88)
 3. **Linhas 109–112. Escolher o estado que o próximo turno poderá ler.** Quando o grafo termina, o worker entrega a chave da tentativa atual para `finish()`. Em um caminho como `/start`, a resposta sai com a referência anterior, pois o grafo ficou fora desse turno. [Escolha do checkpoint](../app/telegram_service.py#L109-L112) · [Marcação ao terminar o grafo](../app/telegram_worker.py#L160-L168)
+
+![Dois turnos do chat. A oferta anterior guarda as opções 1 às 14h e 2 às 16h. Na seta E, o worker copia essa oferta. Na seta F, o grafo usa a cópia para associar “1” às 14h.](assets/telegram-worker-checkpoint.svg)
+
+**E** é a cópia que `_restore_turn_checkpoint()` faz para o `thread_id` da tentativa atual. **F** é o nó `select()` usando a lista de horários para resolver a escolha. [Restaurar a oferta](../app/telegram_service.py#L164-L180) · [Ler a opção escolhida](../app/graph/steps.py#L569-L578)
 
 Dentro de `_run_turn()`, `_message_input()` devolve texto ou baixa a gravação indicada no update. O worker carrega o **catálogo** (serviços, profissionais e dados da empresa) e monta `TurnContext` com o cliente, a modalidade de entrada e a data local da empresa. Para operações de agendamento, usa a chave `telegram:{bot_id}:{update_id}`. Reutilizar essa chave com os mesmos dados permite recuperar o resultado de uma gravação anterior. Essa propriedade se chama **idempotência**. [`_message_input()`](../app/telegram_worker.py#L104-L125) · [`_run_turn()`](../app/telegram_worker.py#L127-L168) · [Idempotência e recuperação](idempotency.md)
 
