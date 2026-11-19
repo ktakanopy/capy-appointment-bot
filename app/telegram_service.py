@@ -120,16 +120,27 @@ def _process_private_message(
 def _prepare_turn_worker(
     turns: TelegramTurns, claim: TurnClaim, runtime: RuntimeContext
 ) -> TelegramWorker | None:
-    """Scope writes to the current claim and isolate the attempt's checkpoint.
+    """Set up the worker that will handle one claimed Telegram message.
 
-    Guard customer and booking writes with the same claim. Use a separate
-    checkpoint thread so a superseded attempt's draft stays private.
+    A claim gives this attempt temporary ownership of the message. Reuse the
+    shared workflow and model clients, but give this worker booking and
+    customer services that verify ownership inside each write transaction.
+    If the lease expires and another worker takes over, the old attempt
+    cannot change a customer's account or booking.
+
+    Give the attempt its own place in Redis to save the conversation draft.
+    The caller can load the last completed draft into that space and publish
+    its reference when the turn finishes and the claim is still valid.
+
+    If the registered bot's credentials are unusable, schedule a retry and
+    return None so the caller stops before processing the message.
     """
     scoped_runtime = replace(
         runtime,
         bookings=BookingService(
             runtime.repository,
             turn_guard=claim.assert_owned,
+            # Save the destination so a later reminder can reach this chat.
             telegram_destination=(claim.bot.bot_id, claim.row["chat_id"]),
         ),
     )
@@ -141,9 +152,11 @@ def _prepare_turn_worker(
         return None
 
     worker = TelegramWorker(scoped_runtime, api, repository)
+    # Use the registered business for customer and catalog lookups.
     worker.bot_id = claim.bot.bot_id
     worker.business_id = claim.bot.business_id
     conversation_id = _conversation_id(claim.bot.business_id, claim.bot.bot_id, claim.row["chat_id"])
+    # Give every attempt a unique Redis thread, even for retries of the same message.
     worker.checkpoint_thread = f"{conversation_id}:attempt:{claim.generation}:{uuid.uuid4().hex}"
     return worker
 

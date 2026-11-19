@@ -35,6 +35,12 @@ flowchart TD
 
 The arrows mirror the graph edges in [builder.py](../app/graph/builder.py). `decide` calls Laya and applies deterministic constraints in `route_turn`. Preparation helpers run inside `prepare_action`; they are not separate graph nodes. Redis checkpoints state throughout graph execution; the `persist` node appends the reply to history.
 
+## Follow a message through the graph
+
+![Two customer turns flow through load_context, understand_input, merge_draft, decide, clarify or search, and persist. The first turn saves a massage service and asks for a date. The second adds the date to the saved draft and searches for available slots.](assets/graph-message-flow.svg)
+
+The example follows one possible route. The full graph above shows the other routes Laya can propose and Python can select. [Node implementations](../app/graph/steps.py) · [Draft fields](../app/graph/contracts.py)
+
 Use the compiled graph to check the arrows against the implementation after changing a route.
 This prints Mermaid using the offline providers.
 

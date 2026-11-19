@@ -1,18 +1,41 @@
 import json
+import logging
 
+import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.graph.builder import build_graph
 from app.graph.contracts import BookingRef, DecisionOutput
 from app.graph.decision import DeterministicDecision
 from app.graph.laya import LayaDecision
+from app.graph.steps import route_turn
 from app.graph.workflow import LangGraphWorkflow
-from app.llm.gemma import GemmaUnderstanding
+from app.llm.gemma import GemmaUnderstanding, ProviderError
 from app.llm.provider import DeterministicInterpreter
 from app.llm.schemas import SchedulingInterpretation
 from tests.conftest import sample_slot
 from tests.unit.test_conversation_graph import FakeSchedulingActions, _turn
 from tests.unit.test_gemma_laya import _Response
+
+
+def test_routing_logs_the_failure_stage_without_exposing_provider_text(caplog):
+    class FailingDecision:
+        def decide(self, message, draft):
+            raise ProviderError(f"Provider echoed {message}")
+
+    private_message = "routing-log-private-marker"
+    state = {"interpretation": {"message": private_message}}
+    with caplog.at_level(logging.DEBUG, logger="service_scheduling"):
+        with pytest.raises(ProviderError):
+            route_turn(state, FailingDecision(), 0.55)
+
+    assert {
+        "level": "debug",
+        "event": "workflow.route.failed",
+        "stage": "request_decision",
+        "error_type": "ProviderError",
+    } in [record.msg for record in caplog.records]
+    assert private_message not in caplog.text
 
 
 def test_real_clients_send_only_gemmas_message_and_current_context_to_laya(monkeypatch):

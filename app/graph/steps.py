@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from datetime import date, time
 
+from pydantic import ValidationError
+
 from app.chat_helpers import _choose_professional, _choose_service, _slot_message
 from app.graph.actions import SchedulingActions
 from app.graph.context import TurnInput
-from app.graph.contracts import DecisionOutput, TurnResult, WorkflowDraft
+from app.graph.contracts import DecisionOutput, NextAction, Operation, TurnResult, WorkflowDraft
 from app.graph.state import HISTORY_LIMIT
 from app.llm.gemma import ProviderError
 from app.llm.schemas import SchedulingInterpretation
@@ -19,16 +21,11 @@ from app.observability import debug_event
 from app.privacy import sanitize_message
 
 
-def _draft(state: dict) -> WorkflowDraft:
-    return WorkflowDraft.model_validate(state.get("draft") or {})
-
-
-def _interpretation(state: dict) -> SchedulingInterpretation:
-    return SchedulingInterpretation.model_validate(state["interpretation"])
-
-
-def _catalog(state: dict) -> CatalogResponse:
-    return CatalogResponse.model_validate(state["catalog"])
+_EXISTING_BOOKING_OPERATIONS: dict[NextAction, Operation] = {
+    "CONFIRM": "confirm",
+    "CANCEL": "cancel",
+    "RESCHEDULE": "reschedule",
+}
 
 
 def _parse_date(value: str | None) -> str | None:
@@ -53,6 +50,23 @@ def _parse_time(value: str | None) -> str | None:
 
 
 def _result(text: str, intent: str, **extra) -> dict:
+    """Build the state update that carries a node's reply through the graph.
+
+    Nodes such as clarify and lookup supply the customer-facing text and an
+    outcome label such as "clarify_date". TurnResult validates these values
+    and supplies defaults for slots and booking before conversion to a
+    JSON-compatible dictionary. The workflow reads this result after the graph
+    finishes and returns it to the caller.
+
+    The optional route selects the next node when the graph uses a conditional
+    edge. It defaults to "persist", which finalizes the reply and adds it to
+    conversation history. An optional draft carries updated scheduling details
+    into state for later turns. Other keyword arguments are currently ignored.
+
+    For example, _result("What date?", "clarify_date") returns an update
+    containing result text "What date?", intent "clarify_date", empty slots,
+    booking None, and route "persist".
+    """
     route = extra.pop("route", "persist")
     draft = extra.pop("draft", None)
     update = {
@@ -65,15 +79,12 @@ def _result(text: str, intent: str, **extra) -> dict:
 
 
 def load_context(state: dict, actions: SchedulingActions) -> dict:
-    draft = (
-        WorkflowDraft.model_validate(state["draft"])
-        if state.get("draft")
-        else WorkflowDraft()
-    )
+    saved_draft = state.get("draft")
+    draft = WorkflowDraft.model_validate(saved_draft or {})
     catalog = actions.catalog(state["business_id"])
     debug_event(
         "workflow.context.loaded", services=len(catalog.services),
-        professionals=len(catalog.professionals), resumed=bool(state.get("draft")),
+        professionals=len(catalog.professionals), resumed=bool(saved_draft),
     )
     return {
         "draft": draft.model_dump(mode="json"),
@@ -106,13 +117,15 @@ def understand_input(state: dict, turn_input: TurnInput, interpreter, transcribe
             raise ProviderError("empty_audio_transcript")
 
     message = sanitize_message(message, turn_input.display_name)
+    has_choices = bool(
+        state.get("offered_slots")
+        or WorkflowDraft.model_validate(state.get("draft") or {}).candidate_booking_ids
+    )
     interpretation = interpreter.interpret(
         message,
         {
             **catalog_context,
-            "has_slots": bool(
-                state.get("offered_slots") or _draft(state).candidate_booking_ids
-            ),
+            "has_slots": has_choices,
             "history": (state.get("messages") or [])[-(HISTORY_LIMIT - 1):],
         },
     )
@@ -133,10 +146,41 @@ def understand_input(state: dict, turn_input: TurnInput, interpreter, transcribe
 
 
 def merge_draft(state: dict) -> dict:
-    draft = _draft(state)
-    interpretation = _interpretation(state)
-    catalog = _catalog(state)
-    invalid_date = False
+    """Combine this turn's facts with the saved draft before choosing an action.
+
+    Resolve catalog names to trusted IDs and track missing details so later
+    steps can ask for clarification or search using the accumulated context.
+    """
+    draft = WorkflowDraft.model_validate(state.get("draft") or {})
+    interpretation = SchedulingInterpretation.model_validate(state["interpretation"])
+    catalog = CatalogResponse.model_validate(state["catalog"])
+    interpretation = _merge_service(draft, interpretation, catalog)
+    _merge_professional(draft, interpretation, catalog)
+    _merge_date_and_time(draft, interpretation)
+    draft.missing = (
+        "booking"
+        if draft.candidate_booking_ids and interpretation.slot_index
+        else _missing(draft, interpretation, catalog)
+    )
+    debug_event(
+        "workflow.draft.merged", operation=draft.operation, missing=draft.missing,
+        invalid_date=draft.invalid_date,
+    )
+    return {
+        "draft": draft.model_dump(mode="json"),
+        "interpretation": interpretation.model_dump(mode="json"),
+    }
+
+
+def _merge_service(
+    draft: WorkflowDraft,
+    interpretation: SchedulingInterpretation,
+    catalog: CatalogResponse,
+) -> SchedulingInterpretation:
+    """Use a catalog service ID and canonical name when the requested service matches.
+
+    Select the only available service when the customer has not named one.
+    """
     if interpretation.service_name:
         service = _choose_service(catalog, interpretation.service_name)
         if service is not None:
@@ -149,33 +193,34 @@ def merge_draft(state: dict) -> dict:
         service = catalog.services[0]
         draft.service_id = service.id
         draft.service_name = service.name
+    return interpretation
+
+
+def _merge_professional(
+    draft: WorkflowDraft,
+    interpretation: SchedulingInterpretation,
+    catalog: CatalogResponse,
+) -> None:
+    """Store a matching professional's ID so availability uses a catalog entry."""
     if interpretation.professional_name:
         professional = _choose_professional(catalog, interpretation.professional_name)
         if professional is not None:
             draft.professional_id = professional.id
+
+
+def _merge_date_and_time(
+    draft: WorkflowDraft, interpretation: SchedulingInterpretation
+) -> None:
+    """Keep valid timing preferences and clear an invalid date before clarification."""
     parsed_date = _parse_date(interpretation.local_date)
+    draft.invalid_date = bool(interpretation.local_date and parsed_date is None)
     if interpretation.local_date and parsed_date is None:
-        invalid_date = True
         draft.local_date = None
     elif parsed_date:
         draft.local_date = parsed_date
     parsed_time = _parse_time(interpretation.local_time)
     if parsed_time:
         draft.earliest_local_time = parsed_time
-    draft.invalid_date = invalid_date
-    draft.missing = (
-        "booking"
-        if draft.candidate_booking_ids and interpretation.slot_index
-        else _missing(draft, interpretation, catalog)
-    )
-    debug_event(
-        "workflow.draft.merged", operation=draft.operation, missing=draft.missing,
-        invalid_date=invalid_date,
-    )
-    return {
-        "draft": draft.model_dump(mode="json"),
-        "interpretation": interpretation.model_dump(mode="json"),
-    }
 
 
 def _missing(
@@ -183,6 +228,7 @@ def _missing(
     interpretation: SchedulingInterpretation,
     catalog: CatalogResponse,
 ) -> str:
+    """Identify the next detail needed to make the draft usable for scheduling."""
     if (
         interpretation.service_name
         and _choose_service(catalog, interpretation.service_name) is None
@@ -204,54 +250,66 @@ def _missing(
 
 
 def route_turn(state: dict, decision_engine, threshold: float) -> dict:
-    draft = _draft(state)
-    interpretation = _interpretation(state)
-    decision = decision_engine.decide(interpretation.message, draft)
-    can_proceed = not decision.needs_human and decision.confidence >= threshold
-    selected_booking_id = None
-    if can_proceed:
-        operation = {
-            "CONFIRM": "confirm",
-            "CANCEL": "cancel",
-            "RESCHEDULE": "reschedule",
-        }.get(decision.next_action)
-        if operation:
-            draft.operation = operation
-        elif (
-            decision.next_action == "CHECK_AVAILABILITY"
-            and draft.operation != "reschedule"
-        ):
-            draft.operation = "create"
-            draft.candidate_booking_ids = []
-            draft.active_booking_id = None
-        elif (
-            decision.next_action == "BOOK"
-            and draft.operation != "reschedule"
-            and not draft.candidate_booking_ids
-        ):
-            draft.operation = "create"
+    """Turn Laya's proposed action into a route allowed by the scheduling rules."""
+    try:
+        draft = WorkflowDraft.model_validate(state.get("draft") or {})
+        interpretation = SchedulingInterpretation.model_validate(state["interpretation"])
+    except (KeyError, ValidationError) as exc:
+        debug_event("workflow.route.failed", stage="read_state", error_type=type(exc).__name__)
+        raise
 
-        # A numbered booking choice is resolved only against saved owned references.
-        if (
-            decision.next_action in {"CONFIRM", "CANCEL", "RESCHEDULE"}
-            and draft.missing == "booking"
-            and interpretation.slot_index
-            and 1 <= interpretation.slot_index <= len(draft.candidate_booking_ids)
-        ):
-            selected_booking_id = draft.candidate_booking_ids[
-                interpretation.slot_index - 1
-            ]
+    debug_event(
+        "workflow.route.started",
+        operation=draft.operation,
+        missing=draft.missing,
+        confidence_threshold=threshold,
+        booking_option_count=len(draft.candidate_booking_ids),
+        has_numbered_choice=interpretation.slot_index is not None,
+    )
+    try:
+        decision = decision_engine.decide(interpretation.message, draft)
+    except Exception as exc:
+        debug_event("workflow.route.failed", stage="request_decision", error_type=type(exc).__name__)
+        raise
+
+    selected_booking_id = None
+    if not decision.needs_human and decision.confidence >= threshold:
+        _update_draft_operation(draft, decision.next_action)
+        selected_booking_id = _booking_id_for_choice(
+            draft, decision.next_action, interpretation.slot_index
+        )
+        if selected_booking_id is not None:
             draft.active_booking_id = selected_booking_id
             draft.candidate_booking_ids = []
             interpretation = interpretation.model_copy(update={"slot_index": None})
-    route = (
-        "prepare_action"
-        if selected_booking_id
-        else _constrain(decision, draft, state, threshold)
-    )
+    else:
+        debug_event(
+            "workflow.route.draft_update_skipped",
+            action=decision.next_action,
+            reason="needs_human" if decision.needs_human else "below_confidence_threshold",
+            confidence=decision.confidence,
+            confidence_threshold=threshold,
+        )
+
+    if selected_booking_id:
+        route = "prepare_action"
+        debug_event(
+            "workflow.route.rule_applied",
+            action=decision.next_action,
+            route=route,
+            reason="existing_booking_selected",
+        )
+    else:
+        route = _choose_next_node(decision, draft, state, threshold)
+
     debug_event(
-        "workflow.route.selected", action=decision.next_action, confidence=decision.confidence,
-        needs_human=decision.needs_human, route=route,
+        "workflow.route.selected",
+        action=decision.next_action,
+        confidence=decision.confidence,
+        needs_human=decision.needs_human,
+        route=route,
+        operation=draft.operation,
+        missing=draft.missing,
     )
     return {
         "interpretation": interpretation.model_dump(mode="json"),
@@ -261,50 +319,151 @@ def route_turn(state: dict, decision_engine, threshold: float) -> dict:
     }
 
 
-def _constrain(
+def _update_draft_operation(draft: WorkflowDraft, action: NextAction) -> None:
+    """Record which booking operation the customer is working toward.
+
+    Laya proposes the next action for one message. The draft keeps the
+    broader goal across messages so a reply like "2" can finish moving an
+    existing appointment. When the customer starts a new availability
+    search, clear the old booking references so the next numbered reply
+    can refer to the new time options.
+    """
+    previous_operation = draft.operation
+    previous_booking_option_count = len(draft.candidate_booking_ids)
+    had_active_booking = bool(draft.active_booking_id)
+    operation = _EXISTING_BOOKING_OPERATIONS.get(action)
+    # An explicit confirm, cancel, or reschedule action sets the goal for later replies.
+    if operation is not None:
+        draft.operation = operation
+        reason = "explicit_existing_booking_action"
+    # Searching for or choosing a new time can be part of the same reschedule.
+    elif draft.operation == "reschedule":
+        reason = "reschedule_in_progress"
+    # Clear both booking references so the new search starts with fresh choices.
+    elif action == "CHECK_AVAILABILITY":
+        draft.operation = "create"
+        draft.candidate_booking_ids = []
+        draft.active_booking_id = None
+        reason = "new_availability_search"
+    # With no booking list to resolve, a numbered choice can select a new time.
+    elif action == "BOOK" and not draft.candidate_booking_ids:
+        draft.operation = "create"
+        reason = "time_choice_for_new_booking"
+    elif action == "BOOK":
+        reason = "existing_booking_choice_pending"
+    else:
+        reason = "action_does_not_change_operation"
+
+    debug_event(
+        "workflow.draft.operation",
+        action=action,
+        reason=reason,
+        previous_operation=previous_operation,
+        operation=draft.operation,
+        previous_booking_option_count=previous_booking_option_count,
+        booking_option_count=len(draft.candidate_booking_ids),
+        had_active_booking=had_active_booking,
+        has_active_booking=bool(draft.active_booking_id),
+    )
+
+
+def _booking_id_for_choice(
+    draft: WorkflowDraft, action: NextAction, choice: int | None
+) -> str | None:
+    """Resolve a numbered reply against the customer's saved booking options.
+
+    The same number field can refer to an available time. Use it here only
+    when the conversation is waiting for the customer to choose a booking.
+    """
+    booking_id = None
+    option_count = len(draft.candidate_booking_ids)
+    if action not in _EXISTING_BOOKING_OPERATIONS:
+        reason = "action_does_not_target_existing_booking"
+    elif draft.missing != "booking":
+        reason = "draft_is_not_waiting_for_booking_choice"
+    elif choice is None:
+        reason = "no_numbered_choice"
+    elif not 1 <= choice <= option_count:
+        reason = "booking_choice_out_of_range"
+    else:
+        booking_id = draft.candidate_booking_ids[choice - 1]
+        reason = "booking_choice_matched"
+
+    debug_event(
+        "workflow.route.booking_choice",
+        action=action,
+        missing=draft.missing,
+        option_number=choice,
+        booking_option_count=option_count,
+        reason=reason,
+    )
+    return booking_id
+
+
+def _choose_next_node(
     decision: DecisionOutput,
     draft: WorkflowDraft,
     state: dict,
     threshold: float,
 ) -> str:
-    if state.get("selected_slot_id") and not any(
-        slot["slot_id"] == state["selected_slot_id"]
-        for slot in state.get("offered_slots", [])
-    ):
-        return "select"
-    if decision.needs_human or decision.confidence < threshold:
-        return "escalate"
+    """Check the draft and offered slots before selecting the next graph node."""
     action = decision.next_action
-    if action == "CLARIFY":
-        return "clarify"
-    if action == "LOOKUP_BOOKING":
-        return "lookup"
-    if action == "FAQ":
-        return "help"
-    if action == "ESCALATE":
-        return "escalate"
-    if action in {"CONFIRM", "CANCEL", "RESCHEDULE"}:
-        return "prepare_action"
-    if action == "BOOK":
+    selected_slot_id = state.get("selected_slot_id")
+    if selected_slot_id and not any(
+        slot["slot_id"] == selected_slot_id for slot in state.get("offered_slots", [])
+    ):
+        route, reason = "select", "selected_slot_not_in_current_offer"
+    elif decision.needs_human:
+        route, reason = "escalate", "needs_human"
+    elif decision.confidence < threshold:
+        route, reason = "escalate", "below_confidence_threshold"
+    elif action == "CLARIFY":
+        route, reason = "clarify", "router_requested_clarification"
+    elif action == "LOOKUP_BOOKING":
+        route, reason = "lookup", "router_requested_booking_lookup"
+    elif action == "FAQ":
+        route, reason = "help", "router_requested_faq"
+    elif action == "ESCALATE":
+        route, reason = "escalate", "router_requested_escalation"
+    elif action in _EXISTING_BOOKING_OPERATIONS:
+        route, reason = "prepare_action", "existing_booking_action"
+    elif action == "BOOK":
         if draft.candidate_booking_ids:
-            return "clarify"
-        return "select"
-    if action == "CHECK_AVAILABILITY":
+            route, reason = "clarify", "existing_booking_choice_pending"
+        else:
+            route, reason = "select", "choose_from_offered_times"
+    elif action == "CHECK_AVAILABILITY":
         if (
             draft.missing in {"service", "date", "professional"}
             or not draft.service_id
             or not draft.local_date
         ):
-            return "clarify"
-        return "search"
-    return "clarify"
+            route, reason = "clarify", "availability_details_missing"
+        else:
+            route, reason = "search", "availability_details_ready"
+    else:
+        route, reason = "clarify", "unrecognized_action"
+
+    debug_event(
+        "workflow.route.rule_applied",
+        action=action,
+        route=route,
+        reason=reason,
+        operation=draft.operation,
+        missing=draft.missing,
+        has_service=bool(draft.service_id),
+        has_date=bool(draft.local_date),
+        confidence=decision.confidence,
+        confidence_threshold=threshold,
+    )
+    return route
 
 
 def clarify(state: dict, actions: SchedulingActions) -> dict:
-    draft = _draft(state)
+    draft = WorkflowDraft.model_validate(state.get("draft") or {})
     debug_event("workflow.clarification.requested", missing=draft.missing, operation=draft.operation)
-    interpretation = _interpretation(state)
-    catalog = _catalog(state)
+    interpretation = SchedulingInterpretation.model_validate(state["interpretation"])
+    catalog = CatalogResponse.model_validate(state["catalog"])
     if state.get("decision", {}).get("next_action") == "CLARIFY":
         return _result(
             "Could you clarify your request? Tell me what you'd like to do and which appointment or time you mean.",
@@ -373,8 +532,8 @@ def clarify(state: dict, actions: SchedulingActions) -> dict:
 
 
 def search(state: dict, actions: SchedulingActions) -> dict:
-    draft = _draft(state)
-    catalog = _catalog(state)
+    draft = WorkflowDraft.model_validate(state.get("draft") or {})
+    catalog = CatalogResponse.model_validate(state["catalog"])
     service = _service(catalog, draft.service_id)
     if service is None or not draft.local_date:
         return clarify(state, actions)
@@ -408,8 +567,8 @@ def search(state: dict, actions: SchedulingActions) -> dict:
 
 
 def select(state: dict, actions: SchedulingActions) -> dict:
-    draft = _draft(state)
-    interpretation = _interpretation(state)
+    draft = WorkflowDraft.model_validate(state.get("draft") or {})
+    interpretation = SchedulingInterpretation.model_validate(state["interpretation"])
     slots = _offered_slots(state)
     selected_slot_id = state.get("selected_slot_id")
     chosen = _chosen_slot(slots, selected_slot_id, interpretation.slot_index)
@@ -445,7 +604,7 @@ def select(state: dict, actions: SchedulingActions) -> dict:
 
 
 def prepare_action(state: dict, actions: SchedulingActions) -> dict:
-    draft = _draft(state)
+    draft = WorkflowDraft.model_validate(state.get("draft") or {})
     debug_event("workflow.action.preparing", operation=draft.operation)
     if draft.operation in {"confirm", "cancel", "reschedule"} and not state.get(
         "customer_id"
@@ -574,7 +733,7 @@ def _prepare_booking_status_change(
 
 
 def execute(state: dict, actions: SchedulingActions) -> dict:
-    draft = _draft(state)
+    draft = WorkflowDraft.model_validate(state.get("draft") or {})
     debug_event("workflow.action.executing", operation=draft.operation)
     key = state["idempotency_key"]
     if not key:
@@ -645,7 +804,7 @@ def execute(state: dict, actions: SchedulingActions) -> dict:
 def help_reply(state: dict) -> dict:
     debug_event("workflow.help.requested")
     """Answer scheduling questions from the catalog already loaded for this turn."""
-    catalog = _catalog(state)
+    catalog = CatalogResponse.model_validate(state["catalog"])
     message = state.get("message", "")
     lowered = message.lower()
     if any(word in lowered for word in ("price", "cost", "how much", "quanto")):
@@ -692,7 +851,7 @@ def lookup(state: dict, actions: SchedulingActions) -> dict:
 
 
 def escalate(state: dict, actions: SchedulingActions) -> dict:
-    draft = _draft(state)
+    draft = WorkflowDraft.model_validate(state.get("draft") or {})
     draft.escalated = True
     debug_event("workflow.escalated")
     actions.record_escalation(state["conversation_id"])
@@ -706,7 +865,7 @@ def escalate(state: dict, actions: SchedulingActions) -> dict:
 
 def persist(state: dict) -> dict:
     """Finalize the reply and draft so the checkpointer can carry context forward."""
-    draft = _draft(state)
+    draft = WorkflowDraft.model_validate(state.get("draft") or {})
     result = dict(
         state.get("result")
         or _result("Tell me which service you'd like and the date.", "clarify")[

@@ -14,7 +14,9 @@ The Telegram worker verifies the sender and downloads the recording within Teleg
 
 `app/channels/telegram_repository.py` provisions Telegram identities. Phone data never chooses the customer record. Intake deduplicates each update by bot and update ID. A worker that recovers an interrupted turn asks the customer to check their appointments. The sender works from a saved reply without rerunning booking operations.
 
-`app/reminders.py` keeps the local demo inbox and can enqueue hosted Telegram reminders in the shared outbox. `app/cli.py` exposes the owner agenda and demo inbox. `app/main.py` provides health and webhook intake. Only conversation workers load the full model and graph runtime.
+The local reminder worker saves due reminders without a Telegram destination to a demo inbox in PostgreSQL. The owner CLI reads PostgreSQL to show upcoming bookings and recent inbox messages. Reminders with a Telegram destination go through the shared outbox. [Reminder worker](../app/reminders.py#L103) · [Owner CLI](../app/cli.py#L12) · [Telegram reminder queue](../app/reminders.py#L71)
+
+`app/main.py` provides health and webhook intake. Only conversation workers load the full model and graph runtime.
 
 See the [database guide](database.md) for table relationships and reminder delivery.
 
@@ -55,10 +57,16 @@ option 1. Find `eval.turn.started` with `number: 3`. Then read these events in o
 
 | Event | What happened |
 | --- | --- |
+| `workflow.draft.operation` with `reason: time_choice_for_new_booking` | The draft records a new booking. In a reschedule, this event would show `reschedule_in_progress` and keep the existing operation. |
+| `workflow.route.booking_choice` with `reason: action_does_not_target_existing_booking` | The number refers to an offered time on this route. The workflow skips the list of existing appointments. |
+| `workflow.route.rule_applied` with `reason: choose_from_offered_times` | The workflow chooses the node that matches the number to a time. |
 | `workflow.route.selected` with `action: BOOK` and `route: select` | The router proposed booking and the workflow moved to the selection step. |
 | `workflow.slot.matched` with `offered: 2` and `option_number: 1` | CAPY looked up option 1 in the two times it offered earlier. |
 | `workflow.action.executing` with `operation: create` | The workflow asked the booking service to create the appointment. |
 | `workflow.turn.completed` with `has_booking: True` | The turn finished and had a booking to report. |
+
+If routing fails, look for `workflow.route.failed`. Its `stage` tells you whether
+the workflow was reading saved state or asking the router for a decision.
 
 For a local test bot, start CAPY with debug logging. Follow the normal
 [Telegram demo setup](../README.md#try-the-telegram-voice-demo) first.

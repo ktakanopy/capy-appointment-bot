@@ -34,7 +34,11 @@ class GemmaUnderstanding:
         with timed_event("model.gemma.interpret"):
             debug_event("model.gemma.interpret.started")
             payload = self._post(
-                {"modality": "text", "message": message, "context": _safe_context(context)}
+                {
+                    "modality": "text",
+                    "message": message,
+                    "context": _safe_context(context),
+                }
             )
             return _interpretation(payload)
 
@@ -81,7 +85,9 @@ class GemmaUnderstanding:
                 ),
             ) as chunks:
                 for chunk_count, chunk in enumerate(chunks, start=1):
-                    debug_event("model.gemma.audio_chunk.started", chunk_number=chunk_count)
+                    debug_event(
+                        "model.gemma.audio_chunk.started", chunk_number=chunk_count
+                    )
                     remaining = deadline - monotonic()
                     if remaining <= 0:
                         raise ProviderError("audio_processing_timeout")

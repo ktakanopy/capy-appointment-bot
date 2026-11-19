@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="652" viewBox="0 0 1000 652" role="img" aria-labelledby="title description">
   <title id="title">CAPY runtime architecture</title>
-  <desc id="description">The webhook stores Telegram updates in PostgreSQL. A relay signals the Telegram worker through RabbitMQ. The worker verifies the sender and passes text or a downloaded recording to LangGraph. One graph node uses Gemma to transcribe recordings, redacts the resulting text and calls Gemma to interpret the message. LangGraph gives Laya the interpreted message and draft context, then validates the proposed action. Python services enforce availability and booking policy in PostgreSQL. Redis checkpoints sanitized conversation state. PostgreSQL also stores Telegram receipts, saved replies and demo reminders, and is accessed by the reminder worker and owner CLI.</desc>
+  <desc id="description">The webhook stores Telegram updates in PostgreSQL. A relay signals the Telegram worker through RabbitMQ. The worker verifies the sender and passes text or a downloaded recording to LangGraph. One graph node uses Gemma to transcribe recordings, redacts the resulting text and calls Gemma to interpret the message. LangGraph gives Laya the interpreted message and draft context, then validates the proposed action. Python services enforce availability and booking policy in PostgreSQL. Redis checkpoints sanitized conversation state. PostgreSQL also stores Telegram receipts and saved replies. The local reminder worker saves due reminders to a demo inbox in PostgreSQL. The owner CLI shows upcoming bookings and recent inbox messages.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 Z" fill="#536b64"/>
@@ -93,7 +93,7 @@
   <text class="detail" x="739" y="406">Telegram receipts and replies</text>
   <text class="detail" x="739" y="427">Reminder jobs and demo inbox</text>
 
-  <text class="heading" x="739" y="557">Demo operations</text>
-  <text class="detail" x="739" y="581">Worker delivers reminders</text>
-  <text class="detail" x="739" y="602">CLI shows agenda and inbox</text>
+  <text class="heading" x="739" y="557">Local demo tools</text>
+  <text class="detail" x="739" y="581">Worker fills reminder inbox</text>
+  <text class="detail" x="739" y="602">CLI shows bookings and inbox</text>
 </svg>
