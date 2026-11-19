@@ -19,7 +19,7 @@ uv run python -m app.evals.runner --understanding deterministic --routing determ
 
 The runner prints each case's status and the path to a JSON report. Look for `en-booking` to follow a massage booking from the initial request to choosing tomorrow and selecting the first offered time. The case checks that CAPY creates exactly one booking. [Follow the booking through the code](docs/architecture.md#how-to-read-the-code).
 
-To see how CAPY branches at each step, [follow one booking in the debug logs](docs/architecture.md#follow-one-booking-in-the-debug-logs).
+The worker guide shows which debug events appear as CAPY books the chosen time. [Trace the offline example](docs/telegram-worker.md#rode-o-exemplo-sem-telegram)
 
 ## Try the Telegram voice demo
 
@@ -100,7 +100,7 @@ Open `http://localhost:3000` and make a test booking to generate a trace. Langfu
 
 ![CAPY runtime architecture. The webhook commits Telegram updates and the relay publishes wake-ups through RabbitMQ. The turn worker handles text and audio and runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](docs/assets/architecture.svg)
 
-Availability results are references, not reservations. Booking writes revalidate policy inside their transaction. PostgreSQL rejects overlapping active bookings; idempotency protects retries. Booking and reminder changes commit atomically. Redis holds a bounded, temporary conversation draft, offered slots and history. PostgreSQL keeps update receipts and saved replies across restarts. RabbitMQ sends identifier-only wake-ups to the workers. [Follow a Telegram message](docs/architecture.md#how-the-telegram-worker-works)
+Availability results are references, not reservations. Booking writes revalidate policy inside their transaction. PostgreSQL rejects overlapping active bookings; idempotency protects retries. Booking and reminder changes commit atomically. Redis holds a bounded, temporary conversation draft, offered slots and history. PostgreSQL keeps update receipts and saved replies across restarts. RabbitMQ sends identifier-only wake-ups to the workers. [Follow a Telegram message](docs/telegram-worker.md)
 
 ## Evaluate with and without Laya
 
@@ -140,7 +140,8 @@ For multiple bots, CAPY supports a shared webhook, conversation workers, and a r
 To follow a PostgreSQL query from the repository to a mapped class, start with the service lookup. [SQLAlchemy example](docs/database.md#read-a-service-with-sqlalchemy)
 
 - [Source map](docs/source-map.md) — where to find each part of the app, the tests, and the tools
-- [Architecture](docs/architecture.md) — Telegram workers, booking flow, and [where to start reading the code](docs/architecture.md#how-to-read-the-code)
+- [Architecture](docs/architecture.md) — components and booking sequence diagrams
+- [Telegram worker guide](docs/telegram-worker.md) — follow one message from webhook to reply, with code excerpts and logs in Portuguese
 - [Conversation graph](docs/graph.md) — routing, state, and workflow steps
 - [Model contracts](docs/model-contracts.md) — Gemma and Laya setup and APIs
 - [Database](docs/database.md) — tables, booking transactions, and reminders

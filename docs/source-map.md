@@ -1,7 +1,7 @@
 # Source map
 
 Start with one customer replying “1” to an offered appointment. Follow the message into the
-conversation worker, through the booking transaction, and back to Telegram. [Booking walkthrough](architecture.md#how-to-read-the-code)
+conversation worker, through the booking transaction, and back to Telegram. [Telegram worker guide (Português)](telegram-worker.md)
 
 ## Telegram and conversation state
 
@@ -11,7 +11,7 @@ conversation worker, through the booking transaction, and back to Telegram. [Boo
 | Which process runs each job | [telegram_service.py](../app/telegram_service.py) runs conversation processing, reminder scheduling, sending, bot registration, and queue statistics. |
 | Bot ownership and incoming messages | [bots.py](../app/channels/bots.py) maps credentials and routes to a business. [telegram_intake.py](../app/channels/telegram_intake.py) validates private messages and records update IDs. [telegram_repository.py](../app/channels/telegram_repository.py) links senders to customers and serializes bot registration. |
 | How work reaches RabbitMQ | [telegram_publications.py](../app/channels/telegram_publications.py#L17) records and relays due work. [telegram_broker.py](../app/channels/telegram_broker.py#L62) publishes IDs and acknowledges after handling. |
-| How a worker gets its turn | [telegram_turns.py](../app/channels/telegram_turns.py#L108) claims one chat head, verifies which worker owns it, and saves the completed turn. [redis_checkpoint.py](../app/graph/redis_checkpoint.py) stores conversation drafts and saved offers in Redis. |
+| How a worker gets its turn | [telegram_turns.py](../app/channels/telegram_turns.py#L157) claims one chat head, verifies which worker owns it, and saves the completed turn. [redis_checkpoint.py](../app/graph/redis_checkpoint.py) stores conversation drafts and saved offers in Redis. |
 | Text, voice, and contact handling | [telegram_worker.py](../app/telegram_worker.py) prepares messages and handles supported commands. [audio_chunks.py](../app/channels/audio_chunks.py) decodes recordings and cuts them into overlapping clips. [phone.py](../app/channels/phone.py) normalizes shared contact numbers. [privacy.py](../app/privacy.py) redacts recognizable contact details before model input. [Data handling](security.md) |
 | Telegram calls and outbound delivery | [telegram.py](../app/channels/telegram.py) calls the Bot API. [telegram_delivery.py](../app/channels/telegram_delivery.py#L111) reserves an outgoing message by ID and shares rate limits across senders. [Retries and recovery](idempotency.md) |
 

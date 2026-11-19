@@ -48,9 +48,9 @@ text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
 <line class="arrow" x1="783" x2="311" y1="375" y2="375"/>
 <text class="call" x="547" y="366">Q06  Claim chat head</text>
 <line class="arrow" x1="783" x2="311" y1="421" y2="421"/>
-<text class="call" x="547" y="412">Q07  Commit reply and checkpoint</text>
+<text class="call" x="547" y="412">Q07  Commit reply and checkpoint reference</text>
 <line class="arrow" x1="783" x2="665" y1="467" y2="467"/>
-<text class="call" x="724" y="458">Q08  Acknowledge turn</text>
+<text class="call" x="724" y="458">Q08  Acknowledge incoming wake-up</text>
 <line class="arrow" x1="429" x2="311" y1="513" y2="513"/>
 <text class="call" x="370" y="504">Q09  Stage due reminder</text>
 <line class="arrow" x1="547" x2="665" y1="559" y2="559"/>
@@ -64,5 +64,5 @@ text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
 <line class="arrow" x1="901" x2="311" y1="743" y2="743"/>
 <text class="call" x="606" y="734">Q14  Record outcome</text>
 <line class="arrow" x1="901" x2="665" y1="789" y2="789"/>
-<text class="call" x="783" y="780">Q15  Acknowledge send</text>
+<text class="call" x="783" y="780">Q15  Acknowledge outgoing wake-up</text>
 </svg>
