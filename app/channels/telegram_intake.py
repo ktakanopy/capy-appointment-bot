@@ -43,11 +43,11 @@ def save_update(
 ) -> bool:
     """Persist a Telegram update and schedule supported private messages for work.
 
-    Telegram may retry an update, so its update ID is the idempotency key and a
-    duplicate counts as accepted without creating another inbox row. Only
-    supported private-message fields are stored; other valid updates receive a
-    completed receipt so Telegram does not keep retrying them. Return False when
-    the update ID is invalid or the bot is no longer enabled for webhook intake.
+    Use (bot_id, update_id) as the idempotency key because update IDs are scoped
+    to a bot. An update with an existing key counts as accepted without another
+    inbox row or notification. Store only fields the worker uses. Other valid
+    updates get a completed receipt. Return False for an invalid update ID or
+    a bot that is no longer enabled for webhook intake.
     """
     update_id = update.get("update_id")
     if not telegram_integer(update_id):
@@ -84,8 +84,8 @@ def save_update(
             debug_event("telegram.inbox.ignored", bot_id=bot.bot_id, update_id=update_id,
                         reason="bot_not_registered_for_intake")
             return False
-        # Telegram retries use the same ID, so this unique key prevents duplicate inbox work.
-        receipt_id = session.scalar(insert(TelegramUpdate).values(
+        idempotency_key_columns = (TelegramUpdate.bot_id, TelegramUpdate.update_id)
+        inserted_update_id = session.scalar(insert(TelegramUpdate).values(
             bot_id=bot.bot_id,
             update_id=update_id,
             business_id=bot.business_id,
@@ -97,9 +97,9 @@ def save_update(
             ready_at=func.clock_timestamp() + timedelta(seconds=0.3),
             expires_at=func.clock_timestamp() + timedelta(days=30),
         ).on_conflict_do_nothing(
-            index_elements=["bot_id", "update_id"],
+            index_elements=idempotency_key_columns,
         ).returning(TelegramUpdate.update_id))
-        if supported and receipt_id is not None:
+        if supported and inserted_update_id is not None:
             session.execute(insert(TelegramConversation).values(
                 bot_id=bot.bot_id, chat_id=chat_id, business_id=bot.business_id,
             ).on_conflict_do_nothing())
@@ -107,6 +107,6 @@ def save_update(
     debug_event(
         "telegram.inbox.recorded", bot_id=bot.bot_id, update_id=update_id,
         source="webhook",
-        is_private=bool(supported), inserted=receipt_id is not None,
+        is_private=bool(supported), inserted=inserted_update_id is not None,
     )
     return True
