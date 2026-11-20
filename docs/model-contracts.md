@@ -14,16 +14,16 @@ To use separate model servers, set `GEMMA_BASE_URL` and `LAYA_BASE_URL` to endpo
 
 ## Gemma interprets meaning
 
-For text, `POST /understand` receives `modality: "text"`, the sanitized `message`, and a `context` containing catalog names, today's date, whether choices exist, and bounded conversation history. For example, the default seed supplies `Relaxation massage`, `Ana Costa`, `Rui Mendes`, and today's date in `America/Sao_Paulo`.
+For text, `POST /understand` receives `modality: "text"`, the sanitized `message`, and a `context` containing catalog names, today's date, whether choices exist, and bounded conversation history. The default seed supplies `Shiatsu 30 min`, `Shiatsu 60 min`, `Liberação miofascial 60 min`, `Ana Costa`, and today's date in `America/Sao_Paulo`.
 
 Configure the Gemma server to rewrite the complete request in short, simple language. Preserve the customer's question, negation, corrections and uncertainty. Resolve relative dates only when the supplied date and meaning make them unambiguous. Do not invent missing details, turn an uncertain request into a definite instruction, classify intent or choose a next action.
 
-For “Uh, tomorrow, could I get a relaxation massage with Ana Costa?”, assuming today is November 11, 2026, a valid response is:
+For “Uh, tomorrow, could I get Shiatsu 60 min with Ana Costa?”, assuming today is November 11, 2026, a valid response is:
 
 ```json
 {
-  "message": "I want to book a relaxation massage with Ana Costa on 2026-11-12.",
-  "service_name": "Relaxation massage",
+  "message": "I want to book Shiatsu 60 min with Ana Costa on 2026-11-12.",
+  "service_name": "Shiatsu 60 min",
   "professional_name": "Ana Costa",
   "local_date": "2026-11-12",
   "local_time": null,
@@ -45,11 +45,11 @@ For the seed example above, the first-turn request is:
 
 ```json
 {
-  "message": "I want to book a relaxation massage with Ana Costa on 2026-11-12.",
+  "message": "I want to book Shiatsu 60 min with Ana Costa on 2026-11-12.",
   "context": {
     "operation": "none",
     "service_id": "service-demo",
-    "service_name": "Relaxation massage",
+    "service_name": "Shiatsu 60 min",
     "professional_id": "professional-demo-ana",
     "local_date": "2026-11-12",
     "earliest_local_time": null,

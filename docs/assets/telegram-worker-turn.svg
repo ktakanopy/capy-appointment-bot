@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="416" viewBox="0 0 720 416" role="img" xml:lang="en" aria-labelledby="title desc">
   <title id="title">Calls inside the turn</title>
-  <desc id="desc">_process_private_message sets up the worker and tries to restore the offer. P1 returns early if setup fails. P2 proceeds to customer lookup and reply generation. P3 passes the reply and checkpoint reference to finish.</desc>
+  <desc id="desc">process_turn sets up the worker and restores the offer. P1 returns early if setup fails. P2 handles the message. P3 passes the reply and checkpoint reference to finish.</desc>
   <style>
     text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
     .title { font-size: 29px; font-weight: 700; }
@@ -17,7 +17,7 @@
   </style>
   <rect width="720" height="416" rx="20" fill="#fbfaf5"/>
   <text class="title" x="30" y="46">Calls inside the turn</text>
-  <text class="code" x="30" y="74">_process_private_message()</text>
+  <text class="code" x="30" y="74">process_turn()</text>
   <rect class="panel" x="30" y="95" width="413" height="94" rx="13"/>
   <text class="heading" x="50" y="125">Prepare and restore the offer</text>
   <text class="code" x="50" y="151">_prepare_turn_worker()</text>
@@ -31,7 +31,7 @@
   <text class="label" x="91" y="218">P2 · Setup complete</text>
   <rect class="green" x="30" y="236" width="660" height="69" rx="13"/>
   <text class="heading" x="52" y="264">Identify the customer and prepare the reply</text>
-  <text class="code" x="52" y="291">_ensure_customer() · _reply_to_message()</text>
+  <text class="code" x="52" y="291">handle_message()</text>
   <path class="arrow" d="M68 306V346m-6-7 6 7 6-7"/>
   <text class="label" x="91" y="331">P3 · Reply ready</text>
   <rect class="pale" x="30" y="347" width="660" height="45" rx="8"/>

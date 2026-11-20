@@ -5,7 +5,6 @@ import os
 import time
 from argparse import Namespace
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import replace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -25,7 +24,7 @@ from app.llm.provider import DeterministicInterpreter
 from app.main import app
 from app.models import BookingCreateRequest, BookingRescheduleRequest
 from app.runtime import close_runtime, create_runtime
-from app.telegram_service import process_turn, reconcile_replies
+from app.telegram_service import process_turn
 from app.telegram_service import register as register_bot
 from tests.integration.helpers import connect, next_open_day, offered_slots
 
@@ -104,6 +103,7 @@ def test_webhook_dedupes_per_bot(scheduling_db, monkeypatch):
             headers = {"X-Telegram-Bot-Api-Secret-Token": f"test-webhook-secret-{bot.bot_id}"}
             assert client.post(path, json=update(10, text="/start")).status_code == 403
             assert client.post(path, headers=headers, content=b"x" * (256 * 1024 + 1)).status_code == 413
+            assert client.post(path, headers=headers, content=b"{invalid").status_code == 400
             assert client.post(path, headers=headers, json=update(10, text="/start")).status_code == 204
             assert client.post(path, headers=headers, json=update(10, text="/start")).status_code == 204
             assert client.post(path, headers=headers, json={"update_id": 11, "edited_message": {}}).status_code == 204
@@ -127,18 +127,18 @@ def test_claims_isolate_chats_and_reject_stale_booking_and_checkpoint(scheduling
         assert save_update(url, bot, item)
     ready_updates(url)
     turns = TelegramTurns(url)
-    voice = turns.claim(lane="audio")
+    voice = turns.claim_chat(42, 101)
     assert voice.row["update_id"] == 1
-    assert turns.claim(lane="text", per_business=1) is None
-    other_chat = turns.claim(lane="text")
+    assert turns.claim_chat(42, 101) is None
+    other_chat = turns.claim_chat(42, 102)
     assert other_chat.row["update_id"] == 3
-    assert turns.claim() is None
+    assert turns.claim_chat(42, 102) is None
     turns.finish(other_chat, "Prices", "other-checkpoint")
     with connect(url) as connection:
         connection.execute(
             "UPDATE telegram_conversations SET lease_until=now()-interval '1 second' WHERE chat_id=101"
         )
-    recovery = turns.claim()
+    recovery = turns.claim_chat(42, 101)
     assert recovery.interrupted and recovery.generation > voice.generation
     slot = offered_slots(scheduling_db)[0]
     bookings = BookingService(scheduling_db["repository"], turn_guard=voice.assert_owned)
@@ -151,15 +151,16 @@ def test_claims_isolate_chats_and_reject_stale_booking_and_checkpoint(scheduling
     with pytest.raises(ClaimLost):
         turns.finish(voice, "Old reply", "stale-checkpoint")
     process_turn(turns, recovery, None)
-    follow_up = turns.claim()
+    follow_up = turns.claim_chat(42, 101)
     assert follow_up.row["update_id"] == 2
     assert follow_up.checkpoint_thread is None
     assert not turns.renew(voice)
 
 
 @pytest.mark.parametrize("outcome", ["success", "worker_crash", "draft_expired"])
+@pytest.mark.parametrize("first_input", ["text", "voice"])
 def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
-    scheduling_db, monkeypatch, caplog, outcome
+    scheduling_db, monkeypatch, caplog, outcome, first_input
 ):
     redis_url = os.environ.get("TEST_REDIS_URL")
     if not redis_url:
@@ -167,22 +168,35 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
     url = scheduling_db["url"]
     bot = register(url)
     monkeypatch.setenv(bot.token_env, "42:synthetic")
-    runtime = create_runtime(replace(load_settings(), chat_redis_url=redis_url))
+    runtime = create_runtime(load_settings().model_copy(update={"chat_redis_url": redis_url}))
+    spoken_request = f"Book Shiatsu 60 min on {next_open_day()}"
+    recordings = []
+
+    def transcribe(recording, _catalog):
+        recordings.append(recording)
+        return spoken_request
+
+    monkeypatch.setattr(TelegramBotApi, "get_file", lambda *_: b"synthetic voice")
     runtime.workflow = LangGraphWorkflow(build_graph(
-        DeterministicInterpreter(), checkpointer=runtime.workflow.graph.checkpointer
+        DeterministicInterpreter(), checkpointer=runtime.workflow.graph.checkpointer,
+        transcribe=transcribe,
     ))
     caplog.set_level(logging.DEBUG, logger=runtime.logger.name)
     turns = TelegramTurns(url)
     chat = time.time_ns() % 1_000_000_000
     try:
-        save_update(url, bot, update(1, chat=chat, text=f"Book Shiatsu 60 min on {next_open_day()}"))
+        first_message = (
+            {"text": spoken_request} if first_input == "text" else {"voice": {"file_id": "clip"}}
+        )
+        save_update(url, bot, update(1, chat=chat, **first_message))
         ready_updates(url)
-        process_turn(turns, turns.claim(), runtime)
+        process_turn(turns, turns.claim_chat(42, chat), runtime)
+        assert recordings == ([b"synthetic voice"] if first_input == "voice" else [])
         selection = update(2, chat=chat, text="1")
         selection["message"]["from"]["first_name"] = "DebugExamplePrivateName"
         save_update(url, bot, selection)
         ready_updates(url)
-        second = turns.claim()
+        second = turns.claim_chat(42, chat)
         assert second.checkpoint_thread
         if outcome == "draft_expired":
             runtime.workflow.graph.checkpointer.delete_thread(second.checkpoint_thread)
@@ -192,7 +206,7 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
         if outcome != "draft_expired":
             save_update(url, bot, update(3, chat=chat, text="Yes, book it."))
             ready_updates(url)
-            third = turns.claim()
+            third = turns.claim_chat(42, chat)
             if outcome == "worker_crash":
                 def lose_reply(*_):
                     raise RuntimeError("simulated loss after booking commit")
@@ -206,7 +220,7 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
                         "UPDATE telegram_conversations SET lease_until=now()-interval '1 second' "
                         "WHERE bot_id=42 AND chat_id=%s", (chat,),
                     )
-                recovery = turns.claim()
+                recovery = turns.claim_chat(42, chat)
                 assert recovery.interrupted
                 process_turn(turns, recovery, runtime)
             else:
@@ -247,16 +261,20 @@ def test_sender_cooldown_is_shared_but_other_bot_can_send(scheduling_db):
         save_update(url, bot, update(number, chat=100 + number, text="/start"))
     ready_updates(url)
     turns = TelegramTurns(url)
-    for _ in range(3):
-        claim = turns.claim()
+    for bot, number in ((first, 1), (first, 2), (second, 3)):
+        claim = turns.claim_chat(bot.bot_id, 100 + number)
         turns.finish(claim, "Hello", None)
+    with connect(url) as connection:
+        ids = {row["update_id"]: row["id"] for row in connection.execute(
+            "SELECT id, update_id FROM telegram_outbox"
+        ).fetchall()}
     sender_a, sender_b = TelegramOutbox(url), TelegramOutbox(url)
-    job = sender_a.claim()
+    job = sender_a.claim_by_id(ids[1])
     assert job["bot_id"] == first.bot_id
     assert sender_a.finish(job, "ready", retry_after=4000, bot_cooldown=4000)
-    other = sender_b.claim()
+    other = sender_b.claim_by_id(ids[3])
     assert other["bot_id"] == second.bot_id
-    assert sender_a.claim() is None
+    assert sender_a.claim_by_id(ids[2]) is None
     with connect(url) as connection:
         connection.execute(
             "UPDATE telegram_outbox SET lease_until=now()-interval '1 second' WHERE id=%s",
@@ -268,28 +286,7 @@ def test_sender_cooldown_is_shared_but_other_bot_can_send(scheduling_db):
     assert remaining > 3900
     assert sender_a.recover_expired() == 1
     assert not sender_b.finish(other, "sent")
-    assert sender_b.claim() is None
-
-
-def test_legacy_replies_backfill_once(scheduling_db):
-    url = scheduling_db["url"]
-    bot = register(url)
-    with connect(url) as connection:
-        connection.execute(
-            """INSERT INTO telegram_updates
-                   (bot_id, update_id, business_id, chat_id, telegram_user_id,
-                    status, reply_text, attempts)
-               VALUES (42, 1, 'demo-studio', 101, 101, 'reply_ready', 'Legacy reply', 1),
-                      (42, 2, 'demo-studio', -101, 101, 'reply_ready', 'Legacy group reply', 1)"""
-        )
-    reconcile_replies(url, bot)
-    reconcile_replies(url, bot)
-    outbox = TelegramOutbox(url)
-    job = outbox.claim()
-    assert job["message"] == "Legacy reply"
-    assert outbox.claim() is None
-    with connect(url) as connection:
-        assert connection.execute("SELECT count(*) AS total FROM telegram_outbox").fetchone()["total"] == 1
+    assert sender_b.claim_by_id(ids[3]) is None
 
 
 def test_bad_bot_credentials_defer_only_its_turn(scheduling_db, monkeypatch):
@@ -303,8 +300,8 @@ def test_bad_bot_credentials_defer_only_its_turn(scheduling_db, monkeypatch):
     runtime = create_runtime(load_settings())
     turns = TelegramTurns(url)
     try:
-        process_turn(turns, turns.claim(), runtime)
-        process_turn(turns, turns.claim(), runtime)
+        process_turn(turns, turns.claim_chat(42, 101), runtime)
+        process_turn(turns, turns.claim_chat(43, 101), runtime)
     finally:
         close_runtime(runtime)
     with connect(url) as connection:
@@ -322,10 +319,10 @@ def test_late_update_requests_a_fresh_offer(scheduling_db):
     turns = TelegramTurns(url)
     save_update(url, bot, update(20, date=2000, text="Newer turn"))
     ready_updates(url)
-    turns.finish(turns.claim(), "Available times", "published")
+    turns.finish(turns.claim_chat(42, 101), "Available times", "published")
     save_update(url, bot, update(19, date=1999, text="1"))
     ready_updates(url)
-    late = turns.claim()
+    late = turns.claim_chat(42, 101)
     assert late.late
     process_turn(turns, late, None)
     with connect(url) as connection:

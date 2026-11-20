@@ -33,7 +33,7 @@ Verified locally during the simplification work. Normal application behavior ret
 ## What changed
 
 - Telegram numeric identity owns the customer; optional phone data cannot merge accounts. Booking changes recheck ownership in their write transaction.
-- Customer capability tokens and public customer/owner HTTP mutation interfaces were retired. Owner inspection and reminder settings are local CLI operations.
+- Customer capability tokens and public customer/owner HTTP mutation interfaces were retired. The owner agenda is available through a local CLI.
 - One bounded Redis checkpoint owns conversation state. Contact sanitization happens before interpretation/checkpointing; arbitrary names in free text remain a documented limitation.
 - Full audio decoding/chunking/transcription remains active. Incomplete recordings cannot execute a partial request.
 - Evaluations share provider construction, return failing exit status on failures/errors, and record dataset/asset hashes, revisions, fields, actions, writes, errors and latency.

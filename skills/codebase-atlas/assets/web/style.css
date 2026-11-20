@@ -128,6 +128,8 @@ kbd, .key-button {
 .node-icon .icon { width: 15px; height: 15px; }
 .node-title { overflow-wrap: anywhere; font-size: 18px; font-weight: 750; line-height: 1.1; letter-spacing: -.027em; }
 .node-ref { flex: 0 0 auto; color: #52665c; font: 12.5px/1.3 var(--code); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-node .node-title { font-size: 16px; }
+.file-node { padding-block: 5px; gap: 2px; }
 .canvas-toolbar, .minimap {
   position: absolute; bottom: 17px; border: 1px solid #cddcd1; background: #fffffff5; border-radius: 10px;
   box-shadow: 0 5px 18px #29433417;
@@ -228,6 +230,11 @@ kbd, .key-button {
 .filter-box input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: .9rem; }
 .filter-box:focus-within { outline: 2px solid #218866; outline-offset: 2px; }
 .group-filter select { padding: 0 10px; font-size: .875rem; max-width: 100%; }
+#dependency-file { width: min(25vw, 235px); }
+.related-view { margin-top: 12px; }
+.import-row { margin-bottom: 9px; }
+.import-row .item { overflow-wrap: anywhere; }
+.import-evidence { min-height: 29px; margin: 4px 5px 0 0; font: .75rem/1.3 var(--code); }
 .directory-group { margin: 20px 0 8px; font-size: .875rem; }
 .file-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; }
 .file-card {

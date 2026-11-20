@@ -7,7 +7,9 @@ import os
 import re
 import textwrap
 import tokenize
+from collections import defaultdict
 from html import escape
+from importlib.util import resolve_name
 from pathlib import Path
 from urllib.parse import quote
 from xml.etree import ElementTree as ET
@@ -295,6 +297,47 @@ def source_lines(path):
     return [format_code_line(line, tokens) for line, tokens in zip(lines, spans, strict=True)]
 
 
+def import_targets(statement, package, modules):
+    if isinstance(statement, ast.Import):
+        return [modules[alias.name] for alias in statement.names if alias.name in modules]
+    if isinstance(statement, ast.ImportFrom):
+        module = statement.module or ""
+        if statement.level:
+            try:
+                module = resolve_name("." * statement.level + module, package)
+            except ImportError:
+                return []
+        return [
+            target for alias in statement.names
+            if (target := modules.get(f"{module}.{alias.name}", modules.get(module)))
+        ]
+    return []
+
+
+def local_imports(root, paths):
+    by_path = {}
+    for path in paths:
+        if not path.endswith(".py"):
+            continue
+        module_parts = Path(path).with_suffix("").parts
+        parts = module_parts[:-1] if module_parts[-1] == "__init__" else module_parts
+        by_path[path] = parts
+    modules = {
+        ".".join(parts): path for path, parts in by_path.items()
+        if parts and all(part.isidentifier() for part in parts)
+    }
+
+    edges = defaultdict(set)
+    for path, parts in by_path.items():
+        package = ".".join(parts if Path(path).name == "__init__.py" else parts[:-1])
+        tree = ast.parse((root / path).read_text(encoding="utf-8"), filename=path)
+        for statement in ast.walk(tree):
+            for target in import_targets(statement, package, modules):
+                if target != path:
+                    edges[path, target].add(statement.lineno)
+    return [[importer, imported, sorted(lines)] for (importer, imported), lines in sorted(edges.items())]
+
+
 def build_web(views, resolver, project, guide_url):
     flows = [view for view in views if "lanes" in view]
     catalogs = [view for view in views if "files" in view]
@@ -313,12 +356,14 @@ def build_web(views, resolver, project, guide_url):
 
     sources = {ref: resolver.resolve(ref) for ref in sorted(refs)}
     paths = sorted({source["file"] for source in sources.values()})
+    catalog_paths = sorted({row[0] for catalog in catalogs for row in catalog["files"]})
     data = {
         "project": project,
         "flows": flows,
         "catalogs": catalogs,
         "sources": sources,
         "sourceFiles": {path: source_lines(resolver.root / path) for path in paths},
+        "imports": local_imports(resolver.root, catalog_paths),
     }
     assets = Path(__file__).resolve().parents[1] / "assets" / "web"
     tokens = {

@@ -32,5 +32,5 @@ These records explain earlier decisions and observations. Use the guides above f
 
 - [Evaluation requirements](sdd/prd-chatbot-evaluation.md) describe the behavior the framework should check. The [executable golden dataset](../evals/scenarios/golden.yaml) is the source for its example conversation and assertions.
 - [Case study](case-study.md) records earlier local checks and two synthetic audio observations. Its test counts and dataset hashes belong to those recorded runs.
-- [Repository history](history.md) links the historical requirements for Telegram and portfolio simplification. Completed implementation plans remain in Git history; new `docs/sdd/plan-*.md` files are ignored.
+- [Repository history](history.md) links the historical requirements for Telegram and portfolio simplification and the massage studio plan.
 - [Historical study board](study/README.md) contains the November 12 schema review and its editable diagram. It predates the current worker architecture and later migrations.

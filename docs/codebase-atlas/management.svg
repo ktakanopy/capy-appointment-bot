@@ -52,11 +52,11 @@
     </a>
   </g>
   <g id="change" data-source="app/booking.py#BookingService.cancel">
-    <a href="../../app/booking.py#L299">
-      <title>BookingService.cancel · app/booking.py:299</title>
+    <a href="../../app/booking.py#L285">
+      <title>BookingService.cancel · app/booking.py:285</title>
       <rect x="1074.5" y="165" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="1086.5" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Cancel and release the time</text>
-      <text x="1086.5" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:299</text>
+      <text x="1086.5" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:285</text>
       <text x="1086.5" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Commit the canceled status and retry</text>
       <text x="1086.5" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">result. The old slot is available to</text>
       <text x="1086.5" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">offer again.</text>
@@ -96,11 +96,11 @@
     </a>
   </g>
   <g id="commit-move" data-source="app/booking.py#BookingService.reschedule">
-    <a href="../../app/booking.py#L403">
-      <title>BookingService.reschedule · app/booking.py:403</title>
+    <a href="../../app/booking.py#L389">
+      <title>BookingService.reschedule · app/booking.py:389</title>
       <rect x="1074.5" y="362" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="1086.5" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Validate and commit the move</text>
-      <text x="1086.5" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:403</text>
+      <text x="1086.5" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:389</text>
       <text x="1086.5" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check the new interval while excluding</text>
       <text x="1086.5" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the previous one. A failed move</text>
       <text x="1086.5" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">preserves the appointment.</text>

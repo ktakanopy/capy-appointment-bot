@@ -1,6 +1,5 @@
 """Health checks and durable Telegram webhook intake."""
 
-import json
 import logging
 import time
 from contextlib import asynccontextmanager
@@ -73,7 +72,7 @@ def live():
     return {"status": "ok"}
 
 
-@app.post("/telegram/{route}", status_code=204)
+@app.post("/telegram/{route}", status_code=204, max_body_size=WEBHOOK_BODY_LIMIT)
 async def telegram_webhook(
     route: str,
     request: Request,
@@ -96,15 +95,8 @@ async def telegram_webhook(
             debug_event("telegram.webhook.rejected", reason="authentication")
             raise HTTPException(status_code=403, detail="Webhook rejected")
 
-        # Authenticate before consuming the body, and stream it to enforce the memory limit.
-        body = bytearray()
-        async for chunk in request.stream():
-            if len(body) + len(chunk) > WEBHOOK_BODY_LIMIT:
-                debug_event("telegram.webhook.rejected", reason="body_too_large")
-                raise HTTPException(status_code=413, detail="Update too large")
-            body.extend(chunk)
         try:
-            update = json.loads(body)
+            update = await request.json()
         except (ValueError, RecursionError) as exc:
             debug_event("telegram.webhook.rejected", reason="invalid_json")
             raise HTTPException(

@@ -35,29 +35,22 @@ class ScheduleRepository:
             return self.demo_service
         return None
 
-    def scheduling_data(
+    def calendar(
         self,
         _business_id,
-        _service_id,
         _professional_id,
         _from_at,
         _until_at,
         **_kwargs,
     ):
-        return (
-            None,
-            None,
-            [
-                {
-                    "professional": {"id": "alex", "name": "Alex"},
-                    "rules": [
-                        {"weekday": 1, "opens_at": time(9), "closes_at": time(12)}
-                    ],
-                    "blocks": self.blocked,
-                    "bookings": [],
-                }
+        return {
+            "professional": {"id": "alex", "name": "Alex"},
+            "rules": [
+                {"weekday": 1, "opens_at": time(9), "closes_at": time(12)}
             ],
-        )
+            "blocks": self.blocked,
+            "bookings": [],
+        }
 
 
 def test_availability_observes_work_hours_buffers_and_blocked_periods():
@@ -91,27 +84,21 @@ def test_availability_observes_work_hours_buffers_and_blocked_periods():
 
 def test_availability_excludes_existing_booking_occupied_interval():
     repo = ScheduleRepository()
-    repo.scheduling_data = lambda *_args, **_kwargs: (
-        None,
-        None,
-        [
+    repo.calendar = lambda *_args, **_kwargs: {
+        "professional": {"id": "alex", "name": "Alex"},
+        "rules": [{"weekday": 1, "opens_at": time(9), "closes_at": time(12)}],
+        "blocks": [],
+        "bookings": [
             {
-                "professional": {"id": "alex", "name": "Alex"},
-                "rules": [{"weekday": 1, "opens_at": time(9), "closes_at": time(12)}],
-                "blocks": [],
-                "bookings": [
-                    {
-                        "occupied_from": datetime(
-                            2026, 10, 20, 10, tzinfo=timezone.utc
-                        ),
-                        "occupied_until": datetime(
-                            2026, 10, 20, 11, tzinfo=timezone.utc
-                        ),
-                    }
-                ],
+                "occupied_from": datetime(
+                    2026, 10, 20, 10, tzinfo=timezone.utc
+                ),
+                "occupied_until": datetime(
+                    2026, 10, 20, 11, tzinfo=timezone.utc
+                ),
             }
         ],
-    )
+    }
     service = AvailabilityService(
         repo, now=lambda: datetime(2026, 10, 19, 8, tzinfo=timezone.utc)
     )

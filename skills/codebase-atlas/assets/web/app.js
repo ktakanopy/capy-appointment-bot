@@ -1,6 +1,6 @@
 "use strict";
 
-const { project, flows, catalogs, sources, sourceFiles } = JSON.parse(document.querySelector("#atlas-data").textContent);
+const { project, flows, catalogs, sources, sourceFiles, imports } = JSON.parse(document.querySelector("#atlas-data").textContent);
 const $ = (id) => document.getElementById(id);
 const svgNamespace = "http://www.w3.org/2000/svg";
 const icons = {
@@ -96,6 +96,7 @@ const files = new Map(catalogs.flatMap((catalog) => catalog.files.map(([path, de
   path, { path, detail, entries, classes, area: catalogLabel(catalog) },
 ])));
 const classCount = [...files.values()].reduce((sum, file) => sum + file.classes.length, 0);
+const importCenter = files.has("app/runtime.py") ? "app/runtime.py" : files.keys().next().value;
 const flowById = new Map(flows.map((flow) => [flow.id, flow]));
 const firstView = flows[0]?.id ?? "files";
 const allNodes = flows.flatMap((flow) => flow.lanes.flatMap((lane) => lane.nodes
@@ -154,10 +155,11 @@ function showInspector(open) {
 
 function renderRoute(parts, reveal = false) {
   const [view, id, symbol] = parts;
-  const directory = view === "files";
-  const flow = flowById.get(view) || (!directory && flows[0]);
+  const focus = view === "imports" && importCenter ? files.get(id) || files.get(importCenter) : null;
+  const directory = view === "files" || (view === "imports" && !focus);
+  const flow = focus ? dependencyFlow(focus) : flowById.get(view) || (!directory && flows[0]);
   const viewId = flow ? flow.id : "files";
-  const changed = route[0] !== viewId;
+  const changed = route[0] !== viewId || Boolean(focus && layout?.flow.focus !== focus.path);
   route = [viewId, id, symbol];
   const showFiles = !flow;
   for (const item of document.querySelectorAll(".nav-item")) {
@@ -172,7 +174,11 @@ function renderRoute(parts, reveal = false) {
   $("view-description").textContent = showFiles
     ? `${files.size} files and ${classCount} classes, with source locations and recommended entry points.`
     : flow.subtitle;
-  $("graph").hidden = $("graph-footer").hidden = $("svg-link").hidden = showFiles;
+  $("graph").hidden = $("graph-footer").hidden = showFiles;
+  $("svg-link").hidden = showFiles || Boolean(focus);
+  $("dependency-picker").hidden = $("dependency-legend").hidden = !focus;
+  $("flow-legend").hidden = Boolean(focus);
+  if (focus) $("dependency-file").value = focus.path;
   $("open-transcript").hidden = !flow?.transcript?.length;
   $("directory").hidden = !showFiles;
 
@@ -192,13 +198,34 @@ function renderRoute(parts, reveal = false) {
     return;
   }
 
-  $("svg-link").href = `${flow.id}.svg`;
+  if (!focus) $("svg-link").href = `${flow.id}.svg`;
   if (changed || !layout) renderGraph(flow);
   const nodes = [...layout.nodes.values()];
+  if (focus) {
+    const selected = layout.nodes.get(focus.path);
+    updateSelection(selected, false);
+    return;
+  }
   const defaultNode = viewport.clientWidth < 600 ? nodes[0] : nodes.find((node) => node.ref);
   const selected = layout.nodes.get(id) || defaultNode || nodes[0];
   updateSelection(selected, Boolean(id));
   if (selected && id && (changed || reveal)) revealNode(selected);
+}
+
+function dependencyFlow(file) {
+  const incoming = imports.filter(([from, to]) => to === file.path);
+  const outgoing = imports.filter(([from]) => from === file.path);
+  return {
+    id: "imports", title: "File connections", focus: file.path,
+    subtitle: "Explore direct Python imports within the atlas. Select a file to see what imports it and what it imports.",
+    lanes: [
+      { label: `Imported by · ${incoming.length}`, nodes: incoming.map(([path]) => ({ id: `in:${path}`, file: path })) },
+      { label: "Selected file", nodes: [{ id: file.path, file: file.path, tone: "entry" }] },
+      { label: `Imports · ${outgoing.length}`, nodes: outgoing.map(([, path]) => ({ id: `out:${path}`, file: path })) },
+    ],
+    edges: [...incoming.map(([path, , lines]) => [`in:${path}`, file.path, "import", lines]),
+      ...outgoing.map(([, path, lines]) => [file.path, `out:${path}`, "import", lines])],
+  };
 }
 
 function placed(node, x, y, width, height) {
@@ -207,6 +234,14 @@ function placed(node, x, y, width, height) {
 }
 
 function edgePath(from, to, type) {
+  if (type === "import") {
+    const x1 = from.x + from.width + 2;
+    const x2 = to.x - 3;
+    const y1 = from.y + from.height / 2;
+    const y2 = to.y + to.height / 2;
+    const middle = (x1 + x2) / 2;
+    return `M ${x1} ${y1} C ${middle} ${y1} ${middle} ${y2} ${x2} ${y2}`;
+  }
   if (from.y === to.y) {
     const dir = Math.sign(to.x - from.x);
     const start = (dir > 0 ? from.x + from.width : from.x) + 2 * dir;
@@ -227,7 +262,7 @@ function edgePath(from, to, type) {
   return `M ${x1} ${y1} V ${yMid - dir * 11} Q ${x1} ${yMid} ${x1 + step} ${yMid} H ${x2 - step} Q ${x2} ${yMid} ${x2} ${yMid + dir * 11} V ${y2}`;
 }
 
-function renderGraph(flow) {
+function flowPositions(flow) {
   const gap = flow.columns === 5 ? 36 : 47;
   const width = 224 + (5 - flow.columns) * 17;
   const laneWidth = 32 + width * flow.columns + gap * (flow.columns - 1);
@@ -249,6 +284,32 @@ function renderGraph(flow) {
   });
 
   const sceneHeight = laneHeight + (flow.lanes.length - 1) * lanePitch;
+  return { nodes, fragment, laneWidth, sceneHeight };
+}
+
+function dependencyPositions(flow) {
+  const nodes = new Map();
+  const fragment = document.createDocumentFragment();
+  const width = 238;
+  const pitch = 332;
+  const row = 65;
+  const sceneHeight = 50 + Math.max(...flow.lanes.map((lane) => lane.nodes.length)) * row;
+  flow.lanes.forEach((lane, column) => {
+    const left = column * pitch;
+    fragment.append(placed(element("div", "lane", lane.label), left, 0, width + 28, sceneHeight));
+    const top = 43 + (sceneHeight - 50 - lane.nodes.length * row) / 2;
+    lane.nodes.forEach((node, index) => {
+      nodes.set(node.id, {
+        ...node, title: fileName(node.file), ref: node.file,
+        x: left + 14, y: top + index * row, width, height: 54,
+      });
+    });
+  });
+  return { nodes, fragment, laneWidth: 2 * pitch + width + 28, sceneHeight };
+}
+
+function renderGraph(flow) {
+  const { nodes, fragment, laneWidth, sceneHeight } = flow.focus ? dependencyPositions(flow) : flowPositions(flow);
   const edges = svgElement("svg", { class: "edge-layer", width: laneWidth, height: sceneHeight, "aria-hidden": "true" });
   const defs = svgElement("defs");
   for (const [name, color] of [
@@ -262,13 +323,13 @@ function renderGraph(flow) {
     defs.append(marker);
   }
   edges.append(defs);
-  const connections = flow.edges.map(([from, to, type]) => {
+  const connections = flow.edges.map(([from, to, type, lines]) => {
     const path = svgElement("path", {
       d: edgePath(nodes.get(from), nodes.get(to), type), class: type === "async" ? "edge async" : "edge",
       "data-from": from, "data-to": to,
     });
     edges.append(path);
-    return { from, to, type, path };
+    return { from, to, type, path, lines };
   });
   fragment.append(edges);
 
@@ -276,17 +337,24 @@ function renderGraph(flow) {
     const tone = node.tone || "normal";
     const [symbol, label] = toneInfo[tone];
     const card = placed(button(`node tone-${tone}`, null, () => {
-      go([flow.id, node.id]);
+      go([flow.id, node.file || node.id]);
       showInspector(true);
     }), node.x, node.y, node.width, node.height);
+    if (node.file) card.classList.add("file-node");
     const caption = element("span", "node-caption");
     const marker = element("span", "node-icon");
     marker.append(icon(symbol));
-    caption.append(marker);
-    if (tone !== "normal") caption.append(element("span", null, label));
     const ref = sources[node.ref];
-    card.append(caption, element("span", "node-title", node.title));
-    if (ref) card.append(element("span", "node-ref", `${fileName(ref.file)}${ref.line ? ":" + ref.line : ""}`));
+    if (!node.file) {
+      caption.append(marker);
+      if (tone !== "normal") caption.append(element("span", null, label));
+      card.append(caption);
+    }
+    card.append(element("span", "node-title", node.title));
+    if (ref) {
+      const caption = node.file ? ref.file : `${fileName(ref.file)}${ref.line ? ":" + ref.line : ""}`;
+      card.append(element("span", "node-ref", caption));
+    }
     card.dataset.node = node.id;
     card.setAttribute("aria-label", node.title);
     node.card = card;
@@ -300,6 +368,10 @@ function renderGraph(flow) {
   renderMinimap();
   viewportSize = { width: viewport.clientWidth, height: viewport.clientHeight };
   fit(true);
+  if (flow.focus && (camera.scale < .63 || viewport.clientWidth < 600)) {
+    const focus = nodes.get(flow.focus);
+    centerAt(focus.x + focus.width / 2, focus.y + focus.height / 2, .66);
+  }
 }
 
 function updateSelection(selected, isolate) {
@@ -320,7 +392,8 @@ function updateSelection(selected, isolate) {
     node.card.setAttribute("aria-pressed", String(chosen));
     node.mini.setAttribute("fill", chosen ? "#218962" : node.tone === "failure" ? "#bf7362" : "#96b7a7");
   }
-  renderNodeDetails(selected);
+  if (layout.flow.focus) renderDependencyDetails(files.get(selected.file));
+  else renderNodeDetails(selected);
 }
 
 const codeDialog = $("source-dialog");
@@ -526,6 +599,7 @@ function renderFileDetails(file, symbol) {
   }
   detailPanel.append(element("h3", null, classRow?.[0] || symbol || fileName(file.path)));
   detailPanel.append(element("p", null, classRow?.[1] || file.detail));
+  detailPanel.append(button("item related-view", "Show file connections", () => go(["imports", file.path], true), "atlas"));
   const mainKey = classRef || entry;
   const ref = mainKey ? `${file.path}#${mainKey}` : file.path;
   if (sources[ref]) detailPanel.append(section(symbol ? "Source" : "Start here", sourceBlock(ref, true)));
@@ -541,6 +615,34 @@ function renderFileDetails(file, symbol) {
     detailPanel.append(section("In the graph", ...related.map((node) => item(
       node.title, flowLabel(node.flow)[0], flowLabel(node.flow)[1], () => go([node.flow.id, node.id], true),
     ))));
+  }
+}
+
+function renderDependencyDetails(file) {
+  detailPanel.replaceChildren();
+  detailPanel.scrollTop = 0;
+  const context = element("div", "inspector-context");
+  context.append(icon("file"), element("span", null, file.path));
+  detailPanel.append(context, element("h3", null, fileName(file.path)), element("p", null, file.detail));
+  detailPanel.append(button("item related-view", "View file & classes", () => go(["files", file.path], true), "files"));
+  for (const [title, current, other, direction] of [
+    ["Imported by", "to", "from", "incoming"], ["Imports", "from", "to", "outgoing"],
+  ]) {
+    const connections = layout.connections.filter((edge) => edge[current] === file.path);
+    const rows = connections.map((edge) => {
+      const neighbor = layout.nodes.get(edge[other]).file;
+      const importingFile = layout.nodes.get(edge.from).file;
+      const row = element("div", "import-row");
+      row.append(item(neighbor, null, direction, () => go(["imports", neighbor], true)));
+      for (const line of edge.lines) {
+        const link = button("button import-evidence", `Line ${line}`, () => openSource({ file: importingFile, line }));
+        link.setAttribute("aria-label", `Show import at ${importingFile}:${line}`);
+        row.append(link);
+      }
+      return row;
+    });
+    if (!rows.length) rows.push(element("p", null, "No direct imports in this direction."));
+    detailPanel.append(section(title, ...rows));
   }
 }
 
@@ -579,7 +681,9 @@ function fit(initial = false) {
     scale = Math.max(scale, .75);
     camera = { x: 12, y: 20, scale };
   } else {
-    if (initial && !layout.flow.transcript && scale < .6) scale = Math.max(scale, Math.min(fitWidth, .85));
+    if (initial && !layout.flow.focus && !layout.flow.transcript && scale < .6) {
+      scale = Math.max(scale, Math.min(fitWidth, .85));
+    }
     camera = { x: (width - layout.width * scale) / 2, y: Math.max(8, (usableHeight - layout.height * scale) / 2 + 12), scale };
   }
   updateCamera();
@@ -798,14 +902,18 @@ $("search-key").textContent = /Mac|iPad|iPhone/.test(navigator.userAgent) ? "⌘
 $("project-name").textContent = project;
 $("project-mark").textContent = project.slice(0, 1).toUpperCase();
 $("brand").href = routeHash([firstView]);
-for (const [id, label, glyph] of [...flows.map((flow) => [flow.id, ...flowLabel(flow)]), ["files", "Files & classes", "files"]]) {
+const referenceViews = [["files", "Files & classes", "files"]];
+if (importCenter) referenceViews.push(["imports", "File connections", "atlas"]);
+for (const [id, label, glyph] of [...flows.map((flow) => [flow.id, ...flowLabel(flow)]), ...referenceViews]) {
   const tab = button("nav-item", label, () => {
     showInspector(false);
     go([id]);
   }, glyph);
   tab.dataset.view = id;
-  $(id === "files" ? "file-nav" : "flow-nav").append(tab);
+  $(flowById.has(id) ? "flow-nav" : "file-nav").append(tab);
 }
+for (const path of [...files.keys()].sort()) $("dependency-file").append(new Option(path, path));
+$("dependency-file").addEventListener("change", (event) => go(["imports", event.target.value]));
 $("group-filter").append(new Option("All areas", ""));
 for (const catalog of catalogs) $("group-filter").append(new Option(catalogLabel(catalog), catalog.id));
 window.addEventListener("hashchange", () => renderRoute(readRoute(), true));

@@ -76,7 +76,11 @@ class TelegramRepository:
                 identity.updated_at = func.now()
                 session.flush()
                 session.refresh(identity)
-            result = {column.name: getattr(identity, column.name) for column in TelegramIdentity.__table__.c}
+            result = {
+                "customer_id": identity.customer_id,
+                "telegram_user_id": identity.telegram_user_id,
+                "display_name": identity.display_name,
+            }
         debug_event("telegram.identity.linked", created_customer=created_customer)
         return result
 

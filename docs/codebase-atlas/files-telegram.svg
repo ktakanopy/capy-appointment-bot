@@ -39,29 +39,24 @@
     <text x="422" y="313" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">access logs.</text>
   </g>
   <g id="app-telegram_service.py" data-source="app/telegram_service.py">
-    <rect x="725" y="123" width="665" height="186" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="725" y="123" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/telegram_service.py">
       <title>app/telegram_service.py</title>
       <text x="741" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/telegram_service.py</text>
     </a>
-    <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Connect worker roles to hosted RabbitMQ or PostgreSQL polling and coordinate</text>
-    <text x="741" y="191" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">a claimed turn.</text>
-    <a href="../../app/telegram_service.py#L400">
-      <title>main · app/telegram_service.py:400</title>
-      <text x="741" y="216" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 400</text>
+    <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Connect worker roles to RabbitMQ and coordinate a claimed turn.</text>
+    <a href="../../app/telegram_service.py#L312">
+      <title>main · app/telegram_service.py:312</title>
+      <text x="741" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 312</text>
     </a>
-    <text x="1273" y="216" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="../../app/telegram_service.py#L236">
-      <title>run_broker_worker · app/telegram_service.py:236</title>
-      <text x="741" y="236" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_broker_worker  /  line 236</text>
+    <text x="1273" y="198" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="../../app/telegram_service.py#L185">
+      <title>run_broker_worker · app/telegram_service.py:185</title>
+      <text x="741" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_broker_worker  /  line 185</text>
     </a>
-    <a href="../../app/telegram_service.py#L65">
-      <title>process_turn · app/telegram_service.py:65</title>
-      <text x="741" y="256" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">process_turn  /  line 65</text>
-    </a>
-    <a href="../../app/telegram_service.py#L270">
-      <title>run_worker · app/telegram_service.py:270</title>
-      <text x="741" y="276" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_worker  /  line 270</text>
+    <a href="../../app/telegram_service.py#L39">
+      <title>process_turn · app/telegram_service.py:39</title>
+      <text x="741" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">process_turn  /  line 39</text>
     </a>
   </g>
   <g id="app-telegram_worker.py" data-source="app/telegram_worker.py">
@@ -72,18 +67,18 @@
     </a>
     <text x="56" y="421" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Prepare one message, resolve account context and invoke the graph for</text>
     <text x="56" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">scheduling input.</text>
-    <a href="../../app/telegram_worker.py#L43">
-      <title>TelegramWorker._reply_to_message · app/telegram_worker.py:43</title>
-      <text x="56" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramWorker._reply_to_message  /  line 43</text>
+    <a href="../../app/telegram_worker.py#L45">
+      <title>TelegramWorker.handle_message · app/telegram_worker.py:45</title>
+      <text x="56" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramWorker.handle_message  /  line 45</text>
     </a>
     <text x="588" y="464" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="../../app/telegram_worker.py#L126">
-      <title>TelegramWorker._run_turn · app/telegram_worker.py:126</title>
-      <text x="56" y="484" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramWorker._run_turn  /  line 126</text>
+    <a href="../../app/telegram_worker.py#L135">
+      <title>TelegramWorker._run_turn · app/telegram_worker.py:135</title>
+      <text x="56" y="484" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramWorker._run_turn  /  line 135</text>
     </a>
-    <a href="../../app/telegram_worker.py#L43">
-      <title>TelegramWorker._reply_to_message · app/telegram_worker.py:43</title>
-      <text x="56" y="504" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramWorker._reply_to_message</text>
+    <a href="../../app/telegram_worker.py#L45">
+      <title>TelegramWorker.handle_message · app/telegram_worker.py:45</title>
+      <text x="56" y="504" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramWorker.handle_message</text>
     </a>
     <text x="422" y="504" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Handles commands, contacts, text and</text>
     <text x="422" y="519" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">voice for a turn.</text>
@@ -96,29 +91,29 @@
     </a>
     <text x="741" y="421" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Lease the oldest eligible chat update and commit the resulting state pointer</text>
     <text x="741" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and reply.</text>
-    <a href="../../app/channels/telegram_turns.py#L157">
-      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:157</title>
-      <text x="741" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramTurns.claim_chat  /  line 157</text>
+    <a href="../../app/channels/telegram_turns.py#L106">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:106</title>
+      <text x="741" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramTurns.claim_chat  /  line 106</text>
     </a>
     <text x="1273" y="464" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="../../app/channels/telegram_turns.py#L384">
-      <title>TelegramTurns.finish · app/channels/telegram_turns.py:384</title>
-      <text x="741" y="484" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramTurns.finish  /  line 384</text>
+    <a href="../../app/channels/telegram_turns.py#L304">
+      <title>TelegramTurns.finish · app/channels/telegram_turns.py:304</title>
+      <text x="741" y="484" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramTurns.finish  /  line 304</text>
     </a>
-    <a href="../../app/channels/telegram_turns.py#L157">
-      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:157</title>
+    <a href="../../app/channels/telegram_turns.py#L106">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:106</title>
       <text x="741" y="504" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramTurns.claim_chat</text>
     </a>
     <text x="1107" y="504" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Owns the chat lease and the turn</text>
     <text x="1107" y="519" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">lifecycle.</text>
-    <a href="../../app/channels/telegram_turns.py#L102">
-      <title>TurnClaim.assert_owned · app/channels/telegram_turns.py:102</title>
+    <a href="../../app/channels/telegram_turns.py#L75">
+      <title>TurnClaim.assert_owned · app/channels/telegram_turns.py:75</title>
       <text x="741" y="544" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TurnClaim.assert_owned</text>
     </a>
     <text x="1107" y="544" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Binds an attempt to proof of current</text>
     <text x="1107" y="559" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">ownership.</text>
-    <a href="../../app/channels/telegram_turns.py#L63">
-      <title>ClaimLost · app/channels/telegram_turns.py:63</title>
+    <a href="../../app/channels/telegram_turns.py#L36">
+      <title>ClaimLost · app/channels/telegram_turns.py:36</title>
       <text x="741" y="584" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ClaimLost</text>
     </a>
     <text x="1107" y="584" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Signals that an attempt can no longer</text>
@@ -149,17 +144,17 @@
     </a>
     <text x="741" y="707" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Enforce outgoing ordering, budgets and dispatch leases and classify send</text>
     <text x="741" y="725" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">outcomes.</text>
-    <a href="../../app/channels/telegram_delivery.py#L254">
-      <title>deliver_claimed · app/channels/telegram_delivery.py:254</title>
-      <text x="741" y="750" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">deliver_claimed  /  line 254</text>
+    <a href="../../app/channels/telegram_delivery.py#L229">
+      <title>deliver_claimed · app/channels/telegram_delivery.py:229</title>
+      <text x="741" y="750" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">deliver_claimed  /  line 229</text>
     </a>
     <text x="1273" y="750" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="../../app/channels/telegram_delivery.py#L100">
-      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:100</title>
-      <text x="741" y="770" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_by_id  /  line 100</text>
+    <a href="../../app/channels/telegram_delivery.py#L81">
+      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:81</title>
+      <text x="741" y="770" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_by_id  /  line 81</text>
     </a>
-    <a href="../../app/channels/telegram_delivery.py#L100">
-      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:100</title>
+    <a href="../../app/channels/telegram_delivery.py#L81">
+      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:81</title>
       <text x="741" y="790" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_by_id</text>
     </a>
     <text x="1107" y="790" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reserves and settles outgoing jobs.</text>
@@ -199,18 +194,18 @@
     </a>
     <text x="741" y="933" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Partition incoming wakes by chat, publish ID-only messages and consume them</text>
     <text x="741" y="951" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">with acknowledgements.</text>
-    <a href="../../app/channels/telegram_broker.py#L77">
-      <title>relay_publications · app/channels/telegram_broker.py:77</title>
-      <text x="741" y="976" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">relay_publications  /  line 77</text>
+    <a href="../../app/channels/telegram_broker.py#L65">
+      <title>relay_publications · app/channels/telegram_broker.py:65</title>
+      <text x="741" y="976" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">relay_publications  /  line 65</text>
     </a>
     <text x="1273" y="976" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="../../app/channels/telegram_broker.py#L137">
-      <title>consume_wakeups · app/channels/telegram_broker.py:137</title>
-      <text x="741" y="996" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">consume_wakeups  /  line 137</text>
+    <a href="../../app/channels/telegram_broker.py#L125">
+      <title>consume_wakeups · app/channels/telegram_broker.py:125</title>
+      <text x="741" y="996" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">consume_wakeups  /  line 125</text>
     </a>
-    <a href="../../app/channels/telegram_broker.py#L62">
-      <title>publish_wakeup · app/channels/telegram_broker.py:62</title>
-      <text x="741" y="1016" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">publish_wakeup  /  line 62</text>
+    <a href="../../app/channels/telegram_broker.py#L50">
+      <title>publish_wakeup · app/channels/telegram_broker.py:50</title>
+      <text x="741" y="1016" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">publish_wakeup  /  line 50</text>
     </a>
   </g>
   <g id="app-channels-telegram_repository.py" data-source="app/channels/telegram_repository.py">

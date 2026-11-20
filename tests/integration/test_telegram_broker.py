@@ -13,11 +13,10 @@ import pytest
 from app.channels.telegram_broker import (
     DEAD_LETTER_QUEUE,
     EXCHANGE,
+    INCOMING_QUEUE,
     OUTGOING_QUEUE,
     broker_channel,
-    chat_partition,
     consume_wakeups,
-    incoming_queue,
     publish_wakeup,
 )
 from app.channels.telegram_delivery import TelegramOutbox
@@ -28,7 +27,6 @@ from app.database import database_session
 from tests.integration.helpers import connect
 from tests.integration.test_telegram_production import register, update
 
-PARTITIONS = 2
 LOGGER = logging.getLogger(__name__)
 
 
@@ -41,8 +39,8 @@ def broker_url():
     if not url:
         pytest.skip("set TEST_AMQP_URL to run RabbitMQ integration tests")
     assert urlsplit(url).path.endswith("_test")
-    with broker_channel(url, PARTITIONS) as (_, channel):
-        for queue in (OUTGOING_QUEUE, DEAD_LETTER_QUEUE, *(incoming_queue(i) for i in range(PARTITIONS))):
+    with broker_channel(url) as (_, channel):
+        for queue in (OUTGOING_QUEUE, DEAD_LETTER_QUEUE, INCOMING_QUEUE):
             channel.queue_purge(queue)
     return url
 
@@ -62,11 +60,7 @@ def test_broker_round_trip_orders_chats_and_deduplicates_sends(scheduling_db, br
     url = scheduling_db["url"]
     bot = register(url)
     voice_chat = 101
-    voice_partition = chat_partition(bot.bot_id, voice_chat, PARTITIONS)
-    other_chat = next(
-        chat for chat in range(102, 200)
-        if chat_partition(bot.bot_id, chat, PARTITIONS) != voice_partition
-    )
+    other_chat = 102
     turns, outbox = TelegramTurns(url), TelegramOutbox(url)
     voice_started, release_voice, stop = Event(), Event(), Event()
     observed = []
@@ -99,32 +93,31 @@ def test_broker_round_trip_orders_chats_and_deduplicates_sends(scheduling_db, br
     assert save_update(url, bot, update(2, chat=voice_chat, text="duplicate"))
     assert backfill_publications(url) == (0, 0)
 
-    with ThreadPoolExecutor(max_workers=3) as workers, broker_channel(broker_url, PARTITIONS) as (_, channel):
+    with ThreadPoolExecutor(max_workers=2) as workers, broker_channel(broker_url) as (_, channel):
         channel.confirm_delivery()
         consumers = [
-            workers.submit(consume_wakeups, broker_url, PARTITIONS, incoming_queue(i), 2, process, stop, LOGGER)
-            for i in range(PARTITIONS)
+            workers.submit(consume_wakeups, broker_url, INCOMING_QUEUE, 2, process, stop, LOGGER),
+            workers.submit(consume_wakeups, broker_url, OUTGOING_QUEUE, 1, send, stop, LOGGER),
         ]
-        consumers.append(workers.submit(
-            consume_wakeups, broker_url, PARTITIONS, OUTGOING_QUEUE, 1, send, stop, LOGGER,
-        ))
 
         def pump():
             """Publish one due wake-up, deliberately duplicating it to model a lost confirmation."""
             def duplicate(row):
                 """Deliver the same durable identifiers twice."""
-                publish_wakeup(channel, row, PARTITIONS)
-                publish_wakeup(channel, row, PARTITIONS)
+                publish_wakeup(channel, row)
+                publish_wakeup(channel, row)
 
             return publish_due(url, duplicate)
 
         try:
-            def other_chat_finished():
-                """Confirm another partition advances while the voice partition is busy."""
+            def voice_is_running():
                 pump()
-                return voice_started.is_set() and observed == [3]
+                return voice_started.is_set()
 
-            wait_for(other_chat_finished)
+            wait_for(voice_is_running)
+            for _ in range(4):
+                pump()
+            assert observed == []
             release_voice.set()
 
             def all_sent():
@@ -133,7 +126,9 @@ def test_broker_round_trip_orders_chats_and_deduplicates_sends(scheduling_db, br
                 return len(sent) == 3
 
             wait_for(all_sent)
-            assert observed == [3, 1, 2]
+            assert observed[0] == 1
+            assert sorted(observed) == [1, 2, 3]
+            assert observed.index(1) < observed.index(2)
             assert sent.index(1) < sent.index(2)
             channel.basic_publish(EXCHANGE, OUTGOING_QUEUE, b"invalid", mandatory=True)
             wait_for(lambda: channel.queue_declare(DEAD_LETTER_QUEUE, passive=True).method.message_count == 1)
@@ -156,14 +151,14 @@ def test_unconfirmed_publication_survives_and_expired_workers_cannot_finish(sche
         connection.execute("UPDATE telegram_publications SET due_at=now()")
         connection.execute("UPDATE telegram_updates SET ready_at=now()")
 
-    with broker_channel(broker_url, PARTITIONS) as (_, channel):
+    with broker_channel(broker_url) as (_, channel):
         channel.confirm_delivery()
         with pytest.raises(pika.exceptions.UnroutableError):
             publish_due(url, lambda row: channel.basic_publish(EXCHANGE, "absent", b"[]", mandatory=True))
         with connect(url) as connection:
             connection.execute("UPDATE telegram_publications SET claimed_until=now()")
-        assert publish_due(url, lambda row: publish_wakeup(channel, row, PARTITIONS))
-        assert not publish_due(url, lambda row: publish_wakeup(channel, row, PARTITIONS))
+        assert publish_due(url, lambda row: publish_wakeup(channel, row))
+        assert not publish_due(url, lambda row: publish_wakeup(channel, row))
 
     turns = TelegramTurns(url)
     original = turns.claim_chat(bot.bot_id, 101)

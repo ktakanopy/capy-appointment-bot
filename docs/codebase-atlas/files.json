@@ -6,9 +6,9 @@
     "files":[
       ["app/main.py","Serve FastAPI health probes and authenticate and persist Telegram updates.",["telegram_webhook","lifespan","health"],[
         ["HealthDependencies","Bundles settings and the Redis client for health checks."],["_SuppressHealthAccess","Filters routine health requests from access logs.","filter"]]],
-      ["app/telegram_service.py","Connect worker roles to hosted RabbitMQ or PostgreSQL polling and coordinate a claimed turn.",["main","run_broker_worker","process_turn","run_worker"],[]],
-      ["app/telegram_worker.py","Prepare one message, resolve account context and invoke the graph for scheduling input.",["TelegramWorker._reply_to_message","TelegramWorker._run_turn"],[
-        ["TelegramWorker","Handles commands, contacts, text and voice for a turn.","_reply_to_message"]]],
+      ["app/telegram_service.py","Connect worker roles to RabbitMQ and coordinate a claimed turn.",["main","run_broker_worker","process_turn"],[]],
+      ["app/telegram_worker.py","Prepare one message, resolve account context and invoke the graph for scheduling input.",["TelegramWorker.handle_message","TelegramWorker._run_turn"],[
+        ["TelegramWorker","Handles commands, contacts, text and voice for a turn.","handle_message"]]],
       ["app/channels/telegram_turns.py","Lease the oldest eligible chat update and commit the resulting state pointer and reply.",["TelegramTurns.claim_chat","TelegramTurns.finish"],[
         ["TelegramTurns","Owns the chat lease and the turn lifecycle.","claim_chat"],["TurnClaim","Binds an attempt to proof of current ownership.","assert_owned"],["ClaimLost","Signals that an attempt can no longer write."]]],
       ["app/channels/telegram_intake.py","Identify supported private messages and save incoming updates idempotently.",["save_update","private_message"],[]],
@@ -80,8 +80,8 @@
         ["BookingService","Owns appointment writes and the retry record.","create"]]],
       ["app/scheduling.py","Compute available appointments and revalidate proposed slots inside a write transaction.",["AvailabilityService.search","validate_slot_in_transaction"],[
         ["AvailabilityService","Computes open slots against business scheduling data.","search"]]],
-      ["app/repositories.py","Read business, catalog, schedule and booking data and map rows to domain contracts.",["PostgresRepository.catalog","PostgresRepository.scheduling_data"],[
-        ["PostgresRepository","Data access facade for scheduling and owner reads.","scheduling_data"]]],
+      ["app/repositories.py","Read business, catalog, schedule and booking data and map rows to domain contracts.",["PostgresRepository.catalog","PostgresRepository.calendar"],[
+        ["PostgresRepository","Data access facade for scheduling and owner reads.","calendar"]]],
       ["app/database.py","Create pooled SQLAlchemy engines and manage session commit or rollback.",["database_session","database_is_ready"],[]],
       ["app/owner.py","Query the studio owner's booking agenda.",["owner_agenda"],[]],
       ["app/cli.py","Print the studio owner's upcoming appointments in local time.",["main"],[]],
@@ -116,7 +116,6 @@
         ["BookingCreateRequest","Business, customer, service and requested start."],
         ["BookingRescheduleRequest","New time and scheduling context for a booking."],
         ["BookingSummary","Saved appointment and write outcome."],
-        ["OwnerBooking","Booking enriched for display on the owner agenda."],
         ["OwnerBookingsResponse","Agenda response for a business and date."],
         ["HealthResponse","Describes API and dependency readiness."],
         ["DomainError","Carries a handled business rule violation."]

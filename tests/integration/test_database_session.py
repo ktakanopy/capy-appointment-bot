@@ -45,14 +45,13 @@ def test_availability_lookup_uses_the_same_calendar(scheduling_db):
     end = start + timedelta(days=2)
     event.listen(engine, "before_cursor_execute", record)
     try:
-        _, _, one = repository.scheduling_data(
-            "demo-studio", "service-demo", "professional-demo-ana", start, end,
-        )
+        one = repository.calendar("demo-studio", "professional-demo-ana", start, end)
         one_query_count = len(statements)
         statements.clear()
-        _, _, many = repository.scheduling_data("demo-studio", "service-demo", None, start, end)
-        assert len(statements) == one_query_count == 6
+        all_professionals = repository.calendar("demo-studio", None, start, end)
+        assert len(statements) == one_query_count == 4
     finally:
         event.remove(engine, "before_cursor_execute", record)
-    assert len(one) == 1
-    assert len(many) == 1
+    assert one == all_professionals
+    assert one["professional"]["id"] == "professional-demo-ana"
+    assert repository.calendar("demo-studio", "unknown", start, end) is None

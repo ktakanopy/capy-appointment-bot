@@ -18,6 +18,10 @@ branches where processing can stop, retry, or leave an uncertain outcome.
   Verify dynamic edges against the wiring. Treat imports as leads for source
   inspection. Label queues, stored checkpoints, and callback boundaries where
   control passes asynchronously or through a framework.
+- Use **File connections** in the HTML to explore direct imports among cataloged
+  Python files. Import arrows point from importer to dependency and link to
+  the statement line. Use a code index such as Codebase Memory for deeper
+  caller and callee exploration when available.
 - Draw the overview and major flows separately. Name the trigger, decisions,
   transaction boundaries, durable effects and recovery outcome that matter to
   each scenario. Link each labeled code location to its source. Preserve the

@@ -7,7 +7,7 @@ import time
 from datetime import timedelta
 
 from psycopg.errors import LockNotAvailable
-from sqlalchemy import and_, case, func, or_, select, update
+from sqlalchemy import and_, case, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session, aliased
@@ -68,34 +68,14 @@ def _with_rate_budgets(statement):
     )
 
 
-class TelegramDelivery:
-    def send(self, job: dict) -> None:
-        bot = TelegramBot(job["bot_id"], job["business_id"], job["token_env"])
-        bot.client().send_message(job["chat_id"], job["message"], job["reply_markup"])
+def send_reply(job: dict) -> None:
+    bot = TelegramBot(job["bot_id"], job["business_id"], job["token_env"])
+    bot.client().send_message(job["chat_id"], job["message"], job["reply_markup"])
 
 
 class TelegramOutbox:
     def __init__(self, database_url: str):
         self.database_url = database_url
-
-    def claim(self) -> dict | None:
-        """Authorize a ready dispatch and reserve both rate budgets atomically."""
-        statement = _with_rate_budgets(_outgoing_details()).where(
-            TelegramOutboxRow.status == "ready",
-            TelegramOutboxRow.ready_at <= func.clock_timestamp(),
-            or_(TelegramBotDelivery.available_at.is_(None),
-                TelegramBotDelivery.available_at <= func.clock_timestamp()),
-            or_(TelegramChatDelivery.available_at.is_(None),
-                TelegramChatDelivery.available_at <= func.clock_timestamp()),
-            ~_older_pending_send(),
-        ).order_by(TelegramOutboxRow.ready_at, TelegramOutboxRow.id).limit(16)
-        with database_session(self.database_url) as session:
-            candidates = session.execute(statement).mappings().all()
-        for job in candidates:
-            claimed = self._try_authorize(job)
-            if claimed:
-                return claimed
-        return None
 
     def claim_by_id(self, outgoing_id: int) -> dict | None:
         """Reserve the broker-selected send or persist a wake-up if delivery is blocked."""
@@ -229,29 +209,19 @@ class TelegramOutbox:
             TelegramOutboxRow.lease_until <= func.clock_timestamp(),
         )
         with database_session(self.database_url) as session:
-            jobs = session.execute(select(
-                TelegramOutboxRow.id,
-            ).where(*expired).order_by(TelegramOutboxRow.lease_until).limit(limit)).mappings().all()
-            recovered = 0
-            for job in jobs:
-                updated = session.scalar(update(TelegramOutboxRow).where(
-                    TelegramOutboxRow.id == job["id"], *expired,
-                ).values(
-                    status="ambiguous", message=None, reply_markup=None, lease_until=None,
-                    finished_at=func.clock_timestamp(), last_error="dispatch_expired",
-                ).returning(TelegramOutboxRow.id))
-                if updated is not None:
-                    recovered += 1
-        return recovered
+            jobs = select(TelegramOutboxRow.id).where(*expired).order_by(
+                TelegramOutboxRow.lease_until
+            ).limit(limit).with_for_update(skip_locked=True)
+            recovered = session.scalars(update(TelegramOutboxRow).where(
+                TelegramOutboxRow.id.in_(jobs), *expired,
+            ).values(
+                status="ambiguous", message=None, reply_markup=None, lease_until=None,
+                finished_at=func.clock_timestamp(), last_error="dispatch_expired",
+            ).returning(TelegramOutboxRow.id)).all()
+        return len(recovered)
 
 
-def send_next(outbox: TelegramOutbox, delivery: TelegramDelivery, logger) -> bool:
-    """Drain one send using the PostgreSQL rollback worker."""
-    job = outbox.claim()
-    return deliver_claimed(outbox, delivery, logger, job)
-
-
-def deliver_claimed(outbox: TelegramOutbox, delivery: TelegramDelivery, logger, job: dict | None) -> bool:
+def deliver_claimed(outbox: TelegramOutbox, logger, job: dict | None) -> bool:
     """Call Telegram once for a reserved send and persist its classified outcome."""
     if job is None:
         return False
@@ -260,7 +230,7 @@ def deliver_claimed(outbox: TelegramOutbox, delivery: TelegramDelivery, logger, 
     debug_event("telegram.outbox.claimed", bot_id=job["bot_id"], update_id=job.get("update_id"),
                 kind=kind, attempt=job["attempts"])
     try:
-        delivery.send(job)
+        send_reply(job)
     except TelegramApiError as error:
         cooldown = error.retry_after if error.code in ("telegram_api_429", "telegram_http_429") else None
         if error.code == "telegram_transport_error":

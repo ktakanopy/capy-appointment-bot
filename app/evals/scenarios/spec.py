@@ -6,7 +6,7 @@ from typing import Any, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, model_validator
 
 ActionName = Literal[
     "BOOK", "RESCHEDULE", "CANCEL", "CHECK_AVAILABILITY", "FAQ", "CONFIRM",
@@ -94,16 +94,8 @@ class TurnAssertions(StrictModel):
     laya: LayaExpectation | None = None
     intent: str | None = None
     offered_slot_count: int | None = Field(default=None, ge=0)
-    writes: dict[WriteName, int]
+    writes: dict[WriteName, NonNegativeInt]
     booking: BookingExpectation | None = None
-
-    @field_validator("writes")
-    @classmethod
-    def require_nonnegative_writes(cls, value: dict[WriteName, int]) -> dict[WriteName, int]:
-        """Reject negative counts because write assertions represent observed effects."""
-        if any(count < 0 for count in value.values()):
-            raise ValueError("write expectations cannot be negative")
-        return value
 
 
 class ConversationStep(StrictModel):
@@ -156,17 +148,9 @@ class JudgeSpec(StrictModel):
 class FinalAssertions(StrictModel):
     """Define expected whole-conversation effects and final booking state."""
 
-    writes: dict[WriteName, int]
+    writes: dict[WriteName, NonNegativeInt]
     booking: BookingExpectation | None = None
     existing_booking_status: str | None = None
-
-    @field_validator("writes")
-    @classmethod
-    def require_nonnegative_writes(cls, value: dict[WriteName, int]) -> dict[WriteName, int]:
-        """Reject negative totals because final assertions count actual writes."""
-        if any(count < 0 for count in value.values()):
-            raise ValueError("write expectations cannot be negative")
-        return value
 
 
 class Scenario(StrictModel):

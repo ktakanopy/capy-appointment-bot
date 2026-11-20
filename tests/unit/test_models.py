@@ -3,25 +3,11 @@ from datetime import date, datetime, timezone
 import pytest
 from pydantic import ValidationError
 
-from app.models import AvailabilitySearchRequest, BookingCreateRequest, CustomerInput
+from app.models import AvailabilitySearchRequest, BookingCreateRequest
 
 
-def test_customer_input_normalizes_name_phone_and_email():
-    customer = CustomerInput(
-        full_name="  Ada   Lovelace ",
-        phone="+55 (11) 99999-9999",
-        email="ADA@example.com",
-    )
-
-    assert customer.full_name == "Ada Lovelace"
-    assert customer.phone == "+5511999999999"
-    assert customer.email == "ada@example.com"
 
 
-@pytest.mark.parametrize("phone", ["123", "+55+11999999999", "abc1234567"])
-def test_customer_input_rejects_invalid_phone(phone):
-    with pytest.raises(ValidationError):
-        CustomerInput(full_name="Ada Lovelace", phone=phone)
 
 
 def test_booking_requires_timezone_aware_start():

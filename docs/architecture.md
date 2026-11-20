@@ -22,7 +22,7 @@ Start with the customer asking for available times, choosing “1,” then appro
 
 1. **Find and offer times.** Gemma interprets the request, Laya proposes an availability search and Python applies schedule rules. The customer chooses from the numbered choices stored in the graph checkpoint. [Understand input](../app/graph/steps.py#L111) · [Choose an action](../app/graph/steps.py#L266) · [Offer slots](../app/graph/steps.py#L698)
 2. **Ask before writing.** `select` resolves “1” to the first saved offer. `_prepare_create` stores that slot as `confirmation_requested_for` and returns a localized question. This turn makes no booking write. [Selection](../app/graph/steps.py#L733) · [Create preparation](../app/graph/steps.py#L858) · [Consent question](../app/graph/booking_messages.py#L44)
-3. **Create only after approval.** On the next turn, `route_turn` resolves pending consent before any other booking action can change the draft. Python requires the latest user message to clearly approve, Laya to propose `BOOK`, and the selected slot to remain in state. `execute` checks the marker and message again, then returns details from the saved booking. [Consent guard](../app/graph/steps.py#L341) · [Create check and write](../app/graph/steps.py#L939) · [Reply formatter](../app/graph/booking_messages.py#L72) · [Booking transaction](../app/booking.py#L152)
+3. **Create only after approval.** On the next turn, `route_turn` resolves pending consent before any other booking action can change the draft. Python requires the latest user message to clearly approve, Laya to propose `BOOK`, and the selected slot to remain in state. `execute` checks the marker and message again, then returns details from the saved booking. [Consent guard](../app/graph/steps.py#L341) · [Create check and write](../app/graph/steps.py#L939) · [Reply formatter](../app/graph/booking_messages.py#L72) · [Booking transaction](../app/booking.py#L149)
 
 | Question | Executable example |
 | --- | --- |
@@ -36,7 +36,7 @@ Start with the customer asking for available times, choosing “1,” then appro
 
 ![Three Telegram turns labeled C01 through C27, from searching for times to selecting a slot, approving it, and receiving the saved booking details.](assets/booking-create-sequence.svg)
 
-Follow “Book a relaxation massage tomorrow,” then “1.” Read the arrows from top to bottom and use each label to find its explanation below. The worker guide details how the Telegram steps reach each service. [Telegram sequence](telegram-worker.md#full-call-sequence)
+Follow “Book Shiatsu 60 min tomorrow,” then “1.” Read the arrows from top to bottom and use each label to find its explanation below. The worker guide details how the Telegram steps reach each service. [Telegram sequence](telegram-worker.md#full-call-sequence)
 
 #### Find a time
 
@@ -44,13 +44,13 @@ Follow “Book a relaxation massage tomorrow,” then “1.” Read the arrows f
 | --- | --- | --- |
 | **C01** | The customer asks for times in a private Telegram chat. Telegram sends the message to the bot’s configured webhook. | [Webhook](../app/main.py#L77) |
 | **C02** | CAPY records the incoming update. The conversation worker uses the Telegram user ID to find the customer's account. | [Worker guide](telegram-worker.md#start-reading-the-code) |
-| **C03** | The graph uses the customer's text or complete transcript. It redacts the text, asks Gemma to interpret it and gives Laya the interpreted message and draft. Python checks the details required to proceed. | [`understand_input()` · L111](../app/graph/steps.py#L111) · [`route_turn()` · L266](../app/graph/steps.py#L266) |
-| **C04** | The workflow requests slots for the selected service and date, applying any staff or earliest-time preference. This narrows the search to choices that address the customer’s request. | [`search()` · L698](../app/graph/steps.py#L698) · [`CustomerSchedulingActions.search()` · L49](../app/customer_scheduling_actions.py#L49) |
-| **C05** | The availability service reads working hours, blocked periods and active bookings for eligible staff. These records supply the current schedule for conflict checks. | [`scheduling_data()` · L123](../app/repositories.py#L123) |
-| **C06** | The service returns slots that fit working hours, duration, setup and cleanup buffers, and the business’s notice and booking horizon rules. The slots represent current availability, which may change before the booking is written. | [`AvailabilityService.search()` · L190](../app/scheduling.py#L190) |
-| **C07** | The workflow formats the slots as numbered choices and saves the offered slots in the Redis checkpoint. This lets the following turn resolve a reply such as “1” to the exact time it offered. | [`_slot_message()` · L34](../app/chat_helpers.py#L34) · [Offered slots · L715–729](../app/graph/steps.py#L715-L729) · [Redis checkpoint setup · L72](../app/runtime.py#L72) |
-| **C08** | The worker saves the offer reply for delivery. | [Finish the turn](../app/channels/telegram_turns.py#L384) |
-| **C09** | The sender delivers the offered times through the originating bot. | [Sender](../app/channels/telegram_delivery.py#L350) |
+| **C03** | The graph uses the customer's text or complete transcript. It redacts the text, asks Gemma to interpret it and gives Laya the interpreted message and draft. Python checks the details required to proceed. | [`understand_input()`](../app/graph/steps.py#L111) · [`route_turn()`](../app/graph/steps.py#L266) |
+| **C04** | The workflow requests slots for the selected service and date, applying any staff or earliest-time preference. This narrows the search to choices that address the customer’s request. | [`search()`](../app/graph/steps.py#L698) · [`CustomerSchedulingActions.search()`](../app/customer_scheduling_actions.py#L49) |
+| **C05** | The availability service reads working hours, blocked periods and active bookings for the massagista. These records supply the current schedule for conflict checks. | [`calendar()`](../app/repositories.py) |
+| **C06** | The service returns slots that fit working hours, duration, setup and cleanup buffers, and the business’s notice and booking horizon rules. The slots represent current availability, which may change before the booking is written. | [`AvailabilityService.search()`](../app/scheduling.py#L189) |
+| **C07** | The workflow formats the slots as numbered choices and saves the offered slots in the Redis checkpoint. This lets the following turn resolve a reply such as “1” to the exact time it offered. | [`_slot_message()`](../app/chat_helpers.py#L34) · [Offered slots](../app/graph/steps.py#L715-L729) · [Redis checkpoint setup](../app/runtime.py#L72) |
+| **C08** | The worker saves the offer reply for delivery. | [Finish the turn](../app/channels/telegram_turns.py#L304) |
+| **C09** | The sender delivers the offered times through the originating bot. | [Sender](../app/channels/telegram_delivery.py) |
 
 #### Select a time and ask for consent
 
@@ -59,9 +59,9 @@ Follow “Book a relaxation massage tomorrow,” then “1.” Read the arrows f
 | **C10** | The customer chooses one of the numbered time options. This is a selection only; it does not authorize a booking. | [Webhook](../app/main.py#L77) |
 | **C11** | CAPY records the new update and claims the chat turn. The worker resumes the checkpoint created by the search turn. | [Worker guide](telegram-worker.md#start-reading-the-code) |
 | **C12** | `select` matches the number to the saved offered-slot list. The selected slot ID is carried into create preparation so the next message refers to this exact offer. | [Workflow](../app/graph/workflow.py) · [Selection](../app/graph/steps.py#L733) |
-| **C13** | `_prepare_create` stores the selected slot as pending consent and returns the service, professional, date, time and timezone question. It does not call the booking service. | [`_prepare_create()` · L858](../app/graph/steps.py#L858) · [Question formatter · L44](../app/graph/booking_messages.py#L44) |
-| **C14** | The worker saves the consent question as its reply to this Telegram update. The selected offer remains in checkpoint state for the next turn. | [Finish the turn](../app/channels/telegram_turns.py#L384) |
-| **C15** | The sender delivers the question. The customer can approve or decline before an appointment row exists. | [Outbound sender](../app/channels/telegram_delivery.py#L350) |
+| **C13** | `_prepare_create` stores the selected slot as pending consent and returns the service, professional, date, time and timezone question. It does not call the booking service. | [`_prepare_create()`](../app/graph/steps.py#L858) · [Question formatter](../app/graph/booking_messages.py#L44) |
+| **C14** | The worker saves the consent question as its reply to this Telegram update. The selected offer remains in checkpoint state for the next turn. | [Finish the turn](../app/channels/telegram_turns.py#L304) |
+| **C15** | The sender delivers the question. The customer can approve or decline before an appointment row exists. | [Outbound sender](../app/channels/telegram_delivery.py) |
 
 #### Approve and create the booking
 
@@ -69,16 +69,16 @@ Follow “Book a relaxation massage tomorrow,” then “1.” Read the arrows f
 | --- | --- | --- |
 | **C16** | The customer explicitly approves the appointment shown by CAPY. This input arrives after the consent question. | [Webhook](../app/main.py#L77) |
 | **C17** | CAPY records and claims the approval update. The worker resumes the same conversation checkpoint so Python can compare the reply with the pending slot ID. | [Worker guide](telegram-worker.md#start-reading-the-code) |
-| **C18** | The graph interprets the latest message and asks Laya for a route. `route_turn` handles pending consent before allowing another booking operation to change the draft. | [`route_turn()` · L266](../app/graph/steps.py#L266) |
-| **C19** | Python checks the exact consent phrase, Laya's `BOOK` proposal, confidence and pending slot. A clear matching approval can proceed; an unclear reply or changed time makes no booking mutation. | [`_route_booking_consent()` · L341](../app/graph/steps.py#L341) · [Consent phrases](../app/graph/consent.py#L49) |
-| **C20** | The booking service locks the business and checks the stable update key against the request hash. A matching retry can return the prior result after a committed write; a different request reusing the key is rejected. | [Update key · L157](../app/telegram_worker.py#L157) · [`_hash_booking_request()` · L36](../app/booking.py#L36) · [`_lock_business_and_check_retry()` · L90](../app/booking.py#L90) |
-| **C21** | The service rechecks the slot because availability may have changed since it was offered. It also verifies that the Telegram customer's account belongs to this business. | [`validate_slot_in_transaction()` · L43](../app/scheduling.py#L43) · [`_require_customer_in_business()` · L246](../app/booking.py#L246) |
+| **C18** | The graph interprets the latest message and asks Laya for a route. `route_turn` handles pending consent before allowing another booking operation to change the draft. | [`route_turn()`](../app/graph/steps.py#L266) |
+| **C19** | Python checks the exact consent phrase, Laya's `BOOK` proposal, confidence and pending slot. A clear matching approval can proceed; an unclear reply or changed time makes no booking mutation. | [`_route_booking_consent()`](../app/graph/steps.py#L341) · [Consent phrases](../app/graph/consent.py#L49) |
+| **C20** | The booking service locks the business and checks the stable update key against the request hash. A matching retry can return the prior result after a committed write; a different request reusing the key is rejected. | [Update key](../app/telegram_worker.py#L135) · [`_hash_booking_request()`](../app/booking.py#L35) · [`_lock_business_and_check_retry()`](../app/booking.py#L87) |
+| **C21** | The service rechecks the slot because availability may have changed since it was offered. It also verifies that the Telegram customer's account belongs to this business. | [`validate_slot_in_transaction()`](../app/scheduling.py#L43) · [`_require_customer_in_business()`](../app/booking.py#L243) |
 | **C22** | The transaction inserts the booking and retry result. PostgreSQL's overlap constraint protects the massagista's occupied time. | [Booking service](../app/booking.py) · [Overlap constraint](../alembic/versions/0001_general_scheduling.py) |
 | **C23** | The database commits the booking and retry record together. A failure rolls them back. | [Database session](../app/database.py) |
-| **C24** | The service returns the saved booking after the transaction exits. This is the persisted result the workflow will report. | [Read and return booking](../app/booking.py#L210) |
-| **C25** | The formatter resolves names from the business catalog and converts the saved start time to the business timezone. The success message therefore reports the data the database stored. | [`booking_created_reply()` · L72](../app/graph/booking_messages.py#L72) · [`booking_details()` · L14](../app/graph/booking_messages.py#L14) |
-| **C26** | The worker saves the success reply after the create transaction commits. | [Finish the turn](../app/channels/telegram_turns.py#L384) |
-| **C27** | The sender delivers the saved booking details to the customer. | [Outbound sender](../app/channels/telegram_delivery.py#L350) |
+| **C24** | The service returns the saved booking after the transaction exits. This is the persisted result the workflow will report. | [Read and return booking](../app/booking.py#L149) |
+| **C25** | The formatter resolves names from the business catalog and converts the saved start time to the business timezone. The success message therefore reports the data the database stored. | [`booking_created_reply()`](../app/graph/booking_messages.py#L72) · [`booking_details()`](../app/graph/booking_messages.py#L14) |
+| **C26** | The worker saves the success reply after the create transaction commits. | [Finish the turn](../app/channels/telegram_turns.py#L304) |
+| **C27** | The sender delivers the saved booking details to the customer. | [Outbound sender](../app/channels/telegram_delivery.py) |
 
 ### Confirm, cancel or reschedule
 
@@ -87,12 +87,12 @@ This diagram starts when the workflow has identified the appointment and, for a 
 
 | Call | What happens and why | Source |
 | --- | --- | --- |
-| **M01** | The workflow asks for clarification until it can identify the appointment and any required replacement slot. It then passes the requested operation, trusted customer account and stable update key to the service. The service can verify the target against database ownership. | [`prepare_action()` · L771](../app/graph/steps.py#L771) · [`_prepare_reschedule()` · L792](../app/graph/steps.py#L792) · [`_prepare_booking_status_change()` · L897](../app/graph/steps.py#L897) · [`execute()` · L928](../app/graph/steps.py#L928) |
-| **M02** | The service locks the business before comparing the retry key and request hash. This gives competing attempts a single order and lets the service reject a key reused for different details. | [`_lock_business_and_check_retry()` · L90](../app/booking.py#L90) |
-| **M03** | The service loads and locks a booking matching all three IDs. The lock holds the state steady through the write. A matching retry returns the current owned booking with its saved outcome. A new change must meet the appointment start-time cutoff. | [`_load_customer_booking()` · L62](../app/booking.py#L62) · [Replay and cutoff · L374](../app/booking.py#L374) · [`_require_upcoming_booking()` · L412](../app/booking.py#L412) |
+| **M01** | The workflow asks for clarification until it can identify the appointment and any required replacement slot. It then passes the requested operation, trusted customer account and stable update key to the service. The service can verify the target against database ownership. | [`prepare_action()`](../app/graph/steps.py#L771) · [`_prepare_reschedule()`](../app/graph/steps.py#L792) · [`_prepare_booking_status_change()`](../app/graph/steps.py#L897) · [`execute()`](../app/graph/steps.py#L928) |
+| **M02** | The service locks the business before comparing the retry key and request hash. This gives competing attempts a single order and lets the service reject a key reused for different details. | [`_lock_business_and_check_retry()`](../app/booking.py#L87) |
+| **M03** | The service loads and locks a booking matching all three IDs. The lock holds the state steady through the write. A matching retry returns the current owned booking with its saved outcome. A new change must meet the appointment start-time cutoff. | [`_load_customer_booking()`](../app/booking.py#L59) · [Replay and cutoff](../app/booking.py#L356) · [`_require_upcoming_booking()`](../app/booking.py#L389) |
 | **M04** | Confirmation records the customer's acceptance. It preserves an already confirmed status and rejects a canceled booking. | [Booking service](../app/booking.py) |
 | **M05** | Cancellation frees the occupied time. | [Booking service](../app/booking.py) |
 | **M06** | Rescheduling validates the new slot while excluding the booking's old interval. A failed move preserves the original appointment. | [Booking service](../app/booking.py) |
-| **M07** | Save the outcome for a new request in the write transaction. This lets a later retry report the saved outcome without repeating the change. | [`_save_retry_result()` · L129](../app/booking.py#L129) |
+| **M07** | Save the outcome for a new request in the write transaction. This lets a later retry report the saved outcome without repeating the change. | [`_save_retry_result()`](../app/booking.py#L126) |
 | **M08** | The booking change and retry result commit together. | [Database session](../app/database.py) |
-| **M09** | The service returns the owned booking and outcome. The workflow uses the outcome to tell the customer whether the change succeeded or, where applicable, had already taken effect. | [Status outcome · L384](../app/booking.py#L384) · [Workflow replies · L970–1005](../app/graph/steps.py#L970-L1005) |
+| **M09** | The service returns the owned booking and outcome. The workflow uses the outcome to tell the customer whether the change succeeded or, where applicable, had already taken effect. | [Status outcome](../app/booking.py#L363) · [Workflow replies](../app/graph/steps.py#L970-L1005) |

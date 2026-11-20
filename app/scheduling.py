@@ -19,6 +19,18 @@ UTC = timezone.utc
 CANDIDATE_STEP_MINUTES = 15
 
 
+def _appointment_interval(start: datetime, duration: int, before: int, after: int):
+    end = start + timedelta(minutes=duration)
+    return end, start - timedelta(minutes=before), end + timedelta(minutes=after)
+
+
+def _slot_id(business_id: str, service_id: str, professional_id: str, start: datetime) -> str:
+    return str(uuid5(
+        NAMESPACE_URL,
+        f"scheduling-slot:{business_id}:{service_id}:{professional_id}:{start.isoformat()}",
+    ))
+
+
 def _valid_local_instants(wall_time: datetime, zone: ZoneInfo) -> list[datetime]:
     """Return all real instants represented by a naive local wall time."""
     instants: dict[datetime, datetime] = {}
@@ -49,7 +61,7 @@ def validate_slot_in_transaction(
     slot_id: str,
     starts_at: datetime,
     exclude_booking_id: str | None = None,
-) -> AvailabilitySlot:
+) -> tuple[AvailabilitySlot, datetime, datetime]:
     """Recheck current policy and conflicts in the same transaction as a booking write."""
     debug_event("availability.slot.checking", is_move=exclude_booking_id is not None)
     professional = session.scalar(select(ProfessionalRow.id).where(
@@ -82,9 +94,9 @@ def validate_slot_in_transaction(
     zone = ZoneInfo(row["timezone"])
     start = starts_at.astimezone(UTC)
     local_start = start.astimezone(zone)
-    end = start + timedelta(minutes=row["duration_minutes"])
-    occupied_from = start - timedelta(minutes=row["buffer_before_minutes"])
-    occupied_until = end + timedelta(minutes=row["buffer_after_minutes"])
+    end, occupied_from, occupied_until = _appointment_interval(
+        start, row["duration_minutes"], row["buffer_before_minutes"], row["buffer_after_minutes"]
+    )
     now = datetime.now(UTC)
     minimum_start = now + timedelta(minutes=row["minimum_notice_minutes"])
     maximum_start = now + timedelta(days=row["booking_horizon_days"])
@@ -153,19 +165,14 @@ def validate_slot_in_transaction(
             "That time is no longer available. Choose another slot.",
             409,
         )
-    expected_slot_id = str(
-        uuid5(
-            NAMESPACE_URL,
-            f"scheduling-slot:{business_id}:{service_id}:{professional_id}:{start.isoformat()}",
-        )
-    )
+    expected_slot_id = _slot_id(business_id, service_id, professional_id, start)
     if slot_id != expected_slot_id:
         raise DomainError(
             "invalid_slot", "Choose one of the listed availability slots.", 409
         )
     label = local_start.strftime("%a %d %b, %H:%M %Z (UTC%z)")
     debug_event("availability.slot.validated")
-    return AvailabilitySlot(
+    slot = AvailabilitySlot(
         slot_id=expected_slot_id,
         business_id=business_id,
         service_id=service_id,
@@ -178,6 +185,7 @@ def validate_slot_in_transaction(
         price_minor=row["price_minor"],
         currency=row["currency"].strip(),
     )
+    return slot, occupied_from, occupied_until
 
 
 class AvailabilityService:
@@ -222,110 +230,103 @@ class AvailabilityService:
         until_local = datetime.combine(
             upper_date + timedelta(days=1), time.min, zone
         ) + timedelta(days=1)
-        _, _, schedules = self.repository.scheduling_data(
+        schedule = self.repository.calendar(
             request.business_id,
-            service.id,
             request.professional_id,
             from_local.astimezone(UTC),
             until_local.astimezone(UTC),
             exclude_booking_id=exclude_booking_id,
         )
+        if schedule is None:
+            debug_event("availability.search.completed", slots=0, reason="no_professional")
+            return []
         min_start = now + timedelta(minutes=business.minimum_notice_minutes)
         max_start = now + timedelta(days=business.booking_horizon_days)
         slots: list[AvailabilitySlot] = []
-        for schedule in schedules:
-            professional = schedule["professional"]
-            rules_by_weekday: dict[int, list[tuple[time, time]]] = {}
-            for rule in schedule["rules"]:
-                rules_by_weekday.setdefault(rule["weekday"], []).append(
-                    (rule["opens_at"], rule["closes_at"])
-                )
-            blocked = [
-                (row["starts_at"].astimezone(UTC), row["ends_at"].astimezone(UTC))
-                for row in schedule["blocks"]
-            ]
-            occupied = [
-                (
-                    row["occupied_from"].astimezone(UTC),
-                    row["occupied_until"].astimezone(UTC),
-                )
-                for row in schedule["bookings"]
-            ]
-            for day_offset in range((upper_date - lower_date).days + 1):
-                current_day = lower_date + timedelta(days=day_offset)
-                for opens_at, closes_at in rules_by_weekday.get(
-                    current_day.weekday(), []
-                ):
-                    cursor = datetime.combine(current_day, opens_at)
-                    closes = datetime.combine(current_day, closes_at)
-                    while cursor < closes:
-                        for local_start in _valid_local_instants(cursor, zone):
-                            start = local_start.astimezone(UTC)
-                            end = start + timedelta(minutes=service.duration_minutes)
-                            occupied_from = start - timedelta(
-                                minutes=service.buffer_before_minutes
+        professional = schedule["professional"]
+        rules_by_weekday: dict[int, list[tuple[time, time]]] = {}
+        for rule in schedule["rules"]:
+            rules_by_weekday.setdefault(rule["weekday"], []).append(
+                (rule["opens_at"], rule["closes_at"])
+            )
+        blocked = [
+            (row["starts_at"].astimezone(UTC), row["ends_at"].astimezone(UTC))
+            for row in schedule["blocks"]
+        ]
+        occupied = [
+            (
+                row["occupied_from"].astimezone(UTC),
+                row["occupied_until"].astimezone(UTC),
+            )
+            for row in schedule["bookings"]
+        ]
+        for day_offset in range((upper_date - lower_date).days + 1):
+            current_day = lower_date + timedelta(days=day_offset)
+            for opens_at, closes_at in rules_by_weekday.get(
+                current_day.weekday(), []
+            ):
+                cursor = datetime.combine(current_day, opens_at)
+                closes = datetime.combine(current_day, closes_at)
+                while cursor < closes:
+                    for local_start in _valid_local_instants(cursor, zone):
+                        start = local_start.astimezone(UTC)
+                        end, occupied_from, occupied_until = _appointment_interval(
+                            start, service.duration_minutes,
+                            service.buffer_before_minutes, service.buffer_after_minutes,
+                        )
+                        local_start_time = local_start.timetz().replace(tzinfo=None)
+                        if (
+                            request.earliest_local_time
+                            and local_start_time < request.earliest_local_time
+                        ):
+                            continue
+                        if (
+                            request.latest_local_time
+                            and local_start_time > request.latest_local_time
+                        ):
+                            continue
+                        if start < min_start or start > max_start:
+                            continue
+                        # Keep the appointment and its buffers within one published work interval.
+                        local_occupied_from = occupied_from.astimezone(zone)
+                        local_occupied_until = occupied_until.astimezone(zone)
+                        if (
+                            local_occupied_from.date() != current_day
+                            or local_occupied_until.date() != current_day
+                        ):
+                            continue
+                        if (
+                            local_occupied_from.timetz().replace(tzinfo=None)
+                            < opens_at
+                        ):
+                            continue
+                        if (
+                            local_occupied_until.timetz().replace(tzinfo=None)
+                            > closes_at
+                        ):
+                            continue
+                        if _overlaps(occupied_from, occupied_until, blocked):
+                            continue
+                        if _overlaps(occupied_from, occupied_until, occupied):
+                            continue
+                        slot_id = _slot_id(request.business_id, service.id, professional["id"], start)
+                        label = local_start.strftime("%a %d %b, %H:%M %Z (UTC%z)")
+                        slots.append(
+                            AvailabilitySlot(
+                                slot_id=slot_id,
+                                business_id=request.business_id,
+                                service_id=service.id,
+                                professional_id=professional["id"],
+                                professional_name=professional["name"],
+                                starts_at=start,
+                                ends_at=end,
+                                local_label=label,
+                                duration_minutes=service.duration_minutes,
+                                price_minor=service.price_minor,
+                                currency=service.currency.strip(),
                             )
-                            occupied_until = end + timedelta(
-                                minutes=service.buffer_after_minutes
-                            )
-                            local_start_time = local_start.timetz().replace(tzinfo=None)
-                            if (
-                                request.earliest_local_time
-                                and local_start_time < request.earliest_local_time
-                            ):
-                                continue
-                            if (
-                                request.latest_local_time
-                                and local_start_time > request.latest_local_time
-                            ):
-                                continue
-                            if start < min_start or start > max_start:
-                                continue
-                            # Keep the appointment and its buffers within one published work interval.
-                            local_occupied_from = occupied_from.astimezone(zone)
-                            local_occupied_until = occupied_until.astimezone(zone)
-                            if (
-                                local_occupied_from.date() != current_day
-                                or local_occupied_until.date() != current_day
-                            ):
-                                continue
-                            if (
-                                local_occupied_from.timetz().replace(tzinfo=None)
-                                < opens_at
-                            ):
-                                continue
-                            if (
-                                local_occupied_until.timetz().replace(tzinfo=None)
-                                > closes_at
-                            ):
-                                continue
-                            if _overlaps(occupied_from, occupied_until, blocked):
-                                continue
-                            if _overlaps(occupied_from, occupied_until, occupied):
-                                continue
-                            slot_id = str(
-                                uuid5(
-                                    NAMESPACE_URL,
-                                    f"scheduling-slot:{request.business_id}:{service.id}:{professional['id']}:{start.isoformat()}",
-                                )
-                            )
-                            label = local_start.strftime("%a %d %b, %H:%M %Z (UTC%z)")
-                            slots.append(
-                                AvailabilitySlot(
-                                    slot_id=slot_id,
-                                    business_id=request.business_id,
-                                    service_id=service.id,
-                                    professional_id=professional["id"],
-                                    professional_name=professional["name"],
-                                    starts_at=start,
-                                    ends_at=end,
-                                    local_label=label,
-                                    duration_minutes=service.duration_minutes,
-                                    price_minor=service.price_minor,
-                                    currency=service.currency.strip(),
-                                )
-                            )
-                        cursor += timedelta(minutes=CANDIDATE_STEP_MINUTES)
+                        )
+                    cursor += timedelta(minutes=CANDIDATE_STEP_MINUTES)
         unique_slots = {slot.slot_id: slot for slot in slots}
         debug_event("availability.search.completed", slots=len(unique_slots))
         return sorted(

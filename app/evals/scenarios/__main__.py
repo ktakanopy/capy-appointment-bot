@@ -210,9 +210,8 @@ def _datasets_from_receipt(receipt: dict[str, Any], selected: list[dict[str, Any
 def _handle_run(args) -> int:
     """Resolve provider profiles, run selected cases, persist the receipt, and set exit status."""
     paths = args.dataset or [DEFAULT_GOLDEN]
-    datasets = _filter_datasets(
-        _load_datasets(paths), args.case, args.category
-    )
+    loaded_datasets = _load_datasets(paths)
+    datasets = _filter_datasets(loaded_datasets, args.case, args.category)
     understanding = args.understanding or ("gemma" if args.profile == "live" else "deterministic")
     routing = args.routing or ("laya" if args.profile == "live" else "deterministic")
     jobs = args.jobs if args.jobs is not None else (2 if args.profile == "live" else 4)
@@ -236,8 +235,8 @@ def _handle_run(args) -> int:
         repeats=args.repeat,
     )
     source_paths = {
-        load_dataset(path, repository_root=REPOSITORY_ROOT).dataset_id: path.resolve()
-        for path in paths
+        dataset.dataset_id: path.resolve()
+        for dataset, path in zip(loaded_datasets, paths)
     }
     receipt = make_receipt(
         execution,

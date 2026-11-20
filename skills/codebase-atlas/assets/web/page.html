@@ -43,6 +43,9 @@
           <p id="view-description"></p>
         </div>
         <div class="view-actions">
+          <label id="dependency-picker" class="group-filter" hidden>
+            <span class="sr-only">Select a source file</span><select id="dependency-file"></select>
+          </label>
           <button id="open-transcript" class="button" type="button" aria-haspopup="dialog" hidden>
             <span data-icon="conversation"></span><span>Transcript</span>
           </button>
@@ -75,9 +78,12 @@
       </section>
 
       <footer id="graph-footer" class="graph-footer">
-        <div class="legend" aria-label="Arrow legend">
+        <div id="flow-legend" class="legend" aria-label="Arrow legend">
           <span><i class="legend-line" aria-hidden="true"></i> Call or flow</span>
           <span><i class="legend-line async" aria-hidden="true"></i> Async or framework handoff</span>
+        </div>
+        <div id="dependency-legend" class="legend" aria-label="Arrow legend" hidden>
+          <span><i class="legend-line" aria-hidden="true"></i> Importer to imported file</span>
         </div>
         <span id="canvas-help">Drag to pan · Scroll to zoom · Select a node</span>
       </footer>

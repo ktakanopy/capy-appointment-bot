@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import timedelta
 
-from sqlalchemy import BigInteger, cast, extract, func, or_, select, text, update
+from sqlalchemy import BigInteger, cast, extract, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -31,33 +31,6 @@ UNKNOWN_OUTCOME = (
     "Please check your appointments before trying it again."
 )
 REFRESH_OFFER = "That message arrived late. Please ask for available times again."
-
-
-# The PostgreSQL fallback chooses the first unfinished message per chat before
-# filtering for text or audio. A quick text reply must wait behind earlier audio.
-FIND_NEXT_TURN = text("""WITH heads AS (
-        SELECT DISTINCT ON (u.bot_id,u.chat_id) u.*
-        FROM telegram_updates u WHERE u.status IN ('received','processing')
-          AND u.chat_id IS NOT NULL
-        ORDER BY u.bot_id,u.chat_id,(u.status='processing') DESC,
-                 COALESCE(u.message_date, extract(epoch FROM u.received_at)::bigint),
-                 u.update_id
-    )
-    SELECT u.*, b.token_env, c.generation AS previous_generation,
-           c.checkpoint_thread, c.last_message_date, c.last_update_id
-    FROM heads u JOIN telegram_conversations c ON u.bot_id=c.bot_id
-      AND u.chat_id=c.chat_id AND u.business_id=c.business_id
-    JOIN telegram_bots b ON b.bot_id=c.bot_id AND b.enabled
-    WHERE (c.lease_until IS NULL OR c.lease_until<=clock_timestamp())
-      AND (u.status='processing' OR u.ready_at<=clock_timestamp())
-      AND (:lane='all' OR u.status='processing'
-           OR (:lane='audio')=COALESCE(
-               (u.payload->'message') ?| array['voice','audio'], false))
-      AND (SELECT count(*) FROM telegram_conversations active
-           WHERE active.business_id=c.business_id AND active.active_update_id IS NOT NULL
-             AND active.lease_until>clock_timestamp()) < :per_business
-    ORDER BY c.last_claimed_at NULLS FIRST, u.received_at, u.bot_id, u.update_id
-    LIMIT 1 FOR NO KEY UPDATE OF c SKIP LOCKED""")
 
 
 class ClaimLost(RuntimeError):
@@ -130,38 +103,11 @@ class TelegramTurns:
         """Keep the connection settings so each operation can open its own transaction."""
         self.database_url = database_url
 
-    def claim(self, *, lane: str = "all", per_business: int = 4) -> TurnClaim | None:
-        """Find work across chats for the PostgreSQL fallback worker.
-
-        The lane selects all messages, text, or audio. Interrupted attempts
-        can be recovered from any lane. The query skips conversations another
-        worker has locked, so the caller can look for work in a different chat.
-        Return None when the worker cannot obtain a claim in this pass.
-        """
-        with database_session(self.database_url) as session:
-            row = (
-                session.execute(
-                    FIND_NEXT_TURN,
-                    {"lane": lane, "per_business": per_business},
-                )
-                .mappings()
-                .first()
-            )
-            if not row:
-                return None
-            # Compare against the limit again under a lock shared by this business.
-            if not self._has_capacity(session, row["business_id"], per_business):
-                return None
-            return self._start_attempt(session, row)
-
-    def claim_chat(
-        self, bot_id: int, chat_id: int, *, per_business: int = 4
-    ) -> TurnClaim | None:
+    def claim_chat(self, bot_id: int, chat_id: int) -> TurnClaim | None:
         """Claim the first unfinished message for a chat named by RabbitMQ.
 
         The queue tells the worker which chat to check. PostgreSQL decides
         which message is next and whether someone can process it.
-        `per_business` limits how many chats for that business can run at once.
         If the chat has work but must wait, save a wake-up so a worker checks
         again. Return None whenever this call leaves without a claim.
         """
@@ -203,10 +149,6 @@ class TelegramTurns:
                     session, bot_id=bot_id, chat_id=chat_id, due_at=ready_at
                 )
                 return None
-            if not self._has_capacity(session, chat.business_id, per_business):
-                # Check again soon because another chat may finish at any time.
-                schedule_publication(session, bot_id=bot_id, chat_id=chat_id, delay=1)
-                return None
             row = {
                 **head,
                 "token_env": token_env,
@@ -245,28 +187,6 @@ class TelegramTurns:
             .limit(1)
         )
         return session.execute(statement).mappings().first()
-
-    @staticmethod
-    def _has_capacity(session: Session, business_id: str, limit: int) -> bool:
-        """Check whether a business can start one more turn in this transaction.
-
-        Take a lock named for the business before counting its active leases.
-        That keeps two workers from both seeing and reserving the last spot.
-        Return False if another worker holds the lock or the limit is reached.
-        """
-        lock_key = func.hashtextextended(f"capy.turn.quota:{business_id}", 0)
-        if not session.scalar(select(func.pg_try_advisory_xact_lock(lock_key))):
-            return False
-        active = session.scalar(
-            select(func.count())
-            .select_from(TelegramConversation)
-            .where(
-                TelegramConversation.business_id == business_id,
-                TelegramConversation.active_update_id.is_not(None),
-                TelegramConversation.lease_until > func.clock_timestamp(),
-            )
-        )
-        return active < limit
 
     @staticmethod
     def _start_attempt(session: Session, row: dict) -> TurnClaim | None:

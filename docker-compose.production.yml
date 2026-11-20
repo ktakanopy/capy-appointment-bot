@@ -33,25 +33,23 @@ services:
       timeout: 5s
       retries: 5
 
-  text:
+  worker:
     <<: *capy
     env_file: &with-bot-tokens
       - ${CAPY_ENV_FILE:?Set CAPY_ENV_FILE to a private runtime environment file}
       - ${CAPY_BOT_ENV_FILE:?Set CAPY_BOT_ENV_FILE to the bot token environment file}
     restart: unless-stopped
-    command: python -m app.telegram_service process --transport postgres --lane text
-    stop_grace_period: 2m
-
-  audio:
-    <<: *capy
-    env_file: *with-bot-tokens
-    restart: unless-stopped
-    command: python -m app.telegram_service process --transport postgres --lane audio
+    command: python -m app.telegram_service process
     stop_grace_period: 16m
 
   sender:
     <<: *capy
     env_file: *with-bot-tokens
     restart: unless-stopped
-    command: python -m app.telegram_service send --transport postgres --idle-seconds 0.05
+    command: python -m app.telegram_service send
     stop_grace_period: 45s
+
+  relay:
+    <<: *capy
+    restart: unless-stopped
+    command: python -m app.telegram_service relay

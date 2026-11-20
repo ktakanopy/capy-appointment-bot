@@ -140,11 +140,11 @@
   <rect x="55" y="722" width="207" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="740" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Action services and state</text>
   <g id="booking" data-source="app/booking.py#BookingService">
-    <a href="../../app/booking.py#L46">
-      <title>BookingService · app/booking.py:46</title>
+    <a href="../../app/booking.py#L45">
+      <title>BookingService · app/booking.py:45</title>
       <rect x="56.0" y="756" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="68.0" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">BookingService</text>
-      <text x="68.0" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:46</text>
+      <text x="68.0" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:45</text>
       <text x="68.0" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Apply booking changes inside PostgreSQL</text>
       <text x="68.0" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transactions.</text>
     </a>

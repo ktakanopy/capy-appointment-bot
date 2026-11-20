@@ -4,7 +4,7 @@ import hashlib
 import json
 import uuid
 from collections.abc import Callable
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Literal
 
 from psycopg.errors import ExclusionViolation
@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 from app.database import database_session
 from app.db_models import (
     BookingRow, BusinessRow, CustomerRow, IdempotencyRecord,
-    ServiceRow,
 )
 from app.models import (
     AvailabilitySlot,
@@ -178,12 +177,12 @@ class BookingService:
                         booking=booking_from_row(row), outcome="replayed"
                     )
 
-                slot = self._revalidate_booking_slot(session, request)
+                slot, occupied_from, occupied_until = self._revalidate_booking_slot(session, request)
                 self._require_customer_in_business(
                     session, request.business_id, request.customer_id
                 )
                 booking_id = self._insert_scheduled_booking(
-                    session, slot, request.customer_id
+                    session, slot, request.customer_id, occupied_from, occupied_until
                 )
                 self._save_retry_result(
                     session,
@@ -215,7 +214,7 @@ class BookingService:
         request: BookingCreateRequest | BookingRescheduleRequest,
         *,
         exclude_booking_id: str | None = None,
-    ) -> AvailabilitySlot:
+    ) -> tuple[AvailabilitySlot, datetime, datetime]:
         """Recheck the slot in the write transaction because offers can go stale.
 
         Exclude the booking being moved so its old interval cannot block its own move.
@@ -242,12 +241,10 @@ class BookingService:
             raise DomainError("customer_not_found", "Customer not found.", 404)
 
     def _insert_scheduled_booking(
-        self, session: Session, slot: AvailabilitySlot, customer_id: str
+        self, session: Session, slot: AvailabilitySlot, customer_id: str,
+        occupied_from: datetime, occupied_until: datetime,
     ) -> str:
         booking_id = str(uuid.uuid4())
-        occupied_from, occupied_until = self._calculate_occupied_interval(
-            session, slot
-        )
         session.add(BookingRow(
             id=booking_id,
             business_id=slot.business_id,
@@ -262,17 +259,6 @@ class BookingService:
         ))
         session.flush()
         return booking_id
-
-    @staticmethod
-    def _calculate_occupied_interval(
-        session, slot: AvailabilitySlot
-    ) -> tuple[datetime, datetime]:
-        """Expand the slot with service buffers so setup and cleanup also block time."""
-        before, after = session.execute(
-            select(ServiceRow.buffer_before_minutes, ServiceRow.buffer_after_minutes)
-            .where(ServiceRow.id == slot.service_id)
-        ).one()
-        return slot.starts_at - timedelta(minutes=before), slot.ends_at + timedelta(minutes=after)
 
     def read(
         self, business_id: str, customer_id: str | None, booking_id: str
@@ -439,10 +425,10 @@ class BookingService:
                         409,
                     )
                 self._require_upcoming_booking(row["starts_at"])
-                slot = self._revalidate_booking_slot(
+                slot, occupied_from, occupied_until = self._revalidate_booking_slot(
                     session, request, exclude_booking_id=booking_id
                 )
-                self._update_booking_slot(session, booking_id, slot)
+                self._update_booking_slot(session, booking_id, slot, occupied_from, occupied_until)
                 self._save_retry_result(
                     session,
                     business_id,
@@ -468,12 +454,10 @@ class BookingService:
             ) from exc
 
     def _update_booking_slot(
-        self, session: Session, booking_id: str, slot: AvailabilitySlot
+        self, session: Session, booking_id: str, slot: AvailabilitySlot,
+        occupied_from: datetime, occupied_until: datetime,
     ) -> None:
         """Move the slot and its buffers so conflict checks use the new interval."""
-        occupied_from, occupied_until = self._calculate_occupied_interval(
-            session, slot
-        )
         session.execute(update(BookingRow).where(BookingRow.id == booking_id).values(
             service_id=slot.service_id,
             professional_id=slot.professional_id,

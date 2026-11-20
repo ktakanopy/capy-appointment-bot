@@ -45,11 +45,11 @@
     </a>
   </g>
   <g id="availability" data-source="app/scheduling.py#AvailabilityService.search">
-    <a href="../../app/scheduling.py#L188">
-      <title>AvailabilityService.search · app/scheduling.py:188</title>
+    <a href="../../app/scheduling.py#L189">
+      <title>AvailabilityService.search · app/scheduling.py:189</title>
       <rect x="735.0" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="747.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Apply schedule rules</text>
-      <text x="747.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:188</text>
+      <text x="747.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:189</text>
       <text x="747.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Filter by staff hours, buffers, blocks</text>
       <text x="747.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and occupied intervals.</text>
     </a>
@@ -67,11 +67,11 @@
   <rect x="55" y="328" width="255" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 2 · Select a specific time</text>
   <g id="choice" data-source="app/telegram_service.py#_restore_turn_checkpoint">
-    <a href="../../app/telegram_service.py#L161">
-      <title>_restore_turn_checkpoint · app/telegram_service.py:161</title>
+    <a href="../../app/telegram_service.py#L110">
+      <title>_restore_turn_checkpoint · app/telegram_service.py:110</title>
       <rect x="56.0" y="362" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“1”</text>
-      <text x="68.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_service.py:161</text>
+      <text x="68.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_service.py:110</text>
       <text x="68.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The worker forks the last completed</text>
       <text x="68.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Redis checkpoint into this attempt.</text>
     </a>
@@ -131,11 +131,11 @@
     </a>
   </g>
   <g id="create" data-source="app/booking.py#BookingService.create">
-    <a href="../../app/booking.py#L150">
-      <title>BookingService.create · app/booking.py:150</title>
+    <a href="../../app/booking.py#L149">
+      <title>BookingService.create · app/booking.py:149</title>
       <rect x="735.0" y="559" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="747.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Commit the booking</text>
-      <text x="747.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:150</text>
+      <text x="747.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:149</text>
       <text x="747.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Revalidate the slot and commit the</text>
       <text x="747.0" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking and idempotency result.</text>
     </a>

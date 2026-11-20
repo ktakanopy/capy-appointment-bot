@@ -4,6 +4,7 @@ import hashlib
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from app.channels.bots import TelegramBot
 from app.channels.phone import canonical_phone
 from app.channels.telegram import TelegramBotApi
 from app.channels.telegram_repository import TelegramRepository
@@ -17,15 +18,16 @@ from app.observability import debug_event, log_event, timed_event
 class TelegramWorker:
     """Resolve customer identity and run one claimed text or voice turn."""
 
-    def __init__(self, runtime, api: TelegramBotApi, repository: TelegramRepository):
-        """Reuse the shared runtime while keeping bot and checkpoint state local to a turn."""
+    def __init__(
+        self, runtime, api: TelegramBotApi, repository: TelegramRepository,
+        bot: TelegramBot, checkpoint_thread: str | None,
+    ):
         self.runtime = runtime
         self.api = api
         self.repository = repository
-        self.business_id = runtime.settings.demo_business_id
-        self.bot_id: int | None = None
-        self.checkpoint_thread: str | None = None
-        self.checkpoint_completed = False
+        self.business_id = bot.business_id
+        self.bot_id = bot.bot_id
+        self.checkpoint_thread = checkpoint_thread
 
     def _ensure_customer(self, sender: dict, user_id: int) -> dict:
         """Resolve the verified sender to the customer identity used for booking ownership.
@@ -40,27 +42,32 @@ class TelegramWorker:
             self.business_id, self.bot_id, user_id, display_name, username
         )
 
-    def _reply_to_message(self, row: dict, identity: dict, message: dict) -> str:
+    def handle_message(
+        self, row: dict, message: dict, previous_checkpoint: str | None
+    ) -> tuple[str, str | None]:
         """Handle commands and contacts directly and send scheduling input to the workflow.
 
         If processing leaves the booking outcome uncertain, ask the customer
         to check their appointments before retrying.
         """
+        identity = self._ensure_customer(message["from"], row["telegram_user_id"])
+        debug_event("telegram.turn.customer_resolved")
         text = message.get("text")
         if _is_start_command(text):
             debug_event("telegram.input.classified", kind="start")
             return (
                 "Tell me which service and date you would like. "
-                "You can type or send a voice message."
+                "You can type or send a voice message.",
+                previous_checkpoint,
             )
 
         contact = message.get("contact")
         if isinstance(contact, dict):
             debug_event("telegram.input.classified", kind="contact")
-            return self._contact_reply(identity, contact)
+            return self._contact_reply(identity, contact), previous_checkpoint
 
         try:
-            return self._run_turn(row, identity, message)
+            return self._run_turn(row, identity, message, previous_checkpoint)
         except ProviderError as error:
             log_event(
                 self.runtime.logger,
@@ -69,11 +76,12 @@ class TelegramWorker:
             )
             return (
                 "The language service is unavailable. Please retry or send a shorter message. "
-                "No booking change was made."
+                "No booking change was made.",
+                previous_checkpoint,
             )
         except DomainError as error:
             debug_event("telegram.input.domain_error", code=error.code)
-            return error.message
+            return error.message, previous_checkpoint
         except Exception as error:
             # A write may have committed before the failure. Do not promise rollback.
             log_event(
@@ -83,7 +91,8 @@ class TelegramWorker:
             )
             return (
                 "I couldn't confirm whether that request completed. "
-                "Please check your appointments before trying again."
+                "Please check your appointments before trying again.",
+                previous_checkpoint,
             )
 
     def _contact_reply(self, identity: dict, contact: dict) -> str:
@@ -123,7 +132,9 @@ class TelegramWorker:
             debug_event("telegram.audio.downloaded", bytes_received=len(audio))
         return audio
 
-    def _run_turn(self, row: dict, identity: dict, message: dict) -> str:
+    def _run_turn(
+        self, row: dict, identity: dict, message: dict, previous_checkpoint: str | None
+    ) -> tuple[str, str | None]:
         """Run one scheduling message with a catalog and customer scoped to this turn.
 
         Transcription and the graph share the same active catalog. The Telegram
@@ -141,7 +152,7 @@ class TelegramWorker:
         incoming = self._message_input(message)
         if incoming is None:
             debug_event("telegram.input.classified", kind="unsupported")
-            return "Send text or a voice message to schedule an appointment."
+            return "Send text or a voice message to schedule an appointment.", previous_checkpoint
         recording = incoming if isinstance(incoming, bytes) else None
         modality = "audio" if recording is not None else "text"
         debug_event("telegram.input.classified", kind=modality)
@@ -164,8 +175,7 @@ class TelegramWorker:
             recording=recording,
             display_name=identity.get("display_name"),
         )
-        self.checkpoint_completed = self.checkpoint_thread is not None
-        return result.text
+        return result.text, self.checkpoint_thread or previous_checkpoint
 
 
 def _today_in_timezone(timezone: str) -> str:

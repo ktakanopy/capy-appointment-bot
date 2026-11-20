@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -15,23 +14,13 @@ from app.observability import log_event
 
 EXCHANGE = "capy.telegram.v1"
 OUTGOING_QUEUE = f"{EXCHANGE}.outgoing"
+INCOMING_QUEUE = f"{EXCHANGE}.incoming.0"
 DEAD_LETTER_QUEUE = f"{EXCHANGE}.dead"
 HANDLER_ATTEMPTS = 5
 
 
-def incoming_queue(partition: int) -> str:
-    """Name a numbered queue in the fixed incoming partition layout."""
-    return f"{EXCHANGE}.incoming.{partition}"
-
-
-def chat_partition(bot_id: int, chat_id: int, partitions: int) -> int:
-    """Hash the bot and chat together so a chat always reaches the same queue."""
-    digest = hashlib.sha256(f"{bot_id}:{chat_id}".encode("ascii")).digest()
-    return int.from_bytes(digest[:8], "big") % partitions
-
-
 @contextmanager
-def broker_channel(url: str, partitions: int):
+def broker_channel(url: str):
     """Open a Pika channel and declare the shared durable routing layout."""
     parameters = pika.URLParameters(url)
     parameters.heartbeat = 30
@@ -51,19 +40,18 @@ def broker_channel(url: str, partitions: int):
         }
         for queue, arguments in (
             (OUTGOING_QUEUE, options),
-            *((incoming_queue(i), {**options, "x-single-active-consumer": True})
-              for i in range(partitions)),
+            (INCOMING_QUEUE, {**options, "x-single-active-consumer": True}),
         ):
             channel.queue_declare(queue, durable=True, arguments=arguments)
             channel.queue_bind(queue, EXCHANGE, queue)
         yield connection, channel
 
 
-def publish_wakeup(channel, row: dict, partitions: int) -> None:
+def publish_wakeup(channel, row: dict) -> None:
     """Publish only IDs and require a broker confirmation on a valid route."""
     if row["outgoing_id"] is None:
         bot_id, chat_id = row["bot_id"], row["chat_id"]
-        queue = incoming_queue(chat_partition(bot_id, chat_id, partitions))
+        queue = INCOMING_QUEUE
         ids = [bot_id, chat_id]
     else:
         queue, ids = OUTGOING_QUEUE, [row["outgoing_id"]]
@@ -74,15 +62,15 @@ def publish_wakeup(channel, row: dict, partitions: int) -> None:
     )
 
 
-def relay_publications(url, partitions, database_url, stop, logger, maintenance, role=None) -> None:
+def relay_publications(url, database_url, stop, logger, maintenance, role=None) -> None:
     """Forward due records and reconnect without discarding unconfirmed work."""
     while not stop.is_set():
         try:
-            with broker_channel(url, partitions) as (connection, channel):
+            with broker_channel(url) as (connection, channel):
                 channel.confirm_delivery()
                 while not stop.is_set():
                     maintenance()
-                    if not publish_due(database_url, lambda row: publish_wakeup(channel, row, partitions), role):
+                    if not publish_due(database_url, lambda row: publish_wakeup(channel, row), role):
                         connection.process_data_events(time_limit=0.05)
         except (pika.exceptions.AMQPError, *DATABASE_ERRORS, OSError) as error:
             log_event(logger, "telegram.relay.retry", failure_type=type(error).__name__)
@@ -134,11 +122,11 @@ def _handle_delivery(connection, channel, executor, delivery, handle, id_count, 
     channel.basic_reject(tag, requeue=retry)
 
 
-def consume_wakeups(url, partitions, queue, id_count, handle, stop, logger) -> None:
+def consume_wakeups(url, queue, id_count, handle, stop, logger) -> None:
     """Handle one delivery at a time while RabbitMQ owns consumer failover."""
     while not stop.is_set():
         try:
-            with broker_channel(url, partitions) as (connection, channel):
+            with broker_channel(url) as (connection, channel):
                 channel.basic_qos(prefetch_count=1)
                 with ThreadPoolExecutor(max_workers=1) as executor:
                     for delivery in channel.consume(queue, inactivity_timeout=0.5):

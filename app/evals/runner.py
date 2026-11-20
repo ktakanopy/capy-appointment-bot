@@ -11,6 +11,7 @@ from pathlib import Path
 from time import perf_counter
 
 from langgraph.checkpoint.memory import InMemorySaver
+from rapidfuzz.distance import Levenshtein
 
 from app.channels.audio_chunks import AudioChunker
 from app.config import load_settings
@@ -103,19 +104,10 @@ def _word_errors(reference, observed):
         re.findall(r"\w+", reference.casefold()),
         re.findall(r"\w+", observed.casefold()),
     )
-    previous_row = list(range(len(observed_words) + 1))
-    for reference_index, reference_word in enumerate(reference_words, 1):
-        current_row = [reference_index]
-        for observed_index, observed_word in enumerate(observed_words, 1):
-            current_row.append(
-                min(
-                    current_row[-1] + 1,
-                    previous_row[observed_index] + 1,
-                    previous_row[observed_index - 1] + (reference_word != observed_word),
-                )
-            )
-        previous_row = current_row
-    return {"word_errors": previous_row[-1], "reference_words": len(reference_words)}
+    return {
+        "word_errors": Levenshtein.distance(reference_words, observed_words),
+        "reference_words": len(reference_words),
+    }
 
 
 def run_scenarios(

@@ -5,6 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from app.channels.bots import TelegramBot
 from app.channels.telegram import TelegramApiError
 from app.channels.telegram_intake import private_message
 from app.graph.builder import build_graph
@@ -40,8 +41,7 @@ def test_failed_laya_produces_retry_and_no_booking_write(monkeypatch):
             "telegram_user_id": 101,
         },
     )
-    worker = TelegramWorker(runtime, None, repo)
-    worker.bot_id = 42
+    worker = TelegramWorker(runtime, None, repo, TelegramBot(42, "demo-studio", "TOKEN"), None)
     reply = reply_to_update(worker, text="cancel my booking")
     assert "No booking change" in reply
     assert actions.created == actions.canceled == actions.rescheduled == []
@@ -75,9 +75,7 @@ def worker():
     }
     api = Mock()
     api.get_file.return_value = b"recording"
-    worker = TelegramWorker(runtime, api, repository)
-    worker.bot_id = 42
-    return worker
+    return TelegramWorker(runtime, api, repository, TelegramBot(42, "demo-studio", "TOKEN"), "attempt")
 
 
 def claimed_update(**content):
@@ -99,8 +97,8 @@ def reply_to_update(worker, **content):
     row = claimed_update(**content)
     message = private_message(row)
     assert message is not None
-    identity = worker._ensure_customer(message["from"], row["telegram_user_id"])
-    return worker._reply_to_message(row, identity, message)
+    reply, _ = worker.handle_message(row, message, "previous")
+    return reply
 
 
 @pytest.mark.parametrize("text", ["/start", "/start@capy_bot", " /START "])
@@ -194,11 +192,20 @@ def test_audio_provider_failure_never_runs_partial_turn(worker):
     worker.runtime.workflow.handle_turn.side_effect = ProviderError(
         "failed_chunk"
     )
-    worker.checkpoint_thread = "private-attempt"
-    reply = reply_to_update(worker, voice={"file_id": "file-1"})
+    row = claimed_update(voice={"file_id": "file-1"})
+    reply, checkpoint = worker.handle_message(row, private_message(row), "previous")
     worker.runtime.workflow.handle_turn.assert_called_once()
-    assert not worker.checkpoint_completed
+    assert checkpoint == "previous"
     assert "No booking change" in reply
+
+
+def test_checkpoint_is_promoted_only_after_a_completed_turn(worker):
+    row = claimed_update(text="/start")
+    _, checkpoint = worker.handle_message(row, private_message(row), "previous")
+    assert checkpoint == "previous"
+    row = claimed_update(text="Book Massage tomorrow")
+    _, checkpoint = worker.handle_message(row, private_message(row), "previous")
+    assert checkpoint == "attempt"
 
 
 @pytest.mark.parametrize("contact_id, saves", [(101, True), (999, False)])

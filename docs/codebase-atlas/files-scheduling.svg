@@ -36,21 +36,21 @@
       <text x="741" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/booking.py</text>
     </a>
     <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Apply booking changes and retry checks in PostgreSQL transactions.</text>
-    <a href="../../app/booking.py#L150">
-      <title>BookingService.create · app/booking.py:150</title>
-      <text x="741" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingService.create  /  line 150</text>
+    <a href="../../app/booking.py#L149">
+      <title>BookingService.create · app/booking.py:149</title>
+      <text x="741" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingService.create  /  line 149</text>
     </a>
     <text x="1273" y="198" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="../../app/booking.py#L299">
-      <title>BookingService.cancel · app/booking.py:299</title>
-      <text x="741" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingService.cancel  /  line 299</text>
+    <a href="../../app/booking.py#L285">
+      <title>BookingService.cancel · app/booking.py:285</title>
+      <text x="741" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingService.cancel  /  line 285</text>
     </a>
-    <a href="../../app/booking.py#L403">
-      <title>BookingService.reschedule · app/booking.py:403</title>
-      <text x="741" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingService.reschedule  /  line 403</text>
+    <a href="../../app/booking.py#L389">
+      <title>BookingService.reschedule · app/booking.py:389</title>
+      <text x="741" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingService.reschedule  /  line 389</text>
     </a>
-    <a href="../../app/booking.py#L150">
-      <title>BookingService.create · app/booking.py:150</title>
+    <a href="../../app/booking.py#L149">
+      <title>BookingService.create · app/booking.py:149</title>
       <text x="741" y="258" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingService.create</text>
     </a>
     <text x="1107" y="258" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Owns appointment writes and the retry</text>
@@ -64,17 +64,17 @@
     </a>
     <text x="56" y="381" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Compute available appointments and revalidate proposed slots inside a write</text>
     <text x="56" y="399" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transaction.</text>
-    <a href="../../app/scheduling.py#L188">
-      <title>AvailabilityService.search · app/scheduling.py:188</title>
-      <text x="56" y="424" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">AvailabilityService.search  /  line 188</text>
+    <a href="../../app/scheduling.py#L189">
+      <title>AvailabilityService.search · app/scheduling.py:189</title>
+      <text x="56" y="424" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">AvailabilityService.search  /  line 189</text>
     </a>
     <text x="588" y="424" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
     <a href="../../app/scheduling.py#L43">
       <title>validate_slot_in_transaction · app/scheduling.py:43</title>
       <text x="56" y="444" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">validate_slot_in_transaction  /  line 43</text>
     </a>
-    <a href="../../app/scheduling.py#L188">
-      <title>AvailabilityService.search · app/scheduling.py:188</title>
+    <a href="../../app/scheduling.py#L189">
+      <title>AvailabilityService.search · app/scheduling.py:189</title>
       <text x="56" y="464" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AvailabilityService.search</text>
     </a>
     <text x="422" y="464" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Computes open slots against business</text>
@@ -88,18 +88,18 @@
     </a>
     <text x="741" y="381" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Read business, catalog, schedule and booking data and map rows to domain</text>
     <text x="741" y="399" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contracts.</text>
-    <a href="../../app/repositories.py#L69">
-      <title>PostgresRepository.catalog · app/repositories.py:69</title>
-      <text x="741" y="424" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">PostgresRepository.catalog  /  line 69</text>
+    <a href="../../app/repositories.py#L67">
+      <title>PostgresRepository.catalog · app/repositories.py:67</title>
+      <text x="741" y="424" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">PostgresRepository.catalog  /  line 67</text>
     </a>
     <text x="1273" y="424" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="../../app/repositories.py#L106">
-      <title>PostgresRepository.scheduling_data · app/repositories.py:106</title>
-      <text x="741" y="444" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">PostgresRepository.scheduling_data  /  line 106</text>
+    <a href="../../app/repositories.py#L104">
+      <title>PostgresRepository.calendar · app/repositories.py:104</title>
+      <text x="741" y="444" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">PostgresRepository.calendar  /  line 104</text>
     </a>
-    <a href="../../app/repositories.py#L106">
-      <title>PostgresRepository.scheduling_data · app/repositories.py:106</title>
-      <text x="741" y="464" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">PostgresRepository.scheduling_data</text>
+    <a href="../../app/repositories.py#L104">
+      <title>PostgresRepository.calendar · app/repositories.py:104</title>
+      <text x="741" y="464" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">PostgresRepository.calendar</text>
     </a>
     <text x="1107" y="464" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Data access facade for scheduling and</text>
     <text x="1107" y="479" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">owner reads.</text>
@@ -128,9 +128,9 @@
       <text x="741" y="564" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/owner.py</text>
     </a>
     <text x="741" y="587" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Query the studio owner's booking agenda.</text>
-    <a href="../../app/owner.py#L25">
-      <title>owner_agenda · app/owner.py:25</title>
-      <text x="741" y="612" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">owner_agenda  /  line 25</text>
+    <a href="../../app/owner.py#L19">
+      <title>owner_agenda · app/owner.py:19</title>
+      <text x="741" y="612" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">owner_agenda  /  line 19</text>
     </a>
     <text x="1273" y="612" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
@@ -141,9 +141,9 @@
       <text x="56" y="712" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/cli.py</text>
     </a>
     <text x="56" y="735" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Print the studio owner's upcoming appointments in local time.</text>
-    <a href="../../app/cli.py#L28">
-      <title>main · app/cli.py:28</title>
-      <text x="56" y="760" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 28</text>
+    <a href="../../app/cli.py#L31">
+      <title>main · app/cli.py:31</title>
+      <text x="56" y="760" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 31</text>
     </a>
     <text x="588" y="760" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>

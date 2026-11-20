@@ -1,6 +1,5 @@
 x-telegram-broker: &telegram-broker
   TELEGRAM_AMQP_URL: ${TELEGRAM_AMQP_URL:-amqp://capy:capy@telegram-rabbitmq:5672/%2F}
-  TELEGRAM_PARTITIONS: ${TELEGRAM_PARTITIONS:-1}
 
 services:
   telegram-rabbitmq:

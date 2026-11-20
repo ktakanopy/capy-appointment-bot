@@ -86,13 +86,6 @@ class Booking(Contract):
     updated_at: datetime
 
 
-class AuditEvent(Contract):
-    id: str
-    business_id: str
-    booking_id: str | None = None
-    action: str
-    occurred_at: datetime
-    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class AvailabilitySlot(Contract):
@@ -140,50 +133,8 @@ class AvailabilitySearchRequest(Contract):
         return self
 
 
-class AvailabilityResponse(Contract):
-    slots: list[AvailabilitySlot]
 
 
-class CustomerInput(Contract):
-    full_name: str = Field(min_length=2, max_length=120)
-    phone: str | None = Field(default=None, min_length=7, max_length=24)
-    email: str | None = None
-
-    @field_validator("phone")
-    @classmethod
-    def validate_phone(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        if any(not (char.isdigit() or char in "+(). -") for char in value):
-            raise ValueError(
-                "phone may contain digits and standard phone punctuation only"
-            )
-        normalized = "".join(char for char in value if char.isdigit() or char == "+")
-        if normalized.count("+") > 1 or (
-            "+" in normalized and not normalized.startswith("+")
-        ):
-            raise ValueError("phone must be an international phone number")
-        digits = normalized.lstrip("+")
-        if not digits.isdigit() or not 7 <= len(digits) <= 20:
-            raise ValueError("phone must contain 7 to 20 digits")
-        return normalized
-
-    @field_validator("full_name")
-    @classmethod
-    def normalize_name(cls, value: str) -> str:
-        value = " ".join(value.split())
-        if not any(char.isalpha() for char in value):
-            raise ValueError("full_name must contain letters")
-        return value
-
-    @field_validator("email")
-    @classmethod
-    def validate_email(cls, value: str | None) -> str | None:
-        if value is not None and (
-            "@" not in value or value.startswith("@") or value.endswith("@")
-        ):
-            raise ValueError("email must be a valid address")
-        return value.lower() if value else None
 
 
 class BookingCreateRequest(Contract):
@@ -222,13 +173,9 @@ class BookingSummary(Contract):
     outcome: str = "created"
 
 
-class OwnerBooking(Booking):
-    pass
-
-
 class OwnerBookingsResponse(Contract):
     business: Business
-    bookings: list[OwnerBooking]
+    bookings: list[Booking]
 
 
 class HealthResponse(Contract):

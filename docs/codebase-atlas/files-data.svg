@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1630" width="1430" height="1630" role="img" aria-label="Source reference · Domain contracts and PostgreSQL rows">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1590" width="1430" height="1590" role="img" aria-label="Source reference · Domain contracts and PostgreSQL rows">
   <title>Source reference · Domain contracts and PostgreSQL rows</title>
   <desc>Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.</desc>
-  <rect x="0" y="0" width="1430" height="1630" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <rect x="0" y="0" width="1430" height="1590" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Domain contracts and PostgreSQL rows</text>
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.</text>
   <g id="app-models.py" data-source="app/models.py">
-    <rect x="40" y="123" width="665" height="908" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="40" y="123" width="665" height="868" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/models.py">
       <title>app/models.py</title>
       <text x="56" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/models.py</text>
@@ -21,9 +21,9 @@
       <title>BookingCreateRequest · app/models.py:189</title>
       <text x="56" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingCreateRequest  /  line 189</text>
     </a>
-    <a href="../../app/models.py#L240">
-      <title>DomainError · app/models.py:240</title>
-      <text x="56" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">DomainError  /  line 240</text>
+    <a href="../../app/models.py#L236">
+      <title>DomainError · app/models.py:236</title>
+      <text x="56" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">DomainError  /  line 236</text>
     </a>
     <a href="../../app/models.py#L10">
       <title>Contract · app/models.py:10</title>
@@ -129,28 +129,22 @@
     </a>
     <text x="422" y="858" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Saved appointment and write outcome.</text>
     <a href="../../app/models.py#L225">
-      <title>OwnerBooking · app/models.py:225</title>
-      <text x="56" y="878" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">OwnerBooking</text>
+      <title>OwnerBookingsResponse · app/models.py:225</title>
+      <text x="56" y="878" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">OwnerBookingsResponse</text>
     </a>
-    <text x="422" y="878" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Booking enriched for display on the</text>
-    <text x="422" y="893" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">owner agenda.</text>
-    <a href="../../app/models.py#L229">
-      <title>OwnerBookingsResponse · app/models.py:229</title>
-      <text x="56" y="918" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">OwnerBookingsResponse</text>
+    <text x="422" y="878" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Agenda response for a business and</text>
+    <text x="422" y="893" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">date.</text>
+    <a href="../../app/models.py#L230">
+      <title>HealthResponse · app/models.py:230</title>
+      <text x="56" y="918" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">HealthResponse</text>
     </a>
-    <text x="422" y="918" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Agenda response for a business and</text>
-    <text x="422" y="933" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">date.</text>
-    <a href="../../app/models.py#L234">
-      <title>HealthResponse · app/models.py:234</title>
-      <text x="56" y="958" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">HealthResponse</text>
+    <text x="422" y="918" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Describes API and dependency readiness.</text>
+    <a href="../../app/models.py#L236">
+      <title>DomainError · app/models.py:236</title>
+      <text x="56" y="938" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">DomainError</text>
     </a>
-    <text x="422" y="958" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Describes API and dependency readiness.</text>
-    <a href="../../app/models.py#L240">
-      <title>DomainError · app/models.py:240</title>
-      <text x="56" y="978" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">DomainError</text>
-    </a>
-    <text x="422" y="978" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries a handled business rule</text>
-    <text x="422" y="993" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">violation.</text>
+    <text x="422" y="938" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries a handled business rule</text>
+    <text x="422" y="953" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">violation.</text>
   </g>
   <g id="app-db_models.py" data-source="app/db_models.py">
     <rect x="725" y="123" width="665" height="728" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
@@ -280,112 +274,112 @@
     <text x="1107" y="813" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">wake-ups.</text>
   </g>
   <g id="alembic-env.py" data-source="alembic/env.py">
-    <rect x="40" y="1051" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="40" y="1011" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../alembic/env.py">
       <title>alembic/env.py</title>
-      <text x="56" y="1078" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/env.py</text>
+      <text x="56" y="1038" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/env.py</text>
     </a>
-    <text x="56" y="1101" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run Alembic against the application's SQLAlchemy metadata.</text>
+    <text x="56" y="1061" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run Alembic against the application's SQLAlchemy metadata.</text>
     <a href="../../alembic/env.py#L28">
       <title>run_migrations_online · alembic/env.py:28</title>
-      <text x="56" y="1126" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_migrations_online  /  line 28</text>
+      <text x="56" y="1086" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_migrations_online  /  line 28</text>
     </a>
-    <text x="588" y="1126" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="1086" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
     <a href="../../alembic/env.py#L22">
       <title>run_migrations_offline · alembic/env.py:22</title>
-      <text x="56" y="1146" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_migrations_offline  /  line 22</text>
+      <text x="56" y="1106" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_migrations_offline  /  line 22</text>
     </a>
   </g>
   <g id="alembic-versions-0001_general_scheduling.py" data-source="alembic/versions/0001_general_scheduling.py">
-    <rect x="725" y="1051" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="725" y="1011" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../alembic/versions/0001_general_scheduling.py">
       <title>alembic/versions/0001_general_scheduling.py</title>
-      <text x="741" y="1078" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0001_general_scheduling.py</text>
+      <text x="741" y="1038" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0001_general_scheduling.py</text>
     </a>
-    <text x="741" y="1101" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Establish the original general scheduling schema.</text>
+    <text x="741" y="1061" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Establish the original general scheduling schema.</text>
     <a href="../../alembic/versions/0001_general_scheduling.py#L16">
       <title>upgrade · alembic/versions/0001_general_scheduling.py:16</title>
-      <text x="741" y="1126" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 16</text>
+      <text x="741" y="1086" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 16</text>
     </a>
-    <text x="1273" y="1126" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1086" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="alembic-versions-0002_telegram_channel.py" data-source="alembic/versions/0002_telegram_channel.py">
-    <rect x="40" y="1199" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="40" y="1159" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../alembic/versions/0002_telegram_channel.py">
       <title>alembic/versions/0002_telegram_channel.py</title>
-      <text x="56" y="1226" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0002_telegram_channel.py</text>
+      <text x="56" y="1186" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0002_telegram_channel.py</text>
     </a>
-    <text x="56" y="1249" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Add initial Telegram update and sender identity storage.</text>
+    <text x="56" y="1209" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Add initial Telegram update and sender identity storage.</text>
     <a href="../../alembic/versions/0002_telegram_channel.py#L16">
       <title>upgrade · alembic/versions/0002_telegram_channel.py:16</title>
-      <text x="56" y="1274" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 16</text>
+      <text x="56" y="1234" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 16</text>
     </a>
-    <text x="588" y="1274" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="1234" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="alembic-versions-0003_telegram_ownership.py" data-source="alembic/versions/0003_telegram_ownership.py">
-    <rect x="725" y="1199" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="725" y="1159" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../alembic/versions/0003_telegram_ownership.py">
       <title>alembic/versions/0003_telegram_ownership.py</title>
-      <text x="741" y="1226" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0003_telegram_ownership.py</text>
+      <text x="741" y="1186" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0003_telegram_ownership.py</text>
     </a>
-    <text x="741" y="1249" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Scope Telegram ownership and connect bookings to customers.</text>
+    <text x="741" y="1209" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Scope Telegram ownership and connect bookings to customers.</text>
     <a href="../../alembic/versions/0003_telegram_ownership.py#L14">
       <title>upgrade · alembic/versions/0003_telegram_ownership.py:14</title>
-      <text x="741" y="1274" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 14</text>
+      <text x="741" y="1234" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 14</text>
     </a>
-    <text x="1273" y="1274" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1234" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="alembic-versions-0004_remove_audit_events.py" data-source="alembic/versions/0004_remove_audit_events.py">
-    <rect x="40" y="1327" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="40" y="1287" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../alembic/versions/0004_remove_audit_events.py">
       <title>alembic/versions/0004_remove_audit_events.py</title>
-      <text x="56" y="1354" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0004_remove_audit_events.py</text>
+      <text x="56" y="1314" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0004_remove_audit_events.py</text>
     </a>
-    <text x="56" y="1377" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Remove the audit events table.</text>
+    <text x="56" y="1337" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Remove the audit events table.</text>
     <a href="../../alembic/versions/0004_remove_audit_events.py#L11">
       <title>upgrade · alembic/versions/0004_remove_audit_events.py:11</title>
-      <text x="56" y="1402" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
+      <text x="56" y="1362" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
     </a>
-    <text x="588" y="1402" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="1362" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="alembic-versions-0005_telegram_jobs.py" data-source="alembic/versions/0005_telegram_jobs.py">
-    <rect x="725" y="1327" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="725" y="1287" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../alembic/versions/0005_telegram_jobs.py">
       <title>alembic/versions/0005_telegram_jobs.py</title>
-      <text x="741" y="1354" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0005_telegram_jobs.py</text>
+      <text x="741" y="1314" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0005_telegram_jobs.py</text>
     </a>
-    <text x="741" y="1377" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Add hosted Telegram turn and delivery infrastructure.</text>
+    <text x="741" y="1337" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Add hosted Telegram turn and delivery infrastructure.</text>
     <a href="../../alembic/versions/0005_telegram_jobs.py#L11">
       <title>upgrade · alembic/versions/0005_telegram_jobs.py:11</title>
-      <text x="741" y="1402" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
+      <text x="741" y="1362" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
     </a>
-    <text x="1273" y="1402" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1362" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="alembic-versions-0006_telegram_publications.py" data-source="alembic/versions/0006_telegram_publications.py">
-    <rect x="40" y="1455" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="40" y="1415" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../alembic/versions/0006_telegram_publications.py">
       <title>alembic/versions/0006_telegram_publications.py</title>
-      <text x="56" y="1482" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0006_telegram_publications.py</text>
+      <text x="56" y="1442" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0006_telegram_publications.py</text>
     </a>
-    <text x="56" y="1505" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Add durable publication work for the RabbitMQ relay.</text>
+    <text x="56" y="1465" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Add durable publication work for the RabbitMQ relay.</text>
     <a href="../../alembic/versions/0006_telegram_publications.py#L11">
       <title>upgrade · alembic/versions/0006_telegram_publications.py:11</title>
-      <text x="56" y="1530" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
+      <text x="56" y="1490" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
     </a>
-    <text x="588" y="1530" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="1490" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="alembic-versions-0007_massage_studio.py" data-source="alembic/versions/0007_massage_studio.py">
-    <rect x="725" y="1455" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="725" y="1415" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../alembic/versions/0007_massage_studio.py">
       <title>alembic/versions/0007_massage_studio.py</title>
-      <text x="741" y="1482" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0007_massage_studio.py</text>
+      <text x="741" y="1442" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0007_massage_studio.py</text>
     </a>
-    <text x="741" y="1505" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reshape a fresh database for the massage studio catalog and reply-only</text>
-    <text x="741" y="1523" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram delivery.</text>
+    <text x="741" y="1465" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reshape a fresh database for the massage studio catalog and reply-only</text>
+    <text x="741" y="1483" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram delivery.</text>
     <a href="../../alembic/versions/0007_massage_studio.py#L11">
       <title>upgrade · alembic/versions/0007_massage_studio.py:11</title>
-      <text x="741" y="1548" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
+      <text x="741" y="1508" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
     </a>
-    <text x="1273" y="1548" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1508" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
 </svg>

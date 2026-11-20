@@ -3,14 +3,17 @@
 from zoneinfo import ZoneInfo
 
 from app.config import load_settings
+from app.models import DomainError
 from app.observability import debug_event
 from app.owner import owner_agenda
 from app.repositories import PostgresRepository
 
 
 def _print_owner(repository: PostgresRepository, business_id: str) -> None:
-    agenda = owner_agenda(repository, business_id)
-    catalog = repository.catalog(agenda.business.id)
+    catalog = repository.catalog(business_id)
+    if catalog is None:
+        raise DomainError("business_not_found", "Business not found.", 404)
+    agenda = owner_agenda(repository, catalog)
     service_names = {service.id: service.name for service in catalog.services}
     zone = ZoneInfo(agenda.business.timezone)
     print(f"\nAgenda: {agenda.business.name} ({agenda.business.timezone})")

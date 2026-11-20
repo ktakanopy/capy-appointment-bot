@@ -6,7 +6,7 @@ This document separates the current code path from a hypothetical workload estim
 
 ## Current runtime in the repository
 
-The code currently receives Telegram updates through an authenticated webhook. For supported private messages, PostgreSQL records the update and its publication in one transaction; unsupported events receive a completed receipt without a worker notification. A relay publishes identifier-only wake-ups to RabbitMQ. Partitioned workers claim chats from PostgreSQL, run the conversation, and save replies to the PostgreSQL outbox. The relay and a separate sender deliver replies. The reminder scheduler writes due work to PostgreSQL; Telegram reminders use the same outbox when enabled, while the local demo can record reminders in the owner inbox.
+The code receives Telegram updates through an authenticated webhook. For supported private messages, PostgreSQL records the update and its publication in one transaction; unsupported events receive a completed receipt without a worker notification. A relay publishes identifier-only wake-ups to RabbitMQ. Partitioned workers claim chats from PostgreSQL, run the conversation, and save replies to the PostgreSQL outbox. The relay and a separate sender deliver replies.
 
 ```mermaid
 flowchart LR
@@ -18,7 +18,6 @@ flowchart LR
     Worker <--> Redis[(Redis checkpoints)]
     Worker <--> Models[Gemma understanding and Laya routing]
     Worker -->|booking and reply outbox| PG
-    Reminder[Reminder scheduler] -->|due reminder work| PG
     PG -->|outbox publication| Relay
     Relay -->|outgoing record ID| Outgoing[RabbitMQ outgoing queue]
     Outgoing --> Sender[Telegram sender]
@@ -62,7 +61,7 @@ This is a workload estimate, not a worker count. Per-chat ordering, per-business
 - **Partitions:** RabbitMQ routes each chat to a partition. Add capacity only after measuring queue age and processing time. Change the partition count with the drain procedure in the [production guide](production.md#capacity-checks).
 - **Model throughput:** Adding workers can make the inference queue longer if Gemma or Laya is already saturated. Measure both model wait time and execution time.
 - **Database connections and locks:** Worker replicas share PostgreSQL. Budget each process's connection pool and watch lock waits on booking and claim transactions.
-- **Telegram delivery:** More sender processes do not increase a bot's allowed send rate. Account for replies, reminders, retries, and rate-limit responses.
+- **Telegram delivery:** More sender processes do not increase a bot's allowed send rate. Account for replies, retries, and rate-limit responses.
 - **Audio:** Track recording duration and decoded memory, not only the number of queued recordings. Keep audio and text latency separate in reports.
 
 ## What the current evidence shows

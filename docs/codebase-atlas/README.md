@@ -17,6 +17,8 @@ Drag the canvas to pan, scroll to zoom, or click the minimap to jump. Selecting 
 
 ## Find a file or class
 
+Use **File connections** to explore which cataloged files import a Python file and what that file imports. Click a neighbor to change the selected file, or click an import’s line number to open its source. The graph is generated from static import statements. The walkthrough shows runtime calls and handoffs.
+
 The reference covers the Python modules and top-level classes under `app/`, plus the Alembic environment and migrations. Each file highlights its main reading entry. Class rows point to the method that best explains its role or to the declaration for data classes, protocols and types.
 
 - [Telegram and workers](files-telegram.svg)

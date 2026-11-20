@@ -6,7 +6,10 @@ from uuid import uuid4
 
 import psycopg
 import pytest
+from sqlalchemy import update
 
+import app.booking as booking_module
+from app.db_models import ServiceRow
 from app.models import (
     AvailabilitySearchRequest,
     BookingCreateRequest,
@@ -99,6 +102,51 @@ def test_duration_fits_hours_and_services_share_one_calendar(scheduling_db):
         created.booking.business_id, created.booking.customer.id, created.booking.id,
     )
     assert saved.ends_at - saved.starts_at == timedelta(minutes=30)
+
+
+def test_booking_writes_preserve_the_validated_buffer_interval(scheduling_db, monkeypatch):
+    with connect(scheduling_db["url"]) as connection:
+        connection.execute(
+            "UPDATE services SET buffer_before_minutes=15, buffer_after_minutes=20 "
+            "WHERE id='service-demo'"
+        )
+    validate = booking_module.validate_slot_in_transaction
+    changes = iter(((30, 45), (0, 0)))
+
+    def change_buffers_after_validation(session, **kwargs):
+        slot = validate(session, **kwargs)
+        before, after = next(changes)
+        session.execute(update(ServiceRow).where(ServiceRow.id == "service-demo").values(
+            buffer_before_minutes=before, buffer_after_minutes=after
+        ))
+        return slot
+
+    monkeypatch.setattr(booking_module, "validate_slot_in_transaction", change_buffers_after_validation)
+    first_slot = offered_slots(scheduling_db)[0]
+    created = create_booking(scheduling_db, first_slot, key="buffer-create", phone="+5511999910010")
+    with connect(scheduling_db["url"]) as connection:
+        saved = connection.execute(
+            "SELECT occupied_from, occupied_until FROM bookings WHERE id=%s", (created.booking.id,)
+        ).fetchone()
+    assert saved["occupied_from"] == first_slot.starts_at - timedelta(minutes=15)
+    assert saved["occupied_until"] == first_slot.ends_at + timedelta(minutes=20)
+
+    next_slot = offered_slots(scheduling_db)[-1]
+    request = BookingRescheduleRequest(
+        business_id=next_slot.business_id, service_id=next_slot.service_id,
+        professional_id=next_slot.professional_id, slot_id=next_slot.slot_id,
+        starts_at=next_slot.starts_at,
+    )
+    scheduling_db["bookings"].reschedule(
+        created.booking.business_id, created.booking.customer.id, created.booking.id,
+        request, "buffer-move",
+    )
+    with connect(scheduling_db["url"]) as connection:
+        saved = connection.execute(
+            "SELECT occupied_from, occupied_until FROM bookings WHERE id=%s", (created.booking.id,)
+        ).fetchone()
+    assert saved["occupied_from"] == next_slot.starts_at - timedelta(minutes=30)
+    assert saved["occupied_until"] == next_slot.ends_at + timedelta(minutes=45)
 
 
 def test_create_idempotency_and_postgres_overlap_constraint(scheduling_db):

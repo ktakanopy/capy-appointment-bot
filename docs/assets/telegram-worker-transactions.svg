@@ -17,7 +17,7 @@
   <text class="body" x="30" y="74">Each successful stage records a separate result.</text>
   <rect class="panel" x="30" y="91" width="660" height="65" rx="13"/>
   <text class="code-title" x="52" y="118">BookingService.create()</text>
-  <text class="body" x="52" y="143">PostgreSQL stores the booking and reminder.</text>
+  <text class="body" x="52" y="143">PostgreSQL stores the booking and retry result.</text>
   <path class="arrow" d="M68 157V201m-6-7 6 7 6-7"/>
   <text class="label" x="91" y="184">T1 · The graph prepares the reply</text>
   <rect class="green" x="30" y="202" width="660" height="78" rx="13"/>

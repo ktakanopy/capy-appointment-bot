@@ -18,15 +18,15 @@ from redis.exceptions import RedisError
 from sqlalchemy import func, select, text
 
 from app.booking import BookingService
-from app.channels.bots import BotRegistry, TelegramBot
+from app.channels.bots import BotRegistry
 from app.channels.telegram import TelegramBotApi
-from app.channels.telegram_broker import OUTGOING_QUEUE, consume_wakeups, incoming_queue, relay_publications
-from app.channels.telegram_delivery import TelegramDelivery, TelegramOutbox, deliver_claimed, send_next
+from app.channels.telegram_broker import INCOMING_QUEUE, OUTGOING_QUEUE, consume_wakeups, relay_publications
+from app.channels.telegram_delivery import TelegramOutbox, deliver_claimed
 from app.channels.telegram_intake import private_message
-from app.channels.telegram_publications import backfill_publications, schedule_publication
+from app.channels.telegram_publications import backfill_publications
 from app.channels.telegram_repository import TelegramRepository
 from app.channels.telegram_turns import (
-    LEASE_SECONDS, REFRESH_OFFER, UNKNOWN_OUTCOME, ClaimLost, TelegramTurns, TurnClaim,
+    LEASE_SECONDS, REFRESH_OFFER, UNKNOWN_OUTCOME, TelegramTurns, TurnClaim,
 )
 from app.config import load_settings
 from app.database import DATABASE_ERRORS, database_session
@@ -36,84 +36,37 @@ from app.runtime import RuntimeContext, close_runtime, create_runtime
 from app.telegram_worker import TelegramWorker, _conversation_id
 
 
-def reconcile_replies(database_url: str, bot: TelegramBot) -> None:
-    """Copy legacy ready replies once. The caller holds the legacy worker lock."""
-    with database_session(database_url) as session:
-        outgoing = session.execute(
-            text("""WITH queued AS (
-                   INSERT INTO telegram_outbox
-                       (business_id,bot_id,chat_id,update_id,message,reply_markup,attempts,ready_at)
-                   SELECT business_id,bot_id,chat_id,update_id,reply_text,reply_markup,
-                          greatest(attempts-1,0),next_attempt_at
-                   FROM telegram_updates WHERE bot_id=:bot_id AND business_id=:business_id
-                     AND status='reply_ready' AND chat_id>0 AND chat_id=telegram_user_id
-                     AND reply_text IS NOT NULL
-                   ORDER BY received_at, update_id
-                   ON CONFLICT (bot_id,update_id) DO NOTHING RETURNING id,ready_at
-               ), finished AS (
-                   UPDATE telegram_updates SET status='delivered', payload=NULL,
-                       reply_text=NULL,reply_markup=NULL,expires_at=now()+interval '30 days'
-                   WHERE bot_id=:bot_id AND business_id=:business_id AND status='reply_ready'
-               )
-               SELECT id,ready_at FROM queued"""),
-            {"bot_id": bot.bot_id, "business_id": bot.business_id},
-        ).mappings().all()
-        for row in outgoing:
-            schedule_publication(session, outgoing_id=row["id"], due_at=row["ready_at"])
-
-
 def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
-    """Tie work and log events to the same Telegram update."""
     with debug_turn(claim.bot.bot_id, claim.row["update_id"]):
         debug_event("telegram.turn.claimed", attempt=claim.generation)
-        _process_turn(turns, claim, runtime)
+        started = time.monotonic()
+        message = private_message(claim.row)
+        if message is None:
+            debug_event("telegram.turn.skipped", reason="unsupported_message")
+            turns.finish(claim, None, claim.checkpoint_thread)
+            return
+        if claim.interrupted:
+            debug_event("telegram.turn.skipped", reason="interrupted_attempt")
+            turns.finish(claim, UNKNOWN_OUTCOME, None)
+            return
+        if claim.late:
+            debug_event("telegram.turn.skipped", reason="out_of_order")
+            turns.finish(claim, REFRESH_OFFER, claim.checkpoint_thread)
+            return
 
-
-def _process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
-    """Handle skipped turns before starting model work and lease renewal.
-
-    An interrupted attempt may have committed a booking. Ask the customer to
-    check their appointments before retrying the request.
-    """
-    started = time.monotonic()
-    message = private_message(claim.row)
-    if message is None:
-        debug_event("telegram.turn.skipped", reason="unsupported_message")
-        turns.finish(claim, None, claim.checkpoint_thread)
-        return
-    if claim.interrupted:
-        debug_event("telegram.turn.skipped", reason="interrupted_attempt")
-        turns.finish(claim, UNKNOWN_OUTCOME, None)
-        return
-    if claim.late:
-        debug_event("telegram.turn.skipped", reason="out_of_order")
-        turns.finish(claim, REFRESH_OFFER, claim.checkpoint_thread)
-        return
-
-    with _keep_turn_claim_alive(turns, claim):
-        _process_private_message(turns, claim, runtime, message, started)
-
-
-def _process_private_message(
-    turns: TelegramTurns, claim: TurnClaim, runtime: RuntimeContext, message: dict, started: float
-) -> None:
-    """Resolve the sender for booking ownership and publish the reply with completed state."""
-    worker = _prepare_turn_worker(turns, claim, runtime)
-    if worker is None or not _restore_turn_checkpoint(turns, claim, worker):
-        return
-
-    identity = worker._ensure_customer(message["from"], claim.row["telegram_user_id"])
-    debug_event("telegram.turn.customer_resolved")
-    reply = worker._reply_to_message(claim.row, identity, message)
-    checkpoint_to_publish = (
-        worker.checkpoint_thread if worker.checkpoint_completed else claim.checkpoint_thread
-    )
-    turns.finish(claim, reply, checkpoint_to_publish)
-    log_event(
-        runtime.logger, "telegram.turn.finished", bot_id=claim.bot.bot_id,
-        queue_ms=round((time.time() - claim.row["received_at"].timestamp()) * 1000),
-        processing_ms=round((time.monotonic() - started) * 1000),
-    )
+        with _keep_turn_claim_alive(turns, claim):
+            worker = _prepare_turn_worker(turns, claim, runtime)
+            if worker is None or not _restore_turn_checkpoint(turns, claim, worker):
+                return
+            reply, checkpoint = worker.handle_message(
+                claim.row, message, claim.checkpoint_thread
+            )
+            turns.finish(claim, reply, checkpoint)
+            log_event(
+                runtime.logger, "telegram.turn.finished", bot_id=claim.bot.bot_id,
+                queue_ms=round((time.time() - claim.row["received_at"].timestamp()) * 1000),
+                processing_ms=round((time.monotonic() - started) * 1000),
+            )
 
 
 def _prepare_turn_worker(
@@ -148,14 +101,10 @@ def _prepare_turn_worker(
         _defer_turn(turns, claim, runtime, "bot_credentials")
         return None
 
-    worker = TelegramWorker(scoped_runtime, api, repository)
-    # Use the registered business for customer and catalog lookups.
-    worker.bot_id = claim.bot.bot_id
-    worker.business_id = claim.bot.business_id
     conversation_id = _conversation_id(claim.bot.business_id, claim.bot.bot_id, claim.row["chat_id"])
     # Give every attempt a unique Redis thread, even for retries of the same message.
-    worker.checkpoint_thread = f"{conversation_id}:attempt:{claim.generation}:{uuid.uuid4().hex}"
-    return worker
+    checkpoint = f"{conversation_id}:attempt:{claim.generation}:{uuid.uuid4().hex}"
+    return TelegramWorker(scoped_runtime, api, repository, claim.bot, checkpoint)
 
 
 def _restore_turn_checkpoint(turns: TelegramTurns, claim: TurnClaim, worker: TelegramWorker) -> bool:
@@ -234,70 +183,34 @@ def _maintain_deliveries(database_url: str):
 
 
 def run_broker_worker(settings, args, stop: Event, logger) -> None:
-    """Run a relay, an incoming partition consumer, or an outgoing consumer."""
+    """Run a relay, an incoming consumer, or an outgoing consumer."""
     database_url = settings.database_url
     broker_url = os.environ["TELEGRAM_AMQP_URL"]
-    partitions = args.partitions
     if args.role == "relay":
-        relay_publications(broker_url, partitions, database_url, stop, logger,
+        relay_publications(broker_url, database_url, stop, logger,
                            _maintain_deliveries(database_url), args.publication_role)
         return
     if args.role == "send":
-        outbox, delivery = TelegramOutbox(database_url), TelegramDelivery()
+        outbox = TelegramOutbox(database_url)
 
         def send_outgoing(outgoing_id: int) -> None:
             """Claim by ID so RabbitMQ selects work and PostgreSQL enforces send policy."""
-            deliver_claimed(outbox, delivery, logger, outbox.claim_by_id(outgoing_id))
+            deliver_claimed(outbox, logger, outbox.claim_by_id(outgoing_id))
 
-        consume_wakeups(broker_url, partitions, OUTGOING_QUEUE, 1, send_outgoing, stop, logger)
+        consume_wakeups(broker_url, OUTGOING_QUEUE, 1, send_outgoing, stop, logger)
         return
     turns = TelegramTurns(database_url)
     runtime = create_runtime(settings)
 
     def process_chat_turn(bot_id: int, chat_id: int) -> None:
         """Run the head turn for this chat or leave its deferred wake-up in PostgreSQL."""
-        claim = turns.claim_chat(bot_id, chat_id, per_business=args.per_business)
+        claim = turns.claim_chat(bot_id, chat_id)
         if claim:
             process_turn(turns, claim, runtime)
 
     try:
-        consume_wakeups(broker_url, partitions, incoming_queue(args.partition), 2,
+        consume_wakeups(broker_url, INCOMING_QUEUE, 2,
                         process_chat_turn, stop, logger)
-    finally:
-        close_runtime(runtime)
-
-
-def run_worker(settings, args, stop: Event, logger) -> None:
-    """Run database scheduling and the PostgreSQL rollback workers."""
-    turns = TelegramTurns(settings.database_url)
-    outbox = TelegramOutbox(settings.database_url)
-    runtime = create_runtime(settings) if args.role == "process" else None
-    delivery = TelegramDelivery()
-    next_maintenance = 0.0
-    next_prune = 0.0
-    debug_event("telegram.worker.started", role=args.role, lane=args.lane)
-    try:
-        while not stop.is_set():
-            did_work = False
-            try:
-                if args.role == "process":
-                    claim = turns.claim(lane=args.lane, per_business=args.per_business)
-                    if claim:
-                        process_turn(turns, claim, runtime)
-                        did_work = True
-                else:
-                    if time.monotonic() >= next_maintenance:
-                        outbox.recover_expired()
-                        next_maintenance = time.monotonic() + 5
-                    if time.monotonic() >= next_prune:
-                        prune_history(settings.database_url)
-                        next_prune = time.monotonic() + 60
-                    did_work = send_next(outbox, delivery, logger)
-            except (*DATABASE_ERRORS, ClaimLost) as error:
-                log_event(logger, "telegram.worker.retry", role=args.role, failure_type=type(error).__name__)
-                stop.wait(1)
-            if not did_work:
-                stop.wait(args.idle_seconds)
     finally:
         close_runtime(runtime)
 
@@ -389,7 +302,6 @@ def register(settings, args) -> None:
             bot_id, args.business, args.token_env, webhook_route=args.route,
             webhook_secret_env=args.webhook_secret_env,
         )
-        reconcile_replies(settings.database_url, TelegramBot(bot_id, args.business, args.token_env))
         if webhook_payload is not None:
             api.call("setWebhook", webhook_payload)
             log_event(get_logger(), "telegram.webhook.configured", bot_id=bot_id)
@@ -400,26 +312,14 @@ def register(settings, args) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("role", choices=("process", "send", "relay", "backfill", "register", "stats"))
-    parser.add_argument("--transport", choices=("rabbitmq", "postgres"), default="rabbitmq")
-    parser.add_argument("--partitions", type=int, default=os.getenv("TELEGRAM_PARTITIONS", "1"))
-    parser.add_argument("--partition", type=int, default=0)
     parser.add_argument("--publication-role", choices=("process", "send"))
-    parser.add_argument("--lane", choices=("all", "text", "audio"), default="all")
-    parser.add_argument("--per-business", type=int, default=4)
-    parser.add_argument("--idle-seconds", type=float, default=0.2)
     parser.add_argument("--business")
     parser.add_argument("--token-env", default="TELEGRAM_BOT_TOKEN")
     parser.add_argument("--route")
     parser.add_argument("--webhook-secret-env")
     parser.add_argument("--webhook-base-url", help="Public HTTPS origin for registering the webhook with Telegram.")
     args = parser.parse_args()
-    if not 0.01 <= args.idle_seconds <= 60 or not 1 <= args.per_business <= 100:
-        parser.error("Use idle seconds between 0.01 and 60 and a per-business cap between 1 and 100.")
-    if not 1 <= args.partitions <= 64 or not 0 <= args.partition < args.partitions:
-        parser.error("Use 1 to 64 partitions and a partition index within that range.")
-    if args.transport == "rabbitmq" and args.lane != "all":
-        parser.error("The RabbitMQ consumer combines text and audio. --lane is for PostgreSQL rollback.")
-    broker_role = args.role == "relay" or (args.role in ("process", "send") and args.transport == "rabbitmq")
+    broker_role = args.role in ("relay", "process", "send")
     if broker_role and not os.environ.get("TELEGRAM_AMQP_URL"):
         parser.error("Set TELEGRAM_AMQP_URL to run a RabbitMQ worker.")
     settings = load_settings()
@@ -437,8 +337,7 @@ def main() -> None:
     stopping = Event()
     for name in (signal.SIGINT, signal.SIGTERM):
         signal.signal(name, lambda *_: stopping.set())
-    worker = run_broker_worker if broker_role else run_worker
-    worker(settings, args, stopping, logger)
+    run_broker_worker(settings, args, stopping, logger)
 
 
 if __name__ == "__main__":
