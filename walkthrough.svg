@@ -48,18 +48,18 @@
   <rect x="55" y="131" width="367" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 1 · Customer asks for a massage tomorrow</text>
   <g id="request-text" data-source="app/main.py#telegram_webhook">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="56.0" y="165" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Book Massage tomorrow.”</text>
-      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram POSTs a private</text>
       <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">message to the authenticated</text>
       <text x="68.0" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">webhook.</text>
     </a>
   </g>
   <g id="store-request" data-source="app/channels/telegram_intake.py#save_update">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_intake.py#L41">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_intake.py#L41">
       <title>save_update · app/channels/telegram_intake.py:41</title>
       <rect x="327.6" y="165" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="339.6" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Accept update</text>
@@ -70,29 +70,29 @@
     </a>
   </g>
   <g id="wake-request" data-source="app/channels/telegram_broker.py#publish_wakeup">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_broker.py#L62">
-      <title>publish_wakeup · app/channels/telegram_broker.py:62</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_broker.py#L50">
+      <title>publish_wakeup · app/channels/telegram_broker.py:50</title>
       <rect x="599.2" y="165" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="611.2" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Wake the worker</text>
-      <text x="611.2" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_broker.py:62</text>
+      <text x="611.2" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_broker.py:50</text>
       <text x="611.2" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The relay publishes bot and</text>
       <text x="611.2" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">chat IDs for the incoming</text>
       <text x="611.2" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">queue.</text>
     </a>
   </g>
   <g id="claim-request" data-source="app/channels/telegram_turns.py#TelegramTurns.claim_chat">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_turns.py#L157">
-      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:157</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L106">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:106</title>
       <rect x="870.8000000000001" y="165" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="882.8000000000001" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Claim the chat head</text>
-      <text x="882.8000000000001" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:157</text>
+      <text x="882.8000000000001" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:106</text>
       <text x="882.8000000000001" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Lease this update. The worker</text>
       <text x="882.8000000000001" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">resolves the sender and</text>
       <text x="882.8000000000001" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">invokes LangGraph.</text>
     </a>
   </g>
   <g id="interpret-request" data-source="app/graph/steps.py#understand_input">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L111">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/graph/steps.py#L111">
       <title>understand_input · app/graph/steps.py:111</title>
       <rect x="1142.4" y="165" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="1154.4" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Extract service and date</text>
@@ -105,7 +105,7 @@
   <rect x="55" y="328" width="335" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 1 · Find and send two numbered times</text>
   <g id="offer-text" data-source="app/channels/telegram.py#TelegramBotApi.send_message">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram.py#L103">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram.py#L103">
       <title>TelegramBotApi.send_message · app/channels/telegram.py:103</title>
       <rect x="56.0" y="362" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Send the two choices</text>
@@ -116,40 +116,40 @@
     </a>
   </g>
   <g id="deliver-offer" data-source="app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_delivery.py#L100">
-      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:100</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_delivery.py#L80">
+      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:80</title>
       <rect x="327.6" y="362" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="339.6" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reserve and deliver reply</text>
-      <text x="339.6" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:100</text>
+      <text x="339.6" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:80</text>
       <text x="339.6" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A sender wake-up contains an</text>
       <text x="339.6" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">outbox ID. The sender</text>
       <text x="339.6" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reserves the reply.</text>
     </a>
   </g>
   <g id="finish-request" data-source="app/channels/telegram_turns.py#TelegramTurns.finish">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_turns.py#L384">
-      <title>TelegramTurns.finish · app/channels/telegram_turns.py:384</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L304">
+      <title>TelegramTurns.finish · app/channels/telegram_turns.py:304</title>
       <rect x="599.2" y="362" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="611.2" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save offer and queue reply</text>
-      <text x="611.2" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:384</text>
+      <text x="611.2" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:304</text>
       <text x="611.2" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Publish the Redis checkpoint</text>
       <text x="611.2" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">pointer and queue the reply</text>
       <text x="611.2" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">in PostgreSQL.</text>
     </a>
   </g>
   <g id="search-request" data-source="app/scheduling.py#AvailabilityService.search">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/scheduling.py#L188">
-      <title>AvailabilityService.search · app/scheduling.py:188</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/scheduling.py#L196">
+      <title>AvailabilityService.search · app/scheduling.py:196</title>
       <rect x="870.8000000000001" y="362" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="882.8000000000001" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Find available slots</text>
-      <text x="882.8000000000001" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:188</text>
+      <text x="882.8000000000001" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:196</text>
       <text x="882.8000000000001" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Search for fits. LangGraph</text>
       <text x="882.8000000000001" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">saves the numbered offer list</text>
       <text x="882.8000000000001" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">in Redis.</text>
     </a>
   </g>
   <g id="route-request" data-source="app/graph/steps.py#route_turn">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L266">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/graph/steps.py#L266">
       <title>route_turn · app/graph/steps.py:266</title>
       <rect x="1142.4" y="362" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="1154.4" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Choose availability search</text>
@@ -162,17 +162,17 @@
   <rect x="55" y="525" width="327" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 2 · Customer chooses the first time</text>
   <g id="selection-text" data-source="app/main.py#telegram_webhook">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="56.0" y="559" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“1”</text>
-      <text x="68.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="68.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram sends a new update</text>
       <text x="68.0" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">for the same chat.</text>
     </a>
   </g>
   <g id="store-selection" data-source="app/channels/telegram_intake.py#save_update">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_intake.py#L41">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_intake.py#L41">
       <title>save_update · app/channels/telegram_intake.py:41</title>
       <rect x="327.6" y="559" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="339.6" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save the selection update</text>
@@ -182,29 +182,28 @@
     </a>
   </g>
   <g id="wake-selection" data-source="app/channels/telegram_broker.py#publish_wakeup">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_broker.py#L62">
-      <title>publish_wakeup · app/channels/telegram_broker.py:62</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_broker.py#L50">
+      <title>publish_wakeup · app/channels/telegram_broker.py:50</title>
       <rect x="599.2" y="559" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="611.2" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Wake the same chat</text>
-      <text x="611.2" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_broker.py:62</text>
+      <text x="611.2" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_broker.py:50</text>
       <text x="611.2" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Send the same bot and chat</text>
-      <text x="611.2" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">IDs to the incoming</text>
-      <text x="611.2" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">partition.</text>
+      <text x="611.2" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">IDs to the incoming queue.</text>
     </a>
   </g>
   <g id="claim-selection" data-source="app/channels/telegram_turns.py#TelegramTurns.claim_chat">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_turns.py#L157">
-      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:157</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L106">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:106</title>
       <rect x="870.8000000000001" y="559" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="882.8000000000001" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Claim the selection</text>
-      <text x="882.8000000000001" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:157</text>
+      <text x="882.8000000000001" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:106</text>
       <text x="882.8000000000001" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Lease the new head and read</text>
       <text x="882.8000000000001" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the published checkpoint</text>
       <text x="882.8000000000001" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reference.</text>
     </a>
   </g>
   <g id="restore-offer" data-source="app/graph/redis_checkpoint.py#RedisCheckpointSaver.fork_completed">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/redis_checkpoint.py#L44">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/graph/redis_checkpoint.py#L44">
       <title>RedisCheckpointSaver.fork_completed · app/graph/redis_checkpoint.py:44</title>
       <rect x="1142.4" y="559" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="1154.4" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Restore the previous offer</text>
@@ -217,7 +216,7 @@
   <rect x="55" y="722" width="399" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="740" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 2 · Ask for consent to the 15:00 appointment</text>
   <g id="consent-text" data-source="app/channels/telegram.py#TelegramBotApi.send_message">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram.py#L103">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram.py#L103">
       <title>TelegramBotApi.send_message · app/channels/telegram.py:103</title>
       <rect x="56.0" y="756" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="68.0" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Send the consent question</text>
@@ -228,29 +227,29 @@
     </a>
   </g>
   <g id="deliver-question" data-source="app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_delivery.py#L100">
-      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:100</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_delivery.py#L80">
+      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:80</title>
       <rect x="327.6" y="756" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="339.6" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reserve the consent reply</text>
-      <text x="339.6" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:100</text>
+      <text x="339.6" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:80</text>
       <text x="339.6" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The sender gets the outbox ID</text>
       <text x="339.6" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and enforces chat ordering</text>
       <text x="339.6" y="848" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and rate limits.</text>
     </a>
   </g>
   <g id="finish-selection" data-source="app/channels/telegram_turns.py#TelegramTurns.finish">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_turns.py#L384">
-      <title>TelegramTurns.finish · app/channels/telegram_turns.py:384</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L304">
+      <title>TelegramTurns.finish · app/channels/telegram_turns.py:304</title>
       <rect x="599.2" y="756" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="611.2" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save pending consent</text>
-      <text x="611.2" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:384</text>
+      <text x="611.2" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:304</text>
       <text x="611.2" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Publish the selected slot’s</text>
       <text x="611.2" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Redis state and queue the</text>
       <text x="611.2" y="848" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">consent question.</text>
     </a>
   </g>
   <g id="prepare-selection" data-source="app/graph/steps.py#_prepare_create">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L858">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/graph/steps.py#L858">
       <title>_prepare_create · app/graph/steps.py:858</title>
       <rect x="870.8000000000001" y="756" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="882.8000000000001" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Ask before writing</text>
@@ -261,7 +260,7 @@
     </a>
   </g>
   <g id="match-selection" data-source="app/graph/steps.py#select">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L733">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/graph/steps.py#L733">
       <title>select · app/graph/steps.py:733</title>
       <rect x="1142.4" y="756" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="1154.4" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Resolve option 1</text>
@@ -274,17 +273,17 @@
   <rect x="55" y="919" width="343" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="937" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 3 · Customer gives permission to book</text>
   <g id="approval-text" data-source="app/main.py#telegram_webhook">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="56.0" y="953" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Yes, book it.”</text>
-      <text x="68.0" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="68.0" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The approval arrives as a</text>
       <text x="68.0" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">separate Telegram update.</text>
     </a>
   </g>
   <g id="store-approval" data-source="app/channels/telegram_intake.py#save_update">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_intake.py#L41">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_intake.py#L41">
       <title>save_update · app/channels/telegram_intake.py:41</title>
       <rect x="327.6" y="953" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="339.6" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save the approval update</text>
@@ -295,28 +294,28 @@
     </a>
   </g>
   <g id="wake-approval" data-source="app/channels/telegram_broker.py#publish_wakeup">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_broker.py#L62">
-      <title>publish_wakeup · app/channels/telegram_broker.py:62</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_broker.py#L50">
+      <title>publish_wakeup · app/channels/telegram_broker.py:50</title>
       <rect x="599.2" y="953" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="611.2" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Wake the chat again</text>
-      <text x="611.2" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_broker.py:62</text>
-      <text x="611.2" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The relay wakes the same chat</text>
-      <text x="611.2" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">partition using IDs.</text>
+      <text x="611.2" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_broker.py:50</text>
+      <text x="611.2" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The relay sends the chat IDs</text>
+      <text x="611.2" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">to the incoming queue.</text>
     </a>
   </g>
   <g id="claim-approval" data-source="app/channels/telegram_turns.py#TelegramTurns.claim_chat">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_turns.py#L157">
-      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:157</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L106">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:106</title>
       <rect x="870.8000000000001" y="953" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="882.8000000000001" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Claim the approval</text>
-      <text x="882.8000000000001" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:157</text>
+      <text x="882.8000000000001" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:106</text>
       <text x="882.8000000000001" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Lease the message and load</text>
       <text x="882.8000000000001" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the pointer saved after</text>
       <text x="882.8000000000001" y="1045" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">choosing option 1.</text>
     </a>
   </g>
   <g id="restore-consent" data-source="app/graph/redis_checkpoint.py#RedisCheckpointSaver.fork_completed">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/redis_checkpoint.py#L44">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/graph/redis_checkpoint.py#L44">
       <title>RedisCheckpointSaver.fork_completed · app/graph/redis_checkpoint.py:44</title>
       <rect x="1142.4" y="953" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="1154.4" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Restore pending consent</text>
@@ -329,7 +328,7 @@
   <rect x="55" y="1116" width="447" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="1134" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 3 · Commit once and send the saved booking details</text>
   <g id="confirmation-text" data-source="app/channels/telegram.py#TelegramBotApi.send_message">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram.py#L103">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram.py#L103">
       <title>TelegramBotApi.send_message · app/channels/telegram.py:103</title>
       <rect x="56.0" y="1150" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="68.0" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Send the confirmation</text>
@@ -340,29 +339,29 @@
     </a>
   </g>
   <g id="finish-approval" data-source="app/channels/telegram_turns.py#TelegramTurns.finish">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/channels/telegram_turns.py#L384">
-      <title>TelegramTurns.finish · app/channels/telegram_turns.py:384</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L304">
+      <title>TelegramTurns.finish · app/channels/telegram_turns.py:304</title>
       <rect x="327.6" y="1150" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="339.6" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Queue the final reply</text>
-      <text x="339.6" y="1193" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:384</text>
+      <text x="339.6" y="1193" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:304</text>
       <text x="339.6" y="1212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Save the reply and completed</text>
       <text x="339.6" y="1227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">checkpoint pointer after the</text>
       <text x="339.6" y="1242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking commits.</text>
     </a>
   </g>
   <g id="commit-approval" data-source="app/booking.py#BookingService.create">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/booking.py#L150">
-      <title>BookingService.create · app/booking.py:150</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/booking.py#L149">
+      <title>BookingService.create · app/booking.py:149</title>
       <rect x="599.2" y="1150" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="611.2" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Commit one booking</text>
-      <text x="611.2" y="1193" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:150</text>
+      <text x="611.2" y="1193" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:149</text>
       <text x="611.2" y="1212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Recheck slot and ownership.</text>
       <text x="611.2" y="1227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Commit the booking and retry</text>
       <text x="611.2" y="1242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">record together.</text>
     </a>
   </g>
   <g id="execute-approval" data-source="app/graph/steps.py#execute">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L939">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/graph/steps.py#L939">
       <title>execute · app/graph/steps.py:939</title>
       <rect x="870.8000000000001" y="1150" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="882.8000000000001" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Execute the guarded write</text>
@@ -373,7 +372,7 @@
     </a>
   </g>
   <g id="guard-approval" data-source="app/graph/steps.py#_route_booking_consent">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L341">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/graph/steps.py#L341">
       <title>_route_booking_consent · app/graph/steps.py:341</title>
       <rect x="1142.4" y="1150" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="1154.4" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Verify approval and route</text>

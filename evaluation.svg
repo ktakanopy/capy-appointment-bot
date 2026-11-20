@@ -1,0 +1,109 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 566" width="1430" height="566" role="img" aria-label="Evaluate a full conversation">
+  <title>Evaluate a full conversation</title>
+  <desc>Follow a scenario from the CLI and YAML assertions through the real graph and its evaluation report.</desc>
+  <rect x="0" y="0" width="1430" height="566" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Evaluate a full conversation</text>
+  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Follow a scenario from the CLI and YAML assertions through the real graph and its evaluation report.</text>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#557383" />
+    </marker>
+  </defs>
+  <rect x="40" y="123" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="320" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <polyline points="355.5,214.5 395.5,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="eval-cli" data-to="eval-load" data-kind="flow" />
+  <polyline points="695.0,214.5 735.0,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="eval-load" data-to="eval-run" data-kind="flow" />
+  <polyline points="1034.5,214.5 1074.5,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="eval-run" data-to="eval-case" data-kind="flow" />
+  <polyline points="1224.25,264 1224.25,313.0 1224.25,313.0 1224.25,362" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="eval-case" data-to="eval-turn" data-kind="flow" />
+  <polyline points="1074.5,411.5 1034.5,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="eval-turn" data-to="eval-assert" data-kind="flow" />
+  <polyline points="735.0,411.5 695.0,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="eval-assert" data-to="eval-receipt" data-kind="flow" />
+  <polyline points="395.5,411.5 355.5,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="eval-receipt" data-to="eval-report" data-kind="flow" />
+  <rect x="55" y="131" width="295" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Set up one or more scenario attempts</text>
+  <g id="eval-cli" data-source="app/evals/scenarios/__main__.py#main">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/__main__.py#L335">
+      <title>main · app/evals/scenarios/__main__.py:335</title>
+      <rect x="56.0" y="165" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Run the scenario CLI</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">__main__.py:335</text>
+      <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Select the dataset, cases, providers,</text>
+      <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and repetition settings.</text>
+    </a>
+  </g>
+  <g id="eval-load" data-source="app/evals/scenarios/spec.py#load_dataset">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L245">
+      <title>load_dataset · app/evals/scenarios/spec.py:245</title>
+      <rect x="395.5" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="407.5" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Validate scenario YAML</text>
+      <text x="407.5" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">spec.py:245</text>
+      <text x="407.5" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Load inputs, expected routes and</text>
+      <text x="407.5" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">writes, and final booking assertions.</text>
+    </a>
+  </g>
+  <g id="eval-run" data-source="app/evals/scenarios/runner.py#run_attempts">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/runner.py#L119">
+      <title>run_attempts · app/evals/scenarios/runner.py:119</title>
+      <rect x="735.0" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="747.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Schedule attempts</text>
+      <text x="747.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">runner.py:119</text>
+      <text x="747.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run cases and repetitions concurrently.</text>
+      <text x="747.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Keep each case’s turns sequential.</text>
+    </a>
+  </g>
+  <g id="eval-case" data-source="app/evals/scenarios/runner.py#_run_case">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/runner.py#L258">
+      <title>_run_case · app/evals/scenarios/runner.py:258</title>
+      <rect x="1074.5" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="1086.5" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Set up one attempt</text>
+      <text x="1086.5" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">runner.py:258</text>
+      <text x="1086.5" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Set up observed providers, in-memory</text>
+      <text x="1086.5" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">checkpoints, and fake scheduling</text>
+      <text x="1086.5" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">actions.</text>
+    </a>
+  </g>
+  <rect x="55" y="328" width="295" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Run the workflow and collect results</text>
+  <g id="eval-report" data-source="app/evals/scenarios/report.py#render_html">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/report.py#L10">
+      <title>render_html · app/evals/scenarios/report.py:10</title>
+      <rect x="56.0" y="362" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Review the HTML report</text>
+      <text x="68.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">report.py:10</text>
+      <text x="68.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Inspect attempts, transcripts,</text>
+      <text x="68.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">failures, timing, and coverage.</text>
+    </a>
+  </g>
+  <g id="eval-receipt" data-source="app/evals/scenarios/runner.py#make_receipt">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/runner.py#L664">
+      <title>make_receipt · app/evals/scenarios/runner.py:664</title>
+      <rect x="395.5" y="362" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="407.5" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Build the run receipt</text>
+      <text x="407.5" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">runner.py:664</text>
+      <text x="407.5" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Record the revision, manifests,</text>
+      <text x="407.5" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">provider settings, and attempt results.</text>
+    </a>
+  </g>
+  <g id="eval-assert" data-source="app/evals/scenarios/runner.py#_compare_writes">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/runner.py#L548">
+      <title>_compare_writes · app/evals/scenarios/runner.py:548</title>
+      <rect x="735.0" y="362" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="747.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Check writes and outcomes</text>
+      <text x="747.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">runner.py:548</text>
+      <text x="747.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Compare turn and final assertions. The</text>
+      <text x="747.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">optional judge reviews reply quality.</text>
+    </a>
+  </g>
+  <g id="eval-turn" data-source="app/graph/workflow.py#LangGraphWorkflow.handle_turn">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/graph/workflow.py#L13">
+      <title>LangGraphWorkflow.handle_turn · app/graph/workflow.py:13</title>
+      <rect x="1074.5" y="362" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="1086.5" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Run each graph turn</text>
+      <text x="1086.5" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">workflow.py:13</text>
+      <text x="1086.5" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Send each fixture message through the</text>
+      <text x="1086.5" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">workflow and capture provider and reply</text>
+      <text x="1086.5" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">evidence.</text>
+    </a>
+  </g>
+  <text x="42" y="538" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Solid arrow · Call or control flow  /  Dashed arrow · Async handoff or framework delegation</text>
+</svg>

@@ -1,358 +1,385 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1926" width="1430" height="1926" role="img" aria-label="Source reference · Evaluation programs">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 2072" width="1430" height="2072" role="img" aria-label="Source reference · Evaluation programs">
   <title>Source reference · Evaluation programs</title>
   <desc>The task runner scores individual capabilities. The scenario CLI reuses the workflow to test full conversations.</desc>
-  <rect x="0" y="0" width="1430" height="1926" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <rect x="0" y="0" width="1430" height="2072" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Evaluation programs</text>
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The task runner scores individual capabilities. The scenario CLI reuses the workflow to test full conversations.</text>
-  <g id="app-evals-scenarios-__main__.py" data-source="app/evals/scenarios/__main__.py">
+  <g id="evals-scenarios-golden.yaml" data-source="evals/scenarios/golden.yaml">
     <rect x="40" y="123" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/__main__.py">
-      <title>app/evals/scenarios/__main__.py</title>
-      <text x="56" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/__main__.py</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/evals/scenarios/golden.yaml">
+      <title>evals/scenarios/golden.yaml</title>
+      <text x="56" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">evals/scenarios/golden.yaml</text>
     </a>
-    <text x="56" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Dispatch scenario validation, execution, audio preparation and report</text>
-    <text x="56" y="191" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">commands.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/__main__.py#L336">
-      <title>main · app/evals/scenarios/__main__.py:336</title>
-      <text x="56" y="216" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 336</text>
+    <text x="56" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Define stable bilingual reference conversations and deterministic</text>
+    <text x="56" y="191" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">assertions.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/evals/scenarios/golden.yaml">
+      <title>evals/scenarios/golden.yaml</title>
+      <text x="56" y="216" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
     </a>
     <text x="588" y="216" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
+  <g id="evals-scenarios-challenge.yaml" data-source="evals/scenarios/challenge.yaml">
+    <rect x="725" y="123" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/evals/scenarios/challenge.yaml">
+      <title>evals/scenarios/challenge.yaml</title>
+      <text x="741" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">evals/scenarios/challenge.yaml</text>
+    </a>
+    <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Exercise harder edge cases and interactions across turns.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/evals/scenarios/challenge.yaml">
+      <title>evals/scenarios/challenge.yaml</title>
+      <text x="741" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+    </a>
+    <text x="1273" y="198" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="app-evals-scenarios-__main__.py" data-source="app/evals/scenarios/__main__.py">
+    <rect x="40" y="269" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/__main__.py">
+      <title>app/evals/scenarios/__main__.py</title>
+      <text x="56" y="296" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/__main__.py</text>
+    </a>
+    <text x="56" y="319" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Dispatch scenario validation, execution, audio preparation and report</text>
+    <text x="56" y="337" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">commands.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/__main__.py#L335">
+      <title>main · app/evals/scenarios/__main__.py:335</title>
+      <text x="56" y="362" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 335</text>
+    </a>
+    <text x="588" y="362" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
   <g id="app-evals-scenarios-runner.py" data-source="app/evals/scenarios/runner.py">
-    <rect x="725" y="123" width="665" height="246" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/runner.py">
+    <rect x="725" y="269" width="665" height="246" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/runner.py">
       <title>app/evals/scenarios/runner.py</title>
-      <text x="741" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/runner.py</text>
+      <text x="741" y="296" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/runner.py</text>
     </a>
-    <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run scenario attempts through the workflow and collect per-turn evidence and</text>
-    <text x="741" y="191" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">assertions.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/runner.py#L119">
+    <text x="741" y="319" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run scenario attempts through the workflow and collect per-turn evidence and</text>
+    <text x="741" y="337" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">assertions.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/runner.py#L119">
       <title>run_attempts · app/evals/scenarios/runner.py:119</title>
-      <text x="741" y="216" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_attempts  /  line 119</text>
+      <text x="741" y="362" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_attempts  /  line 119</text>
     </a>
-    <text x="1273" y="216" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/runner.py#L45">
+    <text x="1273" y="362" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/runner.py#L45">
       <title>ObservedInterpreter.interpret · app/evals/scenarios/runner.py:45</title>
-      <text x="741" y="236" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ObservedInterpreter.interpret</text>
+      <text x="741" y="382" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ObservedInterpreter.interpret</text>
     </a>
-    <text x="1107" y="236" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Captures the validated Gemma result and</text>
-    <text x="1107" y="251" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">latency.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/runner.py#L76">
+    <text x="1107" y="382" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Captures the validated Gemma result and</text>
+    <text x="1107" y="397" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">latency.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/runner.py#L76">
       <title>ObservedDecision.decide · app/evals/scenarios/runner.py:76</title>
-      <text x="741" y="276" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ObservedDecision.decide</text>
+      <text x="741" y="422" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ObservedDecision.decide</text>
     </a>
-    <text x="1107" y="276" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Captures Laya's proposed route and</text>
-    <text x="1107" y="291" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">latency.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/runner.py#L102">
+    <text x="1107" y="422" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Captures Laya's proposed route and</text>
+    <text x="1107" y="437" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">latency.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/runner.py#L102">
       <title>ObservedTranscriber.__call__ · app/evals/scenarios/runner.py:102</title>
-      <text x="741" y="316" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ObservedTranscriber.__call__</text>
+      <text x="741" y="462" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ObservedTranscriber.__call__</text>
     </a>
-    <text x="1107" y="316" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Captures transcription evidence and</text>
-    <text x="1107" y="331" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">latency.</text>
+    <text x="1107" y="462" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Captures transcription evidence and</text>
+    <text x="1107" y="477" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">latency.</text>
   </g>
   <g id="app-evals-runner.py" data-source="app/evals/runner.py">
-    <rect x="40" y="389" width="665" height="208" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/runner.py">
+    <rect x="40" y="535" width="665" height="208" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/runner.py">
       <title>app/evals/runner.py</title>
-      <text x="56" y="416" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/runner.py</text>
+      <text x="56" y="562" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/runner.py</text>
     </a>
-    <text x="56" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Load task cases, evaluate model or workflow layers and summarize outcomes.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/runner.py#L315">
-      <title>main · app/evals/runner.py:315</title>
-      <text x="56" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 315</text>
+    <text x="56" y="585" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Load task cases, evaluate model or workflow layers and summarize outcomes.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/runner.py#L307">
+      <title>main · app/evals/runner.py:307</title>
+      <text x="56" y="610" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 307</text>
     </a>
-    <text x="588" y="464" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/runner.py#L121">
-      <title>run_scenarios · app/evals/runner.py:121</title>
-      <text x="56" y="484" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_scenarios  /  line 121</text>
+    <text x="588" y="610" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/runner.py#L113">
+      <title>run_scenarios · app/evals/runner.py:113</title>
+      <text x="56" y="630" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_scenarios  /  line 113</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/runner.py#L33">
-      <title>TimedInterpreter.interpret · app/evals/runner.py:33</title>
-      <text x="56" y="504" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TimedInterpreter.interpret</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/runner.py#L34">
+      <title>TimedInterpreter.interpret · app/evals/runner.py:34</title>
+      <text x="56" y="650" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TimedInterpreter.interpret</text>
     </a>
-    <text x="422" y="504" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Records latency and output for</text>
-    <text x="422" y="519" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">interpretation.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/runner.py#L63">
-      <title>TimedDecision.decide · app/evals/runner.py:63</title>
-      <text x="56" y="544" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TimedDecision.decide</text>
+    <text x="422" y="650" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Records latency and output for</text>
+    <text x="422" y="665" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">interpretation.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/runner.py#L64">
+      <title>TimedDecision.decide · app/evals/runner.py:64</title>
+      <text x="56" y="690" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TimedDecision.decide</text>
     </a>
-    <text x="422" y="544" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Records latency and output for routing.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/runner.py#L50">
-      <title>TimedTranscriber.__call__ · app/evals/runner.py:50</title>
-      <text x="56" y="564" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TimedTranscriber.__call__</text>
+    <text x="422" y="690" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Records latency and output for routing.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/runner.py#L51">
+      <title>TimedTranscriber.__call__ · app/evals/runner.py:51</title>
+      <text x="56" y="710" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TimedTranscriber.__call__</text>
     </a>
-    <text x="422" y="564" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Records audio transcription evidence.</text>
+    <text x="422" y="710" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Records audio transcription evidence.</text>
   </g>
   <g id="app-evals-fixtures.py" data-source="app/evals/fixtures.py">
-    <rect x="725" y="389" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/fixtures.py">
+    <rect x="725" y="535" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/fixtures.py">
       <title>app/evals/fixtures.py</title>
-      <text x="741" y="416" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/fixtures.py</text>
+      <text x="741" y="562" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/fixtures.py</text>
     </a>
-    <text x="741" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Supply in-memory scheduling operations and appointment fixtures for</text>
-    <text x="741" y="457" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">evaluations.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/fixtures.py#L19">
+    <text x="741" y="585" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Supply in-memory scheduling operations and appointment fixtures for</text>
+    <text x="741" y="603" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">evaluations.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/fixtures.py#L19">
       <title>ScenarioSchedulingActions · app/evals/fixtures.py:19</title>
-      <text x="741" y="482" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">ScenarioSchedulingActions  /  line 19</text>
+      <text x="741" y="628" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">ScenarioSchedulingActions  /  line 19</text>
     </a>
-    <text x="1273" y="482" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/fixtures.py#L103">
+    <text x="1273" y="628" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/fixtures.py#L103">
       <title>ScenarioSchedulingActions.create_booking · app/evals/fixtures.py:103</title>
-      <text x="741" y="502" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ScenarioSchedulingActions.create_booking</text>
+      <text x="741" y="648" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ScenarioSchedulingActions.create_booking</text>
     </a>
-    <text x="1107" y="502" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Simulates domain actions, writes and</text>
-    <text x="1107" y="517" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">idempotency.</text>
+    <text x="1107" y="648" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Simulates domain actions, writes and</text>
+    <text x="1107" y="663" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">idempotency.</text>
   </g>
   <g id="app-evals-scenarios-spec.py" data-source="app/evals/scenarios/spec.py">
-    <rect x="40" y="617" width="665" height="688" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py">
+    <rect x="40" y="763" width="665" height="688" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py">
       <title>app/evals/scenarios/spec.py</title>
-      <text x="56" y="644" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/spec.py</text>
+      <text x="56" y="790" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/spec.py</text>
     </a>
-    <text x="56" y="667" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Validate YAML declarations, references, input modes and expected outcomes.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L261">
-      <title>load_dataset · app/evals/scenarios/spec.py:261</title>
-      <text x="56" y="692" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">load_dataset  /  line 261</text>
+    <text x="56" y="813" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Validate YAML declarations, references, input modes and expected outcomes.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L245">
+      <title>load_dataset · app/evals/scenarios/spec.py:245</title>
+      <text x="56" y="838" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">load_dataset  /  line 245</text>
     </a>
-    <text x="588" y="692" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L221">
-      <title>ScenarioDataset · app/evals/scenarios/spec.py:221</title>
-      <text x="56" y="712" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">ScenarioDataset  /  line 221</text>
+    <text x="588" y="838" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L205">
+      <title>ScenarioDataset · app/evals/scenarios/spec.py:205</title>
+      <text x="56" y="858" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">ScenarioDataset  /  line 205</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L19">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L19">
       <title>StrictModel · app/evals/scenarios/spec.py:19</title>
-      <text x="56" y="732" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">StrictModel</text>
+      <text x="56" y="878" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">StrictModel</text>
     </a>
-    <text x="422" y="732" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Base validation model that rejects</text>
-    <text x="422" y="747" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">unknown fields.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L36">
+    <text x="422" y="878" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Base validation model that rejects</text>
+    <text x="422" y="893" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">unknown fields.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L36">
       <title>UserInput.validate_input_source · app/evals/scenarios/spec.py:36</title>
-      <text x="56" y="772" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">UserInput.validate_input_source</text>
+      <text x="56" y="918" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">UserInput.validate_input_source</text>
     </a>
-    <text x="422" y="772" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Declares text, audio or a spoken</text>
-    <text x="422" y="787" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">script.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L68">
+    <text x="422" y="918" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Declares text, audio or a spoken</text>
+    <text x="422" y="933" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">script.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L68">
       <title>BookingMatch · app/evals/scenarios/spec.py:68</title>
-      <text x="56" y="812" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingMatch</text>
+      <text x="56" y="958" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingMatch</text>
     </a>
-    <text x="422" y="812" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Selects a booking by declared</text>
-    <text x="422" y="827" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">attributes.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L75">
+    <text x="422" y="958" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Selects a booking by declared</text>
+    <text x="422" y="973" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">attributes.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L75">
       <title>BookingExpectation · app/evals/scenarios/spec.py:75</title>
-      <text x="56" y="852" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingExpectation</text>
+      <text x="56" y="998" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingExpectation</text>
     </a>
-    <text x="422" y="852" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Checks a matching booking and its</text>
-    <text x="422" y="867" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">expected state.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L82">
+    <text x="422" y="998" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Checks a matching booking and its</text>
+    <text x="422" y="1013" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">expected state.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L82">
       <title>LayaExpectation · app/evals/scenarios/spec.py:82</title>
-      <text x="56" y="892" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">LayaExpectation</text>
+      <text x="56" y="1038" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">LayaExpectation</text>
     </a>
-    <text x="422" y="892" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Declares expectations for routing</text>
-    <text x="422" y="907" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">output.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L90">
+    <text x="422" y="1038" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Declares expectations for routing</text>
+    <text x="422" y="1053" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">output.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L90">
       <title>TurnAssertions · app/evals/scenarios/spec.py:90</title>
-      <text x="56" y="932" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TurnAssertions</text>
+      <text x="56" y="1078" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TurnAssertions</text>
     </a>
-    <text x="422" y="932" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Describes deterministic checks for a</text>
-    <text x="422" y="947" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">turn.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L109">
-      <title>ConversationStep · app/evals/scenarios/spec.py:109</title>
-      <text x="56" y="972" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ConversationStep</text>
+    <text x="422" y="1078" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Describes deterministic checks for a</text>
+    <text x="422" y="1093" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">turn.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L101">
+      <title>ConversationStep · app/evals/scenarios/spec.py:101</title>
+      <text x="56" y="1118" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ConversationStep</text>
     </a>
-    <text x="422" y="972" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Groups user input and per-turn</text>
-    <text x="422" y="987" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">expectations.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L118">
-      <title>ScenarioSetup · app/evals/scenarios/spec.py:118</title>
-      <text x="56" y="1012" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ScenarioSetup</text>
+    <text x="422" y="1118" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Groups user input and per-turn</text>
+    <text x="422" y="1133" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">expectations.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L110">
+      <title>ScenarioSetup · app/evals/scenarios/spec.py:110</title>
+      <text x="56" y="1158" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ScenarioSetup</text>
     </a>
-    <text x="422" y="1012" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Describes starting business and fixture</text>
-    <text x="422" y="1027" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">state.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L140">
-      <title>JudgeCriterion · app/evals/scenarios/spec.py:140</title>
-      <text x="56" y="1052" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">JudgeCriterion</text>
+    <text x="422" y="1158" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Describes starting business and fixture</text>
+    <text x="422" y="1173" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">state.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L132">
+      <title>JudgeCriterion · app/evals/scenarios/spec.py:132</title>
+      <text x="56" y="1198" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">JudgeCriterion</text>
     </a>
-    <text x="422" y="1052" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines a criterion for a conversation</text>
-    <text x="422" y="1067" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">judge.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L149">
-      <title>JudgeSpec · app/evals/scenarios/spec.py:149</title>
-      <text x="56" y="1092" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">JudgeSpec</text>
+    <text x="422" y="1198" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines a criterion for a conversation</text>
+    <text x="422" y="1213" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">judge.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L141">
+      <title>JudgeSpec · app/evals/scenarios/spec.py:141</title>
+      <text x="56" y="1238" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">JudgeSpec</text>
     </a>
-    <text x="422" y="1092" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Configures qualitative criteria and</text>
-    <text x="422" y="1107" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">their use.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L156">
-      <title>FinalAssertions · app/evals/scenarios/spec.py:156</title>
-      <text x="56" y="1132" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">FinalAssertions</text>
+    <text x="422" y="1238" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Configures qualitative criteria and</text>
+    <text x="422" y="1253" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">their use.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L148">
+      <title>FinalAssertions · app/evals/scenarios/spec.py:148</title>
+      <text x="56" y="1278" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">FinalAssertions</text>
     </a>
-    <text x="422" y="1132" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Asserts end-of-scenario writes and</text>
-    <text x="422" y="1147" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking state.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L172">
-      <title>Scenario · app/evals/scenarios/spec.py:172</title>
-      <text x="56" y="1172" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Scenario</text>
+    <text x="422" y="1278" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Asserts end-of-scenario writes and</text>
+    <text x="422" y="1293" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking state.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L156">
+      <title>Scenario · app/evals/scenarios/spec.py:156</title>
+      <text x="56" y="1318" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Scenario</text>
     </a>
-    <text x="422" y="1172" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines a complete conversation and its</text>
-    <text x="422" y="1187" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">assertions.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L230">
-      <title>ScenarioDataset.validate_ids · app/evals/scenarios/spec.py:230</title>
-      <text x="56" y="1212" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ScenarioDataset.validate_ids</text>
+    <text x="422" y="1318" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines a complete conversation and its</text>
+    <text x="422" y="1333" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">assertions.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L214">
+      <title>ScenarioDataset.validate_ids · app/evals/scenarios/spec.py:214</title>
+      <text x="56" y="1358" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ScenarioDataset.validate_ids</text>
     </a>
-    <text x="422" y="1212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Groups scenarios and enforces unique</text>
-    <text x="422" y="1227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">IDs.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/spec.py#L238">
-      <title>_UniqueKeyLoader · app/evals/scenarios/spec.py:238</title>
-      <text x="56" y="1252" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">_UniqueKeyLoader</text>
+    <text x="422" y="1358" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Groups scenarios and enforces unique</text>
+    <text x="422" y="1373" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">IDs.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/spec.py#L222">
+      <title>_UniqueKeyLoader · app/evals/scenarios/spec.py:222</title>
+      <text x="56" y="1398" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">_UniqueKeyLoader</text>
     </a>
-    <text x="422" y="1252" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">YAML loader that rejects duplicate</text>
-    <text x="422" y="1267" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">keys.</text>
+    <text x="422" y="1398" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">YAML loader that rejects duplicate</text>
+    <text x="422" y="1413" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">keys.</text>
   </g>
   <g id="app-evals-models.py" data-source="app/evals/models.py">
-    <rect x="725" y="617" width="665" height="228" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/models.py">
+    <rect x="725" y="763" width="665" height="228" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/models.py">
       <title>app/evals/models.py</title>
-      <text x="741" y="644" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/models.py</text>
+      <text x="741" y="790" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/models.py</text>
     </a>
-    <text x="741" y="667" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Define task evaluation inputs, expected behavior and output scores.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/models.py#L23">
+    <text x="741" y="813" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Define task evaluation inputs, expected behavior and output scores.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/models.py#L23">
       <title>EvaluationScenario · app/evals/models.py:23</title>
-      <text x="741" y="692" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">EvaluationScenario  /  line 23</text>
+      <text x="741" y="838" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">EvaluationScenario  /  line 23</text>
     </a>
-    <text x="1273" y="692" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/models.py#L23">
+    <text x="1273" y="838" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/models.py#L23">
       <title>EvaluationScenario · app/evals/models.py:23</title>
-      <text x="741" y="712" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">EvaluationScenario</text>
+      <text x="741" y="858" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">EvaluationScenario</text>
     </a>
-    <text x="1107" y="712" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Groups turns and expected case</text>
-    <text x="1107" y="727" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">behavior.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/models.py#L8">
+    <text x="1107" y="858" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Groups turns and expected case</text>
+    <text x="1107" y="873" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">behavior.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/models.py#L8">
       <title>EvaluationTurn · app/evals/models.py:8</title>
-      <text x="741" y="752" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">EvaluationTurn</text>
+      <text x="741" y="898" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">EvaluationTurn</text>
     </a>
-    <text x="1107" y="752" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Declares input and expected output for</text>
-    <text x="1107" y="767" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">a task turn.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/models.py#L41">
+    <text x="1107" y="898" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Declares input and expected output for</text>
+    <text x="1107" y="913" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">a task turn.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/models.py#L41">
       <title>EvaluationResult · app/evals/models.py:41</title>
-      <text x="741" y="792" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">EvaluationResult</text>
+      <text x="741" y="938" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">EvaluationResult</text>
     </a>
-    <text x="1107" y="792" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Summarizes case scores, timings and</text>
-    <text x="1107" y="807" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">mismatches.</text>
+    <text x="1107" y="938" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Summarizes case scores, timings and</text>
+    <text x="1107" y="953" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">mismatches.</text>
   </g>
   <g id="app-evals-routing.py" data-source="app/evals/routing.py">
-    <rect x="40" y="1325" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/routing.py">
+    <rect x="40" y="1471" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/routing.py">
       <title>app/evals/routing.py</title>
-      <text x="56" y="1352" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/routing.py</text>
+      <text x="56" y="1498" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/routing.py</text>
     </a>
-    <text x="56" y="1375" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Compare a routing provider's proposed action to the expected label.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/routing.py#L15">
+    <text x="56" y="1521" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Compare a routing provider's proposed action to the expected label.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/routing.py#L15">
       <title>evaluate_route · app/evals/routing.py:15</title>
-      <text x="56" y="1400" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">evaluate_route  /  line 15</text>
+      <text x="56" y="1546" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">evaluate_route  /  line 15</text>
     </a>
-    <text x="588" y="1400" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="1546" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="app-evals-judge.py" data-source="app/evals/judge.py">
-    <rect x="725" y="1325" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/judge.py">
+    <rect x="725" y="1471" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/judge.py">
       <title>app/evals/judge.py</title>
-      <text x="741" y="1352" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/judge.py</text>
+      <text x="741" y="1498" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/judge.py</text>
     </a>
-    <text x="741" y="1375" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Score extracted scheduling facts for task evaluation.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/judge.py#L7">
+    <text x="741" y="1521" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Score extracted scheduling facts for task evaluation.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/judge.py#L7">
       <title>evaluate_extraction · app/evals/judge.py:7</title>
-      <text x="741" y="1400" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">evaluate_extraction  /  line 7</text>
+      <text x="741" y="1546" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">evaluate_extraction  /  line 7</text>
     </a>
-    <text x="1273" y="1400" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1546" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="app-evals-scenarios-judge.py" data-source="app/evals/scenarios/judge.py">
-    <rect x="40" y="1453" width="665" height="168" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/judge.py">
+    <rect x="40" y="1599" width="665" height="168" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/judge.py">
       <title>app/evals/scenarios/judge.py</title>
-      <text x="56" y="1480" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/judge.py</text>
+      <text x="56" y="1626" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/judge.py</text>
     </a>
-    <text x="56" y="1503" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run and validate an optional qualitative conversation judgement.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/judge.py#L32">
+    <text x="56" y="1649" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run and validate an optional qualitative conversation judgement.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/judge.py#L32">
       <title>judge_conversation · app/evals/scenarios/judge.py:32</title>
-      <text x="56" y="1528" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">judge_conversation  /  line 32</text>
+      <text x="56" y="1674" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">judge_conversation  /  line 32</text>
     </a>
-    <text x="588" y="1528" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/judge.py#L15">
+    <text x="588" y="1674" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/judge.py#L15">
       <title>CriterionVerdict · app/evals/scenarios/judge.py:15</title>
-      <text x="56" y="1548" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">CriterionVerdict</text>
+      <text x="56" y="1694" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">CriterionVerdict</text>
     </a>
-    <text x="422" y="1548" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports one judged criterion and its</text>
-    <text x="422" y="1563" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">explanation.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/judge.py#L25">
+    <text x="422" y="1694" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports one judged criterion and its</text>
+    <text x="422" y="1709" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">explanation.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/judge.py#L25">
       <title>JudgeResult · app/evals/scenarios/judge.py:25</title>
-      <text x="56" y="1588" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">JudgeResult</text>
+      <text x="56" y="1734" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">JudgeResult</text>
     </a>
-    <text x="422" y="1588" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Groups evaluated criterion verdicts.</text>
+    <text x="422" y="1734" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Groups evaluated criterion verdicts.</text>
   </g>
   <g id="app-evals-scenarios-audio.py" data-source="app/evals/scenarios/audio.py">
-    <rect x="725" y="1453" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/audio.py">
+    <rect x="725" y="1599" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/audio.py">
       <title>app/evals/scenarios/audio.py</title>
-      <text x="741" y="1480" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/audio.py</text>
+      <text x="741" y="1626" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/audio.py</text>
     </a>
-    <text x="741" y="1503" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Prepare, cache and resolve audio fixtures for voice scenarios.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/audio.py#L30">
+    <text x="741" y="1649" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Prepare, cache and resolve audio fixtures for voice scenarios.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/audio.py#L30">
       <title>prepare_audio · app/evals/scenarios/audio.py:30</title>
-      <text x="741" y="1528" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">prepare_audio  /  line 30</text>
+      <text x="741" y="1674" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">prepare_audio  /  line 30</text>
     </a>
-    <text x="1273" y="1528" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/audio.py#L146">
+    <text x="1273" y="1674" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/audio.py#L146">
       <title>resolve_audio · app/evals/scenarios/audio.py:146</title>
-      <text x="741" y="1548" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">resolve_audio  /  line 146</text>
+      <text x="741" y="1694" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">resolve_audio  /  line 146</text>
     </a>
   </g>
   <g id="app-evals-scenarios-render.py" data-source="app/evals/scenarios/render.py">
-    <rect x="40" y="1641" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/render.py">
+    <rect x="40" y="1787" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/render.py">
       <title>app/evals/scenarios/render.py</title>
-      <text x="56" y="1668" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/render.py</text>
+      <text x="56" y="1814" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/render.py</text>
     </a>
-    <text x="56" y="1691" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Produce a Markdown reading copy of a scenario dataset.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/render.py#L6">
+    <text x="56" y="1837" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Produce a Markdown reading copy of a scenario dataset.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/render.py#L6">
       <title>render_markdown · app/evals/scenarios/render.py:6</title>
-      <text x="56" y="1716" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">render_markdown  /  line 6</text>
+      <text x="56" y="1862" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">render_markdown  /  line 6</text>
     </a>
-    <text x="588" y="1716" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="1862" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="app-evals-scenarios-report.py" data-source="app/evals/scenarios/report.py">
-    <rect x="725" y="1641" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/report.py">
+    <rect x="725" y="1787" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/report.py">
       <title>app/evals/scenarios/report.py</title>
-      <text x="741" y="1668" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/report.py</text>
+      <text x="741" y="1814" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/report.py</text>
     </a>
-    <text x="741" y="1691" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Render a browsable HTML report from recorded attempts.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/report.py#L10">
+    <text x="741" y="1837" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Render a browsable HTML report from recorded attempts.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/report.py#L10">
       <title>render_html · app/evals/scenarios/report.py:10</title>
-      <text x="741" y="1716" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">render_html  /  line 10</text>
+      <text x="741" y="1862" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">render_html  /  line 10</text>
     </a>
-    <text x="1273" y="1716" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1862" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="app-evals-__init__.py" data-source="app/evals/__init__.py">
-    <rect x="40" y="1769" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/__init__.py">
+    <rect x="40" y="1915" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/__init__.py">
       <title>app/evals/__init__.py</title>
-      <text x="56" y="1796" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/__init__.py</text>
+      <text x="56" y="1942" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/__init__.py</text>
     </a>
-    <text x="56" y="1819" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the evaluation package.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/__init__.py">
+    <text x="56" y="1965" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the evaluation package.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/__init__.py">
       <title>app/evals/__init__.py</title>
-      <text x="56" y="1844" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+      <text x="56" y="1990" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
     </a>
-    <text x="588" y="1844" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="1990" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="app-evals-scenarios-__init__.py" data-source="app/evals/scenarios/__init__.py">
-    <rect x="725" y="1769" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/__init__.py">
+    <rect x="725" y="1915" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/__init__.py">
       <title>app/evals/scenarios/__init__.py</title>
-      <text x="741" y="1796" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/__init__.py</text>
+      <text x="741" y="1942" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/evals/scenarios/__init__.py</text>
     </a>
-    <text x="741" y="1819" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the conversation scenario package.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/evals/scenarios/__init__.py">
+    <text x="741" y="1965" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the conversation scenario package.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/evals/scenarios/__init__.py">
       <title>app/evals/scenarios/__init__.py</title>
-      <text x="741" y="1844" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+      <text x="741" y="1990" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
     </a>
-    <text x="1273" y="1844" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1990" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
 </svg>
