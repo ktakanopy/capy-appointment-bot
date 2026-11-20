@@ -8,14 +8,14 @@ from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from psycopg.errors import ExclusionViolation
-from sqlalchemy import case, func, insert, literal, select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import database_session
 from app.db_models import (
     BookingRow, BusinessRow, CustomerRow, IdempotencyRecord,
-    ReminderRow, ServiceRow, TelegramBotRow, TelegramOutboxRow,
+    ServiceRow,
 )
 from app.models import (
     AvailabilitySlot,
@@ -51,12 +51,10 @@ class BookingService:
         repository: PostgresRepository,
         *,
         turn_guard: Callable | None = None,
-        telegram_destination: tuple[int, int] | None = None,
     ):
         self.repository = repository
         self.database_url = repository.database_url
         self.turn_guard = turn_guard
-        self.telegram_destination = telegram_destination
 
     @staticmethod
     def _load_customer_booking(
@@ -156,8 +154,8 @@ class BookingService:
 
         Another customer may take the time between the offer and the selection,
         so check availability again and verify who will own the appointment.
-        Commit the booking, reminder and retry result together so a failure
-        rolls back all three. A retry with the same key returns the existing booking.
+        Commit the booking and retry result together. A retry with the same key
+        returns the existing booking.
         """
         request_hash = _hash_booking_request(request.model_dump(mode="json"))
         try:
@@ -186,16 +184,6 @@ class BookingService:
                 )
                 booking_id = self._insert_scheduled_booking(
                     session, slot, request.customer_id
-                )
-                if self.telegram_destination:
-                    bot_id, chat_id = self.telegram_destination
-                    session.execute(
-                        update(BookingRow).where(BookingRow.id == booking_id)
-                        .values(telegram_bot_id=bot_id, telegram_chat_id=chat_id)
-                    )
-                send_at = self._calculate_reminder_time(session, slot)
-                self._queue_booking_reminder(
-                    session, request.business_id, booking_id, send_at
                 )
                 self._save_retry_result(
                     session,
@@ -286,36 +274,6 @@ class BookingService:
         ).one()
         return slot.starts_at - timedelta(minutes=before), slot.ends_at + timedelta(minutes=after)
 
-    @staticmethod
-    def _calculate_reminder_time(session: Session, slot: AvailabilitySlot) -> datetime:
-        """Use the same reminder policy for new and moved bookings."""
-        minutes = session.scalar(
-            select(BusinessRow.reminder_lead_minutes).where(BusinessRow.id == slot.business_id)
-        )
-        return slot.starts_at - timedelta(minutes=minutes)
-
-    @staticmethod
-    def _queue_booking_reminder(
-        session: Session, business_id: str, booking_id: str, send_at: datetime
-    ) -> None:
-        """Share the booking transaction so a rollback also removes the reminder."""
-        destination = select(
-            literal(str(uuid.uuid4())), BookingRow.business_id, BookingRow.id, literal(send_at),
-            literal("pending"), TelegramBotRow.bot_id,
-            case((TelegramBotRow.bot_id.is_not(None), BookingRow.telegram_chat_id)),
-        ).select_from(BookingRow).outerjoin(
-            TelegramBotRow,
-            (TelegramBotRow.bot_id == BookingRow.telegram_bot_id)
-            & (TelegramBotRow.business_id == BookingRow.business_id)
-            & TelegramBotRow.enabled
-            & TelegramBotRow.reminder_delivery,
-        ).where(BookingRow.id == booking_id, BookingRow.business_id == business_id)
-        session.execute(insert(ReminderRow).from_select(
-            ["id", "business_id", "booking_id", "send_at", "status", "telegram_bot_id", "telegram_chat_id"],
-            destination,
-        ))
-        debug_event("reminder.write.staged", operation="schedule")
-
     def read(
         self, business_id: str, customer_id: str | None, booking_id: str
     ) -> Booking:
@@ -345,7 +303,7 @@ class BookingService:
         booking_id: str,
         idempotency_key: str,
     ) -> tuple[Booking, str]:
-        """Release the slot and cancel pending reminders in the same transaction."""
+        """Release the slot through the retry-safe status workflow."""
         return self._change_booking_status(
             business_id, customer_id, booking_id, "cancel", idempotency_key
         )
@@ -361,7 +319,7 @@ class BookingService:
         """Give confirmation and cancellation the same ownership and retry checks.
 
         Save the outcome with the status change so a retried request can return
-        the original result. Any reminder cancellation commits with the change.
+        the original result.
         """
         request_hash = _hash_booking_request(
             {
@@ -424,9 +382,7 @@ class BookingService:
     ) -> str:
         """Apply confirmation or cancellation rules to the locked booking.
 
-        Preserve an existing status when the customer repeats a decision. When
-        the booking is canceled, mark its pending reminders as canceled so the
-        worker will skip them.
+        Preserve an existing status when the customer repeats a decision.
         """
         if operation == "confirm" and current == BookingStatus.CANCELED:
             raise DomainError(
@@ -442,15 +398,6 @@ class BookingService:
             update(BookingRow).where(BookingRow.id == booking_id)
             .values(status=target.value, updated_at=func.now())
         )
-        if target == BookingStatus.CANCELED:
-            session.execute(update(ReminderRow).where(
-                ReminderRow.booking_id == booking_id, ReminderRow.status == "pending",
-            ).values(status="canceled", generation=ReminderRow.generation + 1))
-            reminder_ids = select(ReminderRow.id).where(ReminderRow.booking_id == booking_id)
-            session.execute(update(TelegramOutboxRow).where(
-                TelegramOutboxRow.status == "ready", TelegramOutboxRow.reminder_id.in_(reminder_ids),
-            ).values(status="canceled", message=None, finished_at=func.now()))
-            debug_event("reminder.write.staged", operation="cancel")
         return target.value
 
     def reschedule(
@@ -463,9 +410,8 @@ class BookingService:
     ) -> tuple[Booking, str]:
         """Move the customer's upcoming appointment to a slot that is still free.
 
-        Keep the same booking ID and commit its new time with the reminder and
-        retry result. If the move fails, the original appointment and reminder
-        stay in place. A matching retry returns the booking with the saved outcome.
+        Keep the same booking ID and commit its new time with the retry result.
+        If the move fails, the original appointment stays in place.
         """
         if request.business_id != business_id:
             raise DomainError("booking_not_found", "Booking not found.", 404)
@@ -497,7 +443,6 @@ class BookingService:
                     session, request, exclude_booking_id=booking_id
                 )
                 self._update_booking_slot(session, booking_id, slot)
-                self._move_booking_reminder(session, booking_id, slot)
                 self._save_retry_result(
                     session,
                     business_id,
@@ -538,29 +483,3 @@ class BookingService:
             occupied_until=occupied_until,
             updated_at=func.now(),
         ))
-
-    def _move_booking_reminder(
-        self, session: Session, booking_id: str, slot: AvailabilitySlot
-    ) -> None:
-        """Keep reminders aligned with the appointment's new time.
-
-        Lock and retime the pending job so the worker cannot deliver it while
-        it is being updated. If there is no pending job, queue one for the new
-        time. This also covers moves after the first reminder was delivered.
-        """
-        send_at = self._calculate_reminder_time(session, slot)
-        pending_id = session.scalar(select(ReminderRow.id).where(
-            ReminderRow.booking_id == booking_id, ReminderRow.status == "pending",
-        ).with_for_update())
-        if pending_id:
-            session.execute(update(ReminderRow).where(ReminderRow.id == pending_id).values(
-                send_at=send_at, last_error=None, generation=ReminderRow.generation + 1,
-            ))
-            session.execute(update(TelegramOutboxRow).where(
-                TelegramOutboxRow.reminder_id == pending_id, TelegramOutboxRow.status == "ready",
-            ).values(status="canceled", message=None, finished_at=func.now()))
-            debug_event("reminder.write.staged", operation="move")
-        else:
-            self._queue_booking_reminder(
-                session, slot.business_id, booking_id, send_at
-            )

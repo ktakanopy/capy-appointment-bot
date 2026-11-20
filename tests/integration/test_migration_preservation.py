@@ -1,4 +1,4 @@
-"""Exercise an upgrade with populated legacy rows in its own disposable database."""
+"""Exercise legacy upgrades in a disposable database."""
 
 import os
 import subprocess
@@ -12,7 +12,7 @@ from psycopg import sql
 from tests.integration.helpers import connect
 
 
-def test_populated_legacy_database_preserves_booking_and_verified_link(scheduling_db):
+def test_populated_legacy_database_is_preserved(scheduling_db):
     parts = urlsplit(scheduling_db["url"])
     name = "capy_migration_" + uuid4().hex + "_test"
     url = urlunsplit(parts._replace(path="/" + name))
@@ -48,7 +48,16 @@ def test_populated_legacy_database_preserves_booking_and_verified_link(schedulin
                 ('booking','b','s','p','c','2099-01-05T15:00Z','2099-01-05T16:00Z','2099-01-05T15:00Z','2099-01-05T16:00Z','scheduled','legacy-digest')""")
             conn.execute("""INSERT INTO telegram_identities (business_id,bot_id,telegram_user_id,customer_id,verified_phone,verified_name)
                 VALUES ('b',42,101,'c','+5511999998888','Existing Customer')""")
-        migrate("head")
+        migrate("0006_telegram_publications")
+        rejected = subprocess.run(
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        assert rejected.returncode != 0
+        assert "Use a fresh database for the massage studio schema" in rejected.stderr
         with connect(url) as conn:
             assert (
                 conn.execute(

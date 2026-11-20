@@ -4,13 +4,13 @@ from datetime import datetime
 from collections.abc import Mapping
 from typing import Any
 
-from sqlalchemy import case, func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.database import database_session
 from app.db_models import (
     BlockedPeriod, BookingRow, BusinessRow, CustomerRow, ProfessionalRow,
-    ProfessionalService, ReminderRow, ServiceRow, WeeklyAvailabilityRule,
+    ServiceRow, WeeklyAvailabilityRule,
 )
 from app.models import (
     Booking,
@@ -103,23 +103,6 @@ class PostgresRepository:
             ServiceRow.business_id == business_id, ServiceRow.id == service_id, ServiceRow.active,
         )
 
-    def service_named(self, business_id: str, phrase: str) -> Service | None:
-        name = func.lower(ServiceRow.name)
-        match_rank = case(
-            (name == func.lower(phrase), 0),
-            (name.like(func.lower(f"%{phrase}%")), 1),
-            else_=2,
-        )
-        statement = (
-            select(ServiceRow)
-            .where(ServiceRow.business_id == business_id, ServiceRow.active)
-            .order_by(match_rank, ServiceRow.name)
-            .limit(1)
-        )
-        with database_session(self.database_url) as session:
-            service = session.scalar(statement)
-            return Service.model_validate(service, from_attributes=True) if service else None
-
     def scheduling_data(
         self,
         business_id: str,
@@ -138,10 +121,8 @@ class PostgresRepository:
                 return business, service, []
             statement = (
                 select(*ProfessionalRow.__table__.c)
-                .join(ProfessionalService, ProfessionalService.professional_id == ProfessionalRow.id)
                 .where(
                     ProfessionalRow.business_id == business_id,
-                    ProfessionalService.service_id == service_id,
                     ProfessionalRow.active,
                 )
                 .order_by(ProfessionalRow.name)
@@ -185,13 +166,6 @@ class PostgresRepository:
                 by_professional[entry.pop("professional_id")][name].append(entry)
         return list(by_professional.values())
 
-    def customer_by_phone(self, business_id: str, phone: str) -> Customer | None:
-        with database_session(self.database_url) as session:
-            customer = session.scalars(select(CustomerRow).where(
-                CustomerRow.business_id == business_id, CustomerRow.phone == phone,
-            )).first()
-            return Customer.model_validate(customer, from_attributes=True) if customer else None
-
     def list_customer_bookings(self, business_id: str, customer_id: str) -> list[Booking]:
         statement = booking_query().where(
             BookingRow.business_id == business_id, BookingRow.customer_id == customer_id,
@@ -200,29 +174,17 @@ class PostgresRepository:
         with database_session(self.database_url) as session:
             return [booking_from_row(row) for row in session.execute(statement).mappings()]
 
-    def update_reminder_lead(self, business_id: str, minutes: int) -> Business | None:
-        statement = update(BusinessRow).where(BusinessRow.id == business_id).values(
-            reminder_lead_minutes=minutes
-        ).returning(BusinessRow)
-        with database_session(self.database_url) as session:
-            business = session.scalar(statement)
-            return Business.model_validate(business, from_attributes=True) if business else None
-
     def booking(self, booking_id: str) -> Booking | None:
         with database_session(self.database_url) as session:
             row = session.execute(booking_query().where(BookingRow.id == booking_id)).mappings().first()
             return booking_from_row(row) if row else None
 
     def list_owner_bookings(self, business_id: str, start: datetime, end: datetime) -> list[OwnerBooking]:
-        latest_reminder = (
-            select(ReminderRow.status).where(ReminderRow.booking_id == BookingRow.id)
-            .order_by(ReminderRow.created_at.desc()).limit(1).scalar_subquery()
-        )
-        statement = booking_query().add_columns(latest_reminder.label("reminder_status")).where(
+        statement = booking_query().where(
             BookingRow.business_id == business_id, BookingRow.starts_at >= start, BookingRow.starts_at < end,
         ).order_by(BookingRow.starts_at)
         with database_session(self.database_url) as session:
             return [
-                OwnerBooking(**booking_from_row(row).model_dump(), reminder_status=row["reminder_status"])
+                OwnerBooking(**booking_from_row(row).model_dump())
                 for row in session.execute(statement).mappings()
             ]

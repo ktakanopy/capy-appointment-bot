@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta
+from datetime import time, timedelta
 from uuid import uuid4
 
 import psycopg
 import pytest
 
 from app.models import (
+    AvailabilitySearchRequest,
     BookingCreateRequest,
     BookingRescheduleRequest,
     BookingSummary,
@@ -20,32 +21,84 @@ from tests.integration.helpers import (
     offered_slots,
     slot_at_offset,
     test_customer,
+    next_open_day,
 )
 
 
-def test_migration_seed_repeatability_and_second_business_scope(scheduling_db):
-    seed(include_second_business=True)
-    seed(include_second_business=True)
+def test_migration_and_seed_are_repeatable(scheduling_db):
+    seed()
+    seed()
     catalog = scheduling_db["repository"].catalog("demo-studio")
 
     assert catalog is not None
-    assert len(catalog.professionals) == 2
-    assert [service.id for service in catalog.services] == ["service-demo"]
-    assert (
-        scheduling_db["repository"].catalog("second-demo-studio").services[0].id
-        == "service-second"
-    )
+    assert len(catalog.professionals) == 1
+    assert {service.name for service in catalog.services} == {
+        "Shiatsu 30 min", "Shiatsu 60 min", "Liberação miofascial 60 min",
+    }
     with connect(scheduling_db["url"]) as connection:
         assert (
             connection.execute("SELECT count(*) AS n FROM businesses").fetchone()["n"]
-            == 2
+            == 1
         )
         assert (
             connection.execute(
                 "SELECT count(*) AS n FROM weekly_availability_rules"
             ).fetchone()["n"]
-            == 24
+            == 6
         )
+
+
+def test_service_options_are_data_and_durations_are_unique(scheduling_db):
+    with connect(scheduling_db["url"]) as connection:
+        connection.execute(
+            "INSERT INTO services (id,business_id,service_type,duration_minutes,price_minor) "
+            "VALUES ('shiatsu-45','demo-studio','Shiatsu',45,12000)"
+        )
+        connection.execute("UPDATE services SET price_minor=11000 WHERE id='service-shiatsu-30'")
+    seed()
+    catalog = scheduling_db["repository"].catalog("demo-studio")
+    assert any(item.name == "Shiatsu 45 min" and item.duration_minutes == 45 for item in catalog.services)
+    assert next(item.price_minor for item in catalog.services if item.id == "service-shiatsu-30") == 11000
+    with pytest.raises(psycopg.errors.UniqueViolation):
+        with connect(scheduling_db["url"]) as connection:
+            connection.execute(
+                "INSERT INTO services (id,business_id,service_type,duration_minutes,price_minor) "
+                "VALUES ('duplicate','demo-studio','shiatsu',45,12000)"
+            )
+
+
+def test_duration_fits_hours_and_services_share_one_calendar(scheduling_db):
+    day = next_open_day()
+    with connect(scheduling_db["url"]) as connection:
+        connection.execute(
+            "UPDATE weekly_availability_rules SET closes_at='12:00' WHERE weekday=%s",
+            (day.weekday(),),
+        )
+
+    def search(service_id):
+        return scheduling_db["availability"].search(AvailabilitySearchRequest(
+            business_id="demo-studio", service_id=service_id, start_date=day, end_date=day,
+        ))
+
+    short_slots = search("service-shiatsu-30")
+    long_slots = search("service-demo")
+    from zoneinfo import ZoneInfo
+    zone = ZoneInfo("America/Sao_Paulo")
+    assert any(slot.starts_at.astimezone(zone).time() == time(11, 15) for slot in short_slots)
+    assert all(slot.starts_at.astimezone(zone).time() != time(11, 15) for slot in long_slots)
+    short_slot = short_slots[0]
+    long_slot = next(slot for slot in long_slots if slot.starts_at == short_slot.starts_at)
+    created = create_booking(scheduling_db, short_slot, key="short-massage", phone="+5511999900010")
+    with pytest.raises(DomainError) as conflict:
+        create_booking(scheduling_db, long_slot, key="overlap-massage", phone="+5511999900011")
+    assert conflict.value.code == "slot_unavailable"
+    with connect(scheduling_db["url"]) as connection:
+        connection.execute("UPDATE services SET duration_minutes=45 WHERE id='service-shiatsu-30'")
+        assert connection.execute("SELECT to_regclass('reminders') AS name").fetchone()["name"] is None
+    saved = scheduling_db["bookings"].read(
+        created.booking.business_id, created.booking.customer.id, created.booking.id,
+    )
+    assert saved.ends_at - saved.starts_at == timedelta(minutes=30)
 
 
 def test_create_idempotency_and_postgres_overlap_constraint(scheduling_db):
@@ -123,7 +176,7 @@ def test_create_idempotency_and_postgres_overlap_constraint(scheduling_db):
             assert status == "canceled"
 
 
-def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_both(
+def test_failed_reschedule_preserves_booking_then_success_moves_it(
     scheduling_db,
 ):
     slots = offered_slots(scheduling_db)
@@ -147,12 +200,6 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
         scheduling_db, second_slot, key="reschedule-second", phone="+5511999920002"
     )
 
-    with connect(scheduling_db["url"]) as connection:
-        old_reminder = connection.execute(
-            "SELECT id,send_at,status FROM reminders WHERE booking_id=%s",
-            (first.booking.id,),
-        ).fetchone()
-
     occupied_request = BookingRescheduleRequest(
         business_id=second_slot.business_id,
         service_id=second_slot.service_id,
@@ -175,13 +222,6 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
         .starts_at
         == first_slot.starts_at
     )
-    with connect(scheduling_db["url"]) as connection:
-        unchanged_reminder = connection.execute(
-            "SELECT id,send_at,status FROM reminders WHERE booking_id=%s",
-            (first.booking.id,),
-        ).fetchone()
-    assert unchanged_reminder == old_reminder
-
     free_request = BookingRescheduleRequest(
         business_id=free_slot.business_id,
         service_id=free_slot.service_id,
@@ -205,14 +245,6 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
         free_request,
         "successful-move",
     ) == (moved, outcome)
-    with connect(scheduling_db["url"]) as connection:
-        updated_reminder = connection.execute(
-            "SELECT id,send_at,status FROM reminders WHERE booking_id=%s",
-            (first.booking.id,),
-        ).fetchone()
-    assert updated_reminder["id"] == old_reminder["id"]
-    assert updated_reminder["send_at"] != old_reminder["send_at"]
-    assert updated_reminder["status"] == "pending"
     assert (
         scheduling_db["bookings"]
         .read(second.booking.business_id, second.booking.customer.id, second.booking.id)
@@ -221,7 +253,7 @@ def test_failed_reschedule_preserves_booking_and_reminder_then_success_moves_bot
     )
 
 
-def test_cancel_cancels_reminder_and_releases_slot(scheduling_db):
+def test_cancel_releases_slot(scheduling_db):
     slot = offered_slots(scheduling_db)[0]
     created = create_booking(
         scheduling_db, slot, key="cancel-booking", phone="+5511999930001"
@@ -242,11 +274,6 @@ def test_cancel_cancels_reminder_and_releases_slot(scheduling_db):
         created.booking.id,
         "cancel-key",
     ) == (booking, outcome)
-    with connect(scheduling_db["url"]) as connection:
-        reminder = connection.execute(
-            "SELECT status FROM reminders WHERE booking_id=%s", (created.booking.id,)
-        ).fetchone()
-    assert reminder["status"] == "canceled"
     replacement = create_booking(
         scheduling_db, slot, key="replacement-booking", phone="+5511999930002"
     )
@@ -316,7 +343,7 @@ def test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once(
     assert count == 2
 
 
-def test_booking_and_reminder_creation_roll_back_together(scheduling_db):
+def test_booking_and_retry_record_roll_back_together(scheduling_db):
     import psycopg
     from sqlalchemy.exc import DBAPIError
 
@@ -330,10 +357,10 @@ def test_booking_and_reminder_creation_roll_back_together(scheduling_db):
         customer_id=test_customer(scheduling_db, "+5511999970001"),
     )
     with connect(scheduling_db["url"]) as connection:
-        connection.execute("""CREATE FUNCTION fail_booking_reminder_insert() RETURNS trigger LANGUAGE plpgsql AS $$
-            BEGIN RAISE EXCEPTION 'simulated reminder write failure'; END $$""")
-        connection.execute("""CREATE TRIGGER fail_booking_reminder_insert_trigger
-            BEFORE INSERT ON reminders FOR EACH ROW EXECUTE FUNCTION fail_booking_reminder_insert()""")
+        connection.execute("""CREATE FUNCTION fail_retry_insert() RETURNS trigger LANGUAGE plpgsql AS $$
+            BEGIN RAISE EXCEPTION 'simulated retry record failure'; END $$""")
+        connection.execute("""CREATE TRIGGER fail_retry_insert_trigger
+            BEFORE INSERT ON idempotency_records FOR EACH ROW EXECUTE FUNCTION fail_retry_insert()""")
     try:
         with pytest.raises(DBAPIError) as error:
             scheduling_db["bookings"].create(request, "rollback-create")
@@ -350,12 +377,6 @@ def test_booking_and_reminder_creation_roll_back_together(scheduling_db):
                 == 0
             )
             assert (
-                connection.execute("SELECT count(*) AS n FROM reminders").fetchone()[
-                    "n"
-                ]
-                == 0
-            )
-            assert (
                 connection.execute(
                     "SELECT count(*) AS n FROM idempotency_records"
                 ).fetchone()["n"]
@@ -364,6 +385,6 @@ def test_booking_and_reminder_creation_roll_back_together(scheduling_db):
     finally:
         with connect(scheduling_db["url"]) as connection:
             connection.execute(
-                "DROP TRIGGER IF EXISTS fail_booking_reminder_insert_trigger ON reminders"
+                "DROP TRIGGER IF EXISTS fail_retry_insert_trigger ON idempotency_records"
             )
-            connection.execute("DROP FUNCTION IF EXISTS fail_booking_reminder_insert()")
+            connection.execute("DROP FUNCTION IF EXISTS fail_retry_insert()")

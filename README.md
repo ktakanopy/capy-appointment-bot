@@ -1,6 +1,6 @@
 # CAPY — Telegram scheduling with text and audio
 
-A portfolio scheduling assistant for service businesses. Gemma rewrites text or complete voice recordings into simple language; Laya receives that interpreted message and the conversation context, then proposes the next action. Deterministic Python services authorize changes, calculate availability and commit bookings in PostgreSQL.
+A portfolio scheduling assistant for one massage therapist. Gemma rewrites text or complete voice recordings into simple language; Laya receives that interpreted message and the conversation context, then proposes the next action. Deterministic Python services authorize changes, calculate availability and commit bookings in PostgreSQL.
 
 <p align="center"><img src="docs/assets/capy.png" alt="CAPY on Telegram. Find available times, book and look up upcoming appointments, confirm, cancel or reschedule, and ask about services and prices. Send text, voice notes or audio." width="640"></p>
 
@@ -50,10 +50,11 @@ Check `http://localhost:8081/health`. [Model setup options](docs/model-contracts
 Start the web API, RabbitMQ, relay, conversation worker, and sender in a second terminal.
 
 ```bash
-docker compose --profile telegram up -d --build --wait
+docker compose -p capy-massage-studio --profile telegram up -d --build --wait
 ```
 
-Compose seeds the demo studio and connects the worker to the local model server. Check
+The project name gives this demo its own database volume. Compose seeds the studio and
+connects the worker to the local model server. Check
 `http://localhost:8000/health`. Point a public HTTPS reverse proxy or tunnel at
 `http://127.0.0.1:8000`. Telegram will send incoming messages to that HTTPS address.
 
@@ -62,7 +63,7 @@ Use the same route when retrying registration. Replace `demo-studio` if you set 
 different `DEMO_BUSINESS_ID`.
 
 ```bash
-docker compose run --build --rm telegram-register \
+docker compose -p capy-massage-studio run --build --rm telegram-register \
   --business demo-studio \
   --route demo_telegram_webhook \
   --webhook-secret-env TELEGRAM_WEBHOOK_SECRET \
@@ -71,27 +72,42 @@ docker compose run --build --rm telegram-register \
 
 The setup command registers the bot in CAPY and tells Telegram where to send its
 updates. Pending Telegram updates are preserved. If the public address of your tunnel
-changes, run registration again with the new address. If upgrading from an older checkout, stop its Telegram intake container before registering the webhook. [Upgrade and recovery](docs/production.md#cutover-and-recovery)
+changes, run registration again with the new address.
 
 ### Make a test booking
 
-In a private Telegram chat with the test bot, send a voice note asking for massage times tomorrow. Reply with an offered number to select a time. CAPY will show the exact appointment and ask for approval; say yes to create the booking. CAPY returns the saved booking details afterward.
+In a private Telegram chat with the test bot, ask for “Shiatsu 60 min” tomorrow by text or voice. Reply with an offered number to select a time. CAPY will show the exact appointment and ask for approval; say yes to create the booking. CAPY returns the saved booking details afterward.
 
-Check the booking and the demo reminder inbox in the owner CLI.
+Check the booking in the owner CLI.
 
 ```bash
-docker compose run --rm api \
+docker compose -p capy-massage-studio run --rm api \
   python -m app.cli
 ```
 
 Run the [bilingual golden evaluation](#evaluate-with-and-without-laya) to check routing, confirmation, and booking writes before using the bot with customers.
+
+### Change the service menu
+
+The demo seeds Shiatsu for 30 and 60 minutes and liberação miofascial for 60 minutes.
+Prices are illustrative. Each row in `services` has a massage type, duration, price in
+centavos, and optional buffers. For example, insert this row in PostgreSQL to add a
+45-minute option:
+
+```sql
+INSERT INTO services (id, business_id, service_type, duration_minutes, price_minor, buffer_after_minutes)
+VALUES ('shiatsu-45', 'demo-studio', 'Shiatsu', 45, 12000, 15);
+```
+
+PostgreSQL generates the catalog name “Shiatsu 45 min”. The existing conversation
+matches that full name. All options share Ana's working hours and booked times.
 
 ### Add Langfuse to the demo
 
 Set `TRACING_ENABLED=true` in the private `.env` file and start the demo with the Langfuse add-on.
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.observability.yml \
+docker compose -p capy-massage-studio -f docker-compose.yml -f docker-compose.observability.yml \
   --profile telegram up -d --build --wait
 ```
 
@@ -99,9 +115,9 @@ Open `http://localhost:3000` and make a test booking to generate a trace. Langfu
 
 ## Flow and guarantees
 
-![CAPY runtime architecture. The webhook commits Telegram updates and the relay publishes wake-ups through RabbitMQ. The turn worker handles text and audio and runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](docs/assets/architecture.svg)
+The Telegram webhook saves each update. RabbitMQ signals the worker, which uses Gemma, Laya and the scheduling services. The sender delivers the saved reply. Redis stores the conversation state and PostgreSQL stores the calendar and Telegram work.
 
-Availability results are references, not reservations. Selecting a time asks for approval and creates no booking. A later explicit approval allows the transaction to revalidate policy and save the booking. PostgreSQL rejects overlapping active bookings; idempotency protects retries. Booking and reminder changes commit atomically. Redis holds a bounded, temporary conversation draft, offered slots, pending consent and history. PostgreSQL keeps update receipts and saved replies across restarts. RabbitMQ sends identifier-only wake-ups to the workers. [Follow a Telegram message](docs/telegram-worker.md) · [Read the booking sequence](docs/architecture.md#booking-sequence-diagrams)
+Availability results are references, not reservations. Selecting a time asks for approval and creates no booking. A later explicit approval allows the transaction to revalidate policy and save the booking. PostgreSQL rejects overlapping active bookings, and idempotency protects retries. Redis holds a bounded, temporary conversation draft, offered slots, pending consent and history. PostgreSQL keeps update receipts and saved replies across restarts.
 
 ## Evaluate with and without Laya
 
@@ -134,12 +150,12 @@ For host tests, set `TEST_DATABASE_URL` and `TEST_AMQP_URL` to a disposable Post
 
 ## Migration and current limits
 
-Existing databases need a coordinated cutover: stop old workers, back up PostgreSQL, then upgrade with the new application. Migration `0003_telegram_ownership` preserves bookings and verified identity links while retiring token columns. Legacy customers without a trusted link remain owner-visible. It never claims them by phone. Reverting token removal requires restoring the matching backup and application. The message/context model contract starts temporary conversations fresh under checkpoint namespace `lg:v3`; business records are unchanged.
+Migration `0007_massage_studio` requires a fresh database and stops if an older database contains business records. Create a separate empty database and leave the old database intact. Roll back by using the earlier application with its matching database.
 
 The smoke corpus exercises the local models with synthetic data. A live Telegram walkthrough
 requires a test bot, a test chat, and a public HTTPS address for the webhook.
 
-For multiple bots, CAPY supports a shared webhook, conversation workers, and a rate-limited sender for replies and reminders. The production Compose file is deprecated and retained as a deployment reference. [Deployment reference](docs/production.md)
+The demo uses one registered bot and a rate-limited sender. The production Compose file is a deployment reference.
 
 ## Documentation
 
@@ -150,7 +166,7 @@ The [documentation index](docs/README.md) provides a reading order and separates
 - [Telegram worker guide](docs/telegram-worker.md) — follow one message from webhook to reply, with diagrams, code excerpts, and logs
 - [Conversation graph](docs/graph.md) — routing, state, and workflow steps
 - [Model contracts](docs/model-contracts.md) — Gemma and Laya setup and APIs
-- [Database](docs/database.md) — tables, booking transactions, and reminders
+- [Database](docs/database.md) — tables and booking transactions
 - [Ownership and data handling](docs/security.md) — customer identity and privacy
 - [Idempotency and recovery](docs/idempotency.md) — duplicate updates and safe retries
 - [Evaluation guide](docs/evaluation.md) — datasets, commands, and reports

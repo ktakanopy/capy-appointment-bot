@@ -10,11 +10,10 @@ from app.graph.builder import build_graph
 from app.graph.contracts import TurnContext
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import DeterministicInterpreter
-from app.reminders import ReminderWorker
 from tests.integration.helpers import connect, next_open_day
 
 
-def test_real_workflow_booking_reminder_reschedule_cancel(scheduling_db, caplog):
+def test_real_workflow_booking_reschedule_cancel(scheduling_db, caplog):
     runtime = SimpleNamespace(
         repository=scheduling_db["repository"],
         availability=scheduling_db["availability"],
@@ -63,10 +62,9 @@ def test_real_workflow_booking_reminder_reschedule_cancel(scheduling_db, caplog)
                 "SELECT count(*) AS total FROM bookings WHERE customer_id=%s",
                 (identity["customer_id"],),
             ).fetchone()["total"] == 0
-            assert conn.execute("SELECT count(*) AS total FROM reminders").fetchone()["total"] == 0
         created = turn("Yes, book it.")
         assert created.intent == "create"
-        assert "Massage" in created.text and "Alex" in created.text
+        assert catalog.services[0].name in created.text and "Ana" in created.text
         local_start = created.booking.starts_at.astimezone(
             ZoneInfo(catalog.business.timezone)
         )
@@ -78,25 +76,12 @@ def test_real_workflow_booking_reminder_reschedule_cancel(scheduling_db, caplog)
                 "SELECT count(*) AS total FROM bookings WHERE customer_id=%s",
                 (identity["customer_id"],),
             ).fetchone()["total"] == 1
-            assert conn.execute("SELECT count(*) AS total FROM reminders").fetchone()["total"] == 1
         assert turn("confirm my booking").booking.status.value == "confirmed"
-        with connect(scheduling_db["url"]) as conn:
-            conn.execute(
-                "UPDATE reminders SET send_at=now()-interval '1 minute' WHERE booking_id=%s",
-                (created.booking.id,),
-            )
-        assert ReminderWorker(scheduling_db["url"]).deliver_due() == 1
         moved_slots = turn(f"move my appointment to {next_open_day().isoformat()}")
         assert moved_slots.intent == "reschedule" and moved_slots.slots
         moved = turn("2")
         assert moved.intent == "reschedule" and moved.booking.id == created.booking.id
         assert moved.booking.starts_at != created.booking.starts_at
-        with connect(scheduling_db["url"]) as conn:
-            rows = conn.execute(
-                "SELECT status FROM reminders WHERE booking_id=%s",
-                (created.booking.id,),
-            ).fetchall()
-            assert sorted(r["status"] for r in rows) == ["delivered", "pending"]
         assert turn("cancel my booking").booking.status.value == "canceled"
         assert turn("when is my appointment").intent == "lookup"
     assert "Synthetic customer" not in str(workflow.state("journey"))

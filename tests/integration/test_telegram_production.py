@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from app.booking import BookingService
 from app.channels.bots import BotRegistry, TelegramBot
 from app.channels.telegram import TelegramBotApi
-from app.channels.telegram_delivery import REPLY_BURST, TelegramOutbox
+from app.channels.telegram_delivery import TelegramOutbox
 from app.channels.telegram_intake import save_update
 from app.channels.telegram_repository import TelegramRepository
 from app.channels.telegram_turns import ClaimLost, TelegramTurns
@@ -24,9 +24,7 @@ from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import DeterministicInterpreter
 from app.main import app
 from app.models import BookingCreateRequest, BookingRescheduleRequest
-from app.reminders import ReminderWorker, enqueue_telegram_reminders
 from app.runtime import close_runtime, create_runtime
-from app.seed import seed
 from app.telegram_service import process_turn, reconcile_replies
 from app.telegram_service import register as register_bot
 from tests.integration.helpers import connect, next_open_day, offered_slots
@@ -38,11 +36,11 @@ def update(number, chat=101, **content):
     return {"update_id": number, "message": message}
 
 
-def register(url, bot_id=42, *, business="demo-studio", reminders=False):
+def register(url, bot_id=42, *, business="demo-studio"):
     bot = TelegramBot(bot_id, business, f"TEST_BOT_{bot_id}", f"TEST_SECRET_{bot_id}")
     BotRegistry(url).register(
         bot_id, business, bot.token_env, webhook_route=f"private_test_route_{bot_id}",
-        webhook_secret_env=bot.webhook_secret_env, reminder_delivery=reminders,
+        webhook_secret_env=bot.webhook_secret_env,
     )
     return bot
 
@@ -73,7 +71,6 @@ def test_register_configures_webhook_after_saving_route(scheduling_db, monkeypat
     args = Namespace(
         business="demo-studio", token_env="TELEGRAM_BOT_TOKEN", route=route,
         webhook_secret_env="TELEGRAM_WEBHOOK_SECRET", webhook_base_url="http://example.test",
-        deliver_reminders=False,
     )
     with pytest.raises(ValueError, match="HTTPS origin"):
         register_bot(settings, args)
@@ -92,7 +89,11 @@ def test_register_configures_webhook_after_saving_route(scheduling_db, monkeypat
 
 def test_webhook_dedupes_per_bot(scheduling_db, monkeypatch):
     url = scheduling_db["url"]
-    seed(include_second_business=True)
+    with connect(url) as connection:
+        connection.execute(
+            "INSERT INTO businesses (id,name,category,timezone) VALUES "
+            "('second-demo-studio','Other Studio','Massage','UTC')"
+        )
     first = register(url)
     second = register(url, 43, business="second-demo-studio")
     for bot in (first, second):
@@ -174,170 +175,72 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
     turns = TelegramTurns(url)
     chat = time.time_ns() % 1_000_000_000
     try:
-        save_update(url, bot, update(1, chat=chat, text=f"Book Massage {next_open_day()}"))
+        save_update(url, bot, update(1, chat=chat, text=f"Book Shiatsu 60 min on {next_open_day()}"))
         ready_updates(url)
-        first = turns.claim()
-        process_turn(turns, first, runtime)
+        process_turn(turns, turns.claim(), runtime)
         selection = update(2, chat=chat, text="1")
         selection["message"]["from"]["first_name"] = "DebugExamplePrivateName"
         save_update(url, bot, selection)
         ready_updates(url)
         second = turns.claim()
         assert second.checkpoint_thread
-        if outcome == "worker_crash":
-            def lose_reply(*_):
-                raise RuntimeError("simulated loss after booking commit")
+        if outcome == "draft_expired":
+            runtime.workflow.graph.checkpointer.delete_thread(second.checkpoint_thread)
+        process_turn(turns, second, runtime)
+        with connect(url) as connection:
+            assert connection.execute("SELECT count(*) AS total FROM bookings").fetchone()["total"] == 0
+        if outcome != "draft_expired":
+            save_update(url, bot, update(3, chat=chat, text="Yes, book it."))
+            ready_updates(url)
+            third = turns.claim()
+            if outcome == "worker_crash":
+                def lose_reply(*_):
+                    raise RuntimeError("simulated loss after booking commit")
 
-            with monkeypatch.context() as patch:
-                patch.setattr(turns, "finish", lose_reply)
-                with pytest.raises(RuntimeError, match="simulated loss"):
-                    process_turn(turns, second, runtime)
-            with connect(url) as connection:
-                connection.execute(
-                    """UPDATE telegram_conversations SET lease_until=now()-interval '1 second'
-                       WHERE bot_id=42 AND chat_id=%s""",
-                    (chat,),
-                )
-            recovery = turns.claim()
-            assert recovery.interrupted
-            process_turn(turns, recovery, runtime)
-        else:
-            if outcome == "draft_expired":
-                runtime.workflow.graph.checkpointer.delete_thread(second.checkpoint_thread)
-            process_turn(turns, second, runtime)
+                with monkeypatch.context() as patch:
+                    patch.setattr(turns, "finish", lose_reply)
+                    with pytest.raises(RuntimeError, match="simulated loss"):
+                        process_turn(turns, third, runtime)
+                with connect(url) as connection:
+                    connection.execute(
+                        "UPDATE telegram_conversations SET lease_until=now()-interval '1 second' "
+                        "WHERE bot_id=42 AND chat_id=%s", (chat,),
+                    )
+                recovery = turns.claim()
+                assert recovery.interrupted
+                process_turn(turns, recovery, runtime)
+            else:
+                process_turn(turns, third, runtime)
         with connect(url) as connection:
             booking = connection.execute(
-                "SELECT count(*) AS total FROM bookings WHERE telegram_bot_id=42 AND telegram_chat_id=%s",
+                "SELECT count(*) AS total FROM bookings b JOIN telegram_identities i "
+                "ON i.customer_id=b.customer_id WHERE i.bot_id=42 AND i.telegram_user_id=%s",
                 (chat,),
             ).fetchone()
             assert booking["total"] == (0 if outcome == "draft_expired" else 1)
             jobs = connection.execute(
                 "SELECT update_id,message FROM telegram_outbox WHERE chat_id=%s ORDER BY id", (chat,)
             ).fetchall()
-            assert [job["update_id"] for job in jobs] == [1, 2]
+            assert [job["update_id"] for job in jobs] == (
+                [1, 2] if outcome == "draft_expired" else [1, 2, 3]
+            )
             if outcome == "draft_expired":
                 assert "expired" in jobs[-1]["message"]
             if outcome == "worker_crash":
                 assert "check your appointments" in jobs[-1]["message"]
-        if outcome == "success":
-            expected = [
-                "telegram.inbox.recorded", "telegram.turn.claimed",
-                "workflow.checkpoint.forked", "workflow.slot.matched",
-                "availability.slot.validated", "reminder.write.staged",
-                "booking.saved", "telegram.turn.saved",
-            ]
-            events = [
-                event["event"] for record in caplog.records
-                if isinstance(event := record.msg, dict)
-                and event.get("event") in expected
-                and event.get("bot_id") == 42 and event.get("update_id") == 2
-            ]
-            assert events == expected
         assert "DebugExamplePrivateName" not in caplog.text
         assert "42:synthetic" not in caplog.text
     finally:
         close_runtime(runtime)
 
 
-@pytest.mark.parametrize("transport", ["postgres", "rabbitmq"])
-def test_reschedule_and_cancel_supersede_materialized_reminders(scheduling_db, transport):
-    url = scheduling_db["url"]
-    bot = register(url, reminders=True)
-    identity = TelegramRepository(url).ensure_customer_for_sender(
-        bot.business_id, bot.bot_id, 101, "Synthetic customer"
-    )
-    service = BookingService(scheduling_db["repository"], telegram_destination=(bot.bot_id, 101))
-    available = offered_slots(scheduling_db)
-    slot, next_slot = available[0], available[-1]
-    created = service.create(BookingCreateRequest(
-        business_id=bot.business_id, customer_id=identity["customer_id"],
-        service_id=slot.service_id, professional_id=slot.professional_id,
-        slot_id=slot.slot_id, starts_at=slot.starts_at,
-    ), "create")
-
-    def force_due():
-        with connect(url) as connection:
-            connection.execute("UPDATE reminders SET send_at=now()-interval '1 minute'")
-
-    force_due()
-    assert ReminderWorker(url).deliver_due() == 0
-    with ThreadPoolExecutor(max_workers=1) as workers:
-        with database_session(url) as session:
-            service._lock_business_and_check_retry(session, bot.business_id, "cancel", "race", "hash")
-            # A scheduler must be able to insert its FK while the booking
-            # transaction holds the write-serialization lock on the business.
-            assert workers.submit(enqueue_telegram_reminders, url).result(timeout=3) == 1
-    assert enqueue_telegram_reminders(url) == 0
-    service.reschedule(
-        bot.business_id, identity["customer_id"], created.booking.id,
-        BookingRescheduleRequest(
-            business_id=bot.business_id, service_id=next_slot.service_id,
-            professional_id=next_slot.professional_id, slot_id=next_slot.slot_id,
-            starts_at=next_slot.starts_at,
-        ), "move",
-    )
-    force_due()
-    assert enqueue_telegram_reminders(url) == 1
-    outbox = TelegramOutbox(url)
-    if transport == "rabbitmq":
-        with connect(url) as connection:
-            outgoing = connection.execute(
-                """SELECT o.id,o.reminder_generation FROM telegram_publications p
-                   JOIN telegram_outbox o ON o.id=p.outgoing_id ORDER BY o.id"""
-            ).fetchall()
-        assert [row["reminder_generation"] for row in outgoing] == [1, 2]
-        assert outbox.claim_by_id(outgoing[0]["id"]) is None
-        job = outbox.claim_by_id(outgoing[1]["id"])
-    else:
-        job = outbox.claim()
-    assert job["reminder_generation"] == 2
-    service.cancel(bot.business_id, identity["customer_id"], created.booking.id, "cancel")
-    assert outbox.finish(job, "sent")  # Telegram may already have accepted it.
-    assert outbox.claim() is None
-    with connect(url) as connection:
-        reminder = connection.execute("SELECT status,generation FROM reminders").fetchone()
-        jobs = connection.execute("SELECT status FROM telegram_outbox ORDER BY id").fetchall()
-    assert reminder == {"status": "canceled", "generation": 3}
-    assert [row["status"] for row in jobs] == ["canceled", "sent"]
-
-
-def test_locked_reminder_does_not_block_another_bot(scheduling_db):
-    url = scheduling_db["url"]
-    bot, other = register(url, reminders=True), register(url, 43)
-    identity = TelegramRepository(url).ensure_customer_for_sender(bot.business_id, bot.bot_id, 101, "Customer")
-    service = BookingService(scheduling_db["repository"], telegram_destination=(bot.bot_id, 101))
-    slot = offered_slots(scheduling_db)[0]
-    booking = service.create(BookingCreateRequest(
-        business_id=bot.business_id, customer_id=identity["customer_id"],
-        service_id=slot.service_id, professional_id=slot.professional_id,
-        slot_id=slot.slot_id, starts_at=slot.starts_at,
-    ), "test-create").booking
-    with connect(url) as connection:
-        connection.execute("UPDATE reminders SET send_at=now()-interval '1 minute'")
-    enqueue_telegram_reminders(url)
-    save_update(url, other, update(10, text="/start"))
-    ready_updates(url)
-    turns = TelegramTurns(url)
-    turns.finish(turns.claim(), "Other bot reply", None)
-    with connect(url) as connection:
-        connection.execute(
-            "INSERT INTO telegram_bot_delivery (bot_id, reply_streak) VALUES (%s,%s)",
-            (bot.bot_id, REPLY_BURST),
-        )
-        connection.execute(
-            "UPDATE telegram_outbox SET ready_at=now()-interval '1 minute' WHERE reminder_id IS NOT NULL"
-        )
-    with ThreadPoolExecutor(max_workers=1) as workers:
-        with connect(url) as connection:
-            # The earlier readiness timestamp puts this locked reminder ahead of the other bot's reply.
-            connection.execute("SELECT id FROM bookings WHERE id=%s FOR UPDATE", (booking.id,))
-            job = workers.submit(TelegramOutbox(url).claim).result(timeout=3)
-            assert job["bot_id"] == other.bot_id
-
-
 def test_sender_cooldown_is_shared_but_other_bot_can_send(scheduling_db):
     url = scheduling_db["url"]
-    seed(include_second_business=True)
+    with connect(url) as connection:
+        connection.execute(
+            "INSERT INTO businesses (id,name,category,timezone) VALUES "
+            "('second-demo-studio','Other Studio','Massage','UTC')"
+        )
     first = register(url)
     second = register(url, 43, business="second-demo-studio")
     for bot, number in ((first, 1), (first, 2), (second, 3)):

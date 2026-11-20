@@ -74,7 +74,6 @@ class BotRegistry:
         *,
         webhook_route: str | None = None,
         webhook_secret_env: str | None = None,
-        reminder_delivery: bool = False,
     ) -> None:
         """Register a verified bot without ever changing its tenant."""
         names = (token_env, webhook_secret_env) if webhook_secret_env else (token_env,)
@@ -96,7 +95,6 @@ class BotRegistry:
                 token_env=token_env,
                 webhook_route=webhook_route,
                 webhook_secret_env=webhook_secret_env,
-                reminder_delivery=reminder_delivery,
             )
             registered = session.scalar(
                 bot.on_conflict_do_update(
@@ -105,7 +103,6 @@ class BotRegistry:
                         "token_env": bot.excluded.token_env,
                         "webhook_route": bot.excluded.webhook_route,
                         "webhook_secret_env": bot.excluded.webhook_secret_env,
-                        "reminder_delivery": bot.excluded.reminder_delivery,
                     },
                     where=TelegramBotRow.business_id == bot.excluded.business_id,
                 ).returning(TelegramBotRow.bot_id)
@@ -115,9 +112,7 @@ class BotRegistry:
                     "This bot is already registered to a different business."
                 )
             self._backfill_conversations(session, bot_id, business_id)
-        debug_event(
-            "telegram.bot.registered", bot_id=bot_id, reminders=reminder_delivery
-        )
+        debug_event("telegram.bot.registered", bot_id=bot_id)
 
     @staticmethod
     def _check_legacy_scope(session: Session, bot_id: int, business_id: str) -> None:

@@ -1,0 +1,116 @@
+{
+  "features": {
+    "massage-studio": {
+      "artifacts": {
+        "plan": "docs/sdd/plan-massage-studio.md",
+        "prd": "docs/sdd/prd-massage-studio.md"
+      },
+      "created_at": "2026-11-20T21:58:14+00:00",
+      "id": "massage-studio",
+      "notes": [],
+      "status": "active",
+      "title": "One massage studio and one calendar",
+      "updated_at": "2026-11-20T21:58:14+00:00"
+    }
+  },
+  "reviews": [],
+  "tasks": {
+    "MS-01": {
+      "acceptance_criteria": [
+        "Seeding twice produces one professional and no duplicate options.",
+        "A distinct positive duration can be inserted without code changes. Duplicate type and duration pairs are rejected."
+      ],
+      "changed_files": [
+        "app/db_models.py",
+        "alembic/versions/",
+        "app/seed.py",
+        "app/repositories.py"
+      ],
+      "created_at": "2026-11-20T21:58:14+00:00",
+      "dependencies": [],
+      "description": "Why / Intent\nRequirements 1\u20133. Make the business editable as data.\n\nStart Boundary\nAn empty demo PostgreSQL database and the current Alembic setup.\n\nEnd Boundary\nThe seeded catalog and working intervals can be queried twice with identical results.\n\nOwner\nBusiness schema and seed.\n\nMigration Owner\nThis task owns the fresh schema for the professional, options and calendar. No booking backfill is required.\n\nInputs\nOne massagista, the example service rows, the demo timezone, working intervals, prices and buffers. Use the existing bot registration flow for one bot.\n\nOutputs / Side-effects\nOne active professional, one row per type and duration, stable IDs and repeatable seed data. Keep blocked periods available.\n\nNon-goals\nNew admin UI, additional bot registration logic, graph and model changes.\n\nFocused Verification\nOn a dedicated empty test database run alembic upgrade head, then python -m app.seed twice. Check catalog counts and uniqueness, then insert a 45-minute option and read it through the catalog.",
+      "evidence": [
+        "Full test suite: 142 passed with disposable PostgreSQL, Redis and RabbitMQ.",
+        "Offline golden scenarios: 2 passed.",
+        "Fresh migration and seed exercised by integration tests."
+      ],
+      "feature_id": "massage-studio",
+      "id": "MS-01",
+      "notes": [],
+      "priority": "P1",
+      "status": "done",
+      "title": "Set up the massagista, services, and calendar",
+      "updated_at": "2026-11-20T22:05:52+00:00"
+    },
+    "MS-02": {
+      "acceptance_criteria": [
+        "A 30-minute service plus a 15-minute buffer fits a 45-minute opening. A 60-minute service cannot use it.",
+        "Two overlapping requests for different services produce at most one committed booking.",
+        "Cancellation frees time, failed rescheduling preserves the appointment and repeated approval cannot duplicate it."
+      ],
+      "changed_files": [
+        "app/repositories.py",
+        "app/scheduling.py",
+        "app/booking.py",
+        "tests/unit/test_scheduling.py",
+        "tests/integration/test_postgres_booking_lifecycle.py"
+      ],
+      "created_at": "2026-11-20T21:58:14+00:00",
+      "dependencies": [
+        "MS-01"
+      ],
+      "description": "Why / Intent\nRequirements 2\u20134. Make offered times match the chosen massage.\n\nStart Boundary\nThe seeded catalog and working intervals from MS-01.\n\nEnd Boundary\nThe current booking flow saves, displays and manages appointments using one shared calendar.\n\nOwner\nCatalog, availability and booking queries.\n\nMigration Owner\nMS-01 owns the business schema.\n\nInputs\nExisting catalog requests, service ID, working intervals, occupied intervals and verified customer identity.\n\nOutputs / Side-effects\nReturn the same catalog and slot fields the graph consumes. Snapshot the booked interval, enforce ownership and reject overlaps during the booking transaction.\n\nNon-goals\nGraph nodes, prompts, inference, new duration-extraction behavior and Telegram architecture.\n\nFocused Verification\nRun pytest -q tests/unit/test_scheduling.py tests/integration/test_postgres_booking_lifecycle.py tests/integration/test_telegram_ownership.py tests/unit/test_gemma_laya.py against test services.",
+      "evidence": [
+        "Full test suite: 142 passed with disposable PostgreSQL, Redis and RabbitMQ.",
+        "Offline golden scenarios: 2 passed.",
+        "Fresh migration and seed exercised by integration tests."
+      ],
+      "feature_id": "massage-studio",
+      "id": "MS-02",
+      "notes": [],
+      "priority": "P1",
+      "status": "done",
+      "title": "Book each option on the shared calendar",
+      "updated_at": "2026-11-20T22:05:52+00:00"
+    },
+    "MS-03": {
+      "acceptance_criteria": [
+        "The journey produces immediate replies and no reminder work.",
+        "The fresh install and owner agenda work without reminder tables or a reminder worker.",
+        "The existing graph and model tests still pass with the new example data."
+      ],
+      "changed_files": [
+        "app/reminders.py",
+        "app/booking.py",
+        "app/owner.py",
+        "app/cli.py",
+        "app/telegram_service.py",
+        "app/channels/telegram_delivery.py",
+        "app/db_models.py",
+        "alembic/versions/",
+        "docker-compose.yml",
+        "docker-compose.production.yml",
+        "README.md",
+        "tests/integration/"
+      ],
+      "created_at": "2026-11-20T21:58:14+00:00",
+      "dependencies": [
+        "MS-02"
+      ],
+      "description": "Why / Intent\nRequirements 4\u20135. Keep booking replies and the owner's agenda.\n\nStart Boundary\nThe massage booking lifecycle from MS-02.\n\nEnd Boundary\nA clean demo deployment completes a booking journey with immediate replies and no reminder worker, inbox or scheduled jobs.\n\nOwner\nBooking side effects, reminder delivery and demo documentation.\n\nMigration Owner\nThis task owns retirement of reminder storage and dependent columns on the fresh schema.\n\nInputs\nExisting reminder writes, owner CLI, reminder-only sender and scheduler paths, Compose services and demo fixtures.\n\nOutputs / Side-effects\nRemove reminder-only code, tables, jobs, metrics and CLI settings. Retain ordinary reply delivery and the owner agenda. Update affected tests and walkthrough.\n\nNon-goals\nChanges to generic message processing infrastructure, the model stack or unrelated tests.\n\nFocused Verification\nRun pytest -q tests/integration/test_workflow_booking_journey.py tests/integration/test_telegram_production.py with test services. Walk through book, reschedule and cancel, read the agenda and check the reply path and final schema.",
+      "evidence": [
+        "Full test suite: 142 passed with disposable PostgreSQL, Redis and RabbitMQ.",
+        "Offline golden scenarios: 2 passed.",
+        "Fresh migration and seed exercised by integration tests."
+      ],
+      "feature_id": "massage-studio",
+      "id": "MS-03",
+      "notes": [],
+      "priority": "P1",
+      "status": "done",
+      "title": "Remove scheduled reminders and finish the demo",
+      "updated_at": "2026-11-20T22:05:52+00:00"
+    }
+  },
+  "version": 1
+}

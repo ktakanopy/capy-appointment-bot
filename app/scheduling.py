@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db_models import (
-    BlockedPeriod, BookingRow, BusinessRow, ProfessionalRow, ProfessionalService,
+    BlockedPeriod, BookingRow, BusinessRow, ProfessionalRow,
     ServiceRow, WeeklyAvailabilityRule,
 )
 from app.models import AvailabilitySearchRequest, AvailabilitySlot, DomainError
@@ -66,9 +66,7 @@ def validate_slot_in_transaction(
         )
         .select_from(BusinessRow)
         .join(ServiceRow, ServiceRow.business_id == BusinessRow.id)
-        .join(ProfessionalService, (ProfessionalService.business_id == BusinessRow.id)
-              & (ProfessionalService.service_id == ServiceRow.id))
-        .join(ProfessionalRow, ProfessionalRow.id == ProfessionalService.professional_id)
+        .join(ProfessionalRow, ProfessionalRow.business_id == BusinessRow.id)
         .where(
             BusinessRow.id == business_id, ServiceRow.id == service_id, ServiceRow.active,
             ProfessionalRow.id == professional_id, ProfessionalRow.active,
@@ -333,43 +331,4 @@ class AvailabilityService:
         return sorted(
             unique_slots.values(),
             key=lambda slot: (slot.starts_at, slot.professional_name),
-        )
-
-    def validate_slot(
-        self,
-        *,
-        business_id: str,
-        service_id: str,
-        professional_id: str,
-        slot_id: str,
-        starts_at: datetime,
-        exclude_booking_id: str | None = None,
-    ) -> AvailabilitySlot:
-        if starts_at.tzinfo is None or starts_at.utcoffset() is None:
-            raise DomainError(
-                "invalid_instant", "Choose a time with an explicit timezone offset."
-            )
-        local_date = starts_at.astimezone(UTC).date()
-        business = self.repository.business(business_id)
-        if business is None:
-            raise DomainError("business_not_found", "Business not found.", 404)
-        local_date = starts_at.astimezone(ZoneInfo(business.timezone)).date()
-        slots = self.search(
-            AvailabilitySearchRequest(
-                business_id=business_id,
-                service_id=service_id,
-                professional_id=professional_id,
-                start_date=local_date,
-                end_date=local_date,
-            ),
-            exclude_booking_id=exclude_booking_id,
-        )
-        target = starts_at.astimezone(UTC)
-        for slot in slots:
-            if slot.slot_id == slot_id and slot.starts_at == target:
-                return slot
-        raise DomainError(
-            "slot_unavailable",
-            "That time is no longer available. Choose another slot.",
-            409,
         )

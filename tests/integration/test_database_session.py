@@ -33,7 +33,7 @@ def test_registration_lock_releases_when_closed(scheduling_db, monkeypatch):
     lock.close()
 
 
-def test_availability_lookup_batches_queries_across_professionals(scheduling_db):
+def test_availability_lookup_uses_the_same_calendar(scheduling_db):
     engine = _engine(scheduling_db["url"])
     statements = []
 
@@ -55,4 +55,4 @@ def test_availability_lookup_batches_queries_across_professionals(scheduling_db)
     finally:
         event.remove(engine, "before_cursor_execute", record)
     assert len(one) == 1
-    assert len(many) == 2
+    assert len(many) == 1

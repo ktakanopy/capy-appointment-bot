@@ -17,14 +17,6 @@ class BookingStatus(StrEnum):
     CANCELED = "canceled"
 
 
-class ReminderStatus(StrEnum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    DELIVERED = "delivered"
-    FAILED = "failed"
-    CANCELED = "canceled"
-
-
 class Business(Contract):
     id: str
     name: str
@@ -92,14 +84,6 @@ class Booking(Contract):
     status: BookingStatus
     created_at: datetime
     updated_at: datetime
-
-
-class Reminder(Contract):
-    id: str
-    booking_id: str
-    send_at: datetime
-    status: ReminderStatus
-    attempts: int = 0
 
 
 class AuditEvent(Contract):
@@ -239,27 +223,12 @@ class BookingSummary(Contract):
 
 
 class OwnerBooking(Booking):
-    reminder_status: ReminderStatus | None = None
+    pass
 
 
 class OwnerBookingsResponse(Contract):
     business: Business
     bookings: list[OwnerBooking]
-
-
-class DemoReminder(Contract):
-    id: str
-    reminder_id: str
-    booking_id: str
-    customer_name: str
-    service_name: str
-    starts_at: datetime
-    message: str
-    delivered_at: datetime
-
-
-class DemoRemindersResponse(Contract):
-    reminders: list[DemoReminder]
 
 
 class HealthResponse(Contract):

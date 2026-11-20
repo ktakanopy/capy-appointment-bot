@@ -8,7 +8,7 @@ conversation worker through the booking transaction and back to Telegram. [Booki
 | What are you looking for? | Where to read |
 | --- | --- |
 | The webhook and health checks | [main.py](../app/main.py) defines the HTTP endpoints. [Production runbook](production.md#hosted-configuration) |
-| Which process runs each job | [telegram_service.py](../app/telegram_service.py) runs conversation processing, reminder scheduling, sending, bot registration, and queue statistics. |
+| Which process runs each job | [telegram_service.py](../app/telegram_service.py) runs conversation processing, sending, bot registration, and queue statistics. |
 | Bot ownership and incoming messages | [bots.py](../app/channels/bots.py) maps credentials and routes to a business. [telegram_intake.py](../app/channels/telegram_intake.py) validates private messages and records update IDs. [telegram_repository.py](../app/channels/telegram_repository.py) links senders to customers and serializes bot registration. |
 | How work reaches RabbitMQ | [telegram_publications.py](../app/channels/telegram_publications.py#L17) records and relays due work. [telegram_broker.py](../app/channels/telegram_broker.py#L62) publishes IDs and acknowledges after handling. |
 | How a worker gets its turn | [telegram_turns.py](../app/channels/telegram_turns.py#L157) claims one chat head, verifies which worker owns it, and saves the completed turn. [redis_checkpoint.py](../app/graph/redis_checkpoint.py) stores conversation drafts and saved offers in Redis. |
@@ -33,7 +33,7 @@ Follow one service lookup from the repository to its ORM mapping, then read the 
 | Available appointments | [scheduling.py](../app/scheduling.py) checks staff hours, time zones, buffers, blocks, and conflicts. It checks the chosen slot again when a booking is written. |
 | Appointment changes | [customer_scheduling_actions.py](../app/customer_scheduling_actions.py) calls the booking service for the trusted customer. [booking.py](../app/booking.py) enforces ownership and saves each appointment change and its side effects together. |
 | Database records and changes | [repositories.py](../app/repositories.py) reads the catalog, schedules, and bookings. [models.py](../app/models.py) defines the scheduling data contracts. [db_models.py](../app/db_models.py) maps PostgreSQL rows. [database.py](../app/database.py) opens a session for each operation. [Alembic](../alembic) holds schema migrations. [Table guide](database.md) |
-| Reminders and the owner demo | [reminders.py](../app/reminders.py) delivers to the local demo inbox or queues due hosted reminders. [owner.py](../app/owner.py) reads the owner agenda and inbox for [cli.py](../app/cli.py). [seed.py](../app/seed.py) creates the demo catalog and hours. |
+| Owner agenda and demo catalog | [owner.py](../app/owner.py) reads the agenda for [cli.py](../app/cli.py). [seed.py](../app/seed.py) creates the massage catalog and hours. |
 
 ## Running and checking changes
 

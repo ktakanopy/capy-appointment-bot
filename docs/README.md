@@ -6,7 +6,7 @@ Start with the [repository README](../README.md) to run the offline booking exam
 
 | Guide | What it explains |
 | --- | --- |
-| [Architecture](architecture.md#how-to-read-the-code) | Reading order, system components, and labeled booking and reminder sequences |
+| [Architecture](architecture.md#how-to-read-the-code) | Reading order, system components, and booking sequences |
 | [Source map](source-map.md) | Files to open for each part of the application |
 | [Conversation graph](graph.md) | How one text or audio turn updates the draft and reaches a booking action |
 | [Model contracts](model-contracts.md) | What Gemma interprets, what Laya decides, and what Python checks |

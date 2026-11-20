@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1320" viewBox="0 0 1120 1320" role="img" aria-labelledby="title description">
   <title id="title">Find, select, confirm, and create a booking</title>
-  <desc id="description">Three customer turns. First the customer asks for times and CAPY returns current options. Second the customer selects one; CAPY stores the selected offer and asks for explicit consent without writing a booking. Third the customer approves; the workflow verifies approval for that exact slot, and the booking service rechecks availability and ownership before committing the booking, reminder and retry result together. CAPY then returns the saved booking details.</desc>
+  <desc id="description">Three customer turns. First the customer asks for times and CAPY returns current options. Second the customer selects one; CAPY stores the selected offer and asks for explicit consent without writing a booking. Third the customer approves; the workflow verifies approval for that exact slot, and the booking service rechecks availability and ownership before committing the booking and retry result together. CAPY then returns the saved booking details.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L10 5 L0 10 Z" fill="#365f51"/>
@@ -93,7 +93,7 @@
   <path class="arrow" d="M744 1014H1006"/>
   <text class="message" x="876" y="1008"><tspan class="call-id">C21</tspan> Recheck slot and customer ownership</text>
   <path class="arrow" d="M744 1046H1006"/>
-  <text class="message" x="876" y="1040"><tspan class="call-id">C22</tspan> Write booking, reminder, and retry result</text>
+  <text class="message" x="876" y="1040"><tspan class="call-id">C22</tspan> Write booking and retry result</text>
   <path class="arrow" d="M744 1078H1006"/>
   <text class="message" x="876" y="1072"><tspan class="call-id">C23</tspan> Commit all writes together</text>
 

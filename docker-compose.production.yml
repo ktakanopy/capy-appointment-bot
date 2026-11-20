@@ -49,11 +49,6 @@ services:
     command: python -m app.telegram_service process --transport postgres --lane audio
     stop_grace_period: 16m
 
-  reminders:
-    <<: *capy
-    restart: unless-stopped
-    command: python -m app.telegram_service remind --idle-seconds 2
-
   sender:
     <<: *capy
     env_file: *with-bot-tokens

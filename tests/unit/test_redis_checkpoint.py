@@ -92,7 +92,7 @@ def test_audio_forks_published_offer_and_checkpoints_only_redacted_text(caplog):
 
     assert saver.fork_completed(offer.conversation_id, "success")
     with caplog.at_level(logging.DEBUG, logger="service_scheduling"):
-        workflow.handle_turn(
+        selection = workflow.handle_turn(
             voice,
             actions,
             recording=recording,
@@ -108,6 +108,13 @@ def test_audio_forks_published_offer_and_checkpoints_only_redacted_text(caplog):
     assert message == "The second one. [customer] [contact] [private-token]"
     assert context["history"] == published_history
     assert context["has_slots"]
+    assert selection.intent == "request_booking_confirmation"
+    assert actions.created == []
+    workflow.handle_turn(
+        _turn("Yes, book it.", customer_id="customer-1"),
+        actions,
+        checkpoint_thread="success",
+    )
     assert actions.created == [("slot-2", "test-turn")]
     assert workflow.messages("success").count({"role": "user", "content": message}) == 1
 

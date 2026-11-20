@@ -10,7 +10,7 @@ The runner records three separate kinds of evidence:
 
 Conversation playback is sequential: CAPY receives one current user input, produces its actual reply, and checkpoints that user/reply pair before the next scripted input. Gemma receives that earlier actual history as context; `assistant_example` is never inserted. Laya receives only Gemma's current interpreted message and the current `WorkflowDraft`, preserving the application's model contract. The report expands the prior history seen by Gemma for each turn.
 
-The graph uses isolated in-memory checkpoints and synthetic scheduling services for each `(case, repetition)` attempt. Cases and repetitions can run concurrently; messages inside one case remain sequential. The scenario run does not create PostgreSQL rows. PostgreSQL behavior is covered separately by the integration suite, including the real confirmation-before-create journey and reminder transaction.
+The graph uses isolated in-memory checkpoints and synthetic scheduling services for each `(case, repetition)` attempt. Cases and repetitions can run concurrently; messages inside one case remain sequential. The scenario run does not create PostgreSQL rows. PostgreSQL behavior is covered separately by the integration suite, including the confirmation-before-create journey.
 
 ## Run the bilingual golden dataset
 
@@ -182,4 +182,4 @@ If a reply sounds right but the create-write assertion fails, open that attempt 
 
 Keep the golden dataset small and limited to core booking behavior. Put ambiguity, intent changes, spoken corrections, stale offers and lifecycle transitions in challenge cases. Use synthetic examples, stable behavior and criterion IDs, and keep related language/audio examples together in one split. Every booking success criterion should derive its expected service, professional, local date/time and timezone from a selected offer or saved booking rather than repeating model-generated details as ground truth.
 
-Add database guarantees to the existing disposable PostgreSQL integration suite. The scenario runner's simulated counters make fast regressions easy to replay, but they do not prove PostgreSQL transactions, reminder writes, ownership checks or retry recovery.
+Add database guarantees to the existing disposable PostgreSQL integration suite. The scenario runner's simulated counters make fast regressions easy to replay, but they do not prove PostgreSQL transactions, ownership checks or retry recovery.

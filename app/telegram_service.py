@@ -1,4 +1,4 @@
-"""Run Telegram turn, reminder, delivery, and registration commands."""
+"""Run Telegram turn, delivery, and registration commands."""
 
 from __future__ import annotations
 
@@ -32,7 +32,6 @@ from app.config import load_settings
 from app.database import DATABASE_ERRORS, database_session
 from app.db_models import TelegramOutboxRow
 from app.observability import debug_event, debug_turn, get_logger, log_event
-from app.reminders import enqueue_telegram_reminders
 from app.runtime import RuntimeContext, close_runtime, create_runtime
 from app.telegram_worker import TelegramWorker, _conversation_id
 
@@ -140,8 +139,6 @@ def _prepare_turn_worker(
         bookings=BookingService(
             runtime.repository,
             turn_guard=claim.assert_owned,
-            # Save the destination so a later reminder can reach this chat.
-            telegram_destination=(claim.bot.bot_id, claim.row["chat_id"]),
         ),
     )
     repository = TelegramRepository(turns.database_url, turn_guard=claim.assert_owned)
@@ -288,8 +285,6 @@ def run_worker(settings, args, stop: Event, logger) -> None:
                     if claim:
                         process_turn(turns, claim, runtime)
                         did_work = True
-                elif args.role == "remind":
-                    did_work = bool(enqueue_telegram_reminders(settings.database_url))
                 else:
                     if time.monotonic() >= next_maintenance:
                         outbox.recover_expired()
@@ -340,9 +335,6 @@ def queue_stats(database_url: str, logger) -> None:
                 (SELECT extract(epoch FROM clock_timestamp()-min(received_at))::float8
                  FROM telegram_updates WHERE status='received' AND ready_at<=clock_timestamp())
                     AS oldest_ready_turn_seconds,
-                (SELECT extract(epoch FROM clock_timestamp()-min(send_at))::float8
-                 FROM reminders WHERE status='pending' AND telegram_bot_id IS NOT NULL
-                   AND send_at<=clock_timestamp()) AS oldest_due_reminder_seconds,
                 (SELECT extract(epoch FROM clock_timestamp()-min(due_at))::float8
                  FROM telegram_publications WHERE due_at<=clock_timestamp())
                     AS oldest_due_publication_seconds,
@@ -395,7 +387,7 @@ def register(settings, args) -> None:
     try:
         BotRegistry(settings.database_url).register(
             bot_id, args.business, args.token_env, webhook_route=args.route,
-            webhook_secret_env=args.webhook_secret_env, reminder_delivery=args.deliver_reminders,
+            webhook_secret_env=args.webhook_secret_env,
         )
         reconcile_replies(settings.database_url, TelegramBot(bot_id, args.business, args.token_env))
         if webhook_payload is not None:
@@ -407,7 +399,7 @@ def register(settings, args) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("role", choices=("process", "send", "relay", "backfill", "remind", "register", "stats"))
+    parser.add_argument("role", choices=("process", "send", "relay", "backfill", "register", "stats"))
     parser.add_argument("--transport", choices=("rabbitmq", "postgres"), default="rabbitmq")
     parser.add_argument("--partitions", type=int, default=os.getenv("TELEGRAM_PARTITIONS", "1"))
     parser.add_argument("--partition", type=int, default=0)
@@ -420,7 +412,6 @@ def main() -> None:
     parser.add_argument("--route")
     parser.add_argument("--webhook-secret-env")
     parser.add_argument("--webhook-base-url", help="Public HTTPS origin for registering the webhook with Telegram.")
-    parser.add_argument("--deliver-reminders", action="store_true")
     args = parser.parse_args()
     if not 0.01 <= args.idle_seconds <= 60 or not 1 <= args.per_business <= 100:
         parser.error("Use idle seconds between 0.01 and 60 and a per-business cap between 1 and 100.")

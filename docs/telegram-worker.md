@@ -25,29 +25,27 @@ uses PostgreSQL to choose the next message and checkpoint for that chat.
 
 | PostgreSQL table | Data saved there | Who uses it and why |
 | --- | --- | --- |
-| `telegram_bots` | `bot_id`, `business_id`, webhook route, credential environment variable names, `enabled` and `reminder_delivery`. | Registration writes the configuration. Intake, workers and senders read it to select the business and credentials. Token and webhook secret values come from the environment. |
+| `telegram_bots` | `bot_id`, `business_id`, webhook route, credential environment variable names and `enabled`. | Registration writes the configuration. Intake, workers and senders read it to select the business and credentials. Token and webhook secret values come from the environment. |
 | `telegram_updates` | `(bot_id, update_id)`, business, chat and sender IDs, Telegram message time, receipt time, filtered message `payload`, processing status, attempts, readiness and expiry times, and error code. | The webhook inserts a receipt. The worker reads the message and updates its processing state. The key deduplicates repeated webhooks while the receipt exists. |
 | `telegram_conversations` | One row per `(bot_id, chat_id)`: business, claim `generation`, `active_update_id`, `lease_until`, last claim time, last processed message position, and `checkpoint_thread`. | Workers coordinate ownership and message order here. Completion publishes the reference to the Redis checkpoint that the next turn may restore. |
-| `telegram_publications` | Publication ID, a target consisting of either bot/chat IDs or `outgoing_id`, plus `due_at` and `claimed_until`. | Intake, workers, senders and the reminder scheduler schedule notifications here. The relay publishes them to RabbitMQ and deletes confirmed publications. No message text is stored in this table. |
-| `telegram_outbox` | Send ID, business, bot/chat IDs, incoming `update_id` or reminder ID/generation, `message`, optional `reply_markup`, dispatch status, attempts, readiness, lease and completion times, and error code. | The worker saves replies; the reminder scheduler saves reminder sends. The sender reads the saved content and records delivery outcomes independently of the graph. |
-| `telegram_bot_delivery` | Per-bot `available_at` and `reply_streak`. | Senders share a rate budget. The PostgreSQL fallback also uses the streak to balance replies and reminders. |
+| `telegram_publications` | Publication ID, a target consisting of either bot/chat IDs or `outgoing_id`, plus `due_at` and `claimed_until`. | Intake, workers and senders schedule notifications here. The relay publishes them to RabbitMQ and deletes confirmed publications. No message text is stored in this table. |
+| `telegram_outbox` | Send ID, business, bot/chat IDs, incoming `update_id`, `message`, optional `reply_markup`, dispatch status, attempts, readiness, lease and completion times, and error code. | The worker saves replies. The sender reads the saved content and records delivery outcomes independently of the graph. |
+| `telegram_bot_delivery` | Per-bot `available_at`. | Senders share a rate budget. |
 | `telegram_chat_delivery` | Per `(bot_id, chat_id)` `available_at`. | Senders reserve the next allowed send time so replicas share the chat's rate limit. |
 | `telegram_identities` | `(business_id, bot_id, telegram_user_id)`, username, display name, linked `customer_id`, optional legacy `contact_phone`, and creation/update times. | Customer resolution updates the Telegram profile and creates a customer link when needed. Numeric sender identity establishes ownership. |
 | `customers` | Customer ID, business, full name, optional phone/email, and creation time. | Customer resolution creates the account. A valid contact card belonging to the sender updates `customers.phone`; the phone number does not choose an existing account. |
-| `businesses` | Business ID, name, category, time zone, minimum notice, booking horizon, reminder lead time and creation time. | The catalog and availability checks read policy. Booking writes also lock the business row while checking their retry key. |
+| `businesses` | Business ID, name, category, time zone, minimum notice, booking horizon and creation time. | The catalog and availability checks read policy. Booking writes also lock the business row while checking their retry key. |
 | `services` | Service ID/business, name, duration, buffers, price/currency, description and active flag. | The graph reads the catalog; availability and booking validation read duration, buffers and eligibility. |
-| `professionals` | Professional ID/business, name and active flag. | Catalog and availability reads select eligible staff. Booking validation locks the selected professional while rechecking the slot. |
-| `professional_services` | Business, professional and service IDs. | Availability and booking validation check that the professional offers the selected service. |
+| `massagistas` | Professional ID/business, name and active flag. | Catalog and availability reads select eligible staff. Booking validation locks the selected professional while rechecking the slot. |
 | `weekly_availability_rules` | Rule ID, business/professional IDs, weekday and local opening/closing times. | Availability searches and booking validation read the working hours. |
 | `blocked_periods` | Block ID, business/professional IDs, start/end times and reason, which defaults to an empty string. | Availability searches and booking validation read intervals that must remain unavailable. |
-| `bookings` | Booking ID, business/customer/service/professional IDs, start/end times, occupied interval including buffers, status, Telegram destination and timestamps. | Booking actions create or change appointments. Availability reads active occupied intervals to avoid conflicts. |
-| `reminders` | Reminder ID, business/booking IDs, `send_at`, status, attempts, delivery/error fields, generation, queued generation and optional Telegram destination. | Booking writes schedule or adjust reminders. The hosted scheduler stages due reminders in the outbox; the sender checks their current generation and records their outcome. |
+| `bookings` | Booking ID, business/customer/service/professional IDs, start/end times, occupied interval including buffers, status and timestamps. | Booking actions create or change appointments. Availability reads active occupied intervals to avoid conflicts. |
 | `idempotency_records` | `(business_id, operation, idempotency_key)`, request hash, booking ID in `resource_id`, result code and creation time. | Booking writes save the committed result so the same key and request can reuse it. This table does not store the conversation or outgoing reply. |
 
 The current webhook path does not use the historical `telegram_poll_offsets`
 table. `telegram_updates.reply_text`, `reply_markup` and `next_attempt_at` are
 legacy fields; current replies use `telegram_outbox`, and turn scheduling uses
-`ready_at`. The separate local reminder demo writes to `reminder_inbox`.
+`ready_at`.
 [Column mappings](../app/db_models.py) · [Schema and relationships](database.md#tables-and-relationships)
 
 The SQL excerpts below are readable equivalents of the application's SQLAlchemy
@@ -64,7 +62,7 @@ In the demo Compose file, `telegram-worker` runs `python -m app.telegram_service
 
 **S1** starts the relay that publishes pending notifications. **S2** creates the graph and model clients once per process and registers `process_chat_turn()` for incoming notifications. **S3** registers `send_outgoing()` for outgoing notifications. The `api` service receives Telegram's HTTP POST. [Roles in `run_broker_worker()`](../app/telegram_service.py#L239-L270) · [API in Compose](../docker-compose.yml#L70-L74)
 
-The same module also has `run_worker()`, which runs the reminder scheduler and the roles using `--transport postgres`. [Transport selection](../app/telegram_service.py#L408-L450) · [PostgreSQL worker loop](../app/telegram_service.py#L273-L307)
+The same module also has `run_worker()`, which runs the roles using `--transport postgres`. [Transport selection](../app/telegram_service.py#L408-L450) · [PostgreSQL worker loop](../app/telegram_service.py#L273-L307)
 
 ### 1. The webhook saves “1” and the relay wakes the worker
 
@@ -323,7 +321,7 @@ contact card later runs an `UPDATE customers SET phone = :phone` filtered by bot
 business and customer ID, after checking that the contact belongs to the sender.
 
 The graph reads the active catalog from `businesses`, `services` and
-`professionals` using these lookups:
+`massagistas` using these lookups:
 
 ```sql
 SELECT * FROM businesses WHERE id = :business_id;
@@ -332,12 +330,12 @@ SELECT * FROM services
 WHERE business_id = :business_id AND active
 ORDER BY name;
 
-SELECT * FROM professionals
+SELECT * FROM massagistas
 WHERE business_id = :business_id AND active
 ORDER BY name;
 ```
 
-Availability also selects professional/service assignments, weekly hours,
+Availability also selects weekly hours,
 blocked periods and active booking intervals to calculate offers. Choosing which
 times to offer saves conversation state in Redis; an appointment is inserted
 when the booking action executes. [Catalog and schedule queries](../app/repositories.py#L69)
@@ -371,8 +369,7 @@ When validation succeeds, the following writes commit together:
 
 | Write | Data saved |
 | --- | --- |
-| `INSERT INTO bookings` | New UUID, business/customer/service/professional IDs, `starts_at`, `ends_at`, occupied interval including buffers, and `status='scheduled'`. An update adds the bot/chat destination when supplied. |
-| `INSERT INTO reminders ... SELECT ...` | New reminder ID, booking/business IDs, `send_at = starts_at - reminder_lead_minutes`, `status='pending'`, and bot/chat destination when hosted reminders are enabled. |
+| `INSERT INTO bookings` | New UUID, business/customer/service/professional IDs, `starts_at`, `ends_at`, occupied interval including buffers, and `status='scheduled'`.  |
 | `INSERT INTO idempotency_records` | Business, operation `create`, turn retry key, request hash, booking ID and result code `created`. |
 
 The booking table's exclusion constraint also rejects overlapping active
@@ -446,7 +443,7 @@ The outgoing queue lets the sender deliver replies while a conversation worker h
 #### Queries that reserve and complete a send
 
 `claim_by_id()` selects the ready outbox row by `:outgoing_id`, joins its enabled
-bot, and reads the originating update/reminder timestamps. Authorization rechecks
+bot, and reads the originating update timestamp. Authorization rechecks
 the bot with `FOR SHARE NOWAIT`, then locks the outbox row with
 `FOR UPDATE SKIP LOCKED`. A `NOT EXISTS` subquery excludes sends with an earlier
 `ready` or `dispatching` outbox ID in the same bot/chat.
@@ -482,12 +479,6 @@ sets a future `ready_at` and saves another publication in the same transaction.
 Terminal outcomes clear the content. Expired dispatch leases become `ambiguous`
 because Telegram may already have accepted the message.
 
-For reminders, the scheduler also reads the booking, bot and linked customer,
-then inserts an outbox row for `(reminder_id, reminder_generation)` and sets
-`reminders.queued_generation` in one transaction. Before sending, the sender
-rechecks ownership and generation and locks the booking/reminder rows. Completion
-updates the current pending reminder to `delivered` or `failed`.
-[Reminder staging](../app/reminders.py#L71) · [Sender queries](../app/channels/telegram_delivery.py#L111)
 
 ## What is kept and when it is removed
 
@@ -495,12 +486,12 @@ updates the current pending reminder to `delivered` or `failed`.
 | --- | --- |
 | Incoming text, contact card, sender/chat objects and audio metadata | Stored in `telegram_updates.payload` while pending or processing. `finish()` sets the payload to SQL `NULL` when the turn completes. A deferred turn keeps its payload so it can be retried. |
 | Completed incoming receipt | IDs, processing status, times and attempt metadata remain after payload removal. Completion sets `expires_at` to 30 days ahead; cleanup deletes an expired completed receipt once no related send is `ready` or `dispatching`. Deduplication lasts while that receipt exists. |
-| Outgoing reply or reminder content | Remains in the outbox while `ready` or `dispatching`, including safe retries. Recorded terminal outcomes clear the message; normal delivery completion and expired-lease recovery also clear reply markup. |
+| Outgoing reply content | Remains in the outbox while `ready` or `dispatching`, including safe retries. Recorded terminal outcomes clear the message; normal delivery completion and expired-lease recovery also clear reply markup. |
 | Terminal outbox metadata | `sent`, `failed`, `canceled` and `ambiguous` rows become eligible for deletion 30 days after `finished_at`. |
 | Pending broker publication | Deleted after RabbitMQ confirms it and the relay's claim still matches. An unconfirmed publication remains available for another attempt. |
 | Redis checkpoint and intermediate writes | Expire using the configured session TTL, 60 minutes by default. Reads refresh relevant checkpoint keys. Losing the checkpoint loses the temporary offer; PostgreSQL bookings remain. |
 | Audio bytes and temporary decoded audio | The download is held in memory. `AudioChunker` writes `decoded.pcm` under a private `scheduling-audio-...` temporary directory for transcription and removes the directory when its context exits. Audio bytes are not saved in these PostgreSQL tables or Redis checkpoints. |
-| Customer/identity records, bookings, reminders and retry records | `prune_history()` does not delete these records. There is no automatic age-based cleanup for them in this worker. Conversation coordination and rate-budget rows also remain. |
+| Customer/identity records, bookings and retry records | `prune_history()` does not delete these records. There is no automatic age-based cleanup for them in this worker. Conversation coordination and rate-budget rows also remain. |
 
 The relay's maintenance loop runs cleanup about once per minute, deleting up to
 500 incoming receipts and 500 outbox rows per sweep. These are eligibility
@@ -606,9 +597,8 @@ For database-backed consent behavior, read the [booking journey test](../tests/i
 
 ## Full call sequence
 
-Read from top to bottom. Q01–Q08 cover the incoming turn. For a reply, jump from Q07 to the outgoing notification at Q10. Q09 shows how the hosted reminder scheduler adds work to the same outgoing queue.
+Read from top to bottom. Q01–Q08 cover the incoming turn. Q10–Q15 cover the outgoing reply.
 
-![Telegram sequence from webhook receipt to processing, reply delivery, and hosted reminders, with arrows Q01 to Q15.](assets/telegram-broker-sequence.svg)
 
 | Arrow | What passes and why |
 | --- | --- |
@@ -620,10 +610,9 @@ Read from top to bottom. Q01–Q08 cover the incoming turn. For a reply, jump fr
 | **Q06** | The worker uses those IDs to look up the next message in PostgreSQL and try to get its lease. [Claim the chat](../app/channels/telegram_turns.py#L157-L218) |
 | **Q07** | The worker saves the reply, checkpoint reference, and next notifications together in PostgreSQL. [Complete the turn](../app/channels/telegram_turns.py#L384-L454) |
 | **Q08** | The consumer acknowledges the notification. If the connection drops before acknowledgement, RabbitMQ can deliver it again. [Acknowledgement](../app/channels/telegram_broker.py#L122-L134) |
-| **Q09** | The hosted scheduler saves a send for a due reminder and schedules a publication for the relay. [Schedule a reminder](../app/reminders.py#L71) |
-| **Q10** | The relay publishes the reply or reminder ID to the dedicated outgoing queue. [Outgoing publication](../app/channels/telegram_broker.py#L68-L74) |
+| **Q10** | The relay publishes the reply ID to the dedicated outgoing queue. [Outgoing publication](../app/channels/telegram_broker.py#L68-L74) |
 | **Q11** | RabbitMQ delivers that ID to a sender. [Sender loop](../app/telegram_service.py#L248-L256) |
-| **Q12** | The sender looks up the saved message and checks rate limits and chat order. For a reminder, it also checks that the reminder version is current. [Authorize delivery](../app/channels/telegram_delivery.py#L160-L184) |
+| **Q12** | The sender looks up the saved message and checks rate limits and chat order. [Authorize delivery](../app/channels/telegram_delivery.py#L160-L184) |
 | **Q13** | The sender calls Telegram with the saved message through the registered bot. [Send](../app/channels/telegram_delivery.py#L77-L80) |
 | **Q14** | The sender records the outcome or a safe retry in PostgreSQL. [Complete the send](../app/channels/telegram_delivery.py#L260-L300) |
 | **Q15** | The sender acknowledges the notification. A redelivery checks the state of the same saved send. [Acknowledgement](../app/channels/telegram_broker.py#L122-L134) |

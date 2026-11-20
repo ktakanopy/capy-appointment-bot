@@ -1,4 +1,4 @@
-"""Dispatch durable replies and reminders with shared Telegram rate budgets."""
+"""Dispatch durable replies with Telegram rate budgets."""
 
 from __future__ import annotations
 
@@ -17,22 +17,21 @@ from app.channels.telegram import TelegramApiError
 from app.channels.telegram_publications import schedule_publication
 from app.database import database_session
 from app.db_models import (
-    BookingRow, ReminderRow, TelegramBotDelivery, TelegramBotRow, TelegramChatDelivery,
-    TelegramIdentity, TelegramOutboxRow, TelegramUpdate,
+    TelegramBotDelivery, TelegramBotRow, TelegramChatDelivery, TelegramOutboxRow,
+    TelegramUpdate,
 )
 from app.observability import debug_event, log_event
 
 MAX_ATTEMPTS = 5
 SEND_LEASE_SECONDS = 45
 BOT_SEND_INTERVAL = 0.05
-REPLY_BURST = 5
 
 
 def _outgoing_details():
     return select(
         *TelegramOutboxRow.__table__.c,
         TelegramBotRow.token_env,
-        func.coalesce(TelegramUpdate.received_at, ReminderRow.send_at, TelegramOutboxRow.created_at)
+        func.coalesce(TelegramUpdate.received_at, TelegramOutboxRow.created_at)
         .label("origin_at"),
     ).join(
         TelegramBotRow, and_(
@@ -44,11 +43,6 @@ def _outgoing_details():
         TelegramUpdate, and_(
             TelegramUpdate.bot_id == TelegramOutboxRow.bot_id,
             TelegramUpdate.update_id == TelegramOutboxRow.update_id,
-        ),
-    ).outerjoin(
-        ReminderRow, and_(
-            ReminderRow.id == TelegramOutboxRow.reminder_id,
-            ReminderRow.generation == TelegramOutboxRow.reminder_generation,
         ),
     )
 
@@ -86,11 +80,6 @@ class TelegramOutbox:
 
     def claim(self) -> dict | None:
         """Authorize a ready dispatch and reserve both rate budgets atomically."""
-        reminder_first = func.coalesce(TelegramBotDelivery.reply_streak, 0) >= REPLY_BURST
-        priority = case(
-            (reminder_first, TelegramOutboxRow.reminder_id.is_(None)),
-            else_=TelegramOutboxRow.reminder_id.is_not(None),
-        )
         statement = _with_rate_budgets(_outgoing_details()).where(
             TelegramOutboxRow.status == "ready",
             TelegramOutboxRow.ready_at <= func.clock_timestamp(),
@@ -99,7 +88,7 @@ class TelegramOutbox:
             or_(TelegramChatDelivery.available_at.is_(None),
                 TelegramChatDelivery.available_at <= func.clock_timestamp()),
             ~_older_pending_send(),
-        ).order_by(priority, TelegramOutboxRow.ready_at, TelegramOutboxRow.id).limit(16)
+        ).order_by(TelegramOutboxRow.ready_at, TelegramOutboxRow.id).limit(16)
         with database_session(self.database_url) as session:
             candidates = session.execute(statement).mappings().all()
         for job in candidates:
@@ -166,9 +155,6 @@ class TelegramOutbox:
             ).with_for_update(read=True, nowait=True))
             if token_env is None:
                 return None
-            if job["reminder_id"] and not self._lock_current_reminder(session, job):
-                self._cancel_stale_reminder(session, job)
-                return None
             locked = session.scalar(select(TelegramOutboxRow.id).where(
                 TelegramOutboxRow.id == job["id"], TelegramOutboxRow.status == "ready",
                 TelegramOutboxRow.ready_at <= func.clock_timestamp(), ~_older_pending_send(),
@@ -182,54 +168,6 @@ class TelegramOutbox:
                 lease_until=func.clock_timestamp() + timedelta(seconds=SEND_LEASE_SECONDS),
             ).returning(TelegramOutboxRow.attempts, TelegramOutboxRow.lease_until)).one()
             return {**job, "token_env": token_env, "attempts": attempts, "lease_until": lease_until}
-
-    @staticmethod
-    def _cancel_stale_reminder(session: Session, job) -> None:
-        session.execute(select(ReminderRow.id).where(
-            ReminderRow.id == job["reminder_id"],
-        ).with_for_update(nowait=True))
-        canceled = session.scalar(update(TelegramOutboxRow).where(
-            TelegramOutboxRow.id == job["id"], TelegramOutboxRow.status == "ready",
-        ).values(
-            status="canceled", message=None, finished_at=func.clock_timestamp(),
-            last_error="stale_reminder",
-        ).returning(TelegramOutboxRow.id))
-        if canceled is not None:
-            session.execute(_pending_reminder_update(job).values(
-                status="failed", last_error="invalid_delivery_route",
-            ))
-
-    @staticmethod
-    def _lock_current_reminder(session: Session, job) -> bool:
-        """Match cancellation's booking, reminder, outbox lock order to avoid deadlocks."""
-        booking = session.scalar(select(BookingRow).join(
-            ReminderRow, and_(
-                ReminderRow.booking_id == BookingRow.id, ReminderRow.business_id == BookingRow.business_id,
-            ),
-        ).where(
-            ReminderRow.id == job["reminder_id"], ReminderRow.business_id == job["business_id"],
-        ).with_for_update(of=BookingRow, nowait=True))
-        if booking is None or booking.status == "canceled":
-            return False
-        authorized = session.scalar(select(ReminderRow.id).join(
-            TelegramBotRow, and_(
-                TelegramBotRow.bot_id == ReminderRow.telegram_bot_id,
-                TelegramBotRow.business_id == ReminderRow.business_id,
-                TelegramBotRow.enabled, TelegramBotRow.reminder_delivery,
-            ),
-        ).join(
-            TelegramIdentity, and_(
-                TelegramIdentity.business_id == ReminderRow.business_id,
-                TelegramIdentity.bot_id == TelegramBotRow.bot_id,
-                TelegramIdentity.telegram_user_id == ReminderRow.telegram_chat_id,
-                TelegramIdentity.customer_id == booking.customer_id,
-            ),
-        ).where(
-            ReminderRow.id == job["reminder_id"], ReminderRow.status == "pending",
-            ReminderRow.generation == job["reminder_generation"],
-            ReminderRow.telegram_bot_id == job["bot_id"], ReminderRow.telegram_chat_id == job["chat_id"],
-        ).with_for_update(of=ReminderRow, nowait=True))
-        return authorized is not None
 
     @staticmethod
     def _reserve(session: Session, job) -> bool:
@@ -249,11 +187,8 @@ class TelegramOutbox:
         ).returning(TelegramChatDelivery.chat_id))
         if reserved is None:
             return False
-        streak = 0 if job["reminder_id"] is not None else func.least(
-            TelegramBotDelivery.reply_streak + 1, REPLY_BURST,
-        )
         session.execute(update(TelegramBotDelivery).where(TelegramBotDelivery.bot_id == bot_id).values(
-            available_at=func.clock_timestamp() + timedelta(seconds=BOT_SEND_INTERVAL), reply_streak=streak,
+            available_at=func.clock_timestamp() + timedelta(seconds=BOT_SEND_INTERVAL),
         ))
         return True
 
@@ -264,11 +199,6 @@ class TelegramOutbox:
         """Record the provider outcome and schedule any safe retry before acknowledgement."""
         retrying = status == "ready"
         with database_session(self.database_url) as session:
-            # Lock the reminder first so completion and booking changes acquire locks in the same order.
-            if job["reminder_id"]:
-                session.execute(select(ReminderRow.id).where(
-                    ReminderRow.id == job["reminder_id"],
-                ).with_for_update())
             ready_at = session.scalar(update(TelegramOutboxRow).where(
                 TelegramOutboxRow.id == job["id"], TelegramOutboxRow.attempts == job["attempts"],
                 TelegramOutboxRow.status == "dispatching",
@@ -290,13 +220,6 @@ class TelegramOutbox:
                 ).values(available_at=func.greatest(
                     TelegramBotDelivery.available_at, func.clock_timestamp() + timedelta(seconds=bot_cooldown),
                 )))
-            if job["reminder_id"] and not retrying:
-                sent = status == "sent"
-                session.execute(_pending_reminder_update(job).values(
-                    status="delivered" if sent else "failed",
-                    attempts=job["attempts"], last_error=error,
-                    delivered_at=func.clock_timestamp() if sent else None,
-                ))
         return True
 
     def recover_expired(self, limit: int = 50) -> int:
@@ -307,17 +230,10 @@ class TelegramOutbox:
         )
         with database_session(self.database_url) as session:
             jobs = session.execute(select(
-                TelegramOutboxRow.id, TelegramOutboxRow.reminder_id,
-                TelegramOutboxRow.reminder_generation, TelegramOutboxRow.attempts,
+                TelegramOutboxRow.id,
             ).where(*expired).order_by(TelegramOutboxRow.lease_until).limit(limit)).mappings().all()
             recovered = 0
             for job in jobs:
-                if job["reminder_id"]:
-                    reminder = session.scalar(select(ReminderRow.id).where(
-                        ReminderRow.id == job["reminder_id"],
-                    ).with_for_update(skip_locked=True))
-                    if reminder is None:
-                        continue
                 updated = session.scalar(update(TelegramOutboxRow).where(
                     TelegramOutboxRow.id == job["id"], *expired,
                 ).values(
@@ -326,19 +242,7 @@ class TelegramOutbox:
                 ).returning(TelegramOutboxRow.id))
                 if updated is not None:
                     recovered += 1
-                    if job["reminder_id"]:
-                        session.execute(_pending_reminder_update(job).values(
-                            status="failed", attempts=job["attempts"], last_error="dispatch_expired",
-                        ))
         return recovered
-
-
-def _pending_reminder_update(job):
-    return update(ReminderRow).where(
-        ReminderRow.id == job["reminder_id"],
-        ReminderRow.generation == job["reminder_generation"],
-        ReminderRow.status == "pending",
-    )
 
 
 def send_next(outbox: TelegramOutbox, delivery: TelegramDelivery, logger) -> bool:
@@ -352,7 +256,7 @@ def deliver_claimed(outbox: TelegramOutbox, delivery: TelegramDelivery, logger, 
     if job is None:
         return False
     started = time.monotonic()
-    kind = "reminder" if job["reminder_id"] else "reply"
+    kind = "reply"
     debug_event("telegram.outbox.claimed", bot_id=job["bot_id"], update_id=job.get("update_id"),
                 kind=kind, attempt=job["attempts"])
     try:

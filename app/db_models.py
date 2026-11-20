@@ -2,7 +2,7 @@
 
 from datetime import datetime, time
 
-from sqlalchemy import BigInteger, Boolean, CHAR, DateTime, Identity, Integer, SmallInteger, Text, Time, text
+from sqlalchemy import BigInteger, Boolean, CHAR, Computed, DateTime, Identity, Integer, SmallInteger, Text, Time, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -20,12 +20,11 @@ class BusinessRow(Base):
     timezone: Mapped[str] = mapped_column(Text)
     minimum_notice_minutes: Mapped[int] = mapped_column(Integer, server_default=text("60"))
     booking_horizon_days: Mapped[int] = mapped_column(Integer, server_default=text("60"))
-    reminder_lead_minutes: Mapped[int] = mapped_column(Integer, server_default=text("1440"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
 
 
 class ProfessionalRow(Base):
-    __tablename__ = "professionals"
+    __tablename__ = "massagistas"
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     business_id: Mapped[str] = mapped_column(Text)
@@ -38,7 +37,10 @@ class ServiceRow(Base):
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     business_id: Mapped[str] = mapped_column(Text)
-    name: Mapped[str] = mapped_column(Text)
+    service_type: Mapped[str] = mapped_column(Text)
+    name: Mapped[str] = mapped_column(
+        Text, Computed("service_type || ' ' || duration_minutes::text || ' min'", persisted=True)
+    )
     description: Mapped[str] = mapped_column(Text, server_default=text("''"))
     duration_minutes: Mapped[int] = mapped_column(Integer)
     buffer_before_minutes: Mapped[int] = mapped_column(Integer, server_default=text("0"))
@@ -46,14 +48,6 @@ class ServiceRow(Base):
     price_minor: Mapped[int] = mapped_column(Integer)
     currency: Mapped[str] = mapped_column(CHAR(3), server_default=text("'BRL'"))
     active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
-
-
-class ProfessionalService(Base):
-    __tablename__ = "professional_services"
-
-    professional_id: Mapped[str] = mapped_column(Text, primary_key=True)
-    service_id: Mapped[str] = mapped_column(Text, primary_key=True)
-    business_id: Mapped[str] = mapped_column(Text)
 
 
 class WeeklyAvailabilityRule(Base):
@@ -104,38 +98,6 @@ class BookingRow(Base):
     status: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
-    telegram_bot_id: Mapped[int | None] = mapped_column(BigInteger)
-    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger)
-
-
-class ReminderRow(Base):
-    __tablename__ = "reminders"
-
-    id: Mapped[str] = mapped_column(Text, primary_key=True)
-    business_id: Mapped[str] = mapped_column(Text)
-    booking_id: Mapped[str] = mapped_column(Text)
-    send_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    status: Mapped[str] = mapped_column(Text)
-    attempts: Mapped[int] = mapped_column(Integer, server_default=text("0"))
-    claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    last_error: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
-    generation: Mapped[int] = mapped_column(BigInteger, server_default=text("1"))
-    telegram_bot_id: Mapped[int | None] = mapped_column(BigInteger)
-    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger)
-    queued_generation: Mapped[int | None] = mapped_column(BigInteger)
-
-
-class ReminderInboxRow(Base):
-    __tablename__ = "reminder_inbox"
-
-    id: Mapped[str] = mapped_column(Text, primary_key=True)
-    reminder_id: Mapped[str] = mapped_column(Text)
-    booking_id: Mapped[str] = mapped_column(Text)
-    business_id: Mapped[str] = mapped_column(Text)
-    message: Mapped[str] = mapped_column(Text)
-    delivered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
 
 
 class IdempotencyRecord(Base):
@@ -194,7 +156,6 @@ class TelegramBotRow(Base):
     webhook_route: Mapped[str | None] = mapped_column(Text)
     webhook_secret_env: Mapped[str | None] = mapped_column(Text)
     enabled: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
-    reminder_delivery: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
 
 
 class TelegramConversation(Base):
@@ -219,9 +180,7 @@ class TelegramOutboxRow(Base):
     business_id: Mapped[str] = mapped_column(Text)
     bot_id: Mapped[int] = mapped_column(BigInteger)
     chat_id: Mapped[int] = mapped_column(BigInteger)
-    update_id: Mapped[int | None] = mapped_column(BigInteger)
-    reminder_id: Mapped[str | None] = mapped_column(Text)
-    reminder_generation: Mapped[int | None] = mapped_column(BigInteger)
+    update_id: Mapped[int] = mapped_column(BigInteger)
     message: Mapped[str | None] = mapped_column(Text)
     reply_markup: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
     status: Mapped[str] = mapped_column(Text, server_default=text("'ready'"))
@@ -238,7 +197,6 @@ class TelegramBotDelivery(Base):
 
     bot_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     available_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
-    reply_streak: Mapped[int] = mapped_column(Integer, server_default=text("0"))
 
 
 class TelegramChatDelivery(Base):

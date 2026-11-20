@@ -97,18 +97,6 @@ services:
       retries: 15
       start_period: 10s
 
-  reminder-worker:
-    restart: unless-stopped
-    build:
-      context: .
-    command: python -m app.reminders --poll-seconds 2
-    environment:
-      CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
-      DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
-    depends_on:
-      api:
-        condition: service_healthy
-
   telegram-worker:
     profiles: ["telegram"]
     restart: unless-stopped
