@@ -55,6 +55,7 @@ For the seed example above, the first-turn request is:
     "earliest_local_time": null,
     "offered_slot_ids": [],
     "pending_slot_id": null,
+    "confirmation_requested_for": null,
     "missing": "none",
     "active_booking_id": null,
     "candidate_booking_ids": [],
@@ -79,8 +80,12 @@ A suitable response for this example would be:
 
 Allowed actions are `CHECK_AVAILABILITY`, `BOOK`, `RESCHEDULE`, `CANCEL`, `CONFIRM`, `FAQ`, `LOOKUP_BOOKING`, `CLARIFY` and `ESCALATE`. Confidence belongs to Laya's action decision and must be between zero and one. An uncertain meaning can produce `CLARIFY`; low-confidence or unsupported requests receive the existing bounded unsupported response. There is no staffed handoff queue.
 
+For a new booking, `BOOK` first means “choose one of the offered times.” After that choice, Python stores its ID in both `pending_slot_id` and `confirmation_requested_for` and asks the customer to approve the exact service, professional, date, time and business timezone. The next invocation gives Laya the draft with a pending-confirmation marker. Laya should return `BOOK` for a clear approval, but Python also checks the latest sanitized user message against a narrow English/Portuguese phrase list. Both checks must agree, and the marker must still point to the offered slot. A `CANCEL`, `CONFIRM`, `RESCHEDULE`, unclear response, or changed time cannot create or change a booking while this new-booking consent is being resolved. `CONFIRM` remains the action for confirming an appointment that already exists. [Consent guard and route](../app/graph/steps.py#L341) · [Exact phrase check](../app/graph/consent.py#L49)
+
+After the create transaction succeeds, Python formats the success response from the returned booking record. It converts the saved start time into the business timezone and resolves the saved service and professional IDs to catalog names, so the reply reports the booking that was actually committed. Telegram's optional sender `language_code` chooses English or Portuguese for the consent prompt and success reply; unsupported or missing locales default to English. [Reply formatter](../app/graph/booking_messages.py#L14) · [Telegram locale mapping](../app/telegram_worker.py#L177)
+
 ## Python enforces execution rules
 
 The graph checks required details, matched catalog references and offered slots. A choice among booking references cannot be used as a choice among availability slots. Booking services recheck customer ownership, current policy, conflicts and idempotency inside PostgreSQL transactions. Gemma and Laya do not decide whether a slot is free or authorize a customer.
 
-The normal application requires both models. The evaluation CLI can replace Laya with the deterministic router while retaining Gemma text/audio interpretation. Fixed-input routing evaluations use a labelled `interpreted_message` and draft context; they invoke neither Gemma nor audio transcription. See [evaluation](evaluation.md) for the distinction between model quality and fixture-based regression checks.
+The normal application requires both models. The evaluation CLI can replace Laya with the deterministic router while retaining Gemma text/audio interpretation. Fixed-input routing evaluations use a labelled `interpreted_message` and draft context; they invoke neither Gemma nor audio transcription. The YAML scenario framework separately runs complete sequential conversations and captures both validated model objects and deterministic booking effects. See the [evaluation framework](evaluation-framework.md) and the [existing JSONL evaluation path](evaluation.md) for the distinction between these checks.

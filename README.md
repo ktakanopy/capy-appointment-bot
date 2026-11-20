@@ -14,10 +14,11 @@ Redis, or model downloads.
 
 ```sh
 uv sync --locked --extra dev
-uv run python -m app.evals.runner --understanding deterministic --routing deterministic
+uv run --locked --extra dev python -m app.evals.scenarios run \
+  --dataset evals/scenarios/golden.yaml --profile offline --repeat 1
 ```
 
-The runner prints each case's status and the path to a JSON report. Look for `en-booking` to follow a massage booking from the initial request to choosing tomorrow and selecting the first offered time. The case checks that CAPY creates exactly one booking. [Follow the booking through the code](docs/architecture.md#how-to-read-the-code).
+The runner prints each case's status and writes a timestamped JSON receipt and HTML report under `.eval_runs/scenarios/`. The English and Portuguese cases each ask for available times, select an offered time, ask for consent, and create one booking only after the customer approves. [Read the evaluation guide](docs/evaluation-framework.md) · [Follow the booking through the code](docs/architecture.md#how-to-read-the-code).
 
 The worker guide shows which debug events appear as CAPY books the chosen time. [Trace the offline example](docs/telegram-worker.md#run-the-example-without-telegram)
 
@@ -74,7 +75,7 @@ changes, run registration again with the new address. If upgrading from an older
 
 ### Make a test booking
 
-In a private Telegram chat with the test bot, send a voice note asking for massage times tomorrow. Answer any follow-up, then reply with an offered number to book it.
+In a private Telegram chat with the test bot, send a voice note asking for massage times tomorrow. Reply with an offered number to select a time. CAPY will show the exact appointment and ask for approval; say yes to create the booking. CAPY returns the saved booking details afterward.
 
 Check the booking and the demo reminder inbox in the owner CLI.
 
@@ -83,7 +84,7 @@ docker compose run --rm api \
   python -m app.cli
 ```
 
-Run the [bilingual evaluation](#evaluate-with-and-without-laya) to check routing and booking writes before using the bot with customers.
+Run the [bilingual golden evaluation](#evaluate-with-and-without-laya) to check routing, confirmation, and booking writes before using the bot with customers.
 
 ### Add Langfuse to the demo
 
@@ -100,11 +101,16 @@ Open `http://localhost:3000` and make a test booking to generate a trace. Langfu
 
 ![CAPY runtime architecture. The webhook commits Telegram updates and the relay publishes wake-ups through RabbitMQ. The turn worker handles text and audio and runs the LangGraph workflow. Gemma transcribes and interprets messages, Laya proposes an action, and Python services enforce booking rules. Redis stores conversation state. PostgreSQL stores bookings, Telegram receipts and demo reminders.](docs/assets/architecture.svg)
 
-Availability results are references, not reservations. Booking writes revalidate policy inside their transaction. PostgreSQL rejects overlapping active bookings; idempotency protects retries. Booking and reminder changes commit atomically. Redis holds a bounded, temporary conversation draft, offered slots and history. PostgreSQL keeps update receipts and saved replies across restarts. RabbitMQ sends identifier-only wake-ups to the workers. [Follow a Telegram message](docs/telegram-worker.md)
+Availability results are references, not reservations. Selecting a time asks for approval and creates no booking. A later explicit approval allows the transaction to revalidate policy and save the booking. PostgreSQL rejects overlapping active bookings; idempotency protects retries. Booking and reminder changes commit atomically. Redis holds a bounded, temporary conversation draft, offered slots, pending consent and history. PostgreSQL keeps update receipts and saved replies across restarts. RabbitMQ sends identifier-only wake-ups to the workers. [Follow a Telegram message](docs/telegram-worker.md) · [Read the booking sequence](docs/architecture.md#booking-sequence-diagrams)
 
 ## Evaluate with and without Laya
 
+The YAML scenario runner evaluates the actual multi-turn workflow, deterministic booking effects, and both language variants. Use `--profile live` to select Gemma and Laya. See the [scenario framework guide](docs/evaluation-framework.md) for judge setup, audio voices, replay, and reports.
+
 ```bash
+# Offline bilingual golden scenarios:
+uv run --locked --extra dev python -m app.evals.scenarios run \
+  --dataset evals/scenarios/golden.yaml --profile offline --repeat 1
 # Real text and speech through Gemma, then Laya:
 uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understanding gemma --routing laya
 # Same cases through Gemma with deterministic routing:
@@ -148,6 +154,7 @@ To follow a PostgreSQL query from the repository to a mapped class, start with t
 - [Ownership and data handling](docs/security.md) — customer identity and privacy
 - [Idempotency and recovery](docs/idempotency.md) — duplicate updates and safe retries
 - [Evaluation guide](docs/evaluation.md) — datasets, commands, and reports
+- [Evaluation framework](docs/evaluation-framework.md) — YAML scenarios, audio setup, judge, replay, and HTML reports
 - [Case study](docs/case-study.md) — implementation and evaluation results
 - [Repository history](docs/history.md) — earlier versions and design changes
 - [Portfolio roadmap](docs/ai-engineering-portfolio-roadmap.md) — planned work

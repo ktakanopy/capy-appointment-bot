@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="928" viewBox="0 0 1120 928" role="img" aria-labelledby="title description">
-  <title id="title">Find a time and create a booking</title>
-  <desc id="description">The customer requests times in Telegram. The worker records the update and resolves the customer, then runs a workflow turn. The scheduling services read availability from PostgreSQL. The worker saves and sends the offered times. The customer chooses a slot in a second update. The workflow resolves the choice, and the booking service verifies the retry key, slot and customer. It writes the booking, pending reminder and retry record in one transaction. The worker saves and sends the reply after commit.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1320" viewBox="0 0 1120 1320" role="img" aria-labelledby="title description">
+  <title id="title">Find, select, confirm, and create a booking</title>
+  <desc id="description">Three customer turns. First the customer asks for times and CAPY returns current options. Second the customer selects one; CAPY stores the selected offer and asks for explicit consent without writing a booking. Third the customer approves; the workflow verifies approval for that exact slot, and the booking service rechecks availability and ownership before committing the booking, reminder and retry result together. CAPY then returns the saved booking details.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L10 5 L0 10 Z" fill="#365f51"/>
@@ -12,7 +12,7 @@
     .caption { font-size: 15px; fill: #426057; }
     .actor { font-size: 18px; font-weight: 700; text-anchor: middle; }
     .phase { font-size: 19px; font-weight: 700; }
-    .message { font-size: 16px; text-anchor: middle; }
+    .message { font-size: 15px; text-anchor: middle; }
     .call-id { fill: #275343; font-weight: 700; }
     .over-lifelines { paint-order: stroke; stroke: #f1f4eb; stroke-width: 5px; stroke-linejoin: round; }
     .lifeline { fill: none; stroke: #9aad9f; stroke-width: 1.4; stroke-dasharray: 6 5; }
@@ -20,15 +20,16 @@
     .reply { stroke-dasharray: 5 4; }
   </style>
 
-  <rect width="1120" height="928" rx="20" fill="#fbfaf5"/>
-  <text class="title" x="28" y="49">Find a time and create a booking</text>
-  <text class="caption" x="28" y="76">Two Telegram turns. Solid arrows show requests or writes. Dashed arrows show results or replies.</text>
+  <rect width="1120" height="1320" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="28" y="49">Find, select, confirm, and create a booking</text>
+  <text class="caption" x="28" y="76">Three customer turns. Selection asks for consent; only a later approval can create the booking.</text>
 
-  <rect x="28" y="160" width="1064" height="304" rx="13" fill="#f1f4eb"/>
-  <rect x="28" y="476" width="1064" height="424" rx="13" fill="#f1f4eb"/>
-  <rect x="668" y="634" width="412" height="157" rx="10" fill="#e4efdf" stroke="#8baa86"/>
+  <rect x="28" y="160" width="1064" height="330" rx="13" fill="#f1f4eb"/>
+  <rect x="28" y="505" width="1064" height="250" rx="13" fill="#f1f4eb"/>
+  <rect x="28" y="770" width="1064" height="520" rx="13" fill="#f1f4eb"/>
+  <rect x="668" y="910" width="412" height="195" rx="10" fill="#e4efdf" stroke="#8baa86"/>
 
-  <path class="lifeline" d="M108 144V890 M303 144V890 M509 144V890 M744 144V890 M1008 144V890"/>
+  <path class="lifeline" d="M108 144V1280 M303 144V1280 M509 144V1280 M744 144V1280 M1008 144V1280"/>
   <g fill="#e4efdf" stroke="#8baa86">
     <rect x="33" y="97" width="150" height="47" rx="9"/>
     <rect x="216" y="97" width="174" height="47" rx="9"/>
@@ -42,52 +43,66 @@
   <text class="actor" x="744" y="127">Scheduling services</text>
   <text class="actor" x="1008" y="127">PostgreSQL</text>
 
-  <text class="phase" x="46" y="188">Find a time</text>
+  <text class="phase" x="46" y="188">1 · Find available times</text>
   <path class="arrow" d="M108 220H301"/>
-  <text class="message" x="205" y="214"><tspan class="call-id">C01</tspan> Ask for times</text>
+  <text class="message" x="205" y="214"><tspan class="call-id">C01</tspan> Ask for available times</text>
   <path class="arrow" d="M303 252H1006"/>
-  <text class="message over-lifelines" x="655" y="246"><tspan class="call-id">C02</tspan> Save and claim the update, then resolve the customer</text>
+  <text class="message over-lifelines" x="655" y="246"><tspan class="call-id">C02</tspan> Record update and claim the turn</text>
   <path class="arrow" d="M303 284H507"/>
-  <text class="message" x="406" y="278"><tspan class="call-id">C03</tspan> Run the search turn</text>
+  <text class="message" x="406" y="278"><tspan class="call-id">C03</tspan> Resolve customer and run the request turn</text>
   <path class="arrow" d="M509 316H742"/>
-  <text class="message" x="626" y="310"><tspan class="call-id">C04</tspan> Find available slots</text>
+  <text class="message" x="626" y="310"><tspan class="call-id">C04</tspan> Search for matching slots</text>
   <path class="arrow" d="M744 348H1006"/>
-  <text class="message" x="876" y="342"><tspan class="call-id">C05</tspan> Read hours and conflicts</text>
+  <text class="message" x="876" y="342"><tspan class="call-id">C05</tspan> Read hours, blocks, and bookings</text>
   <path class="arrow reply" d="M744 380H511"/>
   <text class="message" x="626" y="374"><tspan class="call-id">C06</tspan> Return available slots</text>
-  <path class="arrow reply" d="M509 380H305"/>
-  <text class="message" x="406" y="374"><tspan class="call-id">C07</tspan> Return slot choices</text>
-  <path class="arrow" d="M303 412H1006"/>
-  <text class="message" x="655" y="406"><tspan class="call-id">C08</tspan> Save the slot reply</text>
-  <path class="arrow reply" d="M303 444H110"/>
-  <text class="message" x="205" y="438"><tspan class="call-id">C09</tspan> Send offered times</text>
+  <path class="arrow reply" d="M509 412H305"/>
+  <text class="message" x="406" y="406"><tspan class="call-id">C07</tspan> Return numbered choices</text>
+  <path class="arrow" d="M303 444H1006"/>
+  <text class="message over-lifelines" x="655" y="438"><tspan class="call-id">C08</tspan> Save the offered-times reply</text>
+  <path class="arrow reply" d="M303 476H110"/>
+  <text class="message" x="205" y="470"><tspan class="call-id">C09</tspan> Send choices to the customer</text>
 
-  <text class="phase" x="46" y="504">Create the booking</text>
-  <path class="arrow" d="M108 536H301"/>
-  <text class="message" x="205" y="530"><tspan class="call-id">C10</tspan> Choose a time</text>
-  <path class="arrow" d="M303 568H1006"/>
-  <text class="message over-lifelines" x="655" y="562"><tspan class="call-id">C11</tspan> Save and claim the new update, then resolve the customer</text>
-  <path class="arrow" d="M303 600H507"/>
-  <text class="message" x="406" y="594"><tspan class="call-id">C12</tspan> Run the selection turn</text>
-  <path class="arrow" d="M509 626H742"/>
-  <text class="message" x="626" y="620"><tspan class="call-id">C13</tspan> Book the selected slot</text>
+  <text class="phase" x="46" y="533">2 · Select a time and ask for consent</text>
+  <path class="arrow" d="M108 565H301"/>
+  <text class="message" x="205" y="559"><tspan class="call-id">C10</tspan> Choose one offered time</text>
+  <path class="arrow" d="M303 597H1006"/>
+  <text class="message over-lifelines" x="655" y="591"><tspan class="call-id">C11</tspan> Record update and claim the turn</text>
+  <path class="arrow" d="M303 629H507"/>
+  <text class="message" x="406" y="623"><tspan class="call-id">C12</tspan> Match the choice to saved offer state</text>
+  <path class="arrow reply" d="M509 661H305"/>
+  <text class="message" x="406" y="655"><tspan class="call-id">C13</tspan> Return a question for this exact slot</text>
+  <path class="arrow" d="M303 693H1006"/>
+  <text class="message over-lifelines" x="655" y="687"><tspan class="call-id">C14</tspan> Save the consent question; no booking write</text>
+  <path class="arrow reply" d="M303 725H110"/>
+  <text class="message" x="205" y="719"><tspan class="call-id">C15</tspan> Ask the customer to confirm</text>
 
-  <text class="phase" x="681" y="657">Booking transaction</text>
-  <path class="arrow" d="M744 689H1006"/>
-  <text class="message" x="876" y="683"><tspan class="call-id">C14</tspan> Lock business and check key</text>
-  <path class="arrow" d="M744 720H1006"/>
-  <text class="message" x="876" y="714"><tspan class="call-id">C15</tspan> Recheck slot and customer</text>
-  <path class="arrow" d="M744 751H1006"/>
-  <text class="message" x="876" y="745"><tspan class="call-id">C16</tspan> Write booking, job and result</text>
-  <path class="arrow" d="M744 781H1006"/>
-  <text class="message" x="876" y="775"><tspan class="call-id">C17</tspan> Commit</text>
+  <text class="phase" x="46" y="798">3 · Approve and create the booking</text>
+  <path class="arrow" d="M108 830H301"/>
+  <text class="message" x="205" y="824"><tspan class="call-id">C16</tspan> Approve the appointment</text>
+  <path class="arrow" d="M303 862H1006"/>
+  <text class="message over-lifelines" x="655" y="856"><tspan class="call-id">C17</tspan> Record update and claim the turn</text>
+  <path class="arrow" d="M303 894H507"/>
+  <text class="message" x="406" y="888"><tspan class="call-id">C18</tspan> Run the consent turn with saved context</text>
+  <path class="arrow" d="M509 926H742"/>
+  <text class="message over-lifelines" x="626" y="920"><tspan class="call-id">C19</tspan> Require exact-slot consent and request creation</text>
 
-  <path class="arrow reply" d="M744 820H511"/>
-  <text class="message" x="626" y="814"><tspan class="call-id">C18</tspan> Return created booking</text>
-  <path class="arrow reply" d="M509 820H305"/>
-  <text class="message" x="406" y="814"><tspan class="call-id">C19</tspan> Return booking reply</text>
-  <path class="arrow" d="M303 852H1006"/>
-  <text class="message" x="655" y="846"><tspan class="call-id">C20</tspan> Save booking reply</text>
-  <path class="arrow reply" d="M303 884H110"/>
-  <text class="message" x="205" y="878"><tspan class="call-id">C21</tspan> Send booking reply</text>
+  <text class="phase" x="681" y="954">Booking transaction</text>
+  <path class="arrow" d="M744 982H1006"/>
+  <text class="message" x="876" y="976"><tspan class="call-id">C20</tspan> Lock business and check retry key</text>
+  <path class="arrow" d="M744 1014H1006"/>
+  <text class="message" x="876" y="1008"><tspan class="call-id">C21</tspan> Recheck slot and customer ownership</text>
+  <path class="arrow" d="M744 1046H1006"/>
+  <text class="message" x="876" y="1040"><tspan class="call-id">C22</tspan> Write booking, reminder, and retry result</text>
+  <path class="arrow" d="M744 1078H1006"/>
+  <text class="message" x="876" y="1072"><tspan class="call-id">C23</tspan> Commit all writes together</text>
+
+  <path class="arrow reply" d="M744 1120H511"/>
+  <text class="message" x="626" y="1114"><tspan class="call-id">C24</tspan> Return the committed booking</text>
+  <path class="arrow reply" d="M509 1152H305"/>
+  <text class="message" x="406" y="1146"><tspan class="call-id">C25</tspan> Format details from saved facts</text>
+  <path class="arrow" d="M303 1184H1006"/>
+  <text class="message over-lifelines" x="655" y="1178"><tspan class="call-id">C26</tspan> Save the booking reply after commit</text>
+  <path class="arrow reply" d="M303 1216H110"/>
+  <text class="message" x="205" y="1210"><tspan class="call-id">C27</tspan> Deliver the saved booking details</text>
 </svg>

@@ -182,5 +182,9 @@ def test_a_new_search_can_replace_an_unfinished_booking_reference_question():
     assert second.intent == "search"
     assert workflow.draft("session-1").candidate_booking_ids == []
     third = workflow.handle_turn(_turn("1", customer_id="customer-1"), actions)
-    assert third.intent == "create"
+    assert third.intent == "request_booking_confirmation"
+    fourth = workflow.handle_turn(
+        _turn("Yes, book it.", customer_id="customer-1"), actions
+    )
+    assert fourth.intent == "create"
     assert not actions.canceled

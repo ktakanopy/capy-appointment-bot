@@ -192,6 +192,7 @@ def _evaluate_case(case, settings, understanding, routing, layer, dataset_dir):
                         today=turn_context["today"],
                         customer_id="fixture-customer" if case.authenticated else None,
                         idempotency_key=f"eval:{case.scenario_id}:{turn_index}",
+                        language=case.language,
                     ),
                     actions,
                     recording=recording,

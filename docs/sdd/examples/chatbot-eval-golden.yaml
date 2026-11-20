@@ -1,0 +1,156 @@
+schema_version: 1
+dataset_id: golden
+description: Minimal scheduling journeys that should pass before release.
+
+scenarios:
+  - id: select-first-offered-slot
+    spec_id: CAPY-BOOK-001
+    category: booking
+    language: en
+    split: test
+    group_id: select-offered-slot
+    provenance: Authored synthetic conversation
+    setup:
+      preset: two_massage_slots
+      verified_customer: true
+      today: "2026-10-19"
+      locale_hint: en-US
+      service_name: Massage
+    example_conversation:
+      - id: ask_for_times
+        user:
+          modality: text
+          text: "Book Massage tomorrow."
+        assistant_example: "I have two times available tomorrow. 1. 15:00 UTC. 2. 17:00 UTC."
+        assertions:
+          gemma:
+            service_name: Massage
+            local_date: "2026-10-20"
+          laya:
+            next_action: CHECK_AVAILABILITY
+          intent: search
+          offered_slot_count: 2
+          writes: {}
+      - id: choose_time
+        user:
+          modality: text
+          text: "1"
+        assistant_example: "Confirm a massage with Alex on October 20 at 15:00 UTC?"
+        assertions:
+          gemma:
+            slot_index: 1
+          laya:
+            next_action: BOOK
+          intent: request_booking_confirmation
+          writes: {}
+      - id: confirm_selection
+        user:
+          modality: text
+          text: "Yes, book it."
+        assistant_example: "Booked. Massage with Alex on October 20, 2026 at 15:00 UTC."
+        assertions:
+          laya:
+            next_action: BOOK
+          intent: create
+          writes:
+            create: 1
+          booking:
+            status: scheduled
+            matches_offer:
+              turn_id: ask_for_times
+              position: 1
+    judge:
+      prompt: |
+        Assess how the assistant presented the options and acknowledged the
+        customer's choice. Use the actual transcript as evidence.
+      criteria:
+        - id: CAPY-BOOK-001-OFFER-CLEAR
+          turn_id: ask_for_times
+          expected: "The assistant makes the two options easy to distinguish and presents them as available times."
+        - id: CAPY-BOOK-001-ASK-CONSENT
+          turn_id: choose_time
+          facts_from: selected_offer
+          expected: "In English, the assistant describes the matching service, professional, date, time, and timezone from the selected offer and asks for confirmation."
+        - id: CAPY-BOOK-001-CONFIRM-CLEAR
+          turn_id: confirm_selection
+          facts_from: saved_booking
+          expected: "In English, the final reply states the service, professional, date, time, and timezone that match the saved booking."
+    final_assertions:
+      writes:
+        create: 1
+
+  - id: confirm-first-offered-slot-pt
+    spec_id: CAPY-BOOK-001
+    category: booking
+    language: pt
+    split: test
+    group_id: select-offered-slot
+    provenance: Authored synthetic conversation in Brazilian Portuguese
+    setup:
+      preset: two_massage_slots
+      verified_customer: true
+      today: "2026-10-19"
+      locale_hint: pt-BR
+      service_name: Massagem
+    example_conversation:
+      - id: ask_for_times
+        user:
+          modality: text
+          text: "Quero marcar uma massagem amanhã."
+        assistant_example: "Tenho dois horários amanhã. 1. 15h UTC. 2. 17h UTC."
+        assertions:
+          gemma:
+            service_name: Massagem
+            local_date: "2026-10-20"
+          laya:
+            next_action: CHECK_AVAILABILITY
+          intent: search
+          offered_slot_count: 2
+          writes: {}
+      - id: choose_time
+        user:
+          modality: text
+          text: "1"
+        assistant_example: "Você confirma a massagem com Alex no dia 20 de outubro às 15h UTC?"
+        assertions:
+          gemma:
+            slot_index: 1
+          laya:
+            next_action: BOOK
+          intent: request_booking_confirmation
+          writes: {}
+      - id: confirm_selection
+        user:
+          modality: text
+          text: "Sim, pode agendar."
+        assistant_example: "Agendamento feito. Massagem com Alex em 20 de outubro de 2026 às 15h UTC."
+        assertions:
+          laya:
+            next_action: BOOK
+          intent: create
+          writes:
+            create: 1
+          booking:
+            status: scheduled
+            matches_offer:
+              turn_id: ask_for_times
+              position: 1
+    judge:
+      prompt: |
+        Avalie se a pessoa consegue entender as opções, confirmar o horário
+        escolhido e reconhecer os detalhes do agendamento na resposta real.
+      criteria:
+        - id: CAPY-BOOK-001-OFFER-CLEAR
+          turn_id: ask_for_times
+          expected: "A resposta distingue as duas opções de horário."
+        - id: CAPY-BOOK-001-ASK-CONSENT
+          turn_id: choose_time
+          facts_from: selected_offer
+          expected: "Em português, a resposta informa serviço, profissional, data, horário e fuso da opção selecionada e pede confirmação antes de agendar."
+        - id: CAPY-BOOK-001-CONFIRM-CLEAR
+          turn_id: confirm_selection
+          facts_from: saved_booking
+          expected: "Em português, a resposta informa serviço, profissional, data, horário e fuso que correspondem ao agendamento salvo."
+    final_assertions:
+      writes:
+        create: 1

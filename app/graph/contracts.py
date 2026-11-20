@@ -34,6 +34,7 @@ class WorkflowDraft(BaseModel):
     earliest_local_time: str | None = None
     offered_slot_ids: list[str] = Field(default_factory=list)
     pending_slot_id: str | None = None
+    confirmation_requested_for: str | None = None
     missing: MissingField = "none"
     active_booking_id: str | None = None
     candidate_booking_ids: list[str] = Field(default_factory=list)
@@ -71,6 +72,7 @@ class TurnContext(BaseModel):
     booking_id: str | None = None
     idempotency_key: str | None = None
     input_modality: Literal["text", "audio"] = "text"
+    language: Literal["en", "pt"] = "en"
 
 
 class TurnResult(BaseModel):

@@ -21,6 +21,7 @@ class SchedulingGraphState(TypedDict, total=False):
     booking_id: str | None
     idempotency_key: str | None
     input_modality: str
+    language: str
     service_names: list[str]
     professional_names: list[str]
     catalog: dict[str, Any]

@@ -109,6 +109,7 @@ def build_graph(
             "lookup": "lookup",
             "escalate": "escalate",
             "prepare_action": "prepare_action",
+            "persist": "persist",
         },
     )
     graph.add_conditional_edges(

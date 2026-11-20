@@ -1,5 +1,6 @@
 import logging
 from types import SimpleNamespace
+from zoneinfo import ZoneInfo
 
 from langgraph.checkpoint.memory import InMemorySaver
 
@@ -54,8 +55,30 @@ def test_real_workflow_booking_reminder_reschedule_cancel(scheduling_db, caplog)
             f"Book {catalog.services[0].name} on {next_open_day().isoformat()}"
         )
         assert slots.intent == "search" and slots.slots
-        created = turn("1")
+        selection = turn("1")
+        assert selection.intent == "request_booking_confirmation"
+        assert selection.booking is None
+        with connect(scheduling_db["url"]) as conn:
+            assert conn.execute(
+                "SELECT count(*) AS total FROM bookings WHERE customer_id=%s",
+                (identity["customer_id"],),
+            ).fetchone()["total"] == 0
+            assert conn.execute("SELECT count(*) AS total FROM reminders").fetchone()["total"] == 0
+        created = turn("Yes, book it.")
         assert created.intent == "create"
+        assert "Massage" in created.text and "Alex" in created.text
+        local_start = created.booking.starts_at.astimezone(
+            ZoneInfo(catalog.business.timezone)
+        )
+        assert local_start.strftime("%H:%M") in created.text
+        assert catalog.business.timezone in created.text
+        assert created.booking.starts_at == slots.slots[0].starts_at
+        with connect(scheduling_db["url"]) as conn:
+            assert conn.execute(
+                "SELECT count(*) AS total FROM bookings WHERE customer_id=%s",
+                (identity["customer_id"],),
+            ).fetchone()["total"] == 1
+            assert conn.execute("SELECT count(*) AS total FROM reminders").fetchone()["total"] == 1
         assert turn("confirm my booking").booking.status.value == "confirmed"
         with connect(scheduling_db["url"]) as conn:
             conn.execute(

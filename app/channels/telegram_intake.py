@@ -41,7 +41,14 @@ def private_message(row: dict) -> dict | None:
 def save_update(
     database_url: str, bot: TelegramBot, update: dict
 ) -> bool:
-    """Return whether the update has a valid receipt ID and an active bot."""
+    """Persist a Telegram update and schedule supported private messages for work.
+
+    Telegram may retry an update, so its update ID is the idempotency key and a
+    duplicate counts as accepted without creating another inbox row. Only
+    supported private-message fields are stored; other valid updates receive a
+    completed receipt so Telegram does not keep retrying them. Return False when
+    the update ID is invalid or the bot is no longer enabled for webhook intake.
+    """
     update_id = update.get("update_id")
     if not telegram_integer(update_id):
         debug_event("telegram.inbox.ignored", reason="invalid_update_id")
@@ -58,6 +65,7 @@ def save_update(
     })
     payload = None
     if supported:
+        # Retain only fields the worker understands, which limits stored customer data.
         payload = {"message": {
             key: message[key] for key in ("chat", "from", "text", "contact", "voice", "audio")
             if key in message
@@ -65,6 +73,7 @@ def save_update(
     message_date = message.get("date")
     date = message_date if telegram_integer(message_date) else None
     with database_session(database_url) as session:
+        # The bot may have been disabled after route lookup; recheck before accepting its update.
         registered = session.scalar(select(TelegramBotRow.bot_id).where(
             TelegramBotRow.bot_id == bot.bot_id,
             TelegramBotRow.business_id == bot.business_id,
@@ -75,6 +84,7 @@ def save_update(
             debug_event("telegram.inbox.ignored", bot_id=bot.bot_id, update_id=update_id,
                         reason="bot_not_registered_for_intake")
             return False
+        # Telegram retries use the same ID, so this unique key prevents duplicate inbox work.
         receipt_id = session.scalar(insert(TelegramUpdate).values(
             bot_id=bot.bot_id,
             update_id=update_id,

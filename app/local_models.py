@@ -50,7 +50,7 @@ Output only the spoken words, preserving names, numbers, corrections and negatio
 
 ACTION_CRITERIA = {
     "CHECK_AVAILABILITY": "Find times for a new appointment or provide missing details for that search.",
-    "BOOK": "Pick an offered time or accept the pending time for a new or rescheduled appointment.",
+    "BOOK": "Pick an offered time. With a pending new-booking confirmation, choose BOOK only when the latest message clearly approves that exact time.",
     "RESCHEDULE": "Move an existing appointment to a different date or time.",
     "CANCEL": "Explicitly cancel an existing appointment, or choose which booking to cancel.",
     "CONFIRM": "Confirm an existing appointment.",
@@ -117,6 +117,7 @@ def route(laya, turn: RoutingTurn) -> DecisionOutput:
             "requested_date": draft.local_date,
             "offered_times": len(draft.offered_slot_ids),
             "pending_time": bool(draft.pending_slot_id),
+            "pending_booking_confirmation": bool(draft.confirmation_requested_for),
             "possible_existing_bookings": len(draft.candidate_booking_ids),
         },
     }

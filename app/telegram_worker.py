@@ -54,7 +54,6 @@ class TelegramWorker:
                 "You can type or send a voice message."
             )
 
-        # check wether this telegram message contains a shared contact card
         contact = message.get("contact")
         if isinstance(contact, dict):
             debug_event("telegram.input.classified", kind="contact")
@@ -156,6 +155,7 @@ class TelegramWorker:
             customer_id=identity["customer_id"],
             idempotency_key=f"telegram:{self.bot_id}:{row['update_id']}",
             input_modality=modality,
+            language=_telegram_language(message.get("from")),
         )
         result = self.runtime.workflow.handle_turn(
             turn,
@@ -171,6 +171,16 @@ class TelegramWorker:
 def _today_in_timezone(timezone: str) -> str:
     """Use the business's local calendar day for phrases such as tomorrow."""
     return datetime.now(ZoneInfo(timezone)).date().isoformat()
+
+
+def _telegram_language(sender: object) -> str:
+    """Map Telegram's optional profile locale to the languages CAPY replies in."""
+    if not isinstance(sender, dict):
+        return "en"
+    language_code = sender.get("language_code")
+    if isinstance(language_code, str) and language_code.casefold().startswith("pt"):
+        return "pt"
+    return "en"
 
 
 def _is_start_command(text: object) -> bool:

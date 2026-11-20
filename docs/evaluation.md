@@ -1,4 +1,6 @@
-# Evaluation
+# Existing JSONL evaluation path
+
+This guide describes the original compact JSONL runner for extraction, fixed-input routing, and small workflow regressions. For executable YAML conversations, concurrent isolated attempts, voice preparation, the judge, per-attempt replay, and HTML reports, start with the [scenario evaluation framework](evaluation-framework.md).
 
 The versioned JSONL corpus under `evals/data/` supports English and Portuguese text and audio. `smoke-text.jsonl` contains 16 synthetic task cases; `smoke-audio.jsonl` contains two synthesized speech cases. `smoke.jsonl` combines them. Speech was generated with installed macOS Eddy voices and converted to 16 kHz mono WAV. These samples validate the plumbing and provide a tiny regression baseline; they do not establish real-world speech/model quality.
 

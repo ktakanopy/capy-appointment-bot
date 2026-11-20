@@ -3,9 +3,10 @@ from __future__ import annotations
 import re
 
 from app.graph.contracts import DecisionOutput, WorkflowDraft
+from app.graph.consent import classify_booking_consent
 
 _RESCHEDULE = re.compile(r"\b(reschedule|move|change|mudar|remarcar|trocar)\b", re.I)
-_CANCEL = re.compile(r"\b(cancel|cancelar|cancela)\b", re.I)
+_CANCEL = re.compile(r"\b(cancel|cancelar|cancela|cancele)\b", re.I)
 _CONFIRM = re.compile(r"\b(confirm|confirmar|confirmo)\b", re.I)
 _SEARCH = re.compile(
     r"\b(available|availability|book|booking|schedule|appointment|agendar|marcar|hor[aá]rio|dispon[ií]vel)\b",
@@ -37,7 +38,13 @@ class DeterministicDecision:
 
     def decide(self, message: str, context: WorkflowDraft) -> DecisionOutput:
         choosing = bool(_CHOICE.search(message) and not _DATE_OR_TIME.search(message))
-        if _OVERRIDE.search(message):
+        if context.confirmation_requested_for:
+            action = (
+                "BOOK"
+                if classify_booking_consent(message) == "approve"
+                else "CLARIFY"
+            )
+        elif _OVERRIDE.search(message):
             action = "ESCALATE"
         elif _CANCEL.search(message) and _RESCHEDULE.search(message):
             action = "CLARIFY"

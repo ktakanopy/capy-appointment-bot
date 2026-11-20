@@ -1,7 +1,7 @@
 from datetime import date
 
 from app.graph.builder import build_graph
-from app.graph.contracts import BookingRef, TurnContext
+from app.graph.contracts import BookingRef, DecisionOutput, TurnContext
 from app.graph.decision import DeterministicDecision
 from app.graph.workflow import LangGraphWorkflow
 from app.llm.provider import DeterministicInterpreter
@@ -140,7 +140,12 @@ def test_authorized_create_does_not_reschedule():
     workflow.handle_turn(
         _turn("book Massage on 2099-01-05", customer_id="customer-1"), actions
     )
-    result = workflow.handle_turn(_turn("1", customer_id="customer-1"), actions)
+    selected = workflow.handle_turn(_turn("1", customer_id="customer-1"), actions)
+    assert selected.intent == "request_booking_confirmation"
+    assert actions.created == []
+    result = workflow.handle_turn(
+        _turn("Yes, book it.", customer_id="customer-1"), actions
+    )
     assert result.intent == "create"
     assert actions.created
     assert actions.rescheduled == []
@@ -180,6 +185,34 @@ def test_several_bookings_do_not_write():
     assert result.intent == "clarify_booking"
     assert actions.rescheduled == []
     assert workflow.draft("session-1").candidate_booking_ids == ["one", "two"]
+
+
+def test_a_wrong_laya_cancel_cannot_mutate_an_existing_booking_during_new_booking_consent():
+    class MisrouteConsent(DeterministicDecision):
+        def decide(self, message, context):
+            if context.confirmation_requested_for:
+                return DecisionOutput(next_action="CANCEL", confidence=0.99)
+            return super().decide(message, context)
+
+    actions = FakeSchedulingActions(
+        slots=[sample_slot()],
+        refs=[BookingRef(id="existing", service_id="massage", label="later")],
+    )
+    workflow = _workflow(MisrouteConsent())
+    workflow.handle_turn(
+        _turn("Book Massage on 2099-01-05", customer_id="customer-1"), actions
+    )
+    selected = workflow.handle_turn(_turn("1", customer_id="customer-1"), actions)
+    assert selected.intent == "request_booking_confirmation"
+    declined = workflow.handle_turn(
+        _turn("No, don't book it.", customer_id="customer-1"), actions
+    )
+
+    assert declined.intent == "booking_not_created"
+    assert actions.created == []
+    assert actions.canceled == []
+    assert actions.confirmed == []
+    assert actions.rescheduled == []
 
 
 def test_second_turn_reads_the_checkpoint_draft():

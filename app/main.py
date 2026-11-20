@@ -75,16 +75,28 @@ def live():
 
 @app.post("/telegram/{route}", status_code=204)
 async def telegram_webhook(
-    route: str, request: Request, dependencies: HealthDependencies = Depends(get_health_dependencies)
+    route: str,
+    request: Request,
+    dependencies: HealthDependencies = Depends(get_health_dependencies),
 ):
+    """Authenticate and durably accept one Telegram update for its configured bot.
+
+    The route identifies the bot and its business. After checking Telegram's
+    webhook secret, the handler validates a size-limited JSON payload and saves
+    the update to the inbox. Returning HTTP 204 only after that save lets
+    Telegram retry when intake fails instead of losing an update.
+    """
     started = time.monotonic()
     database_url = dependencies.settings.database_url
     try:
+        # Registry lookup performs synchronous database I/O, so keep it off the event loop.
         bot = await run_in_threadpool(BotRegistry(database_url).by_route, route)
         secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
         if bot is None or not bot.accepts_webhook(secret):
             debug_event("telegram.webhook.rejected", reason="authentication")
             raise HTTPException(status_code=403, detail="Webhook rejected")
+
+        # Authenticate before consuming the body, and stream it to enforce the memory limit.
         body = bytearray()
         async for chunk in request.stream():
             if len(body) + len(chunk) > WEBHOOK_BODY_LIMIT:
@@ -95,7 +107,11 @@ async def telegram_webhook(
             update = json.loads(body)
         except (ValueError, RecursionError) as exc:
             debug_event("telegram.webhook.rejected", reason="invalid_json")
-            raise HTTPException(status_code=400, detail="Invalid Telegram update") from exc
+            raise HTTPException(
+                status_code=400, detail="Invalid Telegram update"
+            ) from exc
+
+        # Save before acknowledging so Telegram can retry if durable intake fails.
         if not isinstance(update, dict) or not await run_in_threadpool(
             save_update, database_url, bot, update
         ):
@@ -103,8 +119,11 @@ async def telegram_webhook(
     except DATABASE_ERRORS as exc:
         debug_event("telegram.webhook.rejected", reason="database_unavailable")
         raise HTTPException(status_code=503, detail="Intake unavailable") from exc
-    log_event(get_logger(), "telegram.webhook.accepted",
-              duration_ms=round((time.monotonic() - started) * 1000))
+    log_event(
+        get_logger(),
+        "telegram.webhook.accepted",
+        duration_ms=round((time.monotonic() - started) * 1000),
+    )
     return Response(status_code=204)
 
 

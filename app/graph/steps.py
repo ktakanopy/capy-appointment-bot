@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from datetime import date, time
+from zoneinfo import ZoneInfo
 
 from pydantic import ValidationError
 
 from app.chat_helpers import _choose_professional, _choose_service, _slot_message
 from app.graph.actions import SchedulingActions
+from app.graph.booking_messages import booking_confirmation_question, booking_created_reply
 from app.graph.context import TurnInput
+from app.graph.consent import classify_booking_consent
 from app.graph.contracts import DecisionOutput, NextAction, Operation, TurnResult, WorkflowDraft
 from app.graph.state import HISTORY_LIMIT
 from app.llm.gemma import ProviderError
@@ -15,6 +18,7 @@ from app.models import (
     AvailabilitySearchRequest,
     AvailabilitySlot,
     CatalogResponse,
+    DomainError,
     Service,
 )
 from app.observability import debug_event
@@ -25,6 +29,16 @@ _EXISTING_BOOKING_OPERATIONS: dict[NextAction, Operation] = {
     "CONFIRM": "confirm",
     "CANCEL": "cancel",
     "RESCHEDULE": "reschedule",
+}
+_UNBOOKABLE_SLOT_CODES = {
+    "slot_unavailable",
+    "slot_too_soon",
+    "slot_outside_horizon",
+    "invalid_slot",
+    "outside_business_hours",
+    "slot_blocked",
+    "professional_not_found",
+    "service_or_professional_not_found",
 }
 
 
@@ -272,6 +286,11 @@ def route_turn(state: dict, decision_engine, threshold: float) -> dict:
         debug_event("workflow.route.failed", stage="request_decision", error_type=type(exc).__name__)
         raise
 
+    if draft.confirmation_requested_for:
+        return _route_booking_consent(
+            state, draft, interpretation, decision, threshold
+        )
+
     selected_booking_id = None
     if not decision.needs_human and decision.confidence >= threshold:
         _update_draft_operation(draft, decision.next_action)
@@ -317,6 +336,151 @@ def route_turn(state: dict, decision_engine, threshold: float) -> dict:
         "route": route,
         "draft": draft.model_dump(mode="json"),
     }
+
+
+def _route_booking_consent(
+    state: dict,
+    draft: WorkflowDraft,
+    interpretation: SchedulingInterpretation,
+    decision: DecisionOutput,
+    threshold: float,
+) -> dict:
+    """Resolve pending new-booking consent before Laya can change other booking state.
+
+    The model still proposes and reports an action, but only a clear approval
+    plus BOOK can reach the create path. This guard also blocks mistaken
+    CONFIRM, CANCEL, and RESCHEDULE proposals while consent is unresolved.
+    """
+    catalog = CatalogResponse.model_validate(state["catalog"])
+    language = state.get("language", "en")
+    message = state.get("message", "")
+    consent = classify_booking_consent(message)
+    selected = _chosen_slot(
+        _offered_slots(state), draft.confirmation_requested_for, None
+    )
+
+    if selected is None:
+        _clear_pending_booking(draft)
+        return _consent_reply(
+            "That time is no longer available. Please ask me to find available times again.",
+            "Esse horário não está mais disponível. Peça para eu buscar novos horários.",
+            language,
+            draft,
+            decision,
+            interpretation,
+        )
+
+    if _interpretation_changes_selected_time(interpretation, selected, catalog):
+        _clear_pending_booking(draft)
+        return _consent_reply(
+            "That is a different time, so I have not booked it. Ask me to find times for the new time or date.",
+            "Esse é outro horário, então não fiz o agendamento. Peça para eu buscar opções para a nova data ou horário.",
+            language,
+            draft,
+            decision,
+            interpretation,
+        )
+
+    if consent == "decline":
+        _clear_pending_booking(draft)
+        return _consent_reply(
+            "No problem. I have not booked that time.",
+            "Tudo bem. Não fiz o agendamento.",
+            language,
+            draft,
+            decision,
+            interpretation,
+        )
+
+    if (
+        consent == "approve"
+        and decision.next_action == "BOOK"
+        and not decision.needs_human
+        and decision.confidence >= threshold
+    ):
+        draft.operation = "create"
+        return {
+            "decision": decision.model_dump(mode="json"),
+            "interpretation": interpretation.model_dump(mode="json"),
+            "route": "prepare_action",
+            "draft": draft.model_dump(mode="json"),
+        }
+
+    if consent == "approve":
+        text = (
+            "I could not verify that approval. Please reply exactly “yes” to book this time."
+            if language == "en"
+            else "Não consegui confirmar sua autorização. Responda “sim” para agendar este horário."
+        )
+    else:
+        text = (
+            "Please reply “yes” to book this time or “no” to leave it unbooked."
+            if language == "en"
+            else "Responda “sim” para agendar este horário ou “não” para deixá-lo sem agendamento."
+        )
+    update = _result(text, "request_booking_confirmation", route="persist")
+    update["decision"] = decision.model_dump(mode="json")
+    update["interpretation"] = interpretation.model_dump(mode="json")
+    update["draft"] = draft.model_dump(mode="json")
+    return update
+
+
+def _clear_pending_booking(draft: WorkflowDraft) -> None:
+    """Remove the consent marker and offered slot so a later reply cannot reuse it."""
+    draft.pending_slot_id = None
+    draft.confirmation_requested_for = None
+    draft.offered_slot_ids = []
+    draft.active_booking_id = None
+    draft.candidate_booking_ids = []
+    draft.operation = "none"
+
+
+def _consent_reply(
+    english: str,
+    portuguese: str,
+    language: str,
+    draft: WorkflowDraft,
+    decision: DecisionOutput,
+    interpretation: SchedulingInterpretation,
+) -> dict:
+    """Return a localized no-write response after pending consent is resolved."""
+    update = _result(
+        portuguese if language == "pt" else english,
+        "booking_not_created",
+        route="persist",
+        draft=draft.model_dump(mode="json"),
+    )
+    update["offered_slots"] = []
+    update["selected_slot_id"] = None
+    update["decision"] = decision.model_dump(mode="json")
+    update["interpretation"] = interpretation.model_dump(mode="json")
+    return update
+
+
+def _interpretation_changes_selected_time(
+    interpretation: SchedulingInterpretation,
+    selected: AvailabilitySlot,
+    catalog: CatalogResponse,
+) -> bool:
+    """Detect explicit date or time changes that make the displayed approval stale."""
+    local_start = selected.starts_at.astimezone(ZoneInfo(catalog.business.timezone))
+    service = _choose_service(catalog, interpretation.service_name)
+    professional = _choose_professional(catalog, interpretation.professional_name)
+    return bool(
+        (interpretation.service_name and (service is None or service.id != selected.service_id))
+        or (
+            interpretation.professional_name
+            and (professional is None or professional.id != selected.professional_id)
+        )
+        or (
+            interpretation.local_date
+            and interpretation.local_date != local_start.date().isoformat()
+        )
+        or (
+            interpretation.local_time
+            and interpretation.local_time != local_start.strftime("%H:%M")
+        )
+    )
 
 
 def _update_draft_operation(draft: WorkflowDraft, action: NextAction) -> None:
@@ -567,6 +731,11 @@ def search(state: dict, actions: SchedulingActions) -> dict:
 
 
 def select(state: dict, actions: SchedulingActions) -> dict:
+    """Save the chosen offer for the requested operation and clear older consent.
+
+    A new selection must trigger its own confirmation question. Clearing the
+    marker here prevents approval for a previous offer from authorizing this one.
+    """
     draft = WorkflowDraft.model_validate(state.get("draft") or {})
     interpretation = SchedulingInterpretation.model_validate(state["interpretation"])
     slots = _offered_slots(state)
@@ -584,6 +753,7 @@ def select(state: dict, actions: SchedulingActions) -> dict:
             draft=draft.model_dump(mode="json"),
         )
     draft.pending_slot_id = chosen.slot_id
+    draft.confirmation_requested_for = None
     if draft.operation == "reschedule":
         draft.operation = "reschedule"
     else:
@@ -688,6 +858,12 @@ def _prepare_reschedule(
 def _prepare_create(
     state: dict, draft: WorkflowDraft, actions: SchedulingActions
 ) -> dict:
+    """Prepare a booking only after the customer approves the selected offer.
+
+    The first pass stores the exact offered slot and returns a localized
+    confirmation question. A later approval reaches execution, where the
+    booking service checks availability again before committing the write.
+    """
     if not draft.pending_slot_id and not state.get("selected_slot_id"):
         return clarify(state, actions)
     if not state.get("customer_id"):
@@ -695,6 +871,34 @@ def _prepare_create(
         return _result(
             "Use your Telegram account to book an appointment.",
             "manage_booking",
+            route="persist",
+            draft=draft.model_dump(mode="json"),
+        )
+    selected = _chosen_slot(
+        _offered_slots(state), draft.pending_slot_id or state.get("selected_slot_id"), None
+    )
+    if selected is None:
+        return clarify(state, actions)
+    if draft.confirmation_requested_for != selected.slot_id:
+        draft.pending_slot_id = selected.slot_id
+        draft.confirmation_requested_for = selected.slot_id
+        catalog = CatalogResponse.model_validate(state["catalog"])
+        return _result(
+            booking_confirmation_question(
+                selected, catalog, state.get("language", "en")
+            ),
+            "request_booking_confirmation",
+            route="persist",
+            draft=draft.model_dump(mode="json"),
+        )
+    if classify_booking_consent(state.get("message", "")) != "approve":
+        return _result(
+            booking_confirmation_question(
+                selected,
+                CatalogResponse.model_validate(state["catalog"]),
+                state.get("language", "en"),
+            ),
+            "request_booking_confirmation",
             route="persist",
             draft=draft.model_dump(mode="json"),
         )
@@ -733,6 +937,12 @@ def _prepare_booking_status_change(
 
 
 def execute(state: dict, actions: SchedulingActions) -> dict:
+    """Apply a prepared scheduling action after checking its turn-level safeguards.
+
+    For creation, recheck consent and the exact offered slot here because the
+    write boundary must reject any route that bypassed confirmation preparation.
+    The booking service then revalidates availability and idempotency in its transaction.
+    """
     draft = WorkflowDraft.model_validate(state.get("draft") or {})
     debug_event("workflow.action.executing", operation=draft.operation)
     key = state["idempotency_key"]
@@ -744,19 +954,32 @@ def execute(state: dict, actions: SchedulingActions) -> dict:
     )
     booking_id = state.get("booking_id") or draft.active_booking_id
     if draft.operation == "create":
-        if chosen is None:
+        if (
+            chosen is None
+            or draft.confirmation_requested_for != chosen.slot_id
+            or classify_booking_consent(state.get("message", "")) != "approve"
+        ):
             return _result(
-                "Choose one of the times I just offered.",
-                "clarify",
+                "Please confirm the offered time before I book it.",
+                "request_booking_confirmation",
                 route="persist",
                 draft=draft.model_dump(mode="json"),
             )
-        actions.create_booking(chosen, key)
+        try:
+            summary = actions.create_booking(chosen, key)
+        except DomainError as error:
+            if error.code not in _UNBOOKABLE_SLOT_CODES:
+                raise
+            return _slot_no_longer_bookable_reply(draft, state.get("language", "en"))
+        catalog = CatalogResponse.model_validate(state["catalog"])
+        language = state.get("language", "en")
+        text = booking_created_reply(summary.booking, chosen, catalog, language)
         draft.pending_slot_id = None
+        draft.confirmation_requested_for = None
         draft.missing = "none"
         draft.operation = "none"
         return _result(
-            f"You're booked for {chosen.local_label} with {chosen.professional_name}.",
+            text,
             "create",
             route="persist",
             draft=draft.model_dump(mode="json"),
@@ -802,8 +1025,8 @@ def execute(state: dict, actions: SchedulingActions) -> dict:
 
 
 def help_reply(state: dict) -> dict:
-    debug_event("workflow.help.requested")
     """Answer scheduling questions from the catalog already loaded for this turn."""
+    debug_event("workflow.help.requested")
     catalog = CatalogResponse.model_validate(state["catalog"])
     message = state.get("message", "")
     lowered = message.lower()
@@ -876,6 +1099,25 @@ def persist(state: dict) -> dict:
     if result.get("text"):
         update["messages"] = [{"role": "assistant", "content": result["text"]}]
     debug_event("workflow.reply.prepared", intent=result["intent"], missing=draft.missing)
+    return update
+
+
+def _slot_no_longer_bookable_reply(draft: WorkflowDraft, language: str) -> dict:
+    """Clear expired consent when the write transaction rejects a stale offer.
+
+    Availability can change after the customer approves. Returning a refresh
+    request keeps the failed transaction understandable and prevents an old
+    confirmation from being reused on the next turn.
+    """
+    _clear_pending_booking(draft)
+    text = (
+        "That time is no longer available. Please ask me to find available times again."
+        if language != "pt"
+        else "Esse horário não está mais disponível. Peça para eu buscar novos horários."
+    )
+    update = _result(text, "booking_not_created", route="persist", draft=draft.model_dump(mode="json"))
+    update["offered_slots"] = []
+    update["selected_slot_id"] = None
     return update
 
 
