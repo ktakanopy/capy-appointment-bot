@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="421" viewBox="0 0 720 421" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">What can the sender record?</title>
+  <desc id="desc">After send_message, D1 is a confirmed acceptance. D2 is a retryable error. D3 is a permanent error or exhausted attempts. D4 is an uncertain outcome after a transport error. The sender tries to record sent, ready, failed, or ambiguous respectively.</desc>
+  <style>
+    text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+    .title { font-size: 29px; font-weight: 700; }
+    .body { font-size: 18px; fill: #35544a; }
+    .label { font-size: 17px; font-weight: 700; fill: #35544a; }
+    .code-title { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 17px; font-weight: 700; }
+    .panel { fill: #fffefa; stroke: #a4b8a8; }
+    .green { fill: #eaf2e5; stroke: #86a57e; }
+    .pale { fill: #f1f5ec; stroke: #a4b8a8; }
+    .waiting { fill: #faf0db; stroke: #c6ac74; }
+    .error { fill: #f8eae4; stroke: #c98776; }
+    .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="720" height="421" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="30" y="46">What can the sender record?</text>
+  <text class="body" x="30" y="74">The sender classifies the result of the Telegram call.</text>
+  <rect class="pale" x="30" y="91" width="660" height="55" rx="13"/>
+  <text class="code-title" x="52" y="125">send_message()</text>
+  <path class="arrow" d="M68 146V371"/>
+  <rect class="panel" x="119" y="163" width="571" height="51" rx="13"/>
+  <path class="arrow" d="M68 188H118m-7-6 7 6-7 6"/>
+  <text class="label" x="136" y="194">D1 · Telegram accepted it</text>
+  <rect class="green" x="542" y="172" width="129" height="33" rx="7"/>
+  <text class="code-title" x="606.5" y="194" text-anchor="middle">sent</text>
+  <rect class="panel" x="119" y="224" width="571" height="51" rx="13"/>
+  <path class="arrow" d="M68 249H118m-7-6 7 6-7 6"/>
+  <text class="label" x="136" y="255">D2 · Retry allowed</text>
+  <rect class="waiting" x="542" y="233" width="129" height="33" rx="7"/>
+  <text class="code-title" x="606.5" y="255" text-anchor="middle">ready</text>
+  <rect class="panel" x="119" y="285" width="571" height="51" rx="13"/>
+  <path class="arrow" d="M68 310H118m-7-6 7 6-7 6"/>
+  <text class="label" x="136" y="316">D3 · Permanent error or retry limit</text>
+  <rect class="error" x="542" y="294" width="129" height="33" rx="7"/>
+  <text class="code-title" x="606.5" y="316" text-anchor="middle">failed</text>
+  <rect class="panel" x="119" y="346" width="571" height="51" rx="13"/>
+  <path class="arrow" d="M68 371H118m-7-6 7 6-7 6"/>
+  <text class="label" x="136" y="377">D4 · Acceptance uncertain after transport error</text>
+  <rect class="waiting" x="542" y="355" width="129" height="33" rx="7"/>
+  <text class="code-title" x="606.5" y="377" text-anchor="middle">ambiguous</text>
+</svg>

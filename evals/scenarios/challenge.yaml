@@ -1,0 +1,212 @@
+schema_version: 1
+dataset_id: challenge
+description: Consent edge cases and audio input for the booking flow.
+
+scenarios:
+  - id: decline-pending-booking
+    spec_id: CAPY-BOOK-002
+    category: consent
+    language: en
+    split: test
+    group_id: decline-pending-booking
+    provenance: synthetic
+    setup:
+      preset: two_massage_slots
+      verified_customer: true
+      existing_booking: true
+      today: "2026-10-19"
+      business_timezone: UTC
+      locale_hint: en-US
+      service_name: Massage
+    example_conversation:
+      - id: ask_for_times
+        user: {modality: text, text: "Book Massage tomorrow."}
+        assistant_example: "Here are the available times."
+        assertions:
+          gemma: {service_name: Massage, local_date: "2026-10-20"}
+          laya: {next_action: CHECK_AVAILABILITY}
+          intent: search
+          writes: {}
+      - id: choose_time
+        user: {modality: text, text: "1"}
+        assistant_example: "Please confirm the selected appointment before I book it."
+        assertions:
+          gemma: {slot_index: 1}
+          laya: {next_action: BOOK}
+          intent: request_booking_confirmation
+          writes: {}
+      - id: decline
+        user: {modality: text, text: "No, don't book it."}
+        assistant_example: "No problem. I have not booked that time."
+        assertions:
+          laya: {next_action: CLARIFY}
+          intent: booking_not_created
+          writes: {}
+    judge:
+      prompt: Judge the actual replies for clarity and whether they accurately describe what happened.
+      criteria:
+        - id: CAPY-BOOK-002-DECLINE
+          turn_id: decline
+          expected: The assistant acknowledges the refusal and does not claim a booking was created.
+    final_assertions:
+      writes: {}
+      existing_booking_status: scheduled
+
+  - id: changed-time-does-not-approve
+    spec_id: CAPY-BOOK-003
+    category: consent
+    language: en
+    split: test
+    group_id: changed-time-does-not-approve
+    provenance: synthetic
+    setup:
+      preset: two_massage_slots
+      verified_customer: true
+      today: "2026-10-19"
+      business_timezone: UTC
+      locale_hint: en-US
+      service_name: Massage
+    example_conversation:
+      - id: ask_for_times
+        user: {modality: text, text: "Book Massage tomorrow."}
+        assistant_example: "Here are the available times."
+        assertions:
+          gemma: {service_name: Massage, local_date: "2026-10-20"}
+          laya: {next_action: CHECK_AVAILABILITY}
+          intent: search
+          writes: {}
+      - id: choose_time
+        user: {modality: text, text: "1"}
+        assistant_example: "Please confirm the selected appointment."
+        assertions:
+          gemma: {slot_index: 1}
+          laya: {next_action: BOOK}
+          intent: request_booking_confirmation
+          writes: {}
+      - id: change_time
+        user: {modality: text, text: "Yes, but at 17:00 instead."}
+        assistant_example: "That is a different time, so I have not booked it."
+        assertions:
+          laya: {next_action: CLARIFY}
+          intent: booking_not_created
+          writes: {}
+    judge:
+      prompt: Judge whether the actual replies make the changed-time consent boundary clear.
+      criteria:
+        - id: CAPY-BOOK-003-CHANGED-TIME
+          turn_id: change_time
+          expected: The assistant does not claim to have booked either time and explains that the changed time needs a new search or confirmation.
+    final_assertions:
+      writes: {}
+
+  - id: cancel-only-after-created-booking
+    spec_id: CAPY-BOOK-004
+    category: booking-lifecycle
+    language: pt
+    split: test
+    group_id: cancel-after-created-booking
+    provenance: synthetic
+    setup:
+      preset: two_massage_slots
+      verified_customer: true
+      today: "2026-10-19"
+      business_timezone: America/Sao_Paulo
+      locale_hint: pt-BR
+      service_name: Massagem
+    example_conversation:
+      - id: ask_for_times
+        user: {modality: text, text: "Quero marcar uma massagem amanhã."}
+        assistant_example: "Aqui estão os horários disponíveis."
+        assertions:
+          gemma: {service_name: Massagem, local_date: "2026-10-20"}
+          laya: {next_action: CHECK_AVAILABILITY}
+          intent: search
+          writes: {}
+      - id: choose_time
+        user: {modality: text, text: "1"}
+        assistant_example: "Confirma o horário selecionado?"
+        assertions:
+          gemma: {slot_index: 1}
+          laya: {next_action: BOOK}
+          intent: request_booking_confirmation
+          writes: {}
+      - id: approve
+        user: {modality: text, text: "Sim, pode agendar."}
+        assistant_example: "Agendamento confirmado."
+        assertions:
+          laya: {next_action: BOOK}
+          intent: create
+          writes: {create: 1}
+      - id: cancel_created_booking
+        user: {modality: text, text: "Cancele meu agendamento."}
+        assistant_example: "Seu agendamento foi cancelado."
+        assertions:
+          laya: {next_action: CANCEL}
+          intent: cancel
+          writes: {cancel: 1}
+    judge:
+      prompt: Avalie se a conversa distingue a criação do cancelamento e se as respostas descrevem o estado real.
+      criteria:
+        - id: CAPY-BOOK-004-CANCEL
+          turn_id: cancel_created_booking
+          expected: A resposta informa que o agendamento existente foi cancelado, sem confundir isso com a autorização inicial.
+    final_assertions:
+      writes: {create: 1, cancel: 1}
+      booking:
+        status: canceled
+        matches_offer: {turn_id: ask_for_times, position: 1}
+
+  - id: audio-approval-pt
+    spec_id: CAPY-BOOK-001
+    category: audio-consent
+    language: pt
+    split: test
+    group_id: select-offered-slot
+    provenance: synthetic
+    setup:
+      preset: two_massage_slots
+      verified_customer: true
+      today: "2026-10-19"
+      business_timezone: America/Sao_Paulo
+      locale_hint: pt-BR
+      service_name: Massagem
+    example_conversation:
+      - id: ask_for_times
+        user: {modality: text, text: "Quero marcar uma massagem amanhã."}
+        assistant_example: "Aqui estão os horários disponíveis."
+        assertions:
+          gemma: {service_name: Massagem, local_date: "2026-10-20"}
+          laya: {next_action: CHECK_AVAILABILITY}
+          intent: search
+          writes: {}
+      - id: choose_time
+        user: {modality: text, text: "1"}
+        assistant_example: "Confirma o horário selecionado?"
+        assertions:
+          gemma: {slot_index: 1}
+          laya: {next_action: BOOK}
+          intent: request_booking_confirmation
+          writes: {}
+      - id: audio_approval
+        user:
+          modality: audio
+          source: synthesize
+          speech_text: "Sim, pode agendar."
+          reference_transcript: "Sim, pode agendar."
+        assistant_example: "Agendamento confirmado."
+        assertions:
+          laya: {next_action: BOOK}
+          intent: create
+          writes: {create: 1}
+    judge:
+      prompt: Avalie a resposta real em português e confirme se ela reflete o agendamento efetivamente salvo.
+      criteria:
+        - id: CAPY-BOOK-001-AUDIO-CONFIRM
+          turn_id: audio_approval
+          facts_from: saved_booking
+          expected: A resposta informa os detalhes do agendamento salvo em português.
+    final_assertions:
+      writes: {create: 1}
+      booking:
+        status: scheduled
+        matches_offer: {turn_id: ask_for_times, position: 1}

@@ -1,100 +1,148 @@
-from __future__ import annotations
+"""Health checks and durable Telegram webhook intake."""
 
+import json
+import logging
+import time
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 
-from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
+from redis import Redis
 
-from app.models import (
-    ChatRequest,
-    ChatTurnResponse,
-    DependencyUnavailableError,
-    HealthResponse,
-    NewSessionResponseData,
-    SessionNotFoundError,
-)
-from app.responses import build_chat_response, build_new_session_response, build_response_text
-from app.runtime import RuntimeContext, close_runtime, create_runtime, reset_runtime as reset_runtime_context
+from app.channels.bots import BotRegistry
+from app.channels.telegram_intake import save_update
+from app.config import Settings, load_settings
+from app.database import DATABASE_ERRORS, database_is_ready
+from app.models import HealthResponse
+from app.observability import debug_event, get_logger, log_event
+
+WEBHOOK_BODY_LIMIT = 256 * 1024
+
+
+class _SuppressHealthAccess(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        if (
+            isinstance(record.args, tuple)
+            and len(record.args) >= 3
+            and str(record.args[2]).split("?", 1)[0] == "/health"
+        ):
+            return False
+        return '"GET /health ' not in record.getMessage()
+
+
+def _silence_health_access_logs() -> None:
+    logger = logging.getLogger("uvicorn.access")
+    if not any(isinstance(item, _SuppressHealthAccess) for item in logger.filters):
+        logger.addFilter(_SuppressHealthAccess())
+
+
+_silence_health_access_logs()
+
+
+@dataclass
+class HealthDependencies:
+    settings: Settings
+    redis: Redis
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Manage the FastAPI application lifecycle.
-
-    This function is an async context manager used by FastAPI to run startup
-    and shutdown logic around the application. It creates the shared runtime
-    before the app starts serving requests and closes it when the app stops,
-    which is useful because it centralizes dependency setup and cleanup in one
-    place instead of rebuilding runtime state on every request.
-    """
-    app.state.runtime = create_runtime()
-    yield
-    close_runtime(getattr(app.state, "runtime", None))
-
-
-app = FastAPI(title="Conversational Appointment Management API", lifespan=lifespan)
-
-
-def get_runtime(request: Request) -> RuntimeContext:
-    runtime = getattr(request.app.state, "runtime", None)
-    if runtime is None:
-        runtime = create_runtime()
-        request.app.state.runtime = runtime
-    return runtime
-
-
-def reset_runtime(target_app=None, settings=None) -> RuntimeContext:
-    """Rebuild the shared application runtime.
-
-    This function replaces the current runtime stored on the FastAPI app with a
-    freshly created one, optionally using custom settings. It is useful for
-    tests and runtime reconfiguration because it gives the application a clean
-    set of dependencies without restarting the whole process.
-    """
-    if target_app is None:
-        target_app = app
-    return reset_runtime_context(target_app, settings=settings)
-
-
-@app.post("/sessions/new", response_model=NewSessionResponseData)
-def create_session(
-    runtime: RuntimeContext = Depends(get_runtime),
-) -> NewSessionResponseData:
-    runtime.session_service.cleanup_expired()
-    session = runtime.session_service.create_session()
-    response = build_new_session_response(session)
-    if response.response is not None:
-        runtime.workflow.append_assistant_message(session.thread_id, response.response)
-    return response
-
-
-@app.post("/chat", response_model=ChatTurnResponse)
-def chat(
-    request: ChatRequest,
-    runtime: RuntimeContext = Depends(get_runtime),
-) -> ChatTurnResponse:
+async def lifespan(app):
+    settings = load_settings()
+    redis_client = Redis.from_url(
+        settings.chat_redis_url, socket_connect_timeout=2, socket_timeout=2
+    )
+    app.state.health_dependencies = HealthDependencies(settings, redis_client)
+    debug_event("api.started")
     try:
-        runtime.session_service.cleanup_expired()
-        session = runtime.session_service.require_session(request.session_id)
-        state = runtime.workflow.run(session.thread_id, request.message)
-        response_text = build_response_text(state)
-        runtime.workflow.append_assistant_message(session.thread_id, response_text)
-        return build_chat_response(session.thread_id, response_text, state)
-    except SessionNotFoundError as error:
-        raise HTTPException(status_code=404, detail="Session not found. Start a new session.") from error
-    except DependencyUnavailableError as error:
-        raise HTTPException(status_code=503, detail="The appointment service is temporarily unavailable.") from error
+        yield
+    finally:
+        redis_client.close()
+
+
+app = FastAPI(title="CAPY scheduling", lifespan=lifespan)
+
+
+def get_health_dependencies(request: Request) -> HealthDependencies:
+    return request.app.state.health_dependencies
+
+
+@app.get("/live")
+def live():
+    return {"status": "ok"}
+
+
+@app.post("/telegram/{route}", status_code=204)
+async def telegram_webhook(
+    route: str,
+    request: Request,
+    dependencies: HealthDependencies = Depends(get_health_dependencies),
+):
+    """Authenticate and durably accept one Telegram update for its configured bot.
+
+    The route identifies the bot and its business. After checking Telegram's
+    webhook secret, the handler validates a size-limited JSON payload and saves
+    the update to the inbox. Returning HTTP 204 only after that save lets
+    Telegram retry when intake fails instead of losing an update.
+    """
+    started = time.monotonic()
+    database_url = dependencies.settings.database_url
+    try:
+        # Registry lookup performs synchronous database I/O, so keep it off the event loop.
+        bot = await run_in_threadpool(BotRegistry(database_url).by_route, route)
+        secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        if bot is None or not bot.accepts_webhook(secret):
+            debug_event("telegram.webhook.rejected", reason="authentication")
+            raise HTTPException(status_code=403, detail="Webhook rejected")
+
+        # Authenticate before consuming the body, and stream it to enforce the memory limit.
+        body = bytearray()
+        async for chunk in request.stream():
+            if len(body) + len(chunk) > WEBHOOK_BODY_LIMIT:
+                debug_event("telegram.webhook.rejected", reason="body_too_large")
+                raise HTTPException(status_code=413, detail="Update too large")
+            body.extend(chunk)
+        try:
+            update = json.loads(body)
+        except (ValueError, RecursionError) as exc:
+            debug_event("telegram.webhook.rejected", reason="invalid_json")
+            raise HTTPException(
+                status_code=400, detail="Invalid Telegram update"
+            ) from exc
+
+        # Save before acknowledging so Telegram can retry if durable intake fails.
+        if not isinstance(update, dict) or not await run_in_threadpool(
+            save_update, database_url, bot, update
+        ):
+            raise HTTPException(status_code=400, detail="Invalid Telegram update")
+    except DATABASE_ERRORS as exc:
+        debug_event("telegram.webhook.rejected", reason="database_unavailable")
+        raise HTTPException(status_code=503, detail="Intake unavailable") from exc
+    log_event(
+        get_logger(),
+        "telegram.webhook.accepted",
+        duration_ms=round((time.monotonic() - started) * 1000),
+    )
+    return Response(status_code=204)
 
 
 @app.get("/health", response_model=HealthResponse)
-def health() -> HealthResponse:
-    return HealthResponse(status="ok")
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    _ = request
-    _ = exc
-    return JSONResponse(status_code=422, content=jsonable_encoder({"detail": "Invalid chat request"}))
+def health(dependencies: HealthDependencies = Depends(get_health_dependencies)):
+    database_ok = database_is_ready(dependencies.settings.database_url)
+    try:
+        redis_ok = bool(dependencies.redis.ping())
+    except Exception:
+        redis_ok = False
+    response = HealthResponse(
+        status="ok" if database_ok and redis_ok else "degraded",
+        database="ok" if database_ok else "unavailable",
+        chat_history="ok" if redis_ok else "unavailable",
+    )
+    if not database_ok or not redis_ok:
+        debug_event("api.health.degraded", database_ok=database_ok, redis_ok=redis_ok)
+    return (
+        response
+        if response.status == "ok"
+        else JSONResponse(status_code=503, content=response.model_dump())
+    )

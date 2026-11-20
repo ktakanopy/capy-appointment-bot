@@ -1,0 +1,660 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="14469.400000000001" viewBox="0 0 2400 14469.400000000001">
+<rect x="0" y="0" width="2400" height="14469.400000000001" fill="#fafaf9"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#253047"/></marker></defs>
+<text x="60" y="94.0" font-family="Helvetica,Arial,sans-serif" font-size="54" font-weight="600" fill="#253047">CAPY / System design study board</text>
+<text x="60" y="151.0" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="400" fill="#253047">100,000 monthly active users | Telegram scheduling | Code review: 12 Nov 2026</text>
+<text x="60" y="202.0" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Read top to bottom. Every card, label and arrow is editable. Blue = current facts; green = keep / proposed direction; yellow = assumption / trade-off; red = risk.</text>
+<text x="60" y="230.6" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Architecture proposals are NOT implemented.</text>
+<rect x="40" y="300" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="366.0" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">01  Requirements: what are we solving?</text>
+<text x="60" y="412.0" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">Your reference layout, adapted to CAPY. Non-functional requirements describe quality and capacity, not excluded features.</text>
+<rect x="60" y="455" width="1110" height="408.4" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="501.0" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">FUNCTIONAL / what the customer can do</text>
+<text x="84" y="546.8" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Find available slots; book; look up upcoming appointments; confirm, cancel and</text>
+<text x="84" y="575.4" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">reschedule.</text>
+<text x="84" y="604.0" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="632.5999999999999" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Ask about services and prices. Receive text and voice through Telegram. Reply</text>
+<text x="84" y="661.1999999999999" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">in text and voice.</text>
+<text x="84" y="689.8" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="718.4" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Multiple businesses: each customer, catalog, schedule and booking must stay in</text>
+<text x="84" y="747.0" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">the correct tenant.</text>
+<text x="84" y="775.5999999999999" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="804.2" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Current gaps: voice replies are not implemented; FAQ answers use catalog fields</text>
+<text x="84" y="832.8" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">and fixed templates, not a general knowledge base.</text>
+<rect x="1230" y="455" width="1110" height="408.4" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="1254" y="501.0" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">QUALITY / define what success means</text>
+<text x="1254" y="546.8" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">100k monthly ACTIVE users across businesses. This is not 100k concurrent</text>
+<text x="1254" y="575.4" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">requests.</text>
+<text x="1254" y="604.0" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="632.5999999999999" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">p95 text reply &lt;= 5 seconds: webhook receipt to Telegram accepting the reply.</text>
+<text x="1254" y="661.1999999999999" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Voice must be benchmarked by recording duration.</text>
+<text x="1254" y="689.8" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="718.4" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">99.9% daily availability: time-based equivalent is 86.4 seconds unavailable per</text>
+<text x="1254" y="747.0" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">day. A monthly window is different.</text>
+<text x="1254" y="775.5999999999999" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="804.2" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Track failed scheduling journeys, not just HTTP 200 acknowledgments. An error</text>
+<text x="1254" y="832.8" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">reply is not a successful booking.</text>
+<rect x="40" y="933.4" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="999.4" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">02  Capacity: why 11 workers is only an example</text>
+<text x="60" y="1045.4" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">Start with demand and processing time. Monthly users alone cannot determine replica count.</text>
+<rect x="60" y="1088.4" width="980.4" height="55.3" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="1123.4" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Assumption / calculation</text>
+<rect x="1040.4" y="1088.4" width="524.4" height="55.3" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1056.4" y="1123.4" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Result</text>
+<rect x="1564.8000000000002" y="1088.4" width="775.2" height="55.3" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1580.8000000000002" y="1123.4" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Why it matters</text>
+<rect x="60" y="1143.7" width="980.4" height="55.3" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="1178.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">100,000 users x 3 conversations x 8 incoming turns</text>
+<rect x="1040.4" y="1143.7" width="524.4" height="55.3" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1056.4" y="1178.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">2.4 million turns/month</text>
+<rect x="1564.8000000000002" y="1143.7" width="775.2" height="55.3" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1580.8000000000002" y="1178.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Planning assumptions; replace with observed traffic.</text>
+<rect x="60" y="1199.0" width="980.4" height="55.3" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="1234.0" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">2.4M / (30 x 24 x 3,600)</text>
+<rect x="1040.4" y="1199.0" width="524.4" height="55.3" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1056.4" y="1234.0" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">0.93 turns/second average</text>
+<rect x="1564.8000000000002" y="1199.0" width="775.2" height="55.3" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1580.8000000000002" y="1234.0" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Daily peaks can be much higher than the average.</text>
+<rect x="60" y="1254.3" width="980.4" height="55.3" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="1289.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Chosen initial peak / stress scenario</text>
+<rect x="1040.4" y="1254.3" width="524.4" height="55.3" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1056.4" y="1289.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">20 / 100 turns per second</text>
+<rect x="1564.8000000000002" y="1254.3" width="775.2" height="55.3" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1580.8000000000002" y="1289.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Neither is a measured production requirement.</text>
+<rect x="60" y="1309.6" width="980.4" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="1344.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Little&#x27;s Law: L = arrival rate x mean time</text>
+<rect x="1040.4" y="1309.6" width="524.4" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1056.4" y="1344.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">20/s x 3s = 60 in progress</text>
+<rect x="1564.8000000000002" y="1309.6" width="775.2" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1580.8000000000002" y="1344.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Processing-only time counts active work. Total elapsed</text>
+<text x="1580.8000000000002" y="1371.8999999999999" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">time includes the queue.</text>
+<rect x="60" y="1392.1999999999998" width="980.4" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="1427.1999999999998" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">8 safe slots/worker x 70% target occupancy</text>
+<rect x="1040.4" y="1392.1999999999998" width="524.4" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1056.4" y="1427.1999999999998" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">5.6 effective slots/worker</text>
+<rect x="1564.8000000000002" y="1392.1999999999998" width="775.2" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1580.8000000000002" y="1427.1999999999998" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">70% is a planning target for concurrency, not necessarily</text>
+<text x="1580.8000000000002" y="1454.4999999999998" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">CPU.</text>
+<rect x="60" y="1474.7999999999997" width="980.4" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="1509.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">ceil(60 / 5.6)</text>
+<rect x="1040.4" y="1474.7999999999997" width="524.4" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1056.4" y="1509.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">11 workers</text>
+<rect x="1564.8000000000002" y="1474.7999999999997" width="775.2" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1580.8000000000002" y="1509.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Requires 8-way concurrency and 3s service time to be</text>
+<text x="1580.8000000000002" y="1537.0999999999997" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">proven.</text>
+<rect x="60" y="1557.3999999999996" width="980.4" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="1592.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">10% audio x 2.4M x 15 seconds</text>
+<rect x="1040.4" y="1557.3999999999996" width="524.4" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1056.4" y="1592.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">1,000 input-audio hours/month</text>
+<rect x="1564.8000000000002" y="1557.3999999999996" width="775.2" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1580.8000000000002" y="1592.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Audio duration, tokens and GPU capacity drive inference</text>
+<text x="1580.8000000000002" y="1619.6999999999996" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">cost.</text>
+<rect x="60" y="1664.9999999999995" width="2280" height="151.0" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="1710.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">WHY HEADROOM?</text>
+<text x="84" y="1756.7999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">A cafe receiving 2 customers/minute, each staying 10 minutes, has about 20 customers inside on average. CAPY is the same queueing idea. Averages do not describe</text>
+<text x="84" y="1785.3999999999994" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">bursts or p95 latency. Keep warm spare capacity; autoscaling reacts after demand changes.</text>
+<rect x="40" y="1884.9999999999995" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="1950.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">03  Architecture: current implementation vs proposed scaling</text>
+<text x="60" y="1996.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">Keep one application codebase. Separate process roles only where they need different concurrency, resources or failure handling.</text>
+<rect x="60" y="2039.9999999999995" width="700" height="510" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="2085.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">CURRENT: one Telegram worker</text>
+<text x="84" y="2131.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Poll Telegram -&gt; persist update -&gt; process graph</text>
+<text x="84" y="2160.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">-&gt; save reply -&gt; send reply.</text>
+<text x="84" y="2188.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="2217.6" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">One advisory lock per bot. Turns run</text>
+<text x="84" y="2246.2" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">sequentially. Audio, model calls and delivery</text>
+<text x="84" y="2274.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">share the loop.</text>
+<text x="84" y="2303.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="2331.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">app/main.py serves health only. More API</text>
+<text x="84" y="2360.6" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">replicas do not increase conversation</text>
+<text x="84" y="2389.2" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">throughput.</text>
+<text x="84" y="2417.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="2446.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Good MVP property: simple ownership and</text>
+<text x="84" y="2474.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">conservative crash behavior.</text>
+<rect x="60" y="2589.9999999999995" width="700" height="294.0" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="2635.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">WHY split ingress and processing?</text>
+<text x="84" y="2681.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">A webhook should acknowledge after durable</text>
+<text x="84" y="2710.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">storage, not wait for inference. Workers can</text>
+<text x="84" y="2738.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">then process many independent conversations.</text>
+<text x="84" y="2767.6" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="2796.2" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Do not remove the single-worker lock until</text>
+<text x="84" y="2824.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">conversation serialization, safe claims and</text>
+<text x="84" y="2853.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">recovery exist.</text>
+<rect x="850" y="2039.9999999999995" width="650" height="130" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="874" y="2085.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">Telegram</text>
+<text x="874" y="2131.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Input: text or voice</text>
+<rect x="850" y="2269.9999999999995" width="650" height="130" rx="5" fill="#dcfce7" stroke="#253047" stroke-width="1.5"/>
+<text x="874" y="2315.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">Load balancer + webhook API</text>
+<text x="874" y="2361.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Verify identity; insert update; acknowledge.</text>
+<rect x="1630" y="2269.9999999999995" width="650" height="130" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1654" y="2315.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">PostgreSQL inbox</text>
+<text x="1654" y="2361.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Existing telegram_updates can be extended.</text>
+<rect x="1630" y="2529.9999999999995" width="650" height="151.0" rx="5" fill="#dcfce7" stroke="#253047" stroke-width="1.5"/>
+<text x="1654" y="2575.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">Conversation workers</text>
+<text x="1654" y="2621.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">One active turn per conversation; many users</text>
+<text x="1654" y="2650.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">in parallel.</text>
+<rect x="850" y="2529.9999999999995" width="650" height="151.0" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="874" y="2575.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">Gemma + Laya endpoints</text>
+<text x="874" y="2621.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Independent inference capacity; Python</text>
+<text x="874" y="2650.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">decides whether writes are allowed.</text>
+<rect x="850" y="2809.9999999999995" width="650" height="151.0" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="874" y="2855.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">Redis checkpoints</text>
+<text x="874" y="2901.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Draft and offered slots; expiring, not</text>
+<text x="874" y="2930.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">booking truth.</text>
+<rect x="1630" y="2809.9999999999995" width="650" height="151.0" rx="5" fill="#dcfce7" stroke="#253047" stroke-width="1.5"/>
+<text x="1654" y="2855.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">PostgreSQL + reply delivery</text>
+<text x="1654" y="2901.7999999999997" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Domain transactions -&gt; saved reply -&gt;</text>
+<text x="1654" y="2930.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">rate-limited sender.</text>
+<polyline points="1175,2189.9999999999995 1175,2269.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<polyline points="1500,2344.9999999999995 1630,2344.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<polyline points="1955,2444.9999999999995 1955,2529.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<polyline points="1630,2609.9999999999995 1500,2609.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<polyline points="1955,2729.9999999999995 1955,2809.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<polyline points="1630,2689.9999999999995 1565,2689.9999999999995 1565,2894.9999999999995 1500,2894.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="850" y="3076.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Arrows show the main work path. PostgreSQL is ONE database; Python domain services run inside workers.</text>
+<text x="850" y="3105.5999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Senders return replies to Telegram. Audio preparation and reminders use separate bounded work pools.</text>
+<rect x="40" y="3229.9999999999995" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="3295.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">04  Sequence: booking, retries and the crash window</text>
+<text x="60" y="3341.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">A durable inbox prevents lost accepted messages. Idempotent writes prevent repeated business effects. Neither guarantees exactly-once Telegram delivery.</text>
+<rect x="75" y="3384.9999999999995" width="310" height="65" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="90" y="3421.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Telegram</text>
+<polyline points="230,3459.9999999999995 230,4140.0" fill="none" stroke="#253047" stroke-width="2" stroke-dasharray="8 6" />
+<rect x="515" y="3384.9999999999995" width="310" height="65" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="530" y="3421.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Webhook API</text>
+<polyline points="670,3459.9999999999995 670,4140.0" fill="none" stroke="#253047" stroke-width="2" stroke-dasharray="8 6" />
+<rect x="955" y="3384.9999999999995" width="310" height="65" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="970" y="3421.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Worker + models</text>
+<polyline points="1110,3459.9999999999995 1110,4140.0" fill="none" stroke="#253047" stroke-width="2" stroke-dasharray="8 6" />
+<rect x="1395" y="3384.9999999999995" width="310" height="65" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1410" y="3421.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">PostgreSQL</text>
+<polyline points="1550,3459.9999999999995 1550,4140.0" fill="none" stroke="#253047" stroke-width="2" stroke-dasharray="8 6" />
+<rect x="1835" y="3384.9999999999995" width="310" height="65" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1850" y="3421.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Reply sender</text>
+<polyline points="1990,3459.9999999999995 1990,4140.0" fill="none" stroke="#253047" stroke-width="2" stroke-dasharray="8 6" />
+<polyline points="230,3509.9999999999995 670,3509.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="245" y="3499.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">1. POST update</text>
+<polyline points="670,3589.9999999999995 1550,3589.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="685" y="3579.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">2. Insert inbox; unique bot + update</text>
+<polyline points="670,3669.9999999999995 230,3669.9999999999995" fill="none" stroke="#253047" stroke-width="2" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+<text x="245" y="3659.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">3. ACK only after commit</text>
+<polyline points="1110,3749.9999999999995 1550,3749.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="1125" y="3739.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">4. Claim conversation + oldest update</text>
+<polyline points="1110,3829.9999999999995 1550,3829.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="1125" y="3819.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">5. After Gemma/Laya: validate +</text>
+<text x="1125" y="3843.3999999999996" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">commit booking</text>
+<polyline points="1110,3909.9999999999995 1550,3909.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="1125" y="3899.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">6. Save final reply; finish update</text>
+<polyline points="1990,3989.9999999999995 1550,3989.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="1565" y="3979.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">7. Claim saved reply</text>
+<polyline points="1990,4069.9999999999995 230,4069.9999999999995" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="245" y="4059.9999999999995" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">8. Send response; record accepted delivery</text>
+<rect x="60" y="4190.0" width="1110" height="265.40000000000055" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="4236.0" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">CRASH AFTER BOOKING, BEFORE REPLY</text>
+<text x="84" y="4281.8" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Current: recover_interrupted() sends a check-your-appointments message instead</text>
+<text x="84" y="4310.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">of replaying the graph. Safe, but less convenient.</text>
+<text x="84" y="4339.0" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="4367.6" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Proposed: save an immutable command; commit its outcome with the booking;</text>
+<text x="84" y="4396.2" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">reconstruct the reply from that outcome. Never reinterpret a possibly committed</text>
+<text x="84" y="4424.8" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">turn as a different action.</text>
+<rect x="1230" y="4190.0" width="1110" height="265.40000000000055" rx="5" fill="#dcfce7" stroke="#253047" stroke-width="1.5"/>
+<text x="1254" y="4236.0" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">WHY THE SAME USER MUST BE SERIALIZED</text>
+<text x="1254" y="4281.8" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Message A: show tomorrow&#x27;s slots. Message B: choose option 1. If B runs before</text>
+<text x="1254" y="4310.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">A finishes, it may read an old offer.</text>
+<text x="1254" y="4339.0" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="4367.6" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Serialize by business + bot + user. Preserve order for one conversation, not</text>
+<text x="1254" y="4396.2" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">globally for the entire bot. Handle late arrivals explicitly; per-user locking</text>
+<text x="1254" y="4424.8" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">alone does not reorder webhooks.</text>
+<rect x="40" y="4525.400000000001" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="4591.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">05  Database relationships: read the business model first</text>
+<text x="60" y="4637.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">15 application tables after migrations 0001-0003; excludes Alembic version metadata. PK = primary key; FK = foreign key; 1:N = one-to-many.</text>
+<text x="60" y="4708.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="28" font-weight="600" fill="#253047">A. Catalog, professionals and scheduling</text>
+<rect x="350" y="4760.400000000001" width="390" height="90" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="368" y="4807.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">businesses</text>
+<rect x="80" y="4970.400000000001" width="390" height="90" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="98" y="5017.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">professionals</text>
+<rect x="780" y="4970.400000000001" width="390" height="90" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="798" y="5017.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">services</text>
+<rect x="350" y="5190.400000000001" width="390" height="90" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="368" y="5237.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">professional_services</text>
+<polyline points="460,4850.400000000001 275,4970.400000000001" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="285" y="4834.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">1:N</text>
+<polyline points="660,4850.400000000001 975,4970.400000000001" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="670" y="4834.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">1:N</text>
+<polyline points="275,5060.400000000001 450,5190.400000000001" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="285" y="5044.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">1:N</text>
+<polyline points="975,5060.400000000001 650,5190.400000000001" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="660" y="5044.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">1:N</text>
+<rect x="60" y="5350.400000000001" width="1110" height="265.40000000000055" rx="5" fill="#dcfce7" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="5396.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">WHY a join table?</text>
+<text x="84" y="5442.200000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">One professional can offer several services. One service can be offered by</text>
+<text x="84" y="5470.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">several professionals. professional_services models this many-to-many</text>
+<text x="84" y="5499.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">relationship without copying names or prices.</text>
+<text x="84" y="5528.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="5556.6" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Professionals also have 1:N weekly_availability_rules and 1:N blocked_periods:</text>
+<text x="84" y="5585.200000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">recurring opening hours and dated exceptions are different concepts.</text>
+<text x="1230" y="4708.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="28" font-weight="600" fill="#253047">B. Booking and delivery</text>
+<rect x="1230" y="4760.400000000001" width="460" height="90" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1248" y="4807.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">customers</text>
+<rect x="1820" y="4760.400000000001" width="460" height="90" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1838" y="4807.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">bookings</text>
+<rect x="1820" y="5010.400000000001" width="460" height="90" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1838" y="5057.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">reminders</text>
+<rect x="1820" y="5250.400000000001" width="460" height="90" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1838" y="5297.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">reminder_inbox</text>
+<rect x="1230" y="5010.400000000001" width="460" height="90" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1248" y="5057.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">telegram_identities</text>
+<polyline points="1690,4805.400000000001 1820,4805.400000000001" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="1700" y="4789.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">1:N</text>
+<polyline points="2050,4850.400000000001 2050,5010.400000000001" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="2060" y="4834.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">1:N</text>
+<polyline points="2050,5100.400000000001 2050,5250.400000000001" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="2060" y="5084.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">1:0..1</text>
+<polyline points="1460,4850.400000000001 1460,5010.400000000001" fill="none" stroke="#253047" stroke-width="2"  marker-end="url(#arrow)"/>
+<text x="1470" y="4834.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="18" font-weight="400" fill="#253047">1:N*</text>
+<rect x="1230" y="5405.400000000001" width="1110" height="294.0" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="1254" y="5451.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">MORE EDGES / important qualifications</text>
+<text x="1254" y="5497.200000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Each booking references one business, service, professional and customer.</text>
+<text x="1254" y="5525.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="5554.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">*Each identity links to 0..1 customer. The unique index permits at most one</text>
+<text x="1254" y="5583.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">identity per business + bot + customer; a customer can link across bots.</text>
+<text x="1254" y="5611.6" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="5640.200000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">reminder_inbox is a demo sink. idempotency_records.resource_id is a logical</text>
+<text x="1254" y="5668.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">booking link, NOT a declared FK.</text>
+<rect x="40" y="5830.400000000001" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="5896.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">06  Table dictionary: what each table stores and why</text>
+<text x="60" y="5942.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">Current columns after migration 0003. Lists group fields for readability. Every business_id below is an FK to businesses. Decision cards are recommendations, not applied</text>
+<text x="60" y="5971.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">migrations.</text>
+<rect x="60" y="5985.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="80" y="6028.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">businesses</text>
+<text x="80" y="6071.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / tenant root</text>
+<text x="80" y="6121.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK id (text)</text>
+<text x="80" y="6148.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">name, category, timezone</text>
+<text x="80" y="6176.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">minimum_notice_minutes</text>
+<text x="80" y="6203.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">booking_horizon_days</text>
+<text x="80" y="6230.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">reminder_lead_minutes</text>
+<text x="80" y="6257.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">created_at</text>
+<text x="80" y="6371.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Tenant policies and local-time rules. One</text>
+<text x="80" y="6398.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">business has many services, professionals, customers</text>
+<text x="80" y="6426.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">and bookings.</text>
+<rect x="830" y="5985.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="850" y="6028.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">professionals</text>
+<text x="850" y="6071.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / bookable person</text>
+<text x="850" y="6121.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK id; FK business_id</text>
+<text x="850" y="6148.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">name; active</text>
+<text x="850" y="6176.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">UNIQUE(id, business_id)</text>
+<text x="850" y="6371.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Separate people because conflicts belong to a</text>
+<text x="850" y="6398.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">resource. Two professionals can work at the same time.</text>
+<rect x="1600" y="5985.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1620" y="6028.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">services</text>
+<text x="1620" y="6071.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / catalog</text>
+<text x="1620" y="6121.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK id; FK business_id</text>
+<text x="1620" y="6148.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">name; description; active</text>
+<text x="1620" y="6176.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">duration_minutes</text>
+<text x="1620" y="6203.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">buffer_before/after_minutes</text>
+<text x="1620" y="6230.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">price_minor; currency</text>
+<text x="1620" y="6257.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">UNIQUE(id, business_id)</text>
+<text x="1620" y="6371.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / One price/duration definition reused by many</text>
+<text x="1620" y="6398.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">bookings. Store money in minor units, not floats.</text>
+<rect x="60" y="6615.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="80" y="6658.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">professional_services</text>
+<text x="80" y="6701.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / many-to-many</text>
+<text x="80" y="6751.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK(professional_id, service_id)</text>
+<text x="80" y="6778.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">FK business_id</text>
+<text x="80" y="6806.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">FK professional_id</text>
+<text x="80" y="6833.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">FK service_id</text>
+<text x="80" y="7001.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Records which professional can perform which</text>
+<text x="80" y="7028.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">service. Independent FKs do not enforce matching</text>
+<text x="80" y="7056.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">tenants.</text>
+<rect x="830" y="6615.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="850" y="6658.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">weekly_availability_rules</text>
+<text x="850" y="6701.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / recurring hours</text>
+<text x="850" y="6751.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK id; FK business_id</text>
+<text x="850" y="6778.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">FK professional_id</text>
+<text x="850" y="6806.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">weekday (0..6)</text>
+<text x="850" y="6833.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">opens_at; closes_at</text>
+<text x="850" y="6860.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">CHECK closes_at &gt; opens_at</text>
+<text x="850" y="7001.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / One row per weekly interval. Multiple rows</text>
+<text x="850" y="7028.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">support a lunch break. Not precomputed appointment</text>
+<text x="850" y="7056.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">slots.</text>
+<rect x="1600" y="6615.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1620" y="6658.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">blocked_periods</text>
+<text x="1620" y="6701.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / dated exceptions</text>
+<text x="1620" y="6751.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK id; FK business_id</text>
+<text x="1620" y="6778.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">FK professional_id</text>
+<text x="1620" y="6806.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">starts_at; ends_at; reason</text>
+<text x="1620" y="6833.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">CHECK ends_at &gt; starts_at</text>
+<text x="1620" y="6860.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">GiST professional/range index</text>
+<text x="1620" y="7001.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Vacation or a one-off closure. Keep distinct</text>
+<text x="1620" y="7028.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">from repeating weekly hours; they have different</text>
+<text x="1620" y="7056.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">validation.</text>
+<rect x="60" y="7245.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="80" y="7288.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">customers</text>
+<text x="80" y="7331.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / domain identity</text>
+<text x="80" y="7381.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK id; FK business_id</text>
+<text x="80" y="7408.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">full_name; phone?; email?</text>
+<text x="80" y="7436.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">created_at</text>
+<text x="80" y="7463.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Phone is nullable and NOT unique</text>
+<text x="80" y="7631.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Booking ownership must survive contact changes.</text>
+<text x="80" y="7658.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Migration 0003 removed phone-based uniqueness.</text>
+<rect x="830" y="7245.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="850" y="7288.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">bookings</text>
+<text x="850" y="7331.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / business truth</text>
+<text x="850" y="7381.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK id; FK business_id</text>
+<text x="850" y="7408.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">FK service_id; professional_id</text>
+<text x="850" y="7436.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">FK customer_id</text>
+<text x="850" y="7463.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">starts_at; ends_at</text>
+<text x="850" y="7490.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">occupied_from; occupied_until</text>
+<text x="850" y="7517.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">status; created_at; updated_at</text>
+<text x="850" y="7631.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Occupied range includes buffers. GiST exclusion</text>
+<text x="850" y="7658.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">prevents overlapping active bookings. Token fields</text>
+<text x="850" y="7686.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">were removed in 0003.</text>
+<rect x="1600" y="7245.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1620" y="7288.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">reminders</text>
+<text x="1620" y="7331.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP if reminders in scope</text>
+<text x="1620" y="7381.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK id; FK business_id</text>
+<text x="1620" y="7408.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">FK booking_id</text>
+<text x="1620" y="7436.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">send_at; status; attempts</text>
+<text x="1620" y="7463.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">claimed_at?; delivered_at?</text>
+<text x="1620" y="7490.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">last_error?; created_at</text>
+<text x="1620" y="7631.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Durable scheduled work with retries. Partial</text>
+<text x="1620" y="7658.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">unique index: at most one pending reminder per</text>
+<text x="1620" y="7686.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">booking.</text>
+<rect x="60" y="7875.400000000001" width="740" height="590" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="80" y="7918.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">reminder_inbox</text>
+<text x="80" y="7961.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">DEMO ONLY / replace later</text>
+<text x="80" y="8011.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK id; FK business_id</text>
+<text x="80" y="8038.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">FK booking_id</text>
+<text x="80" y="8066.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">UNIQUE FK reminder_id</text>
+<text x="80" y="8093.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">message; delivered_at</text>
+<text x="80" y="8261.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Records simulated delivery for local CLI/tests.</text>
+<text x="80" y="8288.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Replace with real transport delivery; do not delete</text>
+<text x="80" y="8316.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">before migrating callers.</text>
+<rect x="830" y="7875.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="850" y="7918.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">idempotency_records</text>
+<text x="850" y="7961.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / retry safety</text>
+<text x="850" y="8011.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK(business_id, operation,</text>
+<text x="850" y="8038.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">   idempotency_key)</text>
+<text x="850" y="8066.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">request_hash; resource_id</text>
+<text x="850" y="8093.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">result_code; created_at</text>
+<text x="850" y="8261.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Same command must not repeat a mutation.</text>
+<text x="850" y="8288.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Different payload with the same key is rejected. No</text>
+<text x="850" y="8316.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">resource_id FK today.</text>
+<rect x="1600" y="7875.400000000001" width="740" height="590" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="1620" y="7918.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">audit_events</text>
+<text x="1620" y="7961.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">REMOVE or implement</text>
+<text x="1620" y="8011.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK id; FK business_id</text>
+<text x="1620" y="8038.700000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">nullable FK booking_id</text>
+<text x="1620" y="8066.000000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">action; metadata JSONB</text>
+<text x="1620" y="8093.3" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">occurred_at</text>
+<text x="1620" y="8261.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / No application reader/writer found in this</text>
+<text x="1620" y="8288.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">review. Empty infrastructure provides no audit trail.</text>
+<text x="1620" y="8316.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Check external usage/data first.</text>
+<rect x="60" y="8505.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="80" y="8548.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">telegram_identities</text>
+<text x="80" y="8591.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / channel ownership</text>
+<text x="80" y="8641.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK(business_id, bot_id,</text>
+<text x="80" y="8668.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">   telegram_user_id)</text>
+<text x="80" y="8696.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">username; customer_id? FK</text>
+<text x="80" y="8723.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">contact_phone?; display_name?</text>
+<text x="80" y="8750.600000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">created_at; updated_at</text>
+<text x="80" y="8891.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Maps authenticated Telegram identity to a</text>
+<text x="80" y="8918.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">customer. A shared phone never grants account access.</text>
+<rect x="830" y="8505.400000000001" width="740" height="590" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="850" y="8548.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">telegram_updates</text>
+<text x="850" y="8591.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP / inbox + saved reply</text>
+<text x="850" y="8641.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK(bot_id, update_id)</text>
+<text x="850" y="8668.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">FK business_id; chat_id?</text>
+<text x="850" y="8696.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">telegram_user_id?; status</text>
+<text x="850" y="8723.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">payload?; reply_text?; reply_markup?</text>
+<text x="850" y="8750.600000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">attempts; next_attempt_at</text>
+<text x="850" y="8777.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">last_error?; received_at; expires_at</text>
+<text x="850" y="8891.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Durable deduplication, work state and reply</text>
+<text x="850" y="8918.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">retries already live together. No FK to</text>
+<text x="850" y="8946.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">telegram_identities; IDs also record ignored updates.</text>
+<rect x="1600" y="8505.400000000001" width="740" height="590" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="1620" y="8548.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="25" font-weight="600" fill="#253047">telegram_poll_offsets</text>
+<text x="1620" y="8591.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="400" fill="#166534">KEEP now; drop after cutover</text>
+<text x="1620" y="8641.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PK bot_id</text>
+<text x="1620" y="8668.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">next_update_id</text>
+<text x="1620" y="8696.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">updated_at</text>
+<text x="1620" y="8723.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">No bot registry FK today</text>
+<text x="1620" y="8891.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">WHY / Stores the polling cursor. Webhooks remove its</text>
+<text x="1620" y="8918.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">runtime purpose, but only after polling is fully</text>
+<text x="1620" y="8946.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">retired.</text>
+<rect x="40" y="9155.400000000001" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="9221.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">07  Do we need all these tables?</text>
+<text x="60" y="9267.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">My assessment: mostly sensible normalization, with a few removable pieces. Table count is not a useful proxy for operational complexity.</text>
+<rect x="60" y="9310.400000000001" width="547.1999999999999" height="55.3" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="9345.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Decision</text>
+<rect x="607.1999999999999" y="9310.400000000001" width="934.8" height="55.3" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="623.1999999999999" y="9345.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Reason / trade-off</text>
+<rect x="1542.0" y="9310.400000000001" width="798.0" height="55.3" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1558.0" y="9345.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Condition before changing</text>
+<rect x="60" y="9365.7" width="547.1999999999999" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="9400.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Keep the 8 domain tables</text>
+<rect x="607.1999999999999" y="9365.7" width="934.8" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="623.1999999999999" y="9400.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Businesses, professionals, services, assignments, weekly hours,</text>
+<text x="623.1999999999999" y="9428.0" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">blocks, customers, bookings model separate facts.</text>
+<rect x="1542.0" y="9365.7" width="798.0" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1558.0" y="9400.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Merge only if the product permanently drops that concept.</text>
+<rect x="60" y="9448.300000000001" width="547.1999999999999" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="9483.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Keep idempotency + updates</text>
+<rect x="607.1999999999999" y="9448.300000000001" width="934.8" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="623.1999999999999" y="9483.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Update deduplication protects transport; command idempotency protects</text>
+<text x="623.1999999999999" y="9510.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">business mutations. They have different keys and lifecycles.</text>
+<rect x="1542.0" y="9448.300000000001" width="798.0" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1558.0" y="9483.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Do not remove one just because both mention duplicates.</text>
+<rect x="60" y="9530.900000000001" width="547.1999999999999" height="109.9" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="9565.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Keep identities separate by default</text>
+<rect x="607.1999999999999" y="9530.900000000001" width="934.8" height="109.9" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="623.1999999999999" y="9565.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Makes channel ownership independent of customer contact information.</text>
+<rect x="1542.0" y="9530.900000000001" width="798.0" height="109.9" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1558.0" y="9565.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Merging saves one table only if one bot/account per</text>
+<text x="1558.0" y="9593.2" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">customer is a permanent constraint and legacy links are</text>
+<text x="1558.0" y="9620.500000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">migrated.</text>
+<rect x="60" y="9640.800000000001" width="547.1999999999999" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="9675.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Remove or implement audit_events</text>
+<rect x="607.1999999999999" y="9640.800000000001" width="934.8" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="623.1999999999999" y="9675.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Only schema references found; currently no working audit feature.</text>
+<rect x="1542.0" y="9640.800000000001" width="798.0" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1558.0" y="9675.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Check real data and external consumers. Use a new forward</text>
+<text x="1558.0" y="9703.1" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">migration.</text>
+<rect x="60" y="9723.400000000001" width="547.1999999999999" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="9758.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Replace demo reminder_inbox</text>
+<rect x="607.1999999999999" y="9723.400000000001" width="934.8" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="623.1999999999999" y="9758.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Production delivery needs a transport outbox, not a fake inbox.</text>
+<rect x="1542.0" y="9723.400000000001" width="798.0" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1558.0" y="9758.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Migrate CLI/tests and delivery. May replace one table with</text>
+<text x="1558.0" y="9785.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">one table.</text>
+<rect x="60" y="9806.000000000002" width="547.1999999999999" height="55.3" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="9841.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Retire telegram_poll_offsets</text>
+<rect x="607.1999999999999" y="9806.000000000002" width="934.8" height="55.3" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="623.1999999999999" y="9841.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Webhook ingestion does not need a long-poll cursor.</text>
+<rect x="1542.0" y="9806.000000000002" width="798.0" height="55.3" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1558.0" y="9841.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">After webhook cutover and rollback window.</text>
+<rect x="60" y="9861.300000000001" width="547.1999999999999" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="9896.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Do not split every concept into a</text>
+<text x="76" y="9923.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">service</text>
+<rect x="607.1999999999999" y="9861.300000000001" width="934.8" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="623.1999999999999" y="9896.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">One repository with API/worker/sender roles is enough initially.</text>
+<rect x="1542.0" y="9861.300000000001" width="798.0" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1558.0" y="9896.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Split further for measured resource or ownership needs.</text>
+<rect x="60" y="9968.900000000001" width="2280" height="151.0" rx="5" fill="#dcfce7" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="10014.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">COUNT THE TRADE-OFF HONESTLY</text>
+<text x="84" y="10060.7" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Removing unused audit_events and, after webhook cutover, polling offsets takes 15 tables to 13. Replacing reminder_inbox with a real outbox keeps the count at 13. New</text>
+<text x="84" y="10089.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">durable leases, commands or tenant configuration may add tables again. Optimize responsibilities and correctness, not an arbitrary table target.</text>
+<rect x="40" y="10198.900000000001" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="10264.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">08  Static code review: problems and evidence</text>
+<text x="60" y="10310.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">These are source-level findings. Performance risks are not benchmark results; a database constraint gap is not proof of an exploitable customer endpoint.</text>
+<rect x="60" y="10353.900000000001" width="1110" height="355" rx="5" fill="#fee2e2" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="10399.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">HIGH / before horizontal workers / One worker per bot + sequential</text>
+<text x="84" y="10433.7" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">turns</text>
+<text x="84" y="10479.500000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">app/telegram_worker.py: run(), _process_pending_updates();</text>
+<text x="84" y="10508.100000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">telegram_repository.py: acquire_worker_lock().</text>
+<text x="84" y="10536.700000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="10565.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Adding replicas fails the bot lock; slow audio/model work delays everyone.</text>
+<text x="84" y="10593.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Split roles and serialize only per conversation.</text>
+<rect x="1230" y="10353.900000000001" width="1110" height="355" rx="5" fill="#fee2e2" stroke="#253047" stroke-width="1.5"/>
+<text x="1254" y="10399.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">HIGH / before concurrent delivery / Global reply head-of-line</text>
+<text x="1254" y="10433.7" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">blocking</text>
+<text x="1254" y="10479.500000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">app/channels/telegram_repository.py: ready_replies().</text>
+<text x="1254" y="10508.100000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="10536.700000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">The oldest reply across the bot blocks newer replies, including other chats.</text>
+<text x="1254" y="10565.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Use per-chat ordering plus safe sender claims.</text>
+<rect x="60" y="10743.900000000001" width="1110" height="355" rx="5" fill="#fee2e2" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="10789.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">HIGH / integrity hardening / Tenant consistency is not enforced by</text>
+<text x="84" y="10823.7" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">composite FKs</text>
+<text x="84" y="10869.500000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">alembic/versions/0001_general_scheduling.py; 0002_telegram_channel.py.</text>
+<text x="84" y="10898.100000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="10926.700000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">A booking can reference business A and a customer from B at the schema level.</text>
+<text x="84" y="10955.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Add composite tenant FKs after cleaning data; retain application ownership</text>
+<text x="84" y="10983.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">checks.</text>
+<rect x="1230" y="10743.900000000001" width="1110" height="355" rx="5" fill="#fee2e2" stroke="#253047" stroke-width="1.5"/>
+<text x="1254" y="10789.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">HIGH / before concurrent recovery / Recovery and checkpoints</text>
+<text x="1254" y="10823.7" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">assume a single owner</text>
+<text x="1254" y="10869.500000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">telegram_repository.py: recover_interrupted(); graph/redis_checkpoint.py:</text>
+<text x="1254" y="10898.100000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">put(), put_writes().</text>
+<text x="1254" y="10926.700000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="10955.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Recovery sweeps every processing update for the bot. Redis read-modify-write is</text>
+<text x="1254" y="10983.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">not fenced. Add per-conversation leases, expiry and stale-owner rejection.</text>
+<rect x="60" y="11133.900000000001" width="1110" height="355" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="11179.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">MEDIUM / measure hot tenants / Business-wide write lock</text>
+<text x="84" y="11225.7" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">app/booking.py: _lock_business_and_check_retry().</text>
+<text x="84" y="11254.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="11282.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">All booking writes for one business serialize. Deliberate MVP trade-off;</text>
+<text x="84" y="11311.5" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">measure lock wait before narrowing locks. Keep exclusion constraints.</text>
+<rect x="1230" y="11133.900000000001" width="1110" height="355" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="1254" y="11179.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">MEDIUM / database efficiency / Connection churn and</text>
+<text x="1254" y="11213.7" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">per-professional queries</text>
+<text x="1254" y="11259.500000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">app/database.py: connect(); app/repositories.py: scheduling_data().</text>
+<text x="1254" y="11288.100000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="11316.700000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">New DB connections per operation; approximately 3 + 3P queries inside</text>
+<text x="1254" y="11345.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">scheduling_data for P professionals. Add bounded pooling; batch queries if</text>
+<text x="1254" y="11373.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">profiling justifies it.</text>
+<rect x="60" y="11523.900000000001" width="1110" height="355" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="11569.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">MEDIUM / retention semantics / delete_thread removes only latest</text>
+<text x="84" y="11603.7" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">default-namespace state</text>
+<text x="84" y="11649.500000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">app/graph/redis_checkpoint.py: delete_thread().</text>
+<text x="84" y="11678.100000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="11706.700000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Earlier checkpoint/write keys and other namespaces remain until TTL. Fine for</text>
+<text x="84" y="11735.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">eventual expiry, insufficient if full immediate deletion is promised.</text>
+<rect x="1230" y="11523.900000000001" width="1110" height="355" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="1254" y="11569.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">MEDIUM / deploy safety / Migrations and demo seeding on API</text>
+<text x="1254" y="11603.7" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">startup</text>
+<text x="1254" y="11649.500000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">docker-compose.yml: api.command.</text>
+<text x="1254" y="11678.100000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="11706.700000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Fine for local Compose. Do not copy unchanged into multiple production</text>
+<text x="1254" y="11735.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">replicas; use a one-time release migration job.</text>
+<rect x="40" y="11948.900000000001" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="12014.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">09  Why constraints matter: prevent invalid state at the boundary</text>
+<text x="60" y="12060.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">Application authorization answers who may act. Database constraints answer what rows are valid. You need both.</text>
+<rect x="60" y="12103.900000000001" width="1110" height="408.39999999999964" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="12149.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">CURRENT GAP / a concrete example</text>
+<text x="84" y="12195.7" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Business A owns booking X. Customer C belongs to business B.</text>
+<text x="84" y="12224.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="12252.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Independent FKs accept A and C because each exists. They do not check that C</text>
+<text x="84" y="12281.5" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">belongs to A.</text>
+<text x="84" y="12310.1" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="12338.7" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Application create/ownership paths do check business/customer identity. The gap</text>
+<text x="84" y="12367.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">matters for bugs, imports and future writers.</text>
+<text x="84" y="12395.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="84" y="12424.5" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Proposed: UNIQUE(id, business_id) on parents and FOREIGN KEY(customer_id,</text>
+<text x="84" y="12453.1" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">business_id) referencing customers(id, business_id). Extend the pattern to</text>
+<text x="84" y="12481.7" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">other tenant links.</text>
+<rect x="1230" y="12103.900000000001" width="1110" height="351.1999999999989" rx="5" fill="#dcfce7" stroke="#253047" stroke-width="1.5"/>
+<text x="1254" y="12149.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">KEEP / overlap + idempotency</text>
+<text x="1254" y="12195.7" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Two users can both see 10:00 as free. Search is only a snapshot. Revalidate</text>
+<text x="1254" y="12224.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">when booking and keep the exclusion constraint as the final race-safe guard.</text>
+<text x="1254" y="12252.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="12281.5" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">The occupied interval includes preparation/cleanup buffers. Adjacent half-open</text>
+<text x="1254" y="12310.1" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">ranges [start, end) do not overlap.</text>
+<text x="1254" y="12338.7" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047"></text>
+<text x="1254" y="12367.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">A retry with the same operation key should reuse the committed result. Today</text>
+<text x="1254" y="12395.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">replay reads the current booking row, so it is not an immutable copy of the</text>
+<text x="1254" y="12424.5" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">original response.</text>
+<rect x="40" y="12577.300000000001" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="12643.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">10  Autoscaling and failures: what changes the replica count?</text>
+<text x="60" y="12689.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">More workers help only when the downstream database and model servers have spare capacity.</text>
+<rect x="60" y="12732.300000000001" width="456.0" height="55.3" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="12767.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Component</text>
+<rect x="516.0" y="12732.300000000001" width="843.6" height="55.3" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="532.0" y="12767.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Signal / starting policy</text>
+<rect x="1359.6" y="12732.300000000001" width="980.4" height="55.3" rx="5" fill="#dbeafe" stroke="#253047" stroke-width="1.5"/>
+<text x="1375.6" y="12767.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Why / failure behavior</text>
+<rect x="60" y="12787.6" width="456.0" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="12822.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Webhook API</text>
+<rect x="516.0" y="12787.6" width="843.6" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="532.0" y="12822.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">At least 2 warm replicas; request concurrency + latency</text>
+<rect x="1359.6" y="12787.6" width="980.4" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1375.6" y="12822.6" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Acknowledge only committed inbox rows. DB failure must not produce a false</text>
+<text x="1375.6" y="12849.9" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">success.</text>
+<rect x="60" y="12870.2" width="456.0" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="12905.2" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Text workers</text>
+<rect x="516.0" y="12870.2" width="843.6" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="532.0" y="12905.2" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Runnable conversations + arrival rate x service time</text>
+<rect x="1359.6" y="12870.2" width="980.4" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1375.6" y="12905.2" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Do not count 100 queued turns for one user as 100 parallel tasks. Drain</text>
+<text x="1375.6" y="12932.5" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">in-flight work on shutdown.</text>
+<rect x="60" y="12952.800000000001" width="456.0" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="12987.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Gemma + Laya</text>
+<rect x="516.0" y="12952.800000000001" width="843.6" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="532.0" y="12987.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Queue time, tokens/sec, latency, device memory</text>
+<rect x="1359.6" y="12952.800000000001" width="980.4" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1375.6" y="12987.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">More application pods cannot fix saturated inference. Warm redundancy is</text>
+<text x="1375.6" y="13015.1" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">part of availability.</text>
+<rect x="60" y="13035.400000000001" width="456.0" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="13070.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Audio / TTS</text>
+<rect x="516.0" y="13035.400000000001" width="843.6" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="532.0" y="13070.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Queued audio seconds + duration buckets</text>
+<rect x="1359.6" y="13035.400000000001" width="980.4" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1375.6" y="13070.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Isolate expensive audio. Complete transcript before actions. TTS failure</text>
+<text x="1375.6" y="13097.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">falls back to saved text.</text>
+<rect x="60" y="13118.000000000002" width="456.0" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="13153.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Reply sender</text>
+<rect x="516.0" y="13118.000000000002" width="843.6" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="532.0" y="13153.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Eligible reply backlog, per-bot/chat allowance</text>
+<rect x="1359.6" y="13118.000000000002" width="980.4" height="82.6" rx="5" fill="white" stroke="#253047" stroke-width="1.5"/>
+<text x="1375.6" y="13153.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Honor 429 retry_after. More senders cannot raise Telegram limits.</text>
+<text x="1375.6" y="13180.300000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Prioritize interactive replies.</text>
+<rect x="60" y="13200.600000000002" width="456.0" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="76" y="13235.600000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">PostgreSQL + Redis</text>
+<rect x="516.0" y="13200.600000000002" width="843.6" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="532.0" y="13235.600000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Connections, lock wait, query time; checkpoint bytes</text>
+<rect x="1359.6" y="13200.600000000002" width="980.4" height="82.6" rx="5" fill="#f1f5f9" stroke="#253047" stroke-width="1.5"/>
+<text x="1375.6" y="13235.600000000002" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">HA/failover plus restore tests. Redis loss means rebuild a draft, never</text>
+<text x="1375.6" y="13262.900000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">invent a booking.</text>
+<rect x="60" y="13308.200000000003" width="2280" height="179.59999999999854" rx="5" fill="#dcfce7" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="13354.200000000003" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">DO NOT OVERBUILD</text>
+<text x="84" y="13400.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Start with the existing PostgreSQL ledger as the durable queue. No Kafka, database sharding, separate booking microservice, vector database or multi-region writes</text>
+<text x="84" y="13428.600000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">solely because there are 100k monthly users. Add a broker when queue load, fan-out or operational needs justify it. Gemma and Laya are required here; optimize and</text>
+<text x="84" y="13457.200000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">benchmark their boundary rather than silently removing one.</text>
+<rect x="40" y="13573.200000000003" width="2320" height="8" rx="5" fill="#facc15" stroke="#253047" stroke-width="0"/>
+<text x="60" y="13639.200000000003" font-family="Helvetica,Arial,sans-serif" font-size="38" font-weight="600" fill="#253047">11  Study checklist and implementation order</text>
+<text x="60" y="13685.200000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#475569">The board proposes changes; it does not modify application behavior or remove database tables.</text>
+<rect x="60" y="13728.200000000003" width="1110" height="351.1999999999989" rx="5" fill="#dcfce7" stroke="#253047" stroke-width="1.5"/>
+<text x="84" y="13774.200000000003" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">BUILD IN THIS ORDER</text>
+<text x="84" y="13820.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">1. Measure traffic, model latency, DB queries/locks and per-bot delivery.</text>
+<text x="84" y="13848.600000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">2. Harden tenant constraints and retry tests.</text>
+<text x="84" y="13877.200000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">3. Add durable webhook ingestion and per-conversation ownership.</text>
+<text x="84" y="13905.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">4. Separate senders; remove global reply blocking.</text>
+<text x="84" y="13934.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">5. Add bounded concurrency, pooling and safe crash recovery.</text>
+<text x="84" y="13963.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">6. Implement real reminders, TTS and approved FAQ content.</text>
+<text x="84" y="13991.600000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">7. Load-test 1, 5, 20 and 100 turns/s; tune autoscaling.</text>
+<text x="84" y="14020.200000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">8. Remove obsolete tables only with data/consumer checks and forward</text>
+<text x="84" y="14048.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">migrations.</text>
+<rect x="1230" y="13728.200000000003" width="1110" height="322.59999999999854" rx="5" fill="#fef3c7" stroke="#253047" stroke-width="1.5"/>
+<text x="1254" y="13774.200000000003" font-family="Helvetica,Arial,sans-serif" font-size="26" font-weight="600" fill="#253047">CHECK YOUR UNDERSTANDING</text>
+<text x="1254" y="13820.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Why can a webhook return 200 before the customer gets a reply?</text>
+<text x="1254" y="13848.600000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Why do updates and commands need different idempotency keys?</text>
+<text x="1254" y="13877.200000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Why is 100k MAU insufficient to size workers?</text>
+<text x="1254" y="13905.800000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Why is Redis not the source of booking truth?</text>
+<text x="1254" y="13934.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Why can one delayed reply block unrelated users today?</text>
+<text x="1254" y="13963.000000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Why do separate FKs not guarantee the same tenant?</text>
+<text x="1254" y="13991.600000000002" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">Which table would you remove first, and what would you check?</text>
+<text x="1254" y="14020.200000000003" font-family="Helvetica,Arial,sans-serif" font-size="22" font-weight="400" fill="#253047">What happens if a worker dies just after the booking commits?</text>
+<text x="60" y="14157.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="28" font-weight="600" fill="#253047">Sources and scope</text>
+<text x="60" y="14205.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">Source review: migrations 0001-0003; app/booking.py; app/scheduling.py; app/repositories.py; app/database.py; app/telegram_worker.py; app/channels/telegram_repository.py;</text>
+<text x="60" y="14232.7" font-family="Helvetica,Arial,sans-serif" font-size="21" font-weight="400" fill="#253047">app/graph/redis_checkpoint.py; app/reminders.py; docker-compose.yml. Related design: docs/system-design-100k.md. No live database or production load was inspected.</text>
+<text x="60" y="14328.400000000001" font-family="Helvetica,Arial,sans-serif" font-size="19" font-weight="400" fill="#253047">References: https://www.postgresql.org/docs/17/ddl-constraints.html | https://core.telegram.org/bots/faq | https://core.telegram.org/bots/api |</text>
+<text x="60" y="14353.100000000002" font-family="Helvetica,Arial,sans-serif" font-size="19" font-weight="400" fill="#253047">https://keda.sh/docs/2.21/reference/scaledobject-spec/ | https://github.com/excalidraw/excalidraw/blob/master/dev-docs/docs/codebase/json-schema.mdx</text>
+</svg>

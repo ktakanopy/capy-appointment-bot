@@ -1,10 +1,13 @@
 .git
+.env
+.env.*
 .venv
 .pytest_cache
 __pycache__
 .mypy_cache
 .ruff_cache
 .data
-tests
+.local-models
+.archived
 docs
 specs

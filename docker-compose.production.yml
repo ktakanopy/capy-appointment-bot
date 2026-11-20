@@ -1,0 +1,62 @@
+# Deprecated. Retained as a reference for existing hosted deployments.
+# Use docker-compose.yml for the local demo described in README.md.
+# Supply external PostgreSQL and Redis through CAPY_ENV_FILE.
+x-capy: &capy
+  image: ${CAPY_IMAGE:?Set CAPY_IMAGE to the tested application image}
+  env_file: ${CAPY_ENV_FILE:?Set CAPY_ENV_FILE to a private runtime environment file}
+
+services:
+  migrate:
+    <<: *capy
+    profiles: ["release"]
+    command: alembic upgrade head
+
+  register:
+    <<: *capy
+    profiles: ["release"]
+    env_file:
+      - ${CAPY_ENV_FILE:?Set CAPY_ENV_FILE to a private runtime environment file}
+      - ${CAPY_BOT_ENV_FILE:?Set CAPY_BOT_ENV_FILE to the bot token environment file}
+    entrypoint: ["python", "-m", "app.telegram_service", "register"]
+
+  api:
+    <<: *capy
+    env_file:
+      - ${CAPY_ENV_FILE:?Set CAPY_ENV_FILE to a private runtime environment file}
+      - ${CAPY_WEBHOOK_ENV_FILE:?Set CAPY_WEBHOOK_ENV_FILE to the webhook secret environment file}
+    restart: unless-stopped
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports: ["127.0.0.1:8000:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  text:
+    <<: *capy
+    env_file: &with-bot-tokens
+      - ${CAPY_ENV_FILE:?Set CAPY_ENV_FILE to a private runtime environment file}
+      - ${CAPY_BOT_ENV_FILE:?Set CAPY_BOT_ENV_FILE to the bot token environment file}
+    restart: unless-stopped
+    command: python -m app.telegram_service process --transport postgres --lane text
+    stop_grace_period: 2m
+
+  audio:
+    <<: *capy
+    env_file: *with-bot-tokens
+    restart: unless-stopped
+    command: python -m app.telegram_service process --transport postgres --lane audio
+    stop_grace_period: 16m
+
+  reminders:
+    <<: *capy
+    restart: unless-stopped
+    command: python -m app.telegram_service remind --idle-seconds 2
+
+  sender:
+    <<: *capy
+    env_file: *with-bot-tokens
+    restart: unless-stopped
+    command: python -m app.telegram_service send --transport postgres --idle-seconds 0.05
+    stop_grace_period: 45s

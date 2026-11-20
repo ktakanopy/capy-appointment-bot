@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="352" viewBox="0 0 720 352" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">Which message can go next?</title>
+  <desc id="desc">An earlier audio message is still processing while the record for “1” waits in PostgreSQL. O1 shows the active lease preventing a new claim. O2 shows that the text can start after the earlier turn completes.</desc>
+  <style>
+    text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+    .title { font-size: 29px; font-weight: 700; }
+    .heading { font-size: 21px; font-weight: 700; }
+    .body { font-size: 18px; fill: #35544a; }
+    .label { font-size: 17px; font-weight: 700; fill: #35544a; }
+    .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 16px; }
+    .code-title { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 17px; font-weight: 700; }
+    .panel { fill: #fffefa; stroke: #a4b8a8; }
+    .green { fill: #eaf2e5; stroke: #86a57e; }
+    .waiting { fill: #faf0db; stroke: #c6ac74; }
+    .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="720" height="352" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="30" y="46">Which message can go next?</text>
+  <text class="body" x="30" y="74">PostgreSQL picks the next message in this chat.</text>
+  <rect class="green" x="30" y="95" width="318" height="79" rx="13"/>
+  <text class="heading" x="51" y="128">Earlier audio message</text>
+  <text class="code" x="51" y="153">processing · active lease</text>
+  <rect class="waiting" x="372" y="95" width="318" height="79" rx="13"/>
+  <text class="heading" x="393" y="128">Text “1”</text>
+  <text class="code" x="393" y="153">received · waiting</text>
+  <path class="arrow" d="M66 175V222m-6-7 6 7 6-7"/>
+  <text class="label" x="89" y="204">O1 · Audio still active</text>
+  <path class="arrow" d="M408 175V222m-6-7 6 7 6-7"/>
+  <text class="label" x="431" y="204">O2 · Audio turn completed</text>
+  <rect class="panel" x="30" y="223" width="318" height="105" rx="13"/>
+  <text class="code-title" x="51" y="254">claim_chat() returns None</text>
+  <text class="body" x="51" y="283">The text waits in PostgreSQL.</text>
+  <text class="body" x="51" y="306">Schedules another check.</text>
+  <rect class="green" x="372" y="223" width="318" height="105" rx="13"/>
+  <text class="code-title" x="393" y="254">_start_attempt()</text>
+  <text class="body" x="393" y="283">The text can start.</text>
+  <text class="body" x="393" y="306">PostgreSQL grants a new lease.</text>
+</svg>

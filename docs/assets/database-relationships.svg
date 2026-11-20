@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="810" viewBox="0 0 1120 810" role="img" aria-labelledby="title description">
+  <title id="title">CAPY PostgreSQL table relationships</title>
+  <desc id="description">Business-scoped tables reference businesses. Availability relates professionals to services, weekly hours and blocks. Bookings reference customers, professionals and services. Reminders and inbox entries reference bookings. Each reminder can have one inbox entry. Idempotency records store a booking ID as plain text. Telegram identities optionally reference customers. The historical polling table is keyed by bot ID.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#536b64"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+    .title { font-size: 34px; font-weight: 700; }
+    .heading { font-size: 23px; font-weight: 700; }
+    .detail { font-size: 16px; fill: #354d44; }
+    .name { font-family: Consolas, Menlo, monospace; font-size: 16px; font-weight: 700; }
+    .long-name { font-size: 13px; }
+    .panel { fill: #fffef9; stroke: #d1d8ca; stroke-width: 1.5; }
+    .entity { fill: #e4efdf; stroke: #8baa86; stroke-width: 1.5; }
+    .booking { fill: #fbefd5; stroke: #c5a268; }
+    .telegram { fill: #e4eff0; stroke: #8ba8ac; }
+    .link { fill: none; stroke: #536b64; stroke-width: 2; marker-end: url(#arrow); }
+    .logical { stroke-dasharray: 5 4; }
+  </style>
+
+  <rect width="1120" height="810" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="30" y="49">CAPY PostgreSQL table relationships</text>
+  <text class="detail" x="30" y="76">Solid arrows point from the referenced table to the table with the foreign key. Some tables appear twice.</text>
+
+  <rect class="entity" x="30" y="96" width="1060" height="58" rx="10"/>
+  <text class="name" x="47" y="131">businesses</text>
+  <text class="detail" x="171" y="131">Each other table has a required business_id foreign key, except telegram_poll_offsets, which is keyed by bot_id.</text>
+
+  <g transform="translate(30 174)">
+    <rect class="panel" width="520" height="304" rx="13"/>
+    <text class="heading" x="22" y="36">Availability</text>
+
+    <path class="link" d="M 134 112 V 157"/>
+    <path class="link" d="M 22 88 H 12 V 253 H 20"/>
+    <path class="link" d="M 246 88 H 260 V 216 H 272"/>
+    <path class="link" d="M 386 112 V 193"/>
+
+    <rect class="entity" x="22" y="66" width="224" height="44" rx="8"/>
+    <rect class="entity" x="274" y="66" width="224" height="44" rx="8"/>
+    <rect class="entity" x="22" y="159" width="224" height="44" rx="8"/>
+    <rect class="entity" x="22" y="231" width="224" height="44" rx="8"/>
+    <rect class="entity" x="274" y="195" width="224" height="44" rx="8"/>
+    <text class="name" x="134" y="94" text-anchor="middle">professionals</text>
+    <text class="name" x="386" y="94" text-anchor="middle">services</text>
+    <text class="name long-name" x="134" y="187" text-anchor="middle">weekly_availability_rules</text>
+    <text class="name" x="134" y="259" text-anchor="middle">blocked_periods</text>
+    <text class="name" x="386" y="223" text-anchor="middle">professional_services</text>
+  </g>
+
+  <g transform="translate(570 174)">
+    <rect class="panel" width="520" height="304" rx="13"/>
+    <text class="heading" x="22" y="36">Bookings</text>
+
+    <path class="link" d="M 246 88 H 260 V 142 H 272"/>
+    <path class="link" d="M 246 154 H 272"/>
+    <path class="link" d="M 246 220 H 260 V 166 H 272"/>
+    <path class="link logical" d="M 386 178 V 218"/>
+
+    <rect class="entity" x="22" y="66" width="224" height="44" rx="8"/>
+    <rect class="entity" x="22" y="132" width="224" height="44" rx="8"/>
+    <rect class="entity" x="22" y="198" width="224" height="44" rx="8"/>
+    <rect class="entity booking" x="274" y="132" width="224" height="44" rx="8"/>
+    <rect class="entity booking" x="274" y="220" width="224" height="44" rx="8"/>
+    <text class="name" x="134" y="94" text-anchor="middle">customers</text>
+    <text class="name" x="134" y="160" text-anchor="middle">professionals</text>
+    <text class="name" x="134" y="226" text-anchor="middle">services</text>
+    <text class="name" x="386" y="160" text-anchor="middle">bookings</text>
+    <text class="name" x="386" y="248" text-anchor="middle">idempotency_records</text>
+    <text class="detail" x="386" y="287" text-anchor="middle">Dashed line is a text reference.</text>
+  </g>
+
+  <g transform="translate(30 498)">
+    <rect class="panel" width="520" height="282" rx="13"/>
+    <text class="heading" x="22" y="36">Reminders</text>
+
+    <path class="link" d="M 246 86 H 272"/>
+    <path class="link" d="M 134 110 V 194 H 146"/>
+    <path class="link" d="M 386 110 V 194 H 374"/>
+
+    <rect class="entity booking" x="22" y="64" width="224" height="44" rx="8"/>
+    <rect class="entity booking" x="274" y="64" width="224" height="44" rx="8"/>
+    <rect class="entity booking" x="148" y="172" width="224" height="44" rx="8"/>
+    <text class="name" x="134" y="92" text-anchor="middle">bookings</text>
+    <text class="name" x="386" y="92" text-anchor="middle">reminders</text>
+    <text class="name" x="260" y="200" text-anchor="middle">reminder_inbox</text>
+    <text class="detail" x="260" y="246" text-anchor="middle">At most one entry per reminder</text>
+  </g>
+
+  <g transform="translate(570 498)">
+    <rect class="panel" width="520" height="282" rx="13"/>
+    <text class="heading" x="22" y="36">Telegram</text>
+
+    <path class="link" d="M 134 110 V 152"/>
+
+    <rect class="entity" x="22" y="64" width="224" height="44" rx="8"/>
+    <rect class="entity telegram" x="274" y="64" width="224" height="44" rx="8"/>
+    <rect class="entity telegram" x="22" y="154" width="224" height="44" rx="8"/>
+    <rect class="entity telegram" x="274" y="154" width="224" height="44" rx="8"/>
+    <text class="name" x="134" y="92" text-anchor="middle">customers</text>
+    <text class="name" x="386" y="92" text-anchor="middle">telegram_updates</text>
+    <text class="name" x="134" y="182" text-anchor="middle">telegram_identities</text>
+    <text class="name" x="386" y="182" text-anchor="middle">telegram_poll_offsets</text>
+    <text class="detail" x="134" y="226" text-anchor="middle">Optional customer link</text>
+    <text class="detail" x="386" y="226" text-anchor="middle">Historical cursor retained for compatibility.</text>
+  </g>
+</svg>

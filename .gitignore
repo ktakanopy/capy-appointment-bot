@@ -9,6 +9,8 @@ build/
 *.egg-info/
 .coverage
 htmlcov/
+.eval_runs/
+.local-models/
 .env
 .env.*
 *.log
@@ -22,3 +24,4 @@ Thumbs.db
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+/docs/sdd/plan-*.md

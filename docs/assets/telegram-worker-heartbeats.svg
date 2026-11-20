@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="337" viewBox="0 0 720 337" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">Two heartbeats during one turn</title>
+  <desc id="desc">While the callback waits for a model, H1 uses a thread to renew the lease in PostgreSQL. H2 uses the consumer thread to process network events on the RabbitMQ connection. The threads run concurrently in the same worker process.</desc>
+  <style>
+    text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+    .title { font-size: 29px; font-weight: 700; }
+    .heading { font-size: 21px; font-weight: 700; }
+    .body { font-size: 18px; fill: #35544a; }
+    .label { font-size: 17px; font-weight: 700; fill: #35544a; }
+    .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 16px; }
+    .panel { fill: #fffefa; stroke: #a4b8a8; }
+    .green { fill: #eaf2e5; stroke: #86a57e; }
+    .pale { fill: #f1f5ec; stroke: #a4b8a8; }
+    .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="720" height="337" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="30" y="46">Two heartbeats during one turn</text>
+  <text class="body" x="30" y="74">The turn lease and the broker connection have separate deadlines.</text>
+  <rect class="pale" x="30" y="95" width="660" height="55" rx="13"/>
+  <text class="heading" x="52" y="129">While the callback waits for the model</text>
+  <path class="arrow" d="M68 151V205m-6-7 6 7 6-7"/>
+  <text class="label" x="91" y="183">H1 · Renews the lease</text>
+  <path class="arrow" d="M410 151V205m-6-7 6 7 6-7"/>
+  <text class="label" x="433" y="183">H2 · Keeps the connection alive</text>
+  <rect class="green" x="30" y="206" width="318" height="107" rx="13"/>
+  <text class="heading" x="51" y="239">PostgreSQL</text>
+  <text class="body" x="51" y="267">Tries to renew every 30 s.</text>
+  <text class="code" x="51" y="292">turns.renew(claim)</text>
+  <rect class="panel" x="372" y="206" width="318" height="107" rx="13"/>
+  <text class="heading" x="393" y="239">RabbitMQ</text>
+  <text class="body" x="393" y="267">Pika handles network events.</text>
+  <text class="code" x="393" y="292">process_data_events()</text>
+</svg>

@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1655" viewBox="0 0 1440 1655" role="img" aria-labelledby="title desc">
+<title id="title">How a customer message moves through the conversation graph</title>
+<desc id="desc">Two example turns. The first collects a service and asks for a date. The second combines the saved service with the date, searches for available slots and returns choices.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#41665a"/></marker></defs>
+<rect width="1440" height="1655" fill="#f3f4ed"/>
+<style>
+.title{font:700 31px Arial,sans-serif;fill:#1c3029}.subtitle{font:18px Arial,sans-serif;fill:#496157}
+.lane{fill:#fff;stroke:#d5ded4;stroke-width:2}.head{font:700 22px Arial,sans-serif;fill:#1c3029}
+.node{fill:#edf5ee;stroke:#729584;stroke-width:1.5}.decision{fill:#f4ecd7;stroke:#c0a465;stroke-width:1.5}
+.data{fill:#f7f8f5;stroke:#d9e1d7}.out{fill:#dfeee4;stroke:#8ead98}.name{font:700 17px Arial,sans-serif;fill:#203b30}
+.copy{font:15px Arial,sans-serif;fill:#344b40}.small{font:14px Arial,sans-serif;fill:#496157}.edge{fill:none;stroke:#41665a;stroke-width:2;marker-end:url(#arrow)}
+.label{font:14px Arial,sans-serif;fill:#34564a}.tag{font:700 13px Arial,sans-serif;fill:#6b582d}
+</style>
+<text x="56" y="58" class="title">From a message to an appointment offer</text>
+<text x="56" y="89" class="subtitle">One example across two turns · green arrows carry graph state · side arrows show node output</text>
+
+<rect x="45" y="112" width="1350" height="495" rx="12" class="lane"/>
+<text x="75" y="149" class="head">TURN 1  ·  “I’d like a massage.”</text>
+<text x="75" y="173" class="subtitle">The customer supplies a service. The date is still missing.</text>
+<rect x="80" y="190" width="252" height="76" rx="12" class="node"/>
+<text x="98" y="219" class="name">load_context</text>
+<text x="98" y="243" class="small">Load saved draft + catalog</text>
+<path d="M332 228 L407 228" class="edge"/>
+<text x="345" y="219" class="label">catalog</text>
+<rect x="410" y="193" width="930" height="70" rx="12" class="data"/>
+<text x="432" y="217" class="copy">State receives the business catalog and any saved draft.</text>
+<text x="432" y="239" class="copy">Raw input is available through runtime context.</text>
+<rect x="80" y="289" width="252" height="76" rx="12" class="node"/>
+<text x="98" y="318" class="name">understand_input</text>
+<text x="98" y="342" class="small">Redact, then ask Gemma</text>
+<path d="M332 327 L407 327" class="edge"/>
+<text x="345" y="318" class="label">facts</text>
+<rect x="410" y="292" width="930" height="70" rx="12" class="data"/>
+<text x="432" y="316" class="copy">message: “I’d like a massage.”</text>
+<text x="432" y="338" class="copy">interpretation: service_name = “Massage”</text>
+<rect x="80" y="388" width="252" height="76" rx="12" class="node"/>
+<text x="98" y="417" class="name">merge_draft</text>
+<text x="98" y="441" class="small">Resolve the service</text>
+<path d="M332 426 L407 426" class="edge"/>
+<text x="345" y="417" class="label">draft</text>
+<rect x="410" y="391" width="930" height="70" rx="12" class="data"/>
+<text x="432" y="415" class="copy">draft: service = Massage, date = empty, missing = date</text>
+<text x="432" y="437" class="copy">The service name is matched to a catalog ID.</text>
+<rect x="80" y="487" width="252" height="76" rx="12" class="decision"/>
+<text x="98" y="516" class="name">decide → clarify</text>
+<text x="98" y="540" class="small">Laya proposes an action</text>
+<path d="M332 525 L407 525" class="edge"/>
+<text x="345" y="516" class="label">reply</text>
+<rect x="410" y="490" width="930" height="70" rx="12" class="data"/>
+<text x="432" y="514" class="copy">Laya receives interpreted message + draft. Python checks the route.</text>
+<text x="432" y="536" class="copy">Example: CHECK_AVAILABILITY routes to clarification for the date.</text>
+<path d="M 205 266 L 205 286" class="edge"/>
+<text x="216" y="282" class="small">state</text>
+<path d="M 205 365 L 205 385" class="edge"/>
+<text x="216" y="381" class="small">state</text>
+<path d="M 205 464 L 205 484" class="edge"/>
+<text x="216" y="480" class="small">state</text>
+<path d="M 205 565 L 205 631 L 725 631" class="edge"/>
+<text x="225" y="615" class="label">reply + draft</text>
+<rect x="725" y="612" width="430" height="38" rx="12" class="out"/>
+<text x="742" y="637" class="small">persist updates the draft and appends the reply</text>
+<path d="M 940 650 L 940 668" class="edge"/>
+<text x="951" y="666" class="small">next turn</text>
+<rect x="45" y="670" width="1350" height="495" rx="12" class="lane"/>
+<text x="75" y="707" class="head">TURN 2  ·  “2026-12-05”</text>
+<text x="75" y="731" class="subtitle">The customer supplies a date. The saved service carries forward.</text>
+<rect x="80" y="746" width="252" height="76" rx="12" class="node"/>
+<text x="98" y="775" class="name">load_context</text>
+<text x="98" y="799" class="small">Load saved draft + catalog</text>
+<path d="M332 784 L407 784" class="edge"/>
+<text x="345" y="775" class="label">draft</text>
+<rect x="410" y="749" width="930" height="70" rx="12" class="data"/>
+<text x="432" y="773" class="copy">State contains the previous service and the current catalog.</text>
+<text x="432" y="795" class="copy">The new message is available through runtime context.</text>
+<rect x="80" y="845" width="252" height="76" rx="12" class="node"/>
+<text x="98" y="874" class="name">understand_input</text>
+<text x="98" y="898" class="small">Redact, then ask Gemma</text>
+<path d="M332 883 L407 883" class="edge"/>
+<text x="345" y="874" class="label">facts</text>
+<rect x="410" y="848" width="930" height="70" rx="12" class="data"/>
+<text x="432" y="872" class="copy">message: “2026-12-05”</text>
+<text x="432" y="894" class="copy">interpretation: local_date = “2026-12-05”</text>
+<rect x="80" y="944" width="252" height="76" rx="12" class="node"/>
+<text x="98" y="973" class="name">merge_draft</text>
+<text x="98" y="997" class="small">Combine previous + new</text>
+<path d="M332 982 L407 982" class="edge"/>
+<text x="345" y="973" class="label">draft</text>
+<rect x="410" y="947" width="930" height="70" rx="12" class="data"/>
+<text x="432" y="971" class="copy">draft: service = Massage, date = 2026-12-05, missing = none</text>
+<text x="432" y="993" class="copy">The service stays in the draft and the new date is added.</text>
+<rect x="80" y="1043" width="252" height="76" rx="12" class="decision"/>
+<text x="98" y="1072" class="name">decide → search</text>
+<text x="98" y="1096" class="small">Laya proposes an action</text>
+<path d="M332 1081 L407 1081" class="edge"/>
+<text x="345" y="1072" class="label">slots</text>
+<rect x="410" y="1046" width="930" height="70" rx="12" class="data"/>
+<text x="432" y="1070" class="copy">Example outcome: CHECK_AVAILABILITY after Python checks the draft.</text>
+<text x="432" y="1092" class="copy">search uses the service ID and date to find available slots.</text>
+<path d="M 205 822 L 205 842" class="edge"/>
+<text x="216" y="838" class="small">state</text>
+<path d="M 205 921 L 205 941" class="edge"/>
+<text x="216" y="937" class="small">state</text>
+<path d="M 205 1020 L 205 1040" class="edge"/>
+<text x="216" y="1036" class="small">state</text>
+<path d="M 205 1120 L 205 1190 L 476 1190" class="edge"/>
+<text x="225" y="1180" class="label">reply + slots + draft</text>
+<rect x="476" y="1168" width="600" height="55" rx="12" class="out"/>
+<text x="495" y="1192" class="name">persist appends the reply and updates the draft</text>
+<text x="495" y="1213" class="small">Customer receives available times.</text>
+<text x="57" y="1270" class="small">The example assumes a matching catalog service, a valid date and available slots.</text>
+
+<rect x="45" y="1300" width="1350" height="305" rx="12" class="lane"/>
+<text x="75" y="1338" class="head">Words used in this flow</text>
+<text x="75" y="1373" class="name">State</text>
+<text x="225" y="1373" class="copy">The shared information nodes read and update during a turn.</text>
+<text x="75" y="1412" class="name">Catalog</text>
+<text x="225" y="1412" class="copy">The business details, services and professionals available to the bot.</text>
+<text x="75" y="1451" class="name">Draft</text>
+<text x="225" y="1451" class="copy">Booking details collected across turns, such as service and date.</text>
+<text x="75" y="1490" class="name">Interpretation</text>
+<text x="225" y="1490" class="copy">Gemma’s plain-language meaning and extracted facts for this message.</text>
+<text x="75" y="1529" class="name">Slot</text>
+<text x="225" y="1529" class="copy">An available appointment time offered to the customer.</text>
+<text x="750" y="1373" class="name">Node</text>
+<text x="890" y="1373" class="copy">One step in the graph, such as search.</text>
+<text x="750" y="1412" class="name">Turn</text>
+<text x="890" y="1412" class="copy">One customer message and the bot’s response.</text>
+<text x="750" y="1451" class="name">Runtime context</text>
+<text x="890" y="1451" class="copy">Temporary input and actions available during this run.</text>
+<text x="750" y="1490" class="name">Checkpoint</text>
+<text x="890" y="1490" class="copy">A saved graph state used to resume a conversation.</text>
+<text x="750" y="1529" class="name">Persist</text>
+<text x="890" y="1529" class="copy">The final node adds the reply to the conversation history.</text>
+<text x="75" y="1574" class="small">The checkpointer stores graph state in Redis. After a successful turn, the worker publishes the checkpoint reference.</text>
+</svg>

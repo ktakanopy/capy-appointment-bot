@@ -1,128 +1,35 @@
-# Evaluation framework
+# Existing JSONL evaluation path
 
-The repo includes a small eval runner for multi-turn scenarios.
+This guide describes the original compact JSONL runner for extraction, fixed-input routing, and small workflow regressions. For executable YAML conversations, concurrent isolated attempts, voice preparation, the judge, per-attempt replay, and HTML reports, start with the [scenario evaluation framework](evaluation-framework.md).
 
-I like this part because it checks something normal unit tests miss: whether the
-assistant still behaves correctly across a whole conversation, not just inside
-one function call.
+The versioned JSONL corpus under `evals/data/` supports English and Portuguese text and audio. `smoke-text.jsonl` contains 16 synthetic task cases; `smoke-audio.jsonl` contains two synthesized speech cases. `smoke.jsonl` combines them. Speech was generated with installed macOS Eddy voices and converted to 16 kHz mono WAV. These samples validate the plumbing and provide a tiny regression baseline; they do not establish real-world speech/model quality.
 
-## What it does
-
-For each scenario, the runner:
-
-1. creates a fresh runtime
-2. creates a fresh session
-3. replays the user turns through the real workflow
-4. captures the assistant outputs and observed outcomes
-5. sends the whole transcript to the judge model
-6. prints a readable result block and saves JSON results under `.eval_runs/`
-
-## Main pieces
-
-### `EvaluationScenario`
-
-Defined in `app/evals/models.py`.
-
-Fields:
-
-- `scenario_id`
-- `title`
-- `input_turns`
-- `expected_outcomes`
-- `judge_rubric`
-- `category`
-
-`expected_outcomes` is intentionally small. It mirrors the fields the runner
-extracts from the final `ChatTurnResponse`, not the full response object.
-
-In practice that usually means:
-
-- `verified`
-- `current_operation`
-- `issue`
-- `last_action_result`
-
-Those fields exist because the runtime exposes a small structured summary of the
-turn through `ChatTurnResponse`. That gives evals something stable to assert
-against without depending on exact wording in the assistant message.
-
-In particular:
-
-- `issue` explains what kind of problem occurred
-- `last_action_result` explains what business action actually happened
-
-That is why the graph keeps fields like `turn.issue` and
-`turn.operation_result` even though the user also receives a natural-language
-response.
-
-### `EvaluationResult`
-
-Also defined in `app/evals/models.py`.
-
-It stores:
-
-- scenario metadata
-- pass/fail/error status
-- judge summary and score
-- observed outcomes
-- input turns
-- assistant outputs
-
-### Runner
-
-Implemented in `app/evals/runner.py`.
-
-The runner creates a fresh `RuntimeContext` per scenario, replays the turns, and
-prints a readable block for each case. It also prints a final summary and writes
-JSON results to `.eval_runs/<timestamp>/results.json`.
-
-### Judge
-
-Implemented in `app/evals/judge.py`.
-
-The judge path uses the configured provider in eval mode only. It receives:
-
-- the scenario
-- the full transcript
-- observed outcomes extracted from the actual run
-
-If the judge call fails, the result is marked as `error`.
-
-## Core scenarios
-
-The default scenarios live in `app/evals/scenarios/core_scenarios.py` and cover
-the cases I cared most about for this submission:
-
-- verification before listing appointments
-- ambiguous references
-- idempotent confirm behavior
-- retry after failed verification
-- switching intent during verification
-- verification lockout
-- invalid field recovery
-- protected request before verification
-- list, mutate, list again
-- prompt-injection-style bypass attempts
-- conversational rerouting between actions
-
-## Running evals
-
-CLI:
+Each case records ID, language, split, group ID and provenance. Turns contain text or a relative audio path, reference transcript for audio, expected booking facts, a human-labelled `interpreted_message`, expected action and final response intent. Gemma's labels contain no intent or action. The interpreted message is a simple-language rendering that preserves uncertainty; it supplies fixed-input routing and can serve as a target for future Gemma training. Cases can specify initial bookings and expected write counts. Paired recordings/paraphrases must share a group across splits. Duplicate IDs, invalid schema, unsafe/missing audio paths and split leakage fail dataset validation.
 
 ```bash
-uv run python -m app.evals.runner
+# Offline workflow regression with fixture services:
+uv run python -m app.evals.runner --understanding deterministic --routing deterministic
+# Actual Gemma and Laya:
+uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understanding gemma --routing laya --gemma-revision CHECKPOINT --laya-revision CHECKPOINT
+# Same corpus without Laya:
+uv run python -m app.evals.runner --dataset evals/data/smoke.jsonl --understanding gemma --routing deterministic --gemma-revision CHECKPOINT
 ```
 
-Pytest wrapper:
+`--layer workflow` runs the real graph with isolated synthetic domain services. It checks booking facts, routing, final response intent and writes across turns. PostgreSQL/Redis integration tests separately establish persistence, ownership and concurrency guarantees. `--layer extraction` checks Gemma's booking facts against labels and records its interpreted message. `--layer routing` supplies the labelled `interpreted_message` and explicit draft context directly to Laya or the deterministic router. It invokes neither interpretation nor transcription, including for audio cases; missing interpretation labels are errors. Only the two-field message/context contract is routed.
 
-```bash
-uv run --extra dev pytest tests/evals
-```
+Field accuracy does not establish whether a rewritten message preserved its meaning. Before a real quality benchmark or fine-tuning run, review interpretations for omitted constraints, negations, late corrections, ambiguity and English/Portuguese paraphrases. The small current corpus is a regression seed, not a semantic rewrite-quality benchmark.
 
-## Why keep this in the repo?
+Audio workflow evaluations pass fixture recordings through the same `understand_input` node
+as Telegram. Extraction-only evaluations call Gemma independently to measure its output.
+Both paths score the single completed transcript against the synthetic reference.
+The runner reports transcription failures as errors. For successful transcripts, `word_errors`
+is the fewest word insertions, deletions, or substitutions needed to match the reference.
+The comparison ignores case and treats sequences of letters, digits, and underscores as words.
+`reference_words` counts the words in the reference. Routing-only audio cases use the labelled
+meaning directly.
 
-Because it keeps the workflow honest.
+Results under `.eval_runs/` use schema version 2 and contain a hash of dataset and audio assets, requested providers, model revision labels, interpretations, actions, errors and transcription/understanding/routing latency. Per-case provider fields describe what ran: fixed-input understanding is `labelled`, and extraction-only routing is `not_run`. Summaries group language and source modality. Nonzero exit means a failed case, provider error or invalid dataset. Use labelled revision identifiers: the runner cannot infer the checkpoint actually served by an external endpoint. Older intent-labelled datasets and schema-version-1 receipts describe the earlier contract.
 
-It is easy to break a multi-turn assistant in ways that unit tests do not catch.
-This runner gave me a much better feel for whether the product still behaved the
-way a patient would expect.
+CI is configured to run offline cases, provider contracts, real audio decoding/chunk failure tests and real PostgreSQL/Redis integration checks. Integration tests cover populated legacy migration, account separation, scoped booking operations, overlap protection, concurrency, idempotency, atomic reminders, receipts, restart and expiry.
+
+The case study records local Gemma and Laya results for the two synthetic confirmation clips. A live Telegram walkthrough and evaluation with long, noisy recordings and late corrections are open. Record checkpoint revisions, sample counts and per-case results when extending the study. [Local voice evaluation](case-study.md#local-voice-evaluation)
