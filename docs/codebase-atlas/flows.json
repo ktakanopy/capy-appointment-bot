@@ -1,0 +1,253 @@
+[
+  {
+    "id": "walkthrough",
+    "title": "Booking walkthrough · Three messages, one appointment",
+    "subtitle": "Follow one example Telegram conversation from the first webhook to the committed booking and final reply.",
+    "columns": 5,
+    "transcript": [
+      {"node":"request-text","speaker":"Customer","text":"Book Massage tomorrow."},
+      {"node":"offer-text","speaker":"CAPY","text":"Here are the available times. Choose a time below or reply with its number:\n1. 2026-10-20 15:00 UTC with Alex\n2. 2026-10-20 17:00 UTC with Alex"},
+      {"node":"selection-text","speaker":"Customer","text":"1"},
+      {"node":"consent-text","speaker":"CAPY","text":"Please confirm Massage with Alex on October 20, 2026 at 15:00 (UTC). Reply “yes” to book or “no” to leave it unbooked."},
+      {"node":"approval-text","speaker":"Customer","text":"Yes, book it."},
+      {"node":"confirmation-text","speaker":"CAPY","text":"Booked: Massage with Alex on October 20, 2026 at 15:00 (UTC)."}
+    ],
+    "transcriptContext": "Synthetic example from the golden booking fixture. Today is October 19, 2026 in the studio’s UTC timezone.",
+    "lanes": [
+      {"label": "Turn 1 · Customer asks for a massage tomorrow", "nodes": [
+        {"id":"request-text","title":"“Book Massage tomorrow.”","ref":"app/main.py#telegram_webhook","detail":"Telegram POSTs a private message to the authenticated webhook.","tone":"entry","why":"Authenticating the bot at the webhook gives the turn a trusted business identity before CAPY uses the message."},
+        {"id":"store-request","title":"Accept update","ref":"app/channels/telegram_intake.py#save_update","detail":"Save the update and schedule a wake-up before returning HTTP 204.","tone":"data","why":"The database commit gives Telegram a safe acknowledgment boundary. If the webhook fails earlier, Telegram can retry without creating a second inbox row."},
+        {"id":"wake-request","title":"Wake the worker","ref":"app/channels/telegram_broker.py#publish_wakeup","detail":"The relay publishes bot and chat IDs for the incoming queue.","why":"An ID-only wake-up keeps the customer message in PostgreSQL and lets the relay retry publication independently."},
+        {"id":"claim-request","title":"Claim the chat head","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_chat","detail":"Lease this update. The worker resolves the sender and invokes LangGraph.","why":"A chat lease prevents competing workers from applying messages to different versions of the same draft."},
+        {"id":"interpret-request","title":"Extract service and date","ref":"app/graph/steps.py#understand_input","detail":"Gemma resolves Massage on October 20, 2026 from the sanitized message.","why":"Separating fact extraction from routing lets a later step make a decision from explicit service and date values."}
+      ]},
+      {"label": "Turn 1 · Find and send two numbered times", "nodes": [
+        {"id":"offer-text","title":"Send the two choices","ref":"app/channels/telegram.py#TelegramBotApi.send_message","detail":"CAPY offers 15:00 and 17:00 UTC with Alex. The business still has no new booking.","tone":"success","why":"Numbered choices let the customer select a concrete appointment with a short reply that CAPY can resolve later."},
+        {"id":"deliver-offer","title":"Reserve and deliver reply","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id","detail":"A sender wake-up contains an outbox ID. The sender reserves the reply.","why":"Reserving before sending lets multiple sender processes share Telegram rate limits and preserve reply order for the chat."},
+        {"id":"finish-request","title":"Save offer and queue reply","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","detail":"Publish the Redis checkpoint pointer and queue the reply in PostgreSQL.","tone":"data","why":"Committing the checkpoint pointer and reply together makes the stored offers available as soon as the customer can see them."},
+        {"id":"search-request","title":"Find available slots","ref":"app/scheduling.py#AvailabilityService.search","detail":"Search for fits. LangGraph saves the numbered offer list in Redis.","why":"Availability comes from business hours and current bookings, so the options reflect the actual calendar."},
+        {"id":"route-request","title":"Choose availability search","ref":"app/graph/steps.py#route_turn","detail":"Laya proposes a search. Python checks service and date.","why":"A model proposal can guide the conversation while Python checks that the catalog and date support a search."}
+      ]},
+      {"label": "Turn 2 · Customer chooses the first time", "nodes": [
+        {"id":"selection-text","title":"“1”","ref":"app/main.py#telegram_webhook","detail":"Telegram sends a new update for the same chat.","tone":"entry","why":"A separate update preserves the sequence from the offered list to the selected appointment."},
+        {"id":"store-selection","title":"Save the selection update","ref":"app/channels/telegram_intake.py#save_update","detail":"Record this update under its own Telegram update ID.","tone":"data","why":"A stable update ID lets the inbox recognize a redelivery of the same choice."},
+        {"id":"wake-selection","title":"Wake the same chat","ref":"app/channels/telegram_broker.py#publish_wakeup","detail":"Send the same bot and chat IDs to the incoming partition.","why":"Consistent chat partitioning keeps later messages for the conversation on its established queue."},
+        {"id":"claim-selection","title":"Claim the selection","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_chat","detail":"Lease the new head and read the published checkpoint reference.","why":"The worker must use the draft published by the last completed turn for the number to keep its original meaning."},
+        {"id":"restore-offer","title":"Restore the previous offer","ref":"app/graph/redis_checkpoint.py#RedisCheckpointSaver.fork_completed","detail":"Copy the completed Redis state into the selection attempt.","tone":"data","why":"A fresh attempt thread keeps partial work separate from the last successful copy of the offered times."}
+      ]},
+      {"label": "Turn 2 · Ask for consent to the 15:00 appointment", "nodes": [
+        {"id":"consent-text","title":"Send the consent question","ref":"app/channels/telegram.py#TelegramBotApi.send_message","detail":"Ask for explicit approval of Massage with Alex at 15:00 UTC.","tone":"success","why":"Repeating the exact service and time gives the customer a chance to catch a mistaken choice before it is booked."},
+        {"id":"deliver-question","title":"Reserve the consent reply","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id","detail":"The sender gets the outbox ID and enforces chat ordering and rate limits.","why":"Using the same sender ordering boundary keeps the consent question behind the original offer."},
+        {"id":"finish-selection","title":"Save pending consent","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","detail":"Publish the selected slot’s Redis state and queue the consent question.","tone":"data","why":"Publishing pending consent with the reply gives the next turn a durable reference to the exact slot shown to the customer."},
+        {"id":"prepare-selection","title":"Ask before writing","ref":"app/graph/steps.py#_prepare_create","detail":"Mark the exact slot as awaiting approval and format the question.","why":"Binding consent to a slot prevents a later approval from applying to a different appointment."},
+        {"id":"match-selection","title":"Resolve option 1","ref":"app/graph/steps.py#select","detail":"Gemma finds choice 1. Laya proposes BOOK. Python matches the saved 15:00 slot.","why":"The number is an index into a saved list, so matching it against that list preserves what the customer selected."}
+      ]},
+      {"label": "Turn 3 · Customer gives permission to book", "nodes": [
+        {"id":"approval-text","title":"“Yes, book it.”","ref":"app/main.py#telegram_webhook","detail":"The approval arrives as a separate Telegram update.","tone":"entry","why":"Explicit approval in a later message separates an appointment choice from authorization to write it."},
+        {"id":"store-approval","title":"Save the approval update","ref":"app/channels/telegram_intake.py#save_update","detail":"Record the approval. Its update ID will identify any booking retry.","tone":"data","why":"The approval update ID supplies a stable key that lets the booking operation recognize a retry."},
+        {"id":"wake-approval","title":"Wake the chat again","ref":"app/channels/telegram_broker.py#publish_wakeup","detail":"The relay wakes the same chat partition using IDs.","why":"Queue delivery wakes a worker while PostgreSQL continues to decide which eligible update goes next."},
+        {"id":"claim-approval","title":"Claim the approval","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_chat","detail":"Lease the message and load the pointer saved after choosing option 1.","why":"Per-chat ownership ensures the approval operates on the published consent state rather than racing with another turn."},
+        {"id":"restore-consent","title":"Restore pending consent","ref":"app/graph/redis_checkpoint.py#RedisCheckpointSaver.fork_completed","detail":"Bring the exact proposed slot into this attempt’s graph state.","tone":"data","why":"The restored marker identifies the exact pending slot that the approval must authorize."}
+      ]},
+      {"label": "Turn 3 · Commit once and send the saved booking details", "nodes": [
+        {"id":"confirmation-text","title":"Send the confirmation","ref":"app/channels/telegram.py#TelegramBotApi.send_message","detail":"The outbox sender delivers confirmation of the saved 15:00 appointment.","tone":"success","why":"Reporting the persisted booking gives the customer the final appointment details after the write has succeeded."},
+        {"id":"finish-approval","title":"Queue the final reply","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","detail":"Save the reply and completed checkpoint pointer after the booking commits.","tone":"data","why":"Separating the reply transaction from the booking transaction lets Telegram delivery retry without repeating the booking write."},
+        {"id":"commit-approval","title":"Commit one booking","ref":"app/booking.py#BookingService.create","detail":"Recheck slot and ownership. Commit the booking and retry record together.","tone":"data","why":"Another request can take the time between offer and approval, so the transaction rechecks the slot and records the retry outcome together."},
+        {"id":"execute-approval","title":"Execute the guarded write","ref":"app/graph/steps.py#execute","detail":"Recheck explicit consent and call the customer-scoped create action.","why":"Checking approval again at the write boundary keeps an incorrect route from calling the booking service."},
+        {"id":"guard-approval","title":"Verify approval and route","ref":"app/graph/steps.py#_route_booking_consent","detail":"The latest reply approves. Laya proposes BOOK for the pending 15:00 offer.","why":"A fresh approval and a matching pending slot give Python concrete evidence that this specific appointment is authorized."}
+      ]}
+    ],
+    "edges": [
+      ["request-text","store-request"],["store-request","wake-request","async"],["wake-request","claim-request","async"],["claim-request","interpret-request"],["interpret-request","route-request"],
+      ["route-request","search-request"],["search-request","finish-request"],["finish-request","deliver-offer","async"],["deliver-offer","offer-text"],["offer-text","selection-text","async"],
+      ["selection-text","store-selection"],["store-selection","wake-selection","async"],["wake-selection","claim-selection","async"],["claim-selection","restore-offer"],["restore-offer","match-selection"],
+      ["match-selection","prepare-selection"],["prepare-selection","finish-selection"],["finish-selection","deliver-question","async"],["deliver-question","consent-text"],["consent-text","approval-text","async"],
+      ["approval-text","store-approval"],["store-approval","wake-approval","async"],["wake-approval","claim-approval","async"],["claim-approval","restore-consent"],["restore-consent","guard-approval"],
+      ["guard-approval","execute-approval"],["execute-approval","commit-approval"],["commit-approval","finish-approval"],["finish-approval","confirmation-text","async"]
+    ],
+    "legend": "Bold labels show the three customer turns. Dashed arrows include queue handoffs and the wait for the next Telegram message."
+  },
+  {
+    "id": "runtime",
+    "title": "How a Telegram message moves through CAPY",
+    "subtitle": "Follow the hosted RabbitMQ route from webhook intake to a leased conversation turn and a separate sender.",
+    "columns": 5,
+    "lanes": [
+      {"label": "Webhook intake", "nodes": [
+        {"id":"update","title":"Telegram update","detail":"A customer sends text, voice or a contact to the bot.","tone":"entry","ref":"app/main.py#telegram_webhook","why":"A private bot update carries trusted chat and sender identifiers that CAPY can tie to the customer."},
+        {"id":"webhook","title":"Authenticate webhook","ref":"app/main.py#telegram_webhook","detail":"Resolve the bot and verify the secret. Acknowledge after intake commits.","tone":"entry","why":"Verifying the bot route and secret protects the business-scoped inbox before the request is processed."},
+        {"id":"save","title":"Save update","ref":"app/channels/telegram_intake.py#save_update","detail":"Deduplicate the update and record due work in PostgreSQL.","tone":"data","why":"Combining idempotent intake with a durable wake-up lets Telegram retry safely after a lost acknowledgment."},
+        {"id":"relay","title":"Relay due work","ref":"app/channels/telegram_publications.py#publish_due","detail":"Relay claims a publication and calls the broker publisher.","why":"A separate relay can retry publishing while the committed inbox remains the source of the work."},
+        {"id":"broker","title":"Publish chat IDs","ref":"app/channels/telegram_broker.py#publish_wakeup","detail":"RabbitMQ receives bot and chat IDs for the incoming partition.","why":"Publishing identifiers keeps message content in the inbox and lets workers claim the current head from PostgreSQL."}
+      ]},
+      {"label": "Worker follows the chat head", "nodes": [
+        {"id":"workflow","title":"Invoke LangGraph","ref":"app/graph/workflow.py#LangGraphWorkflow.handle_turn","detail":"Run one turn in its Redis attempt thread and return the reply.","why":"The invocation context keeps raw input and service objects scoped to a turn while the graph saves the conversation draft."},
+        {"id":"worker","title":"Handle the message","ref":"app/telegram_worker.py#TelegramWorker._reply_to_message","detail":"Resolve commands and contacts or hand text and voice to the workflow.","why":"Handling commands and contacts directly keeps routine channel operations out of model inference."},
+        {"id":"process","title":"Process claimed turn","ref":"app/telegram_service.py#process_turn","detail":"Fork the prior Redis draft and resolve the customer before running the turn.","tone":"entry","why":"A single coordinator can restore the published draft, run one owned attempt, and decide which state to publish."},
+        {"id":"claim","title":"Lease chat head","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_chat","detail":"Claim the earliest eligible update for this bot and chat.","tone":"data","why":"Serializing attempts for one chat preserves the meaning of short replies such as a numbered choice."},
+        {"id":"consumer","title":"Consume wake-up","ref":"app/telegram_service.py#run_broker_worker","detail":"The process role registers the chat-turn callback.","tone":"entry","why":"Broker notifications wake the worker promptly while the database enforces ordering and claim ownership."}
+      ]},
+      {"label": "Commit the reply and let the sender deliver it", "nodes": [
+        null,
+        null,
+        {"id":"finish","title":"Finish the turn","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","detail":"Commit the checkpoint pointer and reply in PostgreSQL.","tone":"data","why":"The reply and its checkpoint pointer become visible together, so a later answer can resume the state behind the reply."},
+        {"id":"send-claim","title":"Reserve the send","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id","detail":"The sender wakes by outbox ID and reserves against ordering and rate limits.","why":"The reserve step coordinates reply order and rate budgets across sender processes."},
+        {"id":"deliver","title":"Call Telegram","ref":"app/channels/telegram_delivery.py#deliver_claimed","detail":"Call TelegramDelivery.send and record the delivery outcome.","tone":"success","why":"Recording the provider outcome lets the outbox distinguish a safe retry from a send Telegram may already have accepted."}
+      ]}
+    ],
+    "edges": [
+      ["update","webhook"],["webhook","save"],["save","relay","async"],["relay","broker"],["broker","consumer","async"],
+      ["consumer","claim"],["claim","process"],["process","worker"],["worker","workflow"],["process","finish"],
+      ["finish","send-claim","async"],["send-claim","deliver"]
+    ]
+  },
+  {
+    "id": "conversation",
+    "title": "Inside a LangGraph conversation turn",
+    "subtitle": "Gemma extracts facts, Laya proposes the next action, and Python checks the proposed route before any write.",
+    "columns": 4,
+    "lanes": [
+      {"label": "Graph entry and understanding", "nodes": [
+        {"id":"entry","title":"Invoke compiled graph","ref":"app/graph/workflow.py#LangGraphWorkflow.handle_turn","detail":"Pass raw input and scoped actions through runtime context.","tone":"entry","why":"The runtime boundary hands raw input to the nodes that need it and keeps it out of initial checkpoint state."},
+        {"id":"load","title":"load_context","ref":"app/graph/steps.py#load_context","detail":"Load the business catalog and previous draft.","why":"The current catalog lets the graph match real services and staff when it resumes a conversation draft."},
+        {"id":"understand","title":"understand_input","ref":"app/graph/steps.py#understand_input","detail":"Transcribe voice if present. Redact text and ask Gemma for facts.","why":"Processing a complete message captures corrections and redacts recognized contact details before interpreting text."},
+        {"id":"merge","title":"merge_draft","ref":"app/graph/steps.py#merge_draft","detail":"Merge current facts with the saved draft.","why":"Keeping earlier facts lets a short answer such as a date fill one gap in the existing request."}
+      ]},
+      {"label": "Model calls and routing decision", "nodes": [
+        null,
+        {"id":"gemma","title":"GemmaUnderstanding","ref":"app/llm/gemma.py#GemmaUnderstanding.interpret","detail":"Return interpreted text and structured booking facts. Voice also uses the transcription endpoint.","why":"Structured facts give the workflow dates, services, and numbered choices it can validate independently."},
+        {"id":"laya","title":"LayaDecision","ref":"app/graph/laya.py#LayaDecision.decide","detail":"Send message and draft to Laya and parse the proposed action.","why":"A narrow routing contract limits the data passed to Laya and keeps scheduling policy in Python."},
+        {"id":"decision","title":"decide","ref":"app/graph/steps.py#route_turn","detail":"Laya receives the interpreted message and draft. Python validates the route.","tone":"entry","why":"Deterministic gates can enforce required facts, saved choices, and consent after the model proposes an action."}
+      ]},
+      {"label": "Choose an action, offer times or reply", "nodes": [
+        null,
+        {"id":"action","title":"prepare_action → execute","ref":"app/graph/steps.py#prepare_action","detail":"Check booking ownership or the selected offer. Execute if preparation permits.","why":"Preparation checks prerequisites before execution calls a service that can mutate a booking."},
+        {"id":"offers","title":"search / select","ref":"app/graph/steps.py#search","detail":"Search offers slots. Select resolves a saved choice and can continue to preparation.","why":"Binding a numbered reply to the original offer keeps it from selecting a different time after a new search."},
+        {"id":"respond","title":"clarify / help / lookup","ref":"app/graph/steps.py#clarify","detail":"Ask for details, answer catalog questions or list owned bookings. Escalate shows supported options.","why":"The graph can ask for missing details and answer read-only questions while leaving booking state intact."}
+      ]},
+      {"label": "Action services and state", "nodes": [
+        {"id":"booking","title":"BookingService","ref":"app/booking.py#BookingService","detail":"Apply booking changes inside PostgreSQL transactions.","tone":"data","why":"A transaction makes the booking change and its retry record succeed or roll back together."},
+        {"id":"actions","title":"CustomerSchedulingActions","ref":"app/customer_scheduling_actions.py#CustomerSchedulingActions","detail":"Dispatch owned operations to AvailabilityService or BookingService.","why":"A customer-scoped adapter supplies trusted ownership IDs at every scheduling call."},
+        {"id":"persist","title":"persist","ref":"app/graph/steps.py#persist","detail":"Append the actual reply and return the turn result.","why":"Saving the reply that actually went out keeps future turns grounded in what the customer saw."},
+        {"id":"checkpoint","title":"RedisCheckpointSaver","ref":"app/graph/redis_checkpoint.py#RedisCheckpointSaver.put","detail":"LangGraph checkpoints the attempt's state throughout execution.","tone":"data","why":"Attempt-scoped checkpoints let later messages resume a completed draft and isolate failed work."}
+      ]}
+    ],
+    "edges": [
+      ["entry","load"],["load","understand"],["understand","merge"],["understand","gemma"],["merge","decision"],["decision","laya"],
+      ["decision","action"],
+      ["decision","offers"],["decision","respond"],["action","actions"],["actions","booking"],["offers","persist"],
+      ["respond","persist"],["persist","checkpoint","async"]
+    ],
+    "legend": "Selected routes. The compiled graph in app/graph/builder.py shows how all reply branches converge on persist."
+  },
+  {
+    "id": "booking",
+    "title": "Happy path · Create a booking in three turns",
+    "subtitle": "Each row starts with a new customer message. The first two turns save conversation state for the next message.",
+    "columns": 4,
+    "lanes": [
+      {"label": "Turn 1 · Find available times", "nodes": [
+        {"id":"request","title":"“Massage on Friday”","detail":"Gemma extracts the service and date. Laya proposes a slot search.","tone":"entry","ref":"app/main.py#telegram_webhook","why":"Extracting a service and date narrows the request to concrete schedule constraints."},
+        {"id":"search","title":"Search available slots","ref":"app/graph/steps.py#search","detail":"Build the search request from the catalog and draft.","why":"Constructing a typed availability request gives scheduling the same business, service, and day the conversation resolved."},
+        {"id":"availability","title":"Apply schedule rules","ref":"app/scheduling.py#AvailabilityService.search","detail":"Filter by staff hours, buffers, blocks and occupied intervals.","why":"Calendar rules give both search and booking a consistent definition of a time that can be offered."},
+        {"id":"offer","title":"Return numbered offers","ref":"app/graph/steps.py#persist","detail":"Return a list. LangGraph checkpoints the offered slots.","tone":"success","why":"Persisted slot IDs keep the displayed option numbers tied to the exact slots across messages."}
+      ]},
+      {"label": "Turn 2 · Select a specific time", "nodes": [
+        {"id":"choice","title":"“1”","detail":"The worker forks the last completed Redis checkpoint into this attempt.","tone":"entry","ref":"app/telegram_service.py#_restore_turn_checkpoint","why":"Restoring the previous completed turn makes a short reply meaningful without asking the customer to repeat the time."},
+        {"id":"select","title":"Match option 1","ref":"app/graph/steps.py#select","detail":"Resolve the number against the previous offer and set the pending slot.","why":"Validating the index against the saved offers prevents an out-of-range or stale selection from becoming a booking request."},
+        {"id":"prepare","title":"Save the consent marker","ref":"app/graph/steps.py#_prepare_create","detail":"Record which specific appointment is awaiting approval.","why":"The saved marker tells the next turn which appointment the customer needs to approve."},
+        {"id":"ask","title":"Ask for approval","ref":"app/graph/booking_messages.py#booking_confirmation_question","detail":"Reply with the exact local time, service and professional.","tone":"success","why":"The confirmation question lets the customer double-check the local time, service, and professional before committing."}
+      ]},
+      {"label": "Turn 3 · Approve and commit", "nodes": [
+        {"id":"yes","title":"“Yes”","detail":"The pending offer is restored and the latest message supplies explicit consent.","tone":"entry","ref":"app/graph/steps.py#_route_booking_consent","why":"A later, explicit approval gives the workflow customer authorization beyond the initial slot choice."},
+        {"id":"gate","title":"Verify consent and route","ref":"app/graph/steps.py#_route_booking_consent","detail":"Require clear approval, a still-offered slot and an eligible Laya BOOK proposal.","why":"The exact-slot and routing checks keep ambiguous text or a changed time from reaching the creation flow."},
+        {"id":"create","title":"Commit the booking","ref":"app/booking.py#BookingService.create","detail":"Revalidate the slot and commit the booking and idempotency result.","tone":"data","why":"Rechecking availability inside the write handles a competing booking that arrived after the search."},
+        {"id":"done","title":"Return booking details","ref":"app/graph/booking_messages.py#booking_created_reply","detail":"Format success from the saved booking. The worker queues it for the sender.","tone":"success","why":"Using the saved appointment for the reply makes the confirmation match what PostgreSQL committed."}
+      ]}
+    ],
+    "edges": [
+      ["request","search"],["search","availability"],["availability","offer"],["choice","select"],["select","prepare"],
+      ["prepare","ask"],["yes","gate"],["gate","create"],["create","done"]
+    ],
+    "legend": "Arrows follow each customer turn. The booking write and Telegram reply commit in separate transactions."
+  },
+  {
+    "id": "failure-paths",
+    "title": "Failure paths · What happens when a step stops",
+    "subtitle": "Each row traces one condition to its handler and the resulting change in state or customer reply.",
+    "columns": 3,
+    "lanes": [
+      {"label": "Intake · Request rejected", "nodes": [
+        {"id":"bad-request","title":"Bad secret, body or intake outage","detail":"The webhook cannot accept the update.","tone":"failure","ref":"app/main.py#telegram_webhook","why":"Rejecting untrusted or invalid input protects the inbox and its downstream workers."},
+        {"id":"reject","title":"Reject the webhook","ref":"app/main.py#telegram_webhook","detail":"Return 403 for authentication, 413 for size, 400 for invalid updates or 503 for database errors.","why":"Distinct status codes tell Telegram and operators why the webhook could not accept the update."},
+        {"id":"no-ack","title":"No HTTP 204","detail":"Telegram can retry failed intake. Accepted duplicate update IDs produce one durable receipt.","ref":"app/main.py#telegram_webhook","why":"Acknowledgment means intake committed. An unavailable database leaves Telegram free to retry delivery."}
+      ]},
+      {"label": "Processing · Previous offer expired", "nodes": [
+        {"id":"expired","title":"Redis draft has expired","detail":"The last published thread pointer no longer resolves to a checkpoint.","tone":"failure","ref":"app/graph/redis_checkpoint.py#RedisCheckpointSaver.fork_completed","why":"Conversation checkpoints expire to bound retained state, so an old option number may lose its original list."},
+        {"id":"refresh","title":"Stop before graph execution","ref":"app/telegram_service.py#_restore_turn_checkpoint","detail":"Complete the turn with a prompt for fresh times and clear the checkpoint reference.","why":"Stopping before execution avoids attaching an expired choice to the current calendar."},
+        {"id":"new-offer","title":"Customer can start a fresh search","detail":"The expired option number is never applied to a different offer.","ref":"app/telegram_service.py#_restore_turn_checkpoint","why":"A fresh search returns a new list that the customer can select from unambiguously."}
+      ]},
+      {"label": "Processing · Dependency unavailable at setup", "nodes": [
+        {"id":"setup","title":"Redis unavailable or bot credentials unusable","detail":"The worker cannot prepare the turn.","tone":"failure","ref":"app/telegram_service.py#_prepare_turn_worker","why":"The worker needs working bot credentials and the published state to begin a turn safely."},
+        {"id":"defer","title":"Defer before execution","ref":"app/channels/telegram_turns.py#TelegramTurns.defer_before_execution","detail":"Release the claim and schedule a retry.","why":"Releasing the lease lets the system schedule another attempt without holding a chat during the dependency outage."},
+        {"id":"retry","title":"Retry after the delay","detail":"The worker has made no customer or booking changes for this attempt.","ref":"app/channels/telegram_turns.py#TelegramTurns.defer_before_execution","why":"Retrying a preparation failure is safe because the attempt stopped before customer or booking changes."}
+      ]},
+      {"label": "Processing · Interrupted or out of order", "nodes": [
+        {"id":"interruption","title":"Interrupted attempt or late update","detail":"The previous attempt may have committed, or the message may refer to an older offer.","tone":"failure","ref":"app/telegram_service.py#_process_turn","why":"A crash after a database write or a late update invalidates the assumptions needed to replay an ordinary turn."},
+        {"id":"skip","title":"Skip normal turn processing","ref":"app/telegram_service.py#_process_turn","detail":"On interruption, clear the checkpoint reference. For a late update, retain it.","why":"Clearing uncertain state or retaining the latest valid state protects the next turn from the wrong draft."},
+        {"id":"verify","title":"Ask the customer to verify or refresh","detail":"After interruption, check existing appointments. For late input, request a fresh offer.","ref":"app/telegram_service.py#_process_turn","why":"Checking current appointments avoids duplicating a booking whose outcome is uncertain. Refreshing offers resolves a late selection."}
+      ]},
+      {"label": "Workflow · Model error", "nodes": [
+        {"id":"model-error","title":"Transcription or model call fails","detail":"A provider raises ProviderError before booking execution.","tone":"failure","ref":"app/graph/steps.py#understand_input","why":"A complete interpretation is needed before CAPY can choose an action from a recording or message."},
+        {"id":"recover-model","title":"Return a language service reply","ref":"app/telegram_worker.py#TelegramWorker._reply_to_message","detail":"Ask the customer to retry or send a shorter message.","why":"A clear retry reply lets the customer recover when the language service cannot interpret the turn."},
+        {"id":"safe-model","title":"Preserve the previous checkpoint","detail":"The failed attempt publishes no new draft and makes no booking change.","ref":"app/telegram_service.py#_process_private_message","why":"Publishing only completed state gives the next attempt the last usable draft."}
+      ]},
+      {"label": "Workflow · Consent missing or changed", "nodes": [
+        {"id":"consent","title":"“No,” a new time, or unclear approval","detail":"The latest reply does not authorize the pending appointment.","tone":"failure","ref":"app/graph/consent.py#classify_booking_consent","why":"Declining or changing the appointment invalidates the specific time that was offered for approval."},
+        {"id":"check-consent","title":"Resolve the consent guard","ref":"app/graph/steps.py#_route_booking_consent","detail":"Clear the selection on rejection or changed timing. Ask again if approval is unclear or routing cannot verify it.","why":"The guard treats rejection and changed timing differently from ambiguity, which can be resolved by asking again."},
+        {"id":"no-write","title":"Return a reply without creating a booking","detail":"Only guarded approval for the exact slot can reach the write.","ref":"app/graph/steps.py#_route_booking_consent","why":"Leaving the booking unchanged gives the customer time to confirm the exact appointment."}
+      ]},
+      {"label": "Booking · A competing request wins the slot", "nodes": [
+        {"id":"taken","title":"The slot is no longer bookable","detail":"Availability changes after the offer was made.","tone":"failure","ref":"app/scheduling.py#validate_slot_in_transaction","why":"An offer is a snapshot of availability. A new booking may occupy it while the customer is deciding."},
+        {"id":"recheck","title":"Revalidate during the transaction","ref":"app/booking.py#BookingService.create","detail":"Reject the slot and let the graph handle the domain error.","why":"Checking the current interval inside the transaction preserves the calendar when requests overlap."},
+        {"id":"recover-slot","title":"Ask for new available times","ref":"app/graph/steps.py#_slot_no_longer_bookable_reply","detail":"Clear the stale selection and return a fresh-search prompt.","why":"Clearing the stale choice prevents a later approval from trying the unavailable slot again."}
+      ]},
+      {"label": "Delivery · Throttle, rejection or uncertain outcome", "nodes": [
+        {"id":"send-error","title":"Telegram send fails or dispatch expires","detail":"The provider may have accepted the message before a response was lost.","tone":"failure","ref":"app/channels/telegram_delivery.py#deliver_claimed","why":"A timeout can happen after Telegram accepted a reply, so retrying blindly risks a duplicate message."},
+        {"id":"classify","title":"Classify and record the outcome","ref":"app/channels/telegram_delivery.py#deliver_claimed","detail":"Retry transient rejection such as 429. Mark permanent rejection or exhausted retries as failed.","why":"A confirmed temporary rejection can be retried while permanent and uncertain outcomes need different handling."},
+        {"id":"ambiguous","title":"Stop automatic resend if ambiguous","ref":"app/channels/telegram_delivery.py#TelegramOutbox.recover_expired","detail":"An unknown transport outcome or expired dispatch lease becomes ambiguous.","why":"An expired dispatch lease leaves delivery uncertain, which makes automatic resend unsafe."}
+      ]}
+    ],
+    "edges": [
+      ["bad-request","reject"],["reject","no-ack"],["expired","refresh"],["refresh","new-offer"],["setup","defer"],
+      ["defer","retry"],["interruption","skip"],["skip","verify"],["model-error","recover-model"],["recover-model","safe-model"],
+      ["consent","check-consent"],["check-consent","no-write"],["taken","recheck"],["recheck","recover-slot"],["send-error","classify"],
+      ["classify","ambiguous"]
+    ],
+    "legend": "Coral marks the trigger. Links open the relevant definition in the repository."
+  },
+  {
+    "id": "management",
+    "title": "Manage an existing booking",
+    "subtitle": "Follow cancellation and rescheduling through the customer-scoped graph and the PostgreSQL write boundary.",
+    "columns": 4,
+    "lanes": [
+      {"label": "Customer starts a booking change", "nodes": [
+        {"id":"manage","title":"“Cancel my appointment”","detail":"A private Telegram turn resolves the trusted customer.","tone":"entry","ref":"app/main.py#telegram_webhook","why":"Resolving the Telegram sender first keeps a cancellation scoped to that customer's appointments."},
+        {"id":"resolve","title":"Resolve the owned booking","ref":"app/graph/steps.py#_prepare_booking_status_change","detail":"Find a selected appointment from the customer's references or ask them to choose.","why":"Clarification gives the customer a chance to pick the right appointment when several match."},
+        {"id":"dispatch","title":"Call the scoped action","ref":"app/customer_scheduling_actions.py#CustomerSchedulingActions.cancel","detail":"Pass the business, customer and stable turn idempotency key.","why":"Passing the trusted scope and stable key lets the booking service verify ownership and recognize retries."},
+        {"id":"change","title":"Cancel and release the time","ref":"app/booking.py#BookingService.cancel","detail":"Commit the canceled status and retry result. The old slot is available to offer again.","tone":"success","why":"Keeping the canceled status and retry outcome together frees the time and preserves a stable response on replay."}
+      ]},
+      {"label": "Customer moves a booking", "nodes": [
+        {"id":"move","title":"“Move my appointment”","detail":"The private Telegram turn supplies a trusted customer and a new scheduling request.","tone":"entry","ref":"app/main.py#telegram_webhook","why":"Starting with the trusted sender ensures the replacement search applies to an appointment that customer owns."},
+        {"id":"prepare-move","title":"Identify booking and offer times","ref":"app/graph/steps.py#_prepare_reschedule","detail":"Resolve an upcoming owned booking and search for replacement slots.","why":"Identifying the original appointment provides the service and calendar context needed to find suitable replacements."},
+        {"id":"choose-move","title":"Match a replacement slot","ref":"app/graph/steps.py#select","detail":"A later turn matches the number to the saved offer and prepares the move.","why":"Matching the choice to the stored replacement offers preserves the time the customer selected."},
+        {"id":"commit-move","title":"Validate and commit the move","ref":"app/booking.py#BookingService.reschedule","detail":"Check the new interval while excluding the previous one. A failed move preserves the appointment.","tone":"success","why":"One transaction updates the appointment only after the replacement passes validation, preserving the original on failure."}
+      ]}
+    ],
+    "edges": [
+      ["manage","resolve"],["resolve","dispatch"],["dispatch","change"],["move","prepare-move"],["prepare-move","choose-move","async"],
+      ["choose-move","commit-move"]
+    ]
+  }
+]

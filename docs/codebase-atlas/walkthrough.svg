@@ -1,0 +1,387 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1354" width="1430" height="1354" role="img" aria-label="Booking walkthrough · Three messages, one appointment">
+  <title>Booking walkthrough · Three messages, one appointment</title>
+  <desc>Follow one example Telegram conversation from the first webhook to the committed booking and final reply.</desc>
+  <rect x="0" y="0" width="1430" height="1354" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Booking walkthrough · Three messages, one appointment</text>
+  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Follow one example Telegram conversation from the first webhook to the committed booking and final reply.</text>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#557383" />
+    </marker>
+  </defs>
+  <rect x="40" y="123" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="320" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="517" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="714" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="911" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="1108" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <polyline points="287.6,214.5 327.6,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="request-text" data-to="store-request" data-kind="flow" />
+  <polyline points="559.2,214.5 599.2,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="store-request" data-to="wake-request" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="830.8000000000001,214.5 870.8000000000001,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="wake-request" data-to="claim-request" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="1102.4,214.5 1142.4,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="claim-request" data-to="interpret-request" data-kind="flow" />
+  <polyline points="1258.2,264 1258.2,313.0 1258.2,313.0 1258.2,362" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="interpret-request" data-to="route-request" data-kind="flow" />
+  <polyline points="1142.4,411.5 1102.4,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="route-request" data-to="search-request" data-kind="flow" />
+  <polyline points="870.8000000000001,411.5 830.8000000000001,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="search-request" data-to="finish-request" data-kind="flow" />
+  <polyline points="599.2,411.5 559.2,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="finish-request" data-to="deliver-offer" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="327.6,411.5 287.6,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="deliver-offer" data-to="offer-text" data-kind="flow" />
+  <polyline points="56.0,411.5 42.0,411.5 42.0,608.5 56.0,608.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="offer-text" data-to="selection-text" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="287.6,608.5 327.6,608.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="selection-text" data-to="store-selection" data-kind="flow" />
+  <polyline points="559.2,608.5 599.2,608.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="store-selection" data-to="wake-selection" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="830.8000000000001,608.5 870.8000000000001,608.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="wake-selection" data-to="claim-selection" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="1102.4,608.5 1142.4,608.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="claim-selection" data-to="restore-offer" data-kind="flow" />
+  <polyline points="1258.2,658 1258.2,707.0 1258.2,707.0 1258.2,756" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="restore-offer" data-to="match-selection" data-kind="flow" />
+  <polyline points="1142.4,805.5 1102.4,805.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="match-selection" data-to="prepare-selection" data-kind="flow" />
+  <polyline points="870.8000000000001,805.5 830.8000000000001,805.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="prepare-selection" data-to="finish-selection" data-kind="flow" />
+  <polyline points="599.2,805.5 559.2,805.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="finish-selection" data-to="deliver-question" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="327.6,805.5 287.6,805.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="deliver-question" data-to="consent-text" data-kind="flow" />
+  <polyline points="56.0,805.5 42.0,805.5 42.0,1002.5 56.0,1002.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="consent-text" data-to="approval-text" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="287.6,1002.5 327.6,1002.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="approval-text" data-to="store-approval" data-kind="flow" />
+  <polyline points="559.2,1002.5 599.2,1002.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="store-approval" data-to="wake-approval" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="830.8000000000001,1002.5 870.8000000000001,1002.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="wake-approval" data-to="claim-approval" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="1102.4,1002.5 1142.4,1002.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="claim-approval" data-to="restore-consent" data-kind="flow" />
+  <polyline points="1258.2,1052 1258.2,1101.0 1258.2,1101.0 1258.2,1150" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="restore-consent" data-to="guard-approval" data-kind="flow" />
+  <polyline points="1142.4,1199.5 1102.4,1199.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="guard-approval" data-to="execute-approval" data-kind="flow" />
+  <polyline points="870.8000000000001,1199.5 830.8000000000001,1199.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="execute-approval" data-to="commit-approval" data-kind="flow" />
+  <polyline points="599.2,1199.5 559.2,1199.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="commit-approval" data-to="finish-approval" data-kind="flow" />
+  <polyline points="327.6,1199.5 287.6,1199.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="finish-approval" data-to="confirmation-text" data-kind="async" stroke-dasharray="6 5" />
+  <rect x="55" y="131" width="367" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 1 · Customer asks for a massage tomorrow</text>
+  <g id="request-text" data-source="app/main.py#telegram_webhook">
+    <a href="../../app/main.py#L77">
+      <title>telegram_webhook · app/main.py:77</title>
+      <rect x="56.0" y="165" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Book Massage tomorrow.”</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram POSTs a private</text>
+      <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">message to the authenticated</text>
+      <text x="68.0" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">webhook.</text>
+    </a>
+  </g>
+  <g id="store-request" data-source="app/channels/telegram_intake.py#save_update">
+    <a href="../../app/channels/telegram_intake.py#L41">
+      <title>save_update · app/channels/telegram_intake.py:41</title>
+      <rect x="327.6" y="165" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="339.6" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Accept update</text>
+      <text x="339.6" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_intake.py:41</text>
+      <text x="339.6" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Save the update and schedule</text>
+      <text x="339.6" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">a wake-up before returning</text>
+      <text x="339.6" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">HTTP 204.</text>
+    </a>
+  </g>
+  <g id="wake-request" data-source="app/channels/telegram_broker.py#publish_wakeup">
+    <a href="../../app/channels/telegram_broker.py#L62">
+      <title>publish_wakeup · app/channels/telegram_broker.py:62</title>
+      <rect x="599.2" y="165" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="611.2" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Wake the worker</text>
+      <text x="611.2" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_broker.py:62</text>
+      <text x="611.2" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The relay publishes bot and</text>
+      <text x="611.2" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">chat IDs for the incoming</text>
+      <text x="611.2" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">queue.</text>
+    </a>
+  </g>
+  <g id="claim-request" data-source="app/channels/telegram_turns.py#TelegramTurns.claim_chat">
+    <a href="../../app/channels/telegram_turns.py#L157">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:157</title>
+      <rect x="870.8000000000001" y="165" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="882.8000000000001" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Claim the chat head</text>
+      <text x="882.8000000000001" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:157</text>
+      <text x="882.8000000000001" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Lease this update. The worker</text>
+      <text x="882.8000000000001" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">resolves the sender and</text>
+      <text x="882.8000000000001" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">invokes LangGraph.</text>
+    </a>
+  </g>
+  <g id="interpret-request" data-source="app/graph/steps.py#understand_input">
+    <a href="../../app/graph/steps.py#L111">
+      <title>understand_input · app/graph/steps.py:111</title>
+      <rect x="1142.4" y="165" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="1154.4" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Extract service and date</text>
+      <text x="1154.4" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:111</text>
+      <text x="1154.4" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Gemma resolves Massage on</text>
+      <text x="1154.4" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">October 20, 2026 from the</text>
+      <text x="1154.4" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">sanitized message.</text>
+    </a>
+  </g>
+  <rect x="55" y="328" width="335" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 1 · Find and send two numbered times</text>
+  <g id="offer-text" data-source="app/channels/telegram.py#TelegramBotApi.send_message">
+    <a href="../../app/channels/telegram.py#L103">
+      <title>TelegramBotApi.send_message · app/channels/telegram.py:103</title>
+      <rect x="56.0" y="362" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Send the two choices</text>
+      <text x="68.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram.py:103</text>
+      <text x="68.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">CAPY offers 15:00 and 17:00</text>
+      <text x="68.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">UTC with Alex. The business</text>
+      <text x="68.0" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">still has no new booking.</text>
+    </a>
+  </g>
+  <g id="deliver-offer" data-source="app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id">
+    <a href="../../app/channels/telegram_delivery.py#L100">
+      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:100</title>
+      <rect x="327.6" y="362" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="339.6" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reserve and deliver reply</text>
+      <text x="339.6" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:100</text>
+      <text x="339.6" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A sender wake-up contains an</text>
+      <text x="339.6" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">outbox ID. The sender</text>
+      <text x="339.6" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reserves the reply.</text>
+    </a>
+  </g>
+  <g id="finish-request" data-source="app/channels/telegram_turns.py#TelegramTurns.finish">
+    <a href="../../app/channels/telegram_turns.py#L384">
+      <title>TelegramTurns.finish · app/channels/telegram_turns.py:384</title>
+      <rect x="599.2" y="362" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="611.2" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save offer and queue reply</text>
+      <text x="611.2" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:384</text>
+      <text x="611.2" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Publish the Redis checkpoint</text>
+      <text x="611.2" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">pointer and queue the reply</text>
+      <text x="611.2" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">in PostgreSQL.</text>
+    </a>
+  </g>
+  <g id="search-request" data-source="app/scheduling.py#AvailabilityService.search">
+    <a href="../../app/scheduling.py#L188">
+      <title>AvailabilityService.search · app/scheduling.py:188</title>
+      <rect x="870.8000000000001" y="362" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="882.8000000000001" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Find available slots</text>
+      <text x="882.8000000000001" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:188</text>
+      <text x="882.8000000000001" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Search for fits. LangGraph</text>
+      <text x="882.8000000000001" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">saves the numbered offer list</text>
+      <text x="882.8000000000001" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">in Redis.</text>
+    </a>
+  </g>
+  <g id="route-request" data-source="app/graph/steps.py#route_turn">
+    <a href="../../app/graph/steps.py#L266">
+      <title>route_turn · app/graph/steps.py:266</title>
+      <rect x="1142.4" y="362" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="1154.4" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Choose availability search</text>
+      <text x="1154.4" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:266</text>
+      <text x="1154.4" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Laya proposes a search.</text>
+      <text x="1154.4" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Python checks service and</text>
+      <text x="1154.4" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">date.</text>
+    </a>
+  </g>
+  <rect x="55" y="525" width="327" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 2 · Customer chooses the first time</text>
+  <g id="selection-text" data-source="app/main.py#telegram_webhook">
+    <a href="../../app/main.py#L77">
+      <title>telegram_webhook · app/main.py:77</title>
+      <rect x="56.0" y="559" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“1”</text>
+      <text x="68.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram sends a new update</text>
+      <text x="68.0" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">for the same chat.</text>
+    </a>
+  </g>
+  <g id="store-selection" data-source="app/channels/telegram_intake.py#save_update">
+    <a href="../../app/channels/telegram_intake.py#L41">
+      <title>save_update · app/channels/telegram_intake.py:41</title>
+      <rect x="327.6" y="559" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="339.6" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save the selection update</text>
+      <text x="339.6" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_intake.py:41</text>
+      <text x="339.6" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Record this update under its</text>
+      <text x="339.6" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">own Telegram update ID.</text>
+    </a>
+  </g>
+  <g id="wake-selection" data-source="app/channels/telegram_broker.py#publish_wakeup">
+    <a href="../../app/channels/telegram_broker.py#L62">
+      <title>publish_wakeup · app/channels/telegram_broker.py:62</title>
+      <rect x="599.2" y="559" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="611.2" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Wake the same chat</text>
+      <text x="611.2" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_broker.py:62</text>
+      <text x="611.2" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Send the same bot and chat</text>
+      <text x="611.2" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">IDs to the incoming</text>
+      <text x="611.2" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">partition.</text>
+    </a>
+  </g>
+  <g id="claim-selection" data-source="app/channels/telegram_turns.py#TelegramTurns.claim_chat">
+    <a href="../../app/channels/telegram_turns.py#L157">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:157</title>
+      <rect x="870.8000000000001" y="559" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="882.8000000000001" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Claim the selection</text>
+      <text x="882.8000000000001" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:157</text>
+      <text x="882.8000000000001" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Lease the new head and read</text>
+      <text x="882.8000000000001" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the published checkpoint</text>
+      <text x="882.8000000000001" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reference.</text>
+    </a>
+  </g>
+  <g id="restore-offer" data-source="app/graph/redis_checkpoint.py#RedisCheckpointSaver.fork_completed">
+    <a href="../../app/graph/redis_checkpoint.py#L44">
+      <title>RedisCheckpointSaver.fork_completed · app/graph/redis_checkpoint.py:44</title>
+      <rect x="1142.4" y="559" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="1154.4" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Restore the previous offer</text>
+      <text x="1154.4" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">redis_checkpoint.py:44</text>
+      <text x="1154.4" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Copy the completed Redis</text>
+      <text x="1154.4" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">state into the selection</text>
+      <text x="1154.4" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">attempt.</text>
+    </a>
+  </g>
+  <rect x="55" y="722" width="399" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="740" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 2 · Ask for consent to the 15:00 appointment</text>
+  <g id="consent-text" data-source="app/channels/telegram.py#TelegramBotApi.send_message">
+    <a href="../../app/channels/telegram.py#L103">
+      <title>TelegramBotApi.send_message · app/channels/telegram.py:103</title>
+      <rect x="56.0" y="756" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="68.0" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Send the consent question</text>
+      <text x="68.0" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram.py:103</text>
+      <text x="68.0" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Ask for explicit approval of</text>
+      <text x="68.0" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Massage with Alex at 15:00</text>
+      <text x="68.0" y="848" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">UTC.</text>
+    </a>
+  </g>
+  <g id="deliver-question" data-source="app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id">
+    <a href="../../app/channels/telegram_delivery.py#L100">
+      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:100</title>
+      <rect x="327.6" y="756" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="339.6" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reserve the consent reply</text>
+      <text x="339.6" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:100</text>
+      <text x="339.6" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The sender gets the outbox ID</text>
+      <text x="339.6" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and enforces chat ordering</text>
+      <text x="339.6" y="848" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and rate limits.</text>
+    </a>
+  </g>
+  <g id="finish-selection" data-source="app/channels/telegram_turns.py#TelegramTurns.finish">
+    <a href="../../app/channels/telegram_turns.py#L384">
+      <title>TelegramTurns.finish · app/channels/telegram_turns.py:384</title>
+      <rect x="599.2" y="756" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="611.2" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save pending consent</text>
+      <text x="611.2" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:384</text>
+      <text x="611.2" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Publish the selected slot’s</text>
+      <text x="611.2" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Redis state and queue the</text>
+      <text x="611.2" y="848" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">consent question.</text>
+    </a>
+  </g>
+  <g id="prepare-selection" data-source="app/graph/steps.py#_prepare_create">
+    <a href="../../app/graph/steps.py#L858">
+      <title>_prepare_create · app/graph/steps.py:858</title>
+      <rect x="870.8000000000001" y="756" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="882.8000000000001" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Ask before writing</text>
+      <text x="882.8000000000001" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:858</text>
+      <text x="882.8000000000001" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Mark the exact slot as</text>
+      <text x="882.8000000000001" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">awaiting approval and format</text>
+      <text x="882.8000000000001" y="848" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the question.</text>
+    </a>
+  </g>
+  <g id="match-selection" data-source="app/graph/steps.py#select">
+    <a href="../../app/graph/steps.py#L733">
+      <title>select · app/graph/steps.py:733</title>
+      <rect x="1142.4" y="756" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="1154.4" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Resolve option 1</text>
+      <text x="1154.4" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:733</text>
+      <text x="1154.4" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Gemma finds choice 1. Laya</text>
+      <text x="1154.4" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">proposes BOOK. Python matches</text>
+      <text x="1154.4" y="848" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the saved 15:00 slot.</text>
+    </a>
+  </g>
+  <rect x="55" y="919" width="343" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="937" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 3 · Customer gives permission to book</text>
+  <g id="approval-text" data-source="app/main.py#telegram_webhook">
+    <a href="../../app/main.py#L77">
+      <title>telegram_webhook · app/main.py:77</title>
+      <rect x="56.0" y="953" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="68.0" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Yes, book it.”</text>
+      <text x="68.0" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The approval arrives as a</text>
+      <text x="68.0" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">separate Telegram update.</text>
+    </a>
+  </g>
+  <g id="store-approval" data-source="app/channels/telegram_intake.py#save_update">
+    <a href="../../app/channels/telegram_intake.py#L41">
+      <title>save_update · app/channels/telegram_intake.py:41</title>
+      <rect x="327.6" y="953" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="339.6" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save the approval update</text>
+      <text x="339.6" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_intake.py:41</text>
+      <text x="339.6" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Record the approval. Its</text>
+      <text x="339.6" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">update ID will identify any</text>
+      <text x="339.6" y="1045" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking retry.</text>
+    </a>
+  </g>
+  <g id="wake-approval" data-source="app/channels/telegram_broker.py#publish_wakeup">
+    <a href="../../app/channels/telegram_broker.py#L62">
+      <title>publish_wakeup · app/channels/telegram_broker.py:62</title>
+      <rect x="599.2" y="953" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="611.2" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Wake the chat again</text>
+      <text x="611.2" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_broker.py:62</text>
+      <text x="611.2" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The relay wakes the same chat</text>
+      <text x="611.2" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">partition using IDs.</text>
+    </a>
+  </g>
+  <g id="claim-approval" data-source="app/channels/telegram_turns.py#TelegramTurns.claim_chat">
+    <a href="../../app/channels/telegram_turns.py#L157">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:157</title>
+      <rect x="870.8000000000001" y="953" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="882.8000000000001" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Claim the approval</text>
+      <text x="882.8000000000001" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:157</text>
+      <text x="882.8000000000001" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Lease the message and load</text>
+      <text x="882.8000000000001" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the pointer saved after</text>
+      <text x="882.8000000000001" y="1045" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">choosing option 1.</text>
+    </a>
+  </g>
+  <g id="restore-consent" data-source="app/graph/redis_checkpoint.py#RedisCheckpointSaver.fork_completed">
+    <a href="../../app/graph/redis_checkpoint.py#L44">
+      <title>RedisCheckpointSaver.fork_completed · app/graph/redis_checkpoint.py:44</title>
+      <rect x="1142.4" y="953" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="1154.4" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Restore pending consent</text>
+      <text x="1154.4" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">redis_checkpoint.py:44</text>
+      <text x="1154.4" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bring the exact proposed slot</text>
+      <text x="1154.4" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">into this attempt’s graph</text>
+      <text x="1154.4" y="1045" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">state.</text>
+    </a>
+  </g>
+  <rect x="55" y="1116" width="447" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="1134" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 3 · Commit once and send the saved booking details</text>
+  <g id="confirmation-text" data-source="app/channels/telegram.py#TelegramBotApi.send_message">
+    <a href="../../app/channels/telegram.py#L103">
+      <title>TelegramBotApi.send_message · app/channels/telegram.py:103</title>
+      <rect x="56.0" y="1150" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="68.0" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Send the confirmation</text>
+      <text x="68.0" y="1193" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram.py:103</text>
+      <text x="68.0" y="1212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The outbox sender delivers</text>
+      <text x="68.0" y="1227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">confirmation of the saved</text>
+      <text x="68.0" y="1242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">15:00 appointment.</text>
+    </a>
+  </g>
+  <g id="finish-approval" data-source="app/channels/telegram_turns.py#TelegramTurns.finish">
+    <a href="../../app/channels/telegram_turns.py#L384">
+      <title>TelegramTurns.finish · app/channels/telegram_turns.py:384</title>
+      <rect x="327.6" y="1150" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="339.6" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Queue the final reply</text>
+      <text x="339.6" y="1193" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:384</text>
+      <text x="339.6" y="1212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Save the reply and completed</text>
+      <text x="339.6" y="1227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">checkpoint pointer after the</text>
+      <text x="339.6" y="1242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking commits.</text>
+    </a>
+  </g>
+  <g id="commit-approval" data-source="app/booking.py#BookingService.create">
+    <a href="../../app/booking.py#L150">
+      <title>BookingService.create · app/booking.py:150</title>
+      <rect x="599.2" y="1150" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="611.2" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Commit one booking</text>
+      <text x="611.2" y="1193" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:150</text>
+      <text x="611.2" y="1212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Recheck slot and ownership.</text>
+      <text x="611.2" y="1227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Commit the booking and retry</text>
+      <text x="611.2" y="1242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">record together.</text>
+    </a>
+  </g>
+  <g id="execute-approval" data-source="app/graph/steps.py#execute">
+    <a href="../../app/graph/steps.py#L939">
+      <title>execute · app/graph/steps.py:939</title>
+      <rect x="870.8000000000001" y="1150" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="882.8000000000001" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Execute the guarded write</text>
+      <text x="882.8000000000001" y="1193" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:939</text>
+      <text x="882.8000000000001" y="1212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Recheck explicit consent and</text>
+      <text x="882.8000000000001" y="1227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">call the customer-scoped</text>
+      <text x="882.8000000000001" y="1242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">create action.</text>
+    </a>
+  </g>
+  <g id="guard-approval" data-source="app/graph/steps.py#_route_booking_consent">
+    <a href="../../app/graph/steps.py#L341">
+      <title>_route_booking_consent · app/graph/steps.py:341</title>
+      <rect x="1142.4" y="1150" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="1154.4" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Verify approval and route</text>
+      <text x="1154.4" y="1193" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:341</text>
+      <text x="1154.4" y="1212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The latest reply approves.</text>
+      <text x="1154.4" y="1227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Laya proposes BOOK for the</text>
+      <text x="1154.4" y="1242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">pending 15:00 offer.</text>
+    </a>
+  </g>
+  <text x="42" y="1326" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bold labels show the three customer turns. Dashed arrows include queue handoffs and the wait for the next Telegram message.</text>
+</svg>

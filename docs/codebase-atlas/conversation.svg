@@ -1,0 +1,183 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 960" width="1430" height="960" role="img" aria-label="Inside a LangGraph conversation turn">
+  <title>Inside a LangGraph conversation turn</title>
+  <desc>Gemma extracts facts, Laya proposes the next action, and Python checks the proposed route before any write.</desc>
+  <rect x="0" y="0" width="1430" height="960" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Inside a LangGraph conversation turn</text>
+  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Gemma extracts facts, Laya proposes the next action, and Python checks the proposed route before any write.</text>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#557383" />
+    </marker>
+  </defs>
+  <rect x="40" y="123" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="320" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="517" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="714" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <polyline points="355.5,214.5 395.5,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="entry" data-to="load" data-kind="flow" />
+  <polyline points="695.0,214.5 735.0,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="load" data-to="understand" data-kind="flow" />
+  <polyline points="1034.5,214.5 1074.5,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="understand" data-to="merge" data-kind="flow" />
+  <polyline points="884.75,264 884.75,313.0 545.25,313.0 545.25,362" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="understand" data-to="gemma" data-kind="flow" />
+  <polyline points="1224.25,264 1224.25,313.0 1224.25,313.0 1224.25,362" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="merge" data-to="decision" data-kind="flow" />
+  <polyline points="1074.5,411.5 1034.5,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="decision" data-to="laya" data-kind="flow" />
+  <polyline points="1224.25,461 1224.25,510.0 545.25,510.0 545.25,559" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="decision" data-to="action" data-kind="flow" />
+  <polyline points="1224.25,461 1224.25,510.0 884.75,510.0 884.75,559" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="decision" data-to="offers" data-kind="flow" />
+  <polyline points="1224.25,461 1224.25,510.0 1224.25,510.0 1224.25,559" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="decision" data-to="respond" data-kind="flow" />
+  <polyline points="545.25,658 545.25,707.0 545.25,707.0 545.25,756" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="action" data-to="actions" data-kind="flow" />
+  <polyline points="395.5,805.5 355.5,805.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="actions" data-to="booking" data-kind="flow" />
+  <polyline points="884.75,658 884.75,707.0 884.75,707.0 884.75,756" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="offers" data-to="persist" data-kind="flow" />
+  <polyline points="1224.25,658 1224.25,707.0 884.75,707.0 884.75,756" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="respond" data-to="persist" data-kind="flow" />
+  <polyline points="1034.5,805.5 1074.5,805.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="persist" data-to="checkpoint" data-kind="async" stroke-dasharray="6 5" />
+  <rect x="55" y="131" width="239" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Graph entry and understanding</text>
+  <g id="entry" data-source="app/graph/workflow.py#LangGraphWorkflow.handle_turn">
+    <a href="../../app/graph/workflow.py#L13">
+      <title>LangGraphWorkflow.handle_turn · app/graph/workflow.py:13</title>
+      <rect x="56.0" y="165" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Invoke compiled graph</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">workflow.py:13</text>
+      <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pass raw input and scoped actions</text>
+      <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">through runtime context.</text>
+    </a>
+  </g>
+  <g id="load" data-source="app/graph/steps.py#load_context">
+    <a href="../../app/graph/steps.py#L95">
+      <title>load_context · app/graph/steps.py:95</title>
+      <rect x="395.5" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="407.5" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">load_context</text>
+      <text x="407.5" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:95</text>
+      <text x="407.5" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Load the business catalog and previous</text>
+      <text x="407.5" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">draft.</text>
+    </a>
+  </g>
+  <g id="understand" data-source="app/graph/steps.py#understand_input">
+    <a href="../../app/graph/steps.py#L111">
+      <title>understand_input · app/graph/steps.py:111</title>
+      <rect x="735.0" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="747.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">understand_input</text>
+      <text x="747.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:111</text>
+      <text x="747.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Transcribe voice if present. Redact</text>
+      <text x="747.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">text and ask Gemma for facts.</text>
+    </a>
+  </g>
+  <g id="merge" data-source="app/graph/steps.py#merge_draft">
+    <a href="../../app/graph/steps.py#L162">
+      <title>merge_draft · app/graph/steps.py:162</title>
+      <rect x="1074.5" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="1086.5" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">merge_draft</text>
+      <text x="1086.5" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:162</text>
+      <text x="1086.5" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Merge current facts with the saved</text>
+      <text x="1086.5" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">draft.</text>
+    </a>
+  </g>
+  <rect x="55" y="328" width="263" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Model calls and routing decision</text>
+  <g id="gemma" data-source="app/llm/gemma.py#GemmaUnderstanding.interpret">
+    <a href="../../app/llm/gemma.py#L33">
+      <title>GemmaUnderstanding.interpret · app/llm/gemma.py:33</title>
+      <rect x="395.5" y="362" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="407.5" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">GemmaUnderstanding</text>
+      <text x="407.5" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">gemma.py:33</text>
+      <text x="407.5" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Return interpreted text and structured</text>
+      <text x="407.5" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking facts. Voice also uses the</text>
+      <text x="407.5" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transcription endpoint.</text>
+    </a>
+  </g>
+  <g id="laya" data-source="app/graph/laya.py#LayaDecision.decide">
+    <a href="../../app/graph/laya.py#L23">
+      <title>LayaDecision.decide · app/graph/laya.py:23</title>
+      <rect x="735.0" y="362" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="747.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">LayaDecision</text>
+      <text x="747.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">laya.py:23</text>
+      <text x="747.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Send message and draft to Laya and</text>
+      <text x="747.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">parse the proposed action.</text>
+    </a>
+  </g>
+  <g id="decision" data-source="app/graph/steps.py#route_turn">
+    <a href="../../app/graph/steps.py#L266">
+      <title>route_turn · app/graph/steps.py:266</title>
+      <rect x="1074.5" y="362" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="1086.5" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">decide</text>
+      <text x="1086.5" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:266</text>
+      <text x="1086.5" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Laya receives the interpreted message</text>
+      <text x="1086.5" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and draft. Python validates the route.</text>
+    </a>
+  </g>
+  <rect x="55" y="525" width="311" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Choose an action, offer times or reply</text>
+  <g id="action" data-source="app/graph/steps.py#prepare_action">
+    <a href="../../app/graph/steps.py#L776">
+      <title>prepare_action · app/graph/steps.py:776</title>
+      <rect x="395.5" y="559" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="407.5" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">prepare_action → execute</text>
+      <text x="407.5" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:776</text>
+      <text x="407.5" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check booking ownership or the selected</text>
+      <text x="407.5" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">offer. Execute if preparation permits.</text>
+    </a>
+  </g>
+  <g id="offers" data-source="app/graph/steps.py#search">
+    <a href="../../app/graph/steps.py#L698">
+      <title>search · app/graph/steps.py:698</title>
+      <rect x="735.0" y="559" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="747.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">search / select</text>
+      <text x="747.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:698</text>
+      <text x="747.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Search offers slots. Select resolves a</text>
+      <text x="747.0" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">saved choice and can continue to</text>
+      <text x="747.0" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">preparation.</text>
+    </a>
+  </g>
+  <g id="respond" data-source="app/graph/steps.py#clarify">
+    <a href="../../app/graph/steps.py#L626">
+      <title>clarify · app/graph/steps.py:626</title>
+      <rect x="1074.5" y="559" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="1086.5" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">clarify / help / lookup</text>
+      <text x="1086.5" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:626</text>
+      <text x="1086.5" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Ask for details, answer catalog</text>
+      <text x="1086.5" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">questions or list owned bookings.</text>
+      <text x="1086.5" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Escalate shows supported options.</text>
+    </a>
+  </g>
+  <rect x="55" y="722" width="207" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="740" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Action services and state</text>
+  <g id="booking" data-source="app/booking.py#BookingService">
+    <a href="../../app/booking.py#L46">
+      <title>BookingService · app/booking.py:46</title>
+      <rect x="56.0" y="756" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="68.0" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">BookingService</text>
+      <text x="68.0" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:46</text>
+      <text x="68.0" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Apply booking changes inside PostgreSQL</text>
+      <text x="68.0" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transactions.</text>
+    </a>
+  </g>
+  <g id="actions" data-source="app/customer_scheduling_actions.py#CustomerSchedulingActions">
+    <a href="../../app/customer_scheduling_actions.py#L18">
+      <title>CustomerSchedulingActions · app/customer_scheduling_actions.py:18</title>
+      <rect x="395.5" y="756" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="407.5" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">CustomerSchedulingActions</text>
+      <text x="407.5" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">customer_scheduling_actions.py:18</text>
+      <text x="407.5" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Dispatch owned operations to</text>
+      <text x="407.5" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">AvailabilityService or BookingService.</text>
+    </a>
+  </g>
+  <g id="persist" data-source="app/graph/steps.py#persist">
+    <a href="../../app/graph/steps.py#L1089">
+      <title>persist · app/graph/steps.py:1089</title>
+      <rect x="735.0" y="756" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="747.0" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">persist</text>
+      <text x="747.0" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:1089</text>
+      <text x="747.0" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Append the actual reply and return the</text>
+      <text x="747.0" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">turn result.</text>
+    </a>
+  </g>
+  <g id="checkpoint" data-source="app/graph/redis_checkpoint.py#RedisCheckpointSaver.put">
+    <a href="../../app/graph/redis_checkpoint.py#L118">
+      <title>RedisCheckpointSaver.put · app/graph/redis_checkpoint.py:118</title>
+      <rect x="1074.5" y="756" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="1086.5" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">RedisCheckpointSaver</text>
+      <text x="1086.5" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">redis_checkpoint.py:118</text>
+      <text x="1086.5" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">LangGraph checkpoints the attempt's</text>
+      <text x="1086.5" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">state throughout execution.</text>
+    </a>
+  </g>
+  <text x="42" y="932" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Selected routes. The compiled graph in app/graph/builder.py shows how all reply branches converge on persist.</text>
+</svg>

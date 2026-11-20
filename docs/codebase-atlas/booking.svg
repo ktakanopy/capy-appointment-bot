@@ -1,0 +1,154 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 763" width="1430" height="763" role="img" aria-label="Happy path · Create a booking in three turns">
+  <title>Happy path · Create a booking in three turns</title>
+  <desc>Each row starts with a new customer message. The first two turns save conversation state for the next message.</desc>
+  <rect x="0" y="0" width="1430" height="763" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Happy path · Create a booking in three turns</text>
+  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Each row starts with a new customer message. The first two turns save conversation state for the next message.</text>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#557383" />
+    </marker>
+  </defs>
+  <rect x="40" y="123" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="320" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="517" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <polyline points="355.5,214.5 395.5,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="request" data-to="search" data-kind="flow" />
+  <polyline points="695.0,214.5 735.0,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="search" data-to="availability" data-kind="flow" />
+  <polyline points="1034.5,214.5 1074.5,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="availability" data-to="offer" data-kind="flow" />
+  <polyline points="355.5,411.5 395.5,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="choice" data-to="select" data-kind="flow" />
+  <polyline points="695.0,411.5 735.0,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="select" data-to="prepare" data-kind="flow" />
+  <polyline points="1034.5,411.5 1074.5,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="prepare" data-to="ask" data-kind="flow" />
+  <polyline points="355.5,608.5 395.5,608.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="yes" data-to="gate" data-kind="flow" />
+  <polyline points="695.0,608.5 735.0,608.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="gate" data-to="create" data-kind="flow" />
+  <polyline points="1034.5,608.5 1074.5,608.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="create" data-to="done" data-kind="flow" />
+  <rect x="55" y="131" width="239" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 1 · Find available times</text>
+  <g id="request" data-source="app/main.py#telegram_webhook">
+    <a href="../../app/main.py#L77">
+      <title>telegram_webhook · app/main.py:77</title>
+      <rect x="56.0" y="165" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Massage on Friday”</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Gemma extracts the service and date.</text>
+      <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Laya proposes a slot search.</text>
+    </a>
+  </g>
+  <g id="search" data-source="app/graph/steps.py#search">
+    <a href="../../app/graph/steps.py#L698">
+      <title>search · app/graph/steps.py:698</title>
+      <rect x="395.5" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="407.5" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Search available slots</text>
+      <text x="407.5" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:698</text>
+      <text x="407.5" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Build the search request from the</text>
+      <text x="407.5" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">catalog and draft.</text>
+    </a>
+  </g>
+  <g id="availability" data-source="app/scheduling.py#AvailabilityService.search">
+    <a href="../../app/scheduling.py#L188">
+      <title>AvailabilityService.search · app/scheduling.py:188</title>
+      <rect x="735.0" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="747.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Apply schedule rules</text>
+      <text x="747.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:188</text>
+      <text x="747.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Filter by staff hours, buffers, blocks</text>
+      <text x="747.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and occupied intervals.</text>
+    </a>
+  </g>
+  <g id="offer" data-source="app/graph/steps.py#persist">
+    <a href="../../app/graph/steps.py#L1089">
+      <title>persist · app/graph/steps.py:1089</title>
+      <rect x="1074.5" y="165" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="1086.5" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Return numbered offers</text>
+      <text x="1086.5" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:1089</text>
+      <text x="1086.5" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Return a list. LangGraph checkpoints</text>
+      <text x="1086.5" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the offered slots.</text>
+    </a>
+  </g>
+  <rect x="55" y="328" width="255" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 2 · Select a specific time</text>
+  <g id="choice" data-source="app/telegram_service.py#_restore_turn_checkpoint">
+    <a href="../../app/telegram_service.py#L161">
+      <title>_restore_turn_checkpoint · app/telegram_service.py:161</title>
+      <rect x="56.0" y="362" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“1”</text>
+      <text x="68.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_service.py:161</text>
+      <text x="68.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The worker forks the last completed</text>
+      <text x="68.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Redis checkpoint into this attempt.</text>
+    </a>
+  </g>
+  <g id="select" data-source="app/graph/steps.py#select">
+    <a href="../../app/graph/steps.py#L733">
+      <title>select · app/graph/steps.py:733</title>
+      <rect x="395.5" y="362" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="407.5" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Match option 1</text>
+      <text x="407.5" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:733</text>
+      <text x="407.5" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Resolve the number against the previous</text>
+      <text x="407.5" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">offer and set the pending slot.</text>
+    </a>
+  </g>
+  <g id="prepare" data-source="app/graph/steps.py#_prepare_create">
+    <a href="../../app/graph/steps.py#L858">
+      <title>_prepare_create · app/graph/steps.py:858</title>
+      <rect x="735.0" y="362" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="747.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save the consent marker</text>
+      <text x="747.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:858</text>
+      <text x="747.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Record which specific appointment is</text>
+      <text x="747.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">awaiting approval.</text>
+    </a>
+  </g>
+  <g id="ask" data-source="app/graph/booking_messages.py#booking_confirmation_question">
+    <a href="../../app/graph/booking_messages.py#L44">
+      <title>booking_confirmation_question · app/graph/booking_messages.py:44</title>
+      <rect x="1074.5" y="362" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="1086.5" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Ask for approval</text>
+      <text x="1086.5" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking_messages.py:44</text>
+      <text x="1086.5" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reply with the exact local time,</text>
+      <text x="1086.5" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">service and professional.</text>
+    </a>
+  </g>
+  <rect x="55" y="525" width="223" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 3 · Approve and commit</text>
+  <g id="yes" data-source="app/graph/steps.py#_route_booking_consent">
+    <a href="../../app/graph/steps.py#L341">
+      <title>_route_booking_consent · app/graph/steps.py:341</title>
+      <rect x="56.0" y="559" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Yes”</text>
+      <text x="68.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:341</text>
+      <text x="68.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The pending offer is restored and the</text>
+      <text x="68.0" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">latest message supplies explicit</text>
+      <text x="68.0" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">consent.</text>
+    </a>
+  </g>
+  <g id="gate" data-source="app/graph/steps.py#_route_booking_consent">
+    <a href="../../app/graph/steps.py#L341">
+      <title>_route_booking_consent · app/graph/steps.py:341</title>
+      <rect x="395.5" y="559" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="407.5" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Verify consent and route</text>
+      <text x="407.5" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:341</text>
+      <text x="407.5" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Require clear approval, a still-offered</text>
+      <text x="407.5" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">slot and an eligible Laya BOOK</text>
+      <text x="407.5" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">proposal.</text>
+    </a>
+  </g>
+  <g id="create" data-source="app/booking.py#BookingService.create">
+    <a href="../../app/booking.py#L150">
+      <title>BookingService.create · app/booking.py:150</title>
+      <rect x="735.0" y="559" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="747.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Commit the booking</text>
+      <text x="747.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:150</text>
+      <text x="747.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Revalidate the slot and commit the</text>
+      <text x="747.0" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking and idempotency result.</text>
+    </a>
+  </g>
+  <g id="done" data-source="app/graph/booking_messages.py#booking_created_reply">
+    <a href="../../app/graph/booking_messages.py#L72">
+      <title>booking_created_reply · app/graph/booking_messages.py:72</title>
+      <rect x="1074.5" y="559" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="1086.5" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Return booking details</text>
+      <text x="1086.5" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking_messages.py:72</text>
+      <text x="1086.5" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Format success from the saved booking.</text>
+      <text x="1086.5" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The worker queues it for the sender.</text>
+    </a>
+  </g>
+  <text x="42" y="735" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Arrows follow each customer turn. The booking write and Telegram reply commit in separate transactions.</text>
+</svg>

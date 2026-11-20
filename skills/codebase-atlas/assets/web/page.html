@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>@@TITLE@@ · Codebase Atlas</title>
+  <meta name="description" content="Explore the codebase through interactive flows, linked source files, and class descriptions.">
+  <style>@@STYLES@@</style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" id="brand" aria-label="Codebase Atlas home">
+      <span class="brand-mark" data-icon="atlas"></span>
+      <span>Codebase<span class="brand-accent"> Atlas</span></span>
+    </a>
+    <button id="open-search" class="search-trigger" type="button" aria-haspopup="dialog">
+      <span data-icon="search"></span><span>Search files, classes, and steps</span><kbd id="search-key">⌘ K</kbd>
+    </button>
+    <a id="svg-link" class="button" href="runtime.svg" target="_blank" rel="noopener">
+      <span data-icon="file"></span><span>Open SVG</span>
+    </a>
+  </header>
+
+  <div class="workspace">
+    <nav class="sidebar" aria-label="Atlas views">
+      <div class="project">
+        <div class="project-mark" id="project-mark" aria-hidden="true"></div>
+        <div><div class="project-name" id="project-name"></div><div class="project-caption">Repository explorer</div></div>
+      </div>
+      <div class="nav-main">
+        <div class="nav-title">Flows</div>
+        <div id="flow-nav" class="nav-list"></div>
+        <div class="nav-title reference-title">Reference</div>
+        <div id="file-nav" class="nav-list"></div>
+      </div>
+      <a class="guide-link" href="@@GUIDE_URL@@"><span data-icon="book"></span> Atlas guide</a>
+    </nav>
+
+    <main class="main">
+      <header class="view-header">
+        <div class="view-heading">
+          <h1 id="view-title"></h1>
+          <p id="view-description"></p>
+        </div>
+        <div class="view-actions">
+          <button id="open-transcript" class="button" type="button" aria-haspopup="dialog" hidden>
+            <span data-icon="conversation"></span><span>Transcript</span>
+          </button>
+          <button id="open-inspector" class="button" type="button" aria-label="Details" aria-controls="inspector" aria-expanded="false">
+            <span data-icon="panel"></span><span>Details</span>
+          </button>
+        </div>
+      </header>
+
+      <section id="graph" class="graph" aria-label="Interactive graph">
+        <div class="viewport" id="viewport" tabindex="0" role="region" aria-label="Graph canvas" aria-describedby="canvas-help">
+          <div id="scene" class="scene"></div>
+        </div>
+        <div class="canvas-toolbar" role="group" aria-label="Graph viewport controls">
+          <button id="zoom-out" type="button" aria-label="Zoom out" title="Zoom out (−)"><span data-icon="minus"></span></button>
+          <output id="zoom-level" aria-label="Zoom level">100%</output>
+          <button id="zoom-in" type="button" aria-label="Zoom in" title="Zoom in (+)"><span data-icon="plus"></span></button>
+          <span class="toolbar-divider"></span>
+          <button id="fit" type="button" aria-label="Fit graph" title="Fit graph (0)"><span data-icon="fit"></span></button>
+        </div>
+        <button id="map" class="minimap" type="button" aria-label="Show graph overview" title="Click to jump. Press Enter to fit."></button>
+      </section>
+
+      <section id="directory" class="directory" aria-label="Files and classes" hidden>
+        <div class="directory-controls">
+          <label class="filter-box"><span data-icon="search"></span><input id="file-filter" type="search" placeholder="Filter files and classes" autocomplete="off"></label>
+          <label class="group-filter"><span class="sr-only">Filter by area</span><select id="group-filter"></select></label>
+        </div>
+        <div id="directory-results"></div>
+      </section>
+
+      <footer id="graph-footer" class="graph-footer">
+        <div class="legend" aria-label="Arrow legend">
+          <span><i class="legend-line" aria-hidden="true"></i> Call or flow</span>
+          <span><i class="legend-line async" aria-hidden="true"></i> Async or framework handoff</span>
+        </div>
+        <span id="canvas-help">Drag to pan · Scroll to zoom · Select a node</span>
+      </footer>
+    </main>
+
+    <aside id="inspector" class="inspector" aria-label="Atlas inspector">
+      <div class="inspector-bar">
+        <span data-icon="panel"></span><h2>Inspector</h2>
+        <button id="close-inspector" class="icon-button" type="button" aria-label="Close inspector"><span data-icon="close"></span></button>
+      </div>
+      <div id="inspector-content" class="inspector-content" aria-live="polite"></div>
+    </aside>
+  </div>
+
+  <dialog id="search-dialog" aria-label="Search atlas">
+    <form id="search-form">
+      <label class="search-field"><span data-icon="search"></span><input id="search-input" type="search" placeholder="Search files, classes, and steps…" autocomplete="off" aria-label="Search query"></label>
+      <button id="close-search" type="button" class="key-button" aria-label="Close search">Esc</button>
+    </form>
+    <div id="search-results" class="search-results"></div>
+  </dialog>
+
+  <dialog id="source-dialog" class="reader-dialog" aria-labelledby="source-title">
+    <header class="dialog-heading">
+      <div><h2 id="source-title"></h2><p id="source-location"></p></div>
+      <button id="close-source" type="button" class="icon-button" aria-label="Close source"><span data-icon="close"></span></button>
+    </header>
+    <div id="source-file-body"></div>
+  </dialog>
+
+  <dialog id="transcript-dialog" class="reader-dialog transcript-dialog" aria-labelledby="transcript-title">
+    <header class="dialog-heading">
+      <div><h2 id="transcript-title">Example conversation</h2><p id="transcript-context"></p></div>
+      <button id="close-transcript" type="button" class="icon-button" aria-label="Close transcript"><span data-icon="close"></span></button>
+    </header>
+    <div id="transcript-messages" class="transcript-messages"></div>
+  </dialog>
+  <script id="atlas-data" type="application/json">@@DATA@@</script>
+  <script>@@SCRIPT@@</script>
+</body>
+</html>

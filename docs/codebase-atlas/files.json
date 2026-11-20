@@ -1,0 +1,180 @@
+[
+  {
+    "id":"files-telegram",
+    "title":"Source reference · Telegram and worker processes",
+    "subtitle":"Start with the webhook and service CLI. Class rows link to the defining class or its most useful method.",
+    "files":[
+      ["app/main.py","Serve FastAPI health probes and authenticate and persist Telegram updates.",["telegram_webhook","lifespan","health"],[
+        ["HealthDependencies","Bundles settings and the Redis client for health checks."],["_SuppressHealthAccess","Filters routine health requests from access logs.","filter"]]],
+      ["app/telegram_service.py","Connect worker roles to hosted RabbitMQ or PostgreSQL polling and coordinate a claimed turn.",["main","run_broker_worker","process_turn","run_worker"],[]],
+      ["app/telegram_worker.py","Prepare one message, resolve account context and invoke the graph for scheduling input.",["TelegramWorker._reply_to_message","TelegramWorker._run_turn"],[
+        ["TelegramWorker","Handles commands, contacts, text and voice for a turn.","_reply_to_message"]]],
+      ["app/channels/telegram_turns.py","Lease the oldest eligible chat update and commit the resulting state pointer and reply.",["TelegramTurns.claim_chat","TelegramTurns.finish"],[
+        ["TelegramTurns","Owns the chat lease and the turn lifecycle.","claim_chat"],["TurnClaim","Binds an attempt to proof of current ownership.","assert_owned"],["ClaimLost","Signals that an attempt can no longer write."]]],
+      ["app/channels/telegram_intake.py","Identify supported private messages and save incoming updates idempotently.",["save_update","private_message"],[]],
+      ["app/channels/telegram_delivery.py","Enforce outgoing ordering, budgets and dispatch leases and classify send outcomes.",["deliver_claimed","TelegramOutbox.claim_by_id"],[
+        ["TelegramOutbox","Reserves and settles outgoing jobs.","claim_by_id"],["TelegramDelivery","Resolves bot credentials and sends the job.","send"]]],
+      ["app/channels/telegram_publications.py","Journal wake-ups and relay or backfill pending publications from PostgreSQL.",["schedule_publication","publish_due","backfill_publications"],[]],
+      ["app/channels/telegram_broker.py","Partition incoming wakes by chat, publish ID-only messages and consume them with acknowledgements.",["relay_publications","consume_wakeups","publish_wakeup"],[]],
+      ["app/channels/telegram_repository.py","Link a verified Telegram sender to a business customer and save sender-owned contact details.",["TelegramRepository.ensure_customer_for_sender"],[
+        ["TelegramRepository","Owns Telegram-specific identity and contact queries.","ensure_customer_for_sender"]]],
+      ["app/channels/bots.py","Map a webhook route to a business bot and manage bot registration.",["BotRegistry.by_route","BotRegistry.register"],[
+        ["BotRegistry","Looks up and writes bot registrations.","by_route"],["TelegramBot","Checks webhook credentials and builds the API client.","accepts_webhook"]]],
+      ["app/channels/telegram.py","Wrap Telegram Bot API calls for registration, sending and bounded audio downloads.",["TelegramBotApi.call"],[
+        ["TelegramBotApi","Sends requests and parses Telegram responses.","call"],["TelegramApiError","Reports a typed API rejection or transport failure.","is_permanent_rejection"]]],
+      ["app/channels/audio_chunks.py","Decode bounded audio with FFmpeg and emit overlapping WAV chunks for transcription.",["AudioChunker.chunks"],[
+        ["AudioChunker","Applies decode limits and chooses chunk boundaries.","chunks"],["AudioChunk","Carries a WAV chunk and overlap metadata."],["AudioError","Signals an audio decode or processing failure."]]],
+      ["app/channels/phone.py","Normalize a shared contact number into the accepted stored format.",["canonical_phone"],[]],
+      ["app/channels/__init__.py","Defines the channel adapters package.",[""],[]]
+    ]
+  },
+  {
+    "id":"files-conversation",
+    "title":"Source reference · Conversation, models and state",
+    "subtitle":"Start with runtime wiring, the workflow facade and graph steps. Provider adapters are called by the graph.",
+    "files":[
+      ["app/runtime.py","Assemble the normal workflow, models, Redis checkpointer and scheduling services.",["create_runtime","close_runtime"],[
+        ["RuntimeContext","Holds worker-scoped dependencies."]]],
+      ["app/graph/workflow.py","Invoke the compiled graph with raw input and scheduling actions scoped to one turn.",["LangGraphWorkflow.handle_turn"],[
+        ["LangGraphWorkflow","Provides the turn and checkpoint-reading interface.","handle_turn"]]],
+      ["app/graph/builder.py","Compile nodes and conditional transitions into the LangGraph workflow.",["build_graph"],[]],
+      ["app/graph/steps.py","Implement the per-turn workflow from catalog load through interpretation, routing, guarded actions and persistence.",["understand_input","route_turn","prepare_action","execute","persist"],[]],
+      ["app/graph/redis_checkpoint.py","Store expiring LangGraph progress and fork the last completed state into a worker attempt.",["RedisCheckpointSaver.fork_completed","RedisCheckpointSaver.put"],[
+        ["RedisCheckpointSaver","Implements LangGraph's Redis-backed checkpoint store.","fork_completed"]]],
+      ["app/graph/contracts.py","Define the shape of drafts, model decisions, turn input metadata and results.",["TurnContext","WorkflowDraft"],[
+        ["WorkflowDraft","Carries facts, offers and the pending consent marker."],["DecisionOutput","Validates the action proposed by Laya."],["BookingRef","Presents a selectable customer appointment."],["TurnContext","Carries per-turn business, language and identity."],["TurnResult","Returns reply text and optional slot or booking data."]]],
+      ["app/graph/context.py","Carry raw inputs and live action interfaces through LangGraph runtime context.",["TurnRuntime"],[
+        ["TurnInput","Keeps text, recording and display name in memory."],["TurnRuntime","Combines raw input with scoped operations."]]],
+      ["app/graph/state.py","Declare graph state and bound the checkpointed message history.",["SchedulingGraphState","_append_messages"],[
+        ["SchedulingGraphState","Defines the shared fields graph nodes read and write."]]],
+      ["app/graph/actions.py","Define the scheduling operations injected into graph nodes.",["SchedulingActions"],[
+        ["SchedulingActions","Protocol for real and simulated scheduling actions."]]],
+      ["app/graph/consent.py","Recognize explicit approval and rejection phrases in English and Portuguese.",["classify_booking_consent"],[]],
+      ["app/graph/booking_messages.py","Build localized consent and success replies with concrete appointment details.",["booking_confirmation_question","booking_created_reply"],[]],
+      ["app/chat_helpers.py","Resolve service and professional choices and format offered slot lists.",["_choose_service","_slot_message"],[]],
+      ["app/privacy.py","Redact recognized contact details and the supplied display name from free text.",["sanitize_message"],[]],
+      ["app/graph/laya.py","Send the interpreted message and draft to the Laya route endpoint and validate its result.",["LayaDecision.decide"],[
+        ["LayaDecision","Implements the production routing provider.","decide"]]],
+      ["app/graph/decision.py","Propose actions with deterministic rules for evaluation baselines.",["DeterministicDecision.decide"],[
+        ["DeterministicDecision","Provides offline routing from the message and draft.","decide"]]],
+      ["app/llm/gemma.py","Call Gemma for structured facts and transcribe and join the chunks of one recording.",["GemmaUnderstanding.interpret","GemmaUnderstanding.transcribe_recording"],[
+        ["GemmaUnderstanding","Implements understanding and transcription.","interpret"],["ProviderError","Reports an unusable provider result or call failure."]]],
+      ["app/llm/provider.py","Select understanding and routing providers and supply an offline interpretation baseline.",["build_interpreter","build_decision"],[
+        ["Interpreter","Protocol for text-to-facts providers.","interpret"],["DeterministicInterpreter","Extracts common scheduling facts without a model.","interpret"]]],
+      ["app/llm/schemas.py","Validate the plain-language interpretation and extracted booking facts.",["SchedulingInterpretation"],[
+        ["SchedulingInterpretation","Carries message, service, date, time and choice facts."]]],
+      ["app/local_models.py","Serve local Gemma and Laya HTTP endpoints and manage model startup.",["main","create_app"],[
+        ["TextTurn","Validates a text interpretation request."],["AudioChunk","Validates an encoded transcription request."],["RoutingTurn","Validates Laya's message and draft request."]]],
+      ["app/graph/__init__.py","Defines the conversation graph package.",[""],[]],
+      ["app/llm/__init__.py","Defines the understanding adapters package.",[""],[]]
+    ]
+  },
+  {
+    "id":"files-scheduling",
+    "title":"Source reference · Scheduling and application setup",
+    "subtitle":"Start with the customer adapter, availability search and transactional booking methods.",
+    "files":[
+      ["app/customer_scheduling_actions.py","Bind graph operations to the verified business and customer and forward them to domain services.",["CustomerSchedulingActions.search","CustomerSchedulingActions.create_booking"],[
+        ["CustomerSchedulingActions","Enforces the scope passed to domain operations.","create_booking"]]],
+      ["app/booking.py","Apply booking changes and retry checks in PostgreSQL transactions.",["BookingService.create","BookingService.cancel","BookingService.reschedule"],[
+        ["BookingService","Owns appointment writes and the retry record.","create"]]],
+      ["app/scheduling.py","Compute available appointments and revalidate proposed slots inside a write transaction.",["AvailabilityService.search","validate_slot_in_transaction"],[
+        ["AvailabilityService","Computes open slots against business scheduling data.","search"]]],
+      ["app/repositories.py","Read business, catalog, schedule and booking data and map rows to domain contracts.",["PostgresRepository.catalog","PostgresRepository.scheduling_data"],[
+        ["PostgresRepository","Data access facade for scheduling and owner reads.","scheduling_data"]]],
+      ["app/database.py","Create pooled SQLAlchemy engines and manage session commit or rollback.",["database_session","database_is_ready"],[]],
+      ["app/owner.py","Query the studio owner's booking agenda.",["owner_agenda"],[]],
+      ["app/cli.py","Print the studio owner's upcoming appointments in local time.",["main"],[]],
+      ["app/config.py","Read and validate environment-backed application configuration.",["load_settings"],[
+        ["Settings","Carries runtime and provider settings."]]],
+      ["app/observability.py","Emit structured events with redaction and initialize optional Langfuse tracing.",["log_event","debug_event","build_tracer"],[]],
+      ["app/seed.py","Insert sample businesses, services, staff and weekly availability.",["seed"],[]],
+      ["app/__init__.py","Defines the CAPY application package.",[""],[]]
+    ]
+  },
+  {
+    "id":"files-data",
+    "title":"Source reference · Domain contracts and PostgreSQL rows",
+    "subtitle":"Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.",
+    "files":[
+      ["app/models.py","Define domain data, service input and output contracts and expected errors.",["AvailabilitySearchRequest","BookingCreateRequest","DomainError"],[
+        ["Contract","Base class for validated domain contracts."],
+        ["BookingStatus","Enumerates appointment lifecycle states."],
+        ["Business","Tenant identity, timezone and booking policies."],
+        ["Professional","Bookable staff member."],
+        ["Service","Offered work, duration, buffers and price."],
+        ["WeeklyAvailabilityRule","Recurring staff opening hours."],
+        ["BlockedPeriod","Calendar interval that cannot be offered."],
+        ["Customer","Business-owned customer identity and contact data."],
+        ["Booking","An appointment and its current status."],
+        ["AuditEvent","Audit-shaped contract still defined in the module."],
+        ["AvailabilitySlot","A proposed start, end, service and professional."],
+        ["CatalogResponse","Business with its services and professionals."],
+        ["AvailabilitySearchRequest","Filters and time range for a slot search."],
+        ["AvailabilityResponse","Wraps available slots."],
+        ["CustomerInput","Validates customer name and contact fields."],
+        ["BookingCreateRequest","Business, customer, service and requested start."],
+        ["BookingRescheduleRequest","New time and scheduling context for a booking."],
+        ["BookingSummary","Saved appointment and write outcome."],
+        ["OwnerBooking","Booking enriched for display on the owner agenda."],
+        ["OwnerBookingsResponse","Agenda response for a business and date."],
+        ["HealthResponse","Describes API and dependency readiness."],
+        ["DomainError","Carries a handled business rule violation."]
+      ]],
+      ["app/db_models.py","Map business, scheduling and Telegram tables to SQLAlchemy models.",["Base","BookingRow","TelegramUpdate","TelegramConversation","TelegramOutboxRow","TelegramPublication"],[
+        ["Base","SQLAlchemy declarative metadata root."],
+        ["BusinessRow","Tenant data and booking policy."],
+        ["ProfessionalRow","Bookable massage therapist in the massagistas table."],
+        ["ServiceRow","Service type, duration, price and generated name."],
+        ["WeeklyAvailabilityRule","Recurring working-hours interval."],
+        ["BlockedPeriod","Staff calendar hold."],
+        ["CustomerRow","Business-owned customer record."],
+        ["BookingRow","Appointment and the staff interval it occupies."],
+        ["IdempotencyRecord","Request fingerprint and prior write outcome."],
+        ["TelegramIdentity","Maps a bot sender to a business customer."],
+        ["TelegramUpdate","Durable receipt and pending inbound payload."],
+        ["TelegramBotRow","Registered bot, business and credential references."],
+        ["TelegramConversation","Chat lease, update order and checkpoint pointer."],
+        ["TelegramOutboxRow","Pending or settled Telegram send."],
+        ["TelegramBotDelivery","Bot-wide send timing and cooldown."],
+        ["TelegramChatDelivery","Per-chat send timing and cooldown."],
+        ["TelegramPublication","Durable metadata for chat or sender wake-ups."]
+      ]],
+      ["alembic/env.py","Run Alembic against the application's SQLAlchemy metadata.",["run_migrations_online","run_migrations_offline"],[]],
+      ["alembic/versions/0001_general_scheduling.py","Establish the original general scheduling schema.",["upgrade"],[]],
+      ["alembic/versions/0002_telegram_channel.py","Add initial Telegram update and sender identity storage.",["upgrade"],[]],
+      ["alembic/versions/0003_telegram_ownership.py","Scope Telegram ownership and connect bookings to customers.",["upgrade"],[]],
+      ["alembic/versions/0004_remove_audit_events.py","Remove the audit events table.",["upgrade"],[]],
+      ["alembic/versions/0005_telegram_jobs.py","Add hosted Telegram turn and delivery infrastructure.",["upgrade"],[]],
+      ["alembic/versions/0006_telegram_publications.py","Add durable publication work for the RabbitMQ relay.",["upgrade"],[]],
+      ["alembic/versions/0007_massage_studio.py","Reshape a fresh database for the massage studio catalog and reply-only Telegram delivery.",["upgrade"],[]]
+    ]
+  },
+  {
+    "id":"files-evaluation",
+    "title":"Source reference · Evaluation programs",
+    "subtitle":"The task runner scores individual capabilities. The scenario CLI reuses the workflow to test full conversations.",
+    "files":[
+      ["app/evals/scenarios/__main__.py","Dispatch scenario validation, execution, audio preparation and report commands.",["main"],[]],
+      ["app/evals/scenarios/runner.py","Run scenario attempts through the workflow and collect per-turn evidence and assertions.",["run_attempts"],[
+        ["ObservedInterpreter","Captures the validated Gemma result and latency.","interpret"],["ObservedDecision","Captures Laya's proposed route and latency.","decide"],["ObservedTranscriber","Captures transcription evidence and latency.","__call__"]]],
+      ["app/evals/runner.py","Load task cases, evaluate model or workflow layers and summarize outcomes.",["main","run_scenarios"],[
+        ["TimedInterpreter","Records latency and output for interpretation.","interpret"],["TimedDecision","Records latency and output for routing.","decide"],["TimedTranscriber","Records audio transcription evidence.","__call__"]]],
+      ["app/evals/fixtures.py","Supply in-memory scheduling operations and appointment fixtures for evaluations.",["ScenarioSchedulingActions"],[
+        ["ScenarioSchedulingActions","Simulates domain actions, writes and idempotency.","create_booking"]]],
+      ["app/evals/scenarios/spec.py","Validate YAML declarations, references, input modes and expected outcomes.",["load_dataset","ScenarioDataset"],[
+        ["StrictModel","Base validation model that rejects unknown fields."],["UserInput","Declares text, audio or a spoken script.","validate_input_source"],["BookingMatch","Selects a booking by declared attributes."],["BookingExpectation","Checks a matching booking and its expected state."],["LayaExpectation","Declares expectations for routing output."],["TurnAssertions","Describes deterministic checks for a turn."],["ConversationStep","Groups user input and per-turn expectations."],["ScenarioSetup","Describes starting business and fixture state."],["JudgeCriterion","Defines a criterion for a conversation judge."],["JudgeSpec","Configures qualitative criteria and their use."],["FinalAssertions","Asserts end-of-scenario writes and booking state."],["Scenario","Defines a complete conversation and its assertions."],["ScenarioDataset","Groups scenarios and enforces unique IDs.","validate_ids"],["_UniqueKeyLoader","YAML loader that rejects duplicate keys."]]],
+      ["app/evals/models.py","Define task evaluation inputs, expected behavior and output scores.",["EvaluationScenario"],[
+        ["EvaluationScenario","Groups turns and expected case behavior."],["EvaluationTurn","Declares input and expected output for a task turn."],["EvaluationResult","Summarizes case scores, timings and mismatches."]]],
+      ["app/evals/routing.py","Compare a routing provider's proposed action to the expected label.",["evaluate_route"],[]],
+      ["app/evals/judge.py","Score extracted scheduling facts for task evaluation.",["evaluate_extraction"],[]],
+      ["app/evals/scenarios/judge.py","Run and validate an optional qualitative conversation judgement.",["judge_conversation"],[
+        ["CriterionVerdict","Reports one judged criterion and its explanation."],["JudgeResult","Groups evaluated criterion verdicts."]]],
+      ["app/evals/scenarios/audio.py","Prepare, cache and resolve audio fixtures for voice scenarios.",["prepare_audio","resolve_audio"],[]],
+      ["app/evals/scenarios/render.py","Produce a Markdown reading copy of a scenario dataset.",["render_markdown"],[]],
+      ["app/evals/scenarios/report.py","Render a browsable HTML report from recorded attempts.",["render_html"],[]],
+      ["app/evals/__init__.py","Defines the evaluation package.",[""],[]],
+      ["app/evals/scenarios/__init__.py","Defines the conversation scenario package.",[""],[]]
+    ]
+  }
+]
