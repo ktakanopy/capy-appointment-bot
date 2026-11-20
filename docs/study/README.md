@@ -1,19 +1,21 @@
 # CAPY system design study board
 
-This document describes an earlier design or implementation phase. See the architecture guide for the current webhook intake and worker flow. [Current Telegram architecture](../architecture.md#how-the-telegram-worker-works)
+> Historical review snapshot from November 12, 2026. Its schema section describes migrations 0001–0003 and is not the current database or runtime reference.
+
+See the [current architecture](../architecture.md#how-the-telegram-worker-works) for webhook intake and worker behavior, and the [scale study](../system-design-100k.md) for current workload assumptions. The scale study is not a deployment proposal.
 
 Open `capy-system-design.excalidraw` in Excalidraw using **Open**, or drag the file onto the canvas. This is an editable scene with native text, shapes and arrows, not a screenshot. The SVG is a matching reading copy. Read the numbered sections from top to bottom and zoom into each section.
 
-The reference image informed the requirements, architecture and sequence layout. This board adds capacity calculations, the current schema, table decisions, concrete code-review findings, and study questions. Its language is English to match this discussion.
+The reference image informed the requirements, architecture and sequence layout. This board records capacity calculations, a schema snapshot, table decisions, code-review findings, and study questions. Its language is English to match this discussion.
 
-## What is current versus proposed?
+## What the November 12 snapshot calls current versus proposed
 
-- Blue identifies current facts and data structures.
+- Blue identifies facts and data structures in that source snapshot.
 - Green identifies useful safeguards to keep or proposed directions; the text distinguishes them.
 - Yellow identifies assumptions, qualifications and trade-offs.
 - Red identifies risks to address before scaling.
 
-The review describes the source in this working tree on November 12, 2026. It did not inspect production data, execute database migrations, or benchmark traffic. The application has not been modified by this study-board task. See [the longer design](../system-design-100k.md) for the deployment proposal.
+The review describes the source snapshot from November 12, 2026. It did not inspect production data, execute database migrations, or benchmark traffic. The application was not modified by the study-board task.
 
 ## Schema verdict
 

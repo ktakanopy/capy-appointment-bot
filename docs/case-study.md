@@ -1,5 +1,7 @@
 # Portfolio cleanup: implementation evidence
 
+This record describes earlier local runs. Test counts, dataset hashes, and migration notes belong to those runs; they do not certify the current checkout. The newer [YAML evaluation framework](evaluation-framework.md) produces its own timestamped receipts and reports. For current deployment and migration instructions, use the [deployment reference](production.md#cutover-and-recovery).
+
 ## Local voice evaluation
 
 Both synthetic confirmation clips passed with the pinned Gemma and Laya checkpoints on Apple Silicon. Gemma transcribed the recordings without word errors against their reference transcripts. Laya chose `CONFIRM` for each clip and the workflow recorded one confirmation per case using fixture services.
@@ -72,6 +74,6 @@ All **16 text cases** passed in offline workflow and extraction modes. All **18 
 
 A live Telegram text and audio walkthrough is still open. The local model runs above use fixture services. Larger datasets, fine-tuning and held-out quality comparisons are future work. [Evaluation guide](evaluation.md)
 
-## Cutover
+## Historical cutover notes
 
 The existing application containers and database were not upgraded. Stop old workers and back up the database before deploying migration `0003_telegram_ownership`. It preserves bookings and verified identity links; rollback after token-column removal requires restoring the matching backup and application. Temporary conversations use a new checkpoint namespace. The disposable verification containers were removed after testing.

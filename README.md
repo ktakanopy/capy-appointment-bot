@@ -143,7 +143,7 @@ For multiple bots, CAPY supports a shared webhook, conversation workers, and a r
 
 ## Documentation
 
-To follow a PostgreSQL query from the repository to a mapped class, start with the service lookup. [SQLAlchemy example](docs/database.md#read-a-service-with-sqlalchemy)
+The [documentation index](docs/README.md) provides a reading order and separates current guides from requirements and historical studies. Start with the [architecture code tour](docs/architecture.md#how-to-read-the-code), then use the [source map](docs/source-map.md) to find each implementation.
 
 - [Source map](docs/source-map.md) — where to find each part of the app, the tests, and the tools
 - [Architecture](docs/architecture.md) — components and booking sequence diagrams
@@ -158,5 +158,5 @@ To follow a PostgreSQL query from the repository to a mapped class, start with t
 - [Case study](docs/case-study.md) — implementation and evaluation results
 - [Repository history](docs/history.md) — earlier versions and design changes
 - [Portfolio roadmap](docs/ai-engineering-portfolio-roadmap.md) — planned work
-- [Simplification plan](docs/sdd/plan-portfolio-simplification.md) — scope and implementation steps
-- [Multi-bot deployment reference](docs/production.md) — architecture, cutover, and capacity checks
+- [Scale study](docs/system-design-100k.md) — workload assumptions, current architecture, and evidence needed before making capacity claims
+- [Deployment reference](docs/production.md) — worker roles, cutover, recovery, and local benchmarks

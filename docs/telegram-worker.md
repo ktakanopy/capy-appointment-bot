@@ -1,6 +1,6 @@
 # Telegram worker
 
-You ask for a massage tomorrow. CAPY offers **1. 14:00** and **2. 16:00**. When you reply **“1”**, CAPY needs to recover that offer, find your customer account, and check whether 14:00 is still available. This guide follows that reply through the code.
+You ask for a massage tomorrow. CAPY offers **1. 14:00** and **2. 16:00**. When you reply **“1”**, CAPY recovers that offer, resolves your customer account, and asks you to approve the exact appointment. A later clear approval allows the booking service to recheck availability and save it. This guide follows those turns through the code.
 
 The `telegram-worker` is the background process that runs the conversation. The API accepts the incoming message, the relay passes queue notifications, and the sender delivers the reply. The API can confirm receipt while the worker is still processing the previous audio or checking the schedule.
 
@@ -277,7 +277,7 @@ turns.finish(claim, reply, checkpoint_to_publish)
 
 ![The previous offer lists option 1 at 14:00 and option 2 at 16:00. E copies the offer. F uses the copy to match the new message “1” to 14:00.](assets/telegram-worker-checkpoint.svg)
 
-**E** copies the published checkpoint to the current attempt's `thread_id` in `_restore_turn_checkpoint()`. **F** is the graph's `select()` node reading the offered times to resolve the choice. [Restore the offer](../app/telegram_service.py#L164-L180) · [Read the selected option](../app/graph/steps.py#L569-L578)
+**E** copies the published checkpoint to the current attempt's `thread_id` in `_restore_turn_checkpoint()`. **F** is the graph's `select()` node reading the offered times to resolve the choice. [Restore the offer](../app/telegram_service.py#L164-L180) · [Read the selected option](../app/graph/steps.py#L733-L774)
 
 PostgreSQL has already returned `checkpoint_thread` with the claimed conversation.
 `fork_completed()` uses that reference to read Redis. With the default empty
@@ -386,7 +386,7 @@ Inside `_run_turn()`, the worker gets the **catalog** of services, staff, and bu
 
 ![Typed text and audio converge before interpretation. M1 passes the typed text. M2 passes the transcription. M3 passes the interpreted message and the draft to Laya.](assets/telegram-worker-models.svg)
 
-**M1** uses the text read by `_message_input()`. **M2** uses the recording the worker downloaded and Gemma transcribed. `handle_turn()` passes the raw input to the graph in memory, and the graph redacts recognizable sensitive details from the text before interpretation. **M3** gives Laya the interpreted message and the **draft**, which holds details collected so far, such as the service and date. [Read the input](../app/telegram_worker.py#L104-L125) · [`handle_turn()`](../app/graph/workflow.py#L13-L40) · [Interpretation node](../app/graph/steps.py#L97-L135) · [Laya contract](model-contracts.md)
+**M1** uses the text read by `_message_input()`. **M2** uses the recording the worker downloaded and Gemma transcribed. `handle_turn()` passes the raw input to the graph in memory, and the graph redacts recognizable sensitive details from the text before interpretation. **M3** gives Laya the interpreted message and the **draft**, which holds details collected so far, such as the service and date. [Read the input](../app/telegram_worker.py#L104-L125) · [`handle_turn()`](../app/graph/workflow.py#L13-L40) · [Interpretation node](../app/graph/steps.py#L111-L159) · [Laya contract](model-contracts.md)
 
 Once the customer approves the selected time and the graph executes the booking action, the booking service checks that 14:00 is still available and saves the booking for the customer. Each `_run_turn()` gives the worker `result.text`, including turns that ask for confirmation. [Booking write](../app/booking.py#L152-L214)
 
@@ -587,21 +587,22 @@ CAPY_LOG_LEVEL=DEBUG uv run --locked python -m app.evals.runner \
   --understanding deterministic --routing deterministic
 ```
 
-![The en-booking case starts with Book Massage. V1 supplies tomorrow and gets an offer. V2 chooses 1, and the graph creates a test booking in turn three.](assets/telegram-worker-offline.svg)
+![Four messages in en-booking. V1 supplies tomorrow and gets an offer. V2 chooses 1 and receives a consent question. V3 approves, allowing a simulated booking write.](assets/telegram-worker-offline.svg)
 
-**V1** supplies the date needed for the test to offer times. **V2** selects the first time. Find `eval.turn.started` with `number: 3` and follow the events for that turn. [Test conversation](../evals/data/smoke-text.jsonl#L1) · [Set up the local environment](../README.md#run-the-offline-example)
+**V1** supplies the date needed to offer times. **V2** selects the first time in turn three; the reply has intent `request_booking_confirmation` and makes no booking write. **V3** sends “Yes, book it.” in turn four; only this approval allows the create operation. Find `eval.turn.started` with `number: 3`, then follow turn four to compare selection with creation. [Test conversation](../evals/data/smoke-text.jsonl#L1) · [Set up the local environment](../README.md#run-the-offline-example)
 
 | Event | What to check in `en-booking` |
 | --- | --- |
 | `workflow.draft.operation` | `reason: time_choice_for_new_booking` identifies a selection for a new booking. |
 | `workflow.route.booking_choice` | `reason: action_does_not_target_existing_booking` indicates that the choice refers to offered times. |
 | `workflow.route.rule_applied` and `workflow.route.selected` | `reason: choose_from_offered_times` and `route: select` lead to the node that reads the offer. |
-| `workflow.slot.matched` and `workflow.action.executing` | `option_number: 1` identifies the chosen time. `operation: create` triggers the simulated booking service. |
+| `workflow.slot.matched` and `workflow.reply.prepared` | Turn three matches `option_number: 1`, then returns intent `request_booking_confirmation` without a booking write. |
+| `workflow.action.executing` | Turn four reaches `operation: create` after explicit approval and calls the simulated booking service. |
 | `workflow.turn.completed` | `has_booking: True` means the graph returned a booking. The runner prints `PASS  en-booking`. |
 
-If routing fails during the demo, the `stage` field of `workflow.route.failed` shows where the error occurred. [Routing code](../app/graph/steps.py#L252)
+If routing fails during the demo, the `stage` field of `workflow.route.failed` shows where the error occurred. [Routing code](../app/graph/steps.py#L266)
 
-To follow two turns with PostgreSQL and Redis, open `test_completed_checkpoint_carries_slot_offer_into_next_attempt`. It creates an offer, processes “1”, and counts the bookings saved. It also covers an expired offer and a crash after committing the booking. [Python integration test](../tests/integration/test_telegram_production.py#L159-L221)
+For database-backed consent behavior, read the [booking journey test](../tests/integration/test_workflow_booking_journey.py). For worker checkpoint recovery, read `test_completed_checkpoint_carries_slot_offer_into_next_attempt`; it uses a stub workflow to isolate checkpoint publication, expiry, and interrupted-turn recovery rather than exercising the real consent logic. [Checkpoint integration test](../tests/integration/test_telegram_production.py#L159-L221)
 
 ## Full call sequence
 

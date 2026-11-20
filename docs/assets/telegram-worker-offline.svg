@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="350" viewBox="0 0 720 350" role="img" xml:lang="en" aria-labelledby="title desc">
-  <title id="title">Three messages in the en-booking test</title>
-  <desc id="desc">The offline case begins with Book Massage and a follow-up asking for a date. V1 supplies tomorrow and gets offered times. V2 supplies 1 and the graph creates a test booking in turn three.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="445" viewBox="0 0 720 445" role="img" xml:lang="en" aria-labelledby="title desc">
+  <title id="title">Four messages in the en-booking test</title>
+  <desc id="desc">The offline case begins with Book Massage and a follow-up asking for a date. V1 supplies tomorrow and gets offered times. V2 supplies 1 and gets a consent question. V3 approves and the graph creates a test booking in turn four.</desc>
   <style>
     text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
     .title { font-size: 29px; font-weight: 700; }
@@ -12,8 +12,8 @@
     .green { fill: #eaf2e5; stroke: #86a57e; }
     .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   </style>
-  <rect width="720" height="350" rx="20" fill="#fbfaf5"/>
-  <text class="title" x="30" y="46">Three messages in the en-booking test</text>
+  <rect width="720" height="445" rx="20" fill="#fbfaf5"/>
+  <text class="title" x="30" y="46">Four messages in the en-booking test</text>
   <rect class="panel" x="30" y="73" width="660" height="54" rx="13"/>
   <text class="code-title" x="52" y="107">“Book Massage”</text>
   <text class="body" x="281" y="107">The graph asks for the date.</text>
@@ -26,7 +26,10 @@
   <text class="label" x="91" y="251">V2 · Customer picks a time</text>
   <rect class="green" x="30" y="267" width="660" height="59" rx="13"/>
   <text class="code-title" x="52" y="303">“1”</text>
-  <text class="body" x="132" y="303">The graph creates a test booking.</text>
-  <rect class="panel" x="541" y="279" width="129" height="35" rx="7"/>
-  <text class="code" x="605.5" y="302" text-anchor="middle">number = 3</text>
+  <text class="body" x="210" y="303">CAPY asks for approval.</text>
+  <path class="arrow" d="M68 327V364m-6-7 6 7 6-7"/>
+  <text class="label" x="91" y="351">V3 · Customer approves the appointment</text>
+  <rect class="green" x="30" y="365" width="660" height="54" rx="13"/>
+  <text class="code-title" x="52" y="399">“Yes, book it.”</text>
+  <text class="body" x="281" y="399">The graph creates a test booking.</text>
 </svg>

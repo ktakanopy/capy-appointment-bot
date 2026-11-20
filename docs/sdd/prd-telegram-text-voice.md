@@ -1,10 +1,8 @@
 # Telegram scheduling through text and voice
 
-This document describes an earlier design or implementation phase. See the architecture guide for the current webhook intake and worker flow. [Current Telegram architecture](../architecture.md#how-the-telegram-worker-works)
+> Historical design input, not current setup or runtime guidance. The original requirements below describe an earlier checkout. [Portfolio simplification requirements](prd-portfolio-simplification.md) supersede phone-proof, token-interface and fallback rules. Use the [current architecture](../architecture.md) and [model contracts](../model-contracts.md) for the running code. Full Gemma audio and Laya routing remain supported.
 
-> Historical design input, not current setup or runtime guidance. The original requirements and implementation notes below describe an earlier checkout. [Portfolio simplification](plan-portfolio-simplification.md) supersedes phone-proof, token-interface and fallback rules. Use [current architecture](../architecture.md) for the running code. Full Gemma audio and Laya routing remain supported.
-
-Status: historical feature record. Telegram is the active customer channel; earlier WhatsApp code is retained in Git history. Text and voice integration is implemented; live Telegram and real Gemma audio remain unverified.
+Status: historical feature record. The polling and mandatory-contact requirements below were superseded. The [case study](../case-study.md#local-voice-evaluation) records later synthetic Gemma/Laya audio results; a live Telegram walkthrough remains pending.
 
 ## Intent checkpoint
 
@@ -51,7 +49,7 @@ For voice, decode incrementally and divide the recording into model-sized window
 - **Quality/deployment (WP6):** own focused regression evidence, real audio/bot walkthrough, worker image media dependency, configuration and documentation.
 - **Application services:** keep availability, booking authorization, overlaps, and token generation in their existing deterministic services.
 
-Work-package labels refer to the [implementation plan](plan-telegram-text-voice.md); they are not registered tracker or SDD task IDs.
+Work-package labels are historical organization aids, not registered tracker or SDD task IDs.
 
 ## Implementation decisions
 
@@ -63,7 +61,7 @@ Work-package labels refer to the [implementation plan](plan-telegram-text-voice.
 6. Use bounded streaming/incremental decoding, temporary storage cleanup, per-stage timeouts, and an explicit total processing budget. Derive production values from measured hardware behavior rather than promising unlimited recording length or compute.
 7. Reuse the configured Gemma API without server changes. If it cannot process real audio, report voice unavailability and retain text operation; voice readiness remains incomplete.
 8. Use a small PostgreSQL update ledger and saved reply outcome. Stable update-derived idempotency keys protect business writes; ambiguous send timeouts can still duplicate external replies.
-9. Initial engineering defaults retain existing English text replies and booking actions. Evaluate English and Portuguese speech; broader language guarantees and localization are outside this feature. These defaults remain visible in plan review.
+9. The original proposal retained English text replies and booking actions while evaluating English and Portuguese speech. Broader language guarantees and localization were outside that feature proposal.
 10. Telegram first; WhatsApp launch follows separately. Reuse the same workflow/audio boundary later without adding a generic channel framework now. Existing Streamlit owner tools need no changes for this feature.
 
 ## Testing and quality decisions
@@ -85,8 +83,8 @@ Streamlit chatbot development, deletion of existing owner/frontend tools, WhatsA
 
 ## Risks and review state
 
-- The existing custom Gemma endpoint's real audio compatibility has not been demonstrated. Server work is excluded, so an incompatibility must be reported as a voice-readiness blocker.
-- The Telegram polling worker, contact verification, update/reply ledger, Gemma chunking adapter, and deployment configuration are implemented. The companion [implementation plan](plan-telegram-text-voice.md) records the work-package status and unverified integration checks.
+- At the time of this proposal, Gemma audio compatibility had not been demonstrated. Later synthetic results are recorded in the case study linked above.
+- The initial Telegram integration used polling; the current service uses authenticated webhooks, durable PostgreSQL intake, and RabbitMQ wake-ups. See the [Telegram worker guide](../telegram-worker.md) and [deployment reference](../production.md) for current behavior. Live Telegram and representative real-recording validation remain deployment checks.
 - Long recordings increase latency and may exceed processing or text-context budgets even within the transport size limit. Communicate failure and ask for shorter messages rather than executing partial content.
 - Existing customer upsert-by-phone must never turn unverified contact extraction into account ownership.
-- SDD and Plannotator tools are unavailable in this session, so no mutable tracker task state or external review is claimed. Implementation status and remaining integration checks are recorded in the companion plan.
+- This PRD is retained as a historical requirements record. It is not a setup guide; use the current runtime documentation linked above.

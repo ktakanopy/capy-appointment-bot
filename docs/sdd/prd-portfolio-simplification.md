@@ -1,6 +1,6 @@
 # Portfolio simplification with Gemma audio and Laya routing
 
-Status: requirements accompany the approved plan; implemented locally, automated checks passed, live verification pending. Created 2026-11-11.
+Status: historical requirements record. Implementation and local verification evidence are summarized in the [case study](../case-study.md); a live Telegram walkthrough and broader speech validation remain pending. Created 2026-11-11.
 
 Follow-up model-boundary decision: Gemma interprets the message without intent/action labels; Laya receives only the interpreted message and conversation context, then chooses the action. See the current [model contracts](../model-contracts.md), which supersede earlier model payload details in this record.
 
@@ -13,7 +13,7 @@ Follow-up model-boundary decision: Gemma interprets the message without intent/a
 - **Scope:** simplify identity, public interfaces, state, providers, deployment and documentation; fix privacy and evaluation defects; preserve booking invariants and delivery recovery.
 - **Future work:** large dataset creation and actual fine-tuning. This change provides the evaluation foundation only.
 
-The user requested the plan directly after the clarification batch. The following are conservative planning defaults, not separately confirmed answers: provider failures stop the turn without writes; existing database records are preserved; customer HTTP mutation interfaces are retired; owner operations use a local CLI; live text/audio validation is required before claiming release readiness. Implementation must not interpret this plan as permission to reset a database or send live Telegram messages without an authorized test destination.
+The following requirements record the defaults used for the implementation: provider failures stop the turn without writes; existing database records are preserved; customer HTTP mutation interfaces are retired; owner operations use a local CLI; live text/audio validation is required before claiming release readiness.
 
 ## Original problem and source evidence
 
@@ -60,4 +60,4 @@ Quality evidence includes cross-account denial, concurrency, idempotent replay, 
 
 Excluded: large-scale data generation, training jobs, automatic collection of customer conversations for training, new WhatsApp/SMS/web interfaces, RAG, payments, calendar integration, a new human-handoff product and broad deployment infrastructure.
 
-See [implementation plan](plan-portfolio-simplification.md) for work packages, contracts, ordering and verification.
+For current behavior, use the [architecture guide](../architecture.md), [model contracts](../model-contracts.md), and [evaluation framework guide](../evaluation-framework.md). The [case study](../case-study.md) records implementation and local verification evidence.

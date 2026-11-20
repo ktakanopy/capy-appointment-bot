@@ -1,6 +1,6 @@
 # PRD — CAPY chatbot evaluation
 
-**Status** · Scope implemented in the current worktree. The exact CLI and provider defaults are documented in [the implementation plan](plan-chatbot-evaluation.md). Formal test execution remains pending.
+**Status** · The evaluation framework is implemented. Use the [evaluation framework guide](../evaluation-framework.md) for current commands, provider defaults, and report details.
 
 ## Intent checkpoint
 
@@ -15,7 +15,7 @@
 
 Each scenario has a stable scenario ID and a behavior ID such as `CAPY-BOOK-001`. It includes setup, an ordered `example_conversation`, a judge prompt and named criteria, and deterministic expectations. The schema calls the reference reply `assistant_example` so the author can tell at a glance which text gets sent to CAPY.
 
-The [golden YAML example](examples/chatbot-eval-golden.yaml) defines the same booking behavior in English and Brazilian Portuguese. The user asks to book a massage tomorrow, sends `"1"`, then answers the confirmation question. Gemma should identify the service and date, then read `"1"` as a slot choice. Laya should propose `CHECK_AVAILABILITY`, `BOOK`, and then `BOOK` for the new appointment. The first two turns must have zero booking writes. The last turn must create exactly one booking for the first slot CAPY actually offered. The Markdown view renders both sides of the example from the same file.
+The [executable golden dataset](../../evals/scenarios/golden.yaml) defines the English and Brazilian Portuguese booking journeys. The user asks to book a massage tomorrow, sends `"1"`, then answers the confirmation question. The first two turns must have zero booking writes. The final turn must create exactly one booking for the first slot CAPY offered. Use [render-spec](../evaluation-framework.md#author-a-scenario) to generate a Markdown view of those same examples and assertions.
 
 An audio turn uses the same conversation structure. Its user entry identifies an existing audio fixture or specifies text to synthesize before running the test. The runner passes the prepared recording to CAPY. A reference transcript supports reporting and review. The operator can select a voice backend, model, and voice, with language-appropriate defaults. The receipt and report record which settings produced each clip.
 
@@ -65,7 +65,7 @@ The pending choice is specific to the offered slot and conversation. The questio
 - Runs repeat three times by default. Judge failures are advisory unless `--judge-gate` is set.
 - The explicit-approval requirement applies to creating a new booking. Existing booking confirmation, cancellation and rescheduling retain their current workflows.
 
-The [implementation plan](plan-chatbot-evaluation.md) documents the commands and report fields. The [evaluation framework guide](../evaluation-framework.md) explains how to run and extend it.
+The [evaluation framework guide](../evaluation-framework.md) is the operational reference for running and extending the framework.
 
 ## Ownership and rollout
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="486" viewBox="0 0 720 486" role="img" xml:lang="en" aria-labelledby="title desc">
-  <title id="title">From message to confirmation</title>
-  <desc id="desc">The webhook saves the customer text in PostgreSQL. A sends the bot and chat IDs through RabbitMQ. The worker restores the offer, handles the choice, and saves the reply. B leads the sender to that reply so it can deliver the confirmation through Telegram.</desc>
+  <title id="title">From message to consent question</title>
+  <desc id="desc">The webhook saves the customer text in PostgreSQL. A sends the bot and chat IDs through RabbitMQ. The worker restores the offer, handles the choice, and saves the reply. B leads the sender to that reply so it can deliver the consent question through Telegram.</desc>
   <style>
     text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
     .title { font-size: 30px; font-weight: 700; }
@@ -11,7 +11,7 @@
     .arrow { fill: none; stroke: #537568; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   </style>
   <rect width="720" height="486" rx="20" fill="#fbfaf5"/>
-  <text class="title" x="30" y="45">From message to confirmation</text>
+  <text class="title" x="30" y="45">From message to consent question</text>
 
   <rect x="30" y="70" width="660" height="92" rx="13" fill="#fffefa" stroke="#a4b8a8"/>
   <text class="heading" x="52" y="106">Receive</text>
@@ -26,7 +26,7 @@
   <rect x="30" y="211" width="660" height="110" rx="13" fill="#eaf2e5" stroke="#86a57e"/>
   <text class="heading" x="52" y="247">Process</text>
   <text class="body" x="52" y="275">The worker reads “1” and restores the offer from Redis.</text>
-  <text class="body" x="52" y="299">It checks 14:00 and saves the reply in PostgreSQL.</text>
+  <text class="body" x="52" y="299">It saves a question asking you to approve 14:00.</text>
 
   <path class="arrow" d="M67 322v47m-6-7 6 7 6-7"/>
   <text class="arrow-label" x="90" y="350">B · RabbitMQ receives</text>
