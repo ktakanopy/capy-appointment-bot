@@ -41,6 +41,8 @@ const flowLabels = {
   booking: ["Booking happy path", "booking"],
   "failure-paths": ["Failure paths", "failure"],
   management: ["Manage a booking", "management"],
+  evaluation: ["Evaluation framework", "class"],
+  tests: ["Test suites", "success"],
 };
 const areas = {
   "files-telegram": "Telegram & workers",
@@ -48,6 +50,7 @@ const areas = {
   "files-scheduling": "Scheduling & setup",
   "files-data": "Contracts & database",
   "files-evaluation": "Evaluation",
+  "files-tests": "Tests & CI",
 };
 
 function element(tag, classes, value) {

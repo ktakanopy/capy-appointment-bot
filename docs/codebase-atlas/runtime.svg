@@ -28,21 +28,21 @@
   <rect x="55" y="131" width="119" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Webhook intake</text>
   <g id="update" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="../../app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="56.0" y="165" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Telegram update</text>
-      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A customer sends text, voice</text>
       <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">or a contact to the bot.</text>
     </a>
   </g>
   <g id="webhook" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="../../app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="327.6" y="165" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="339.6" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Authenticate webhook</text>
-      <text x="339.6" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="339.6" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="339.6" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Resolve the bot and verify</text>
       <text x="339.6" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the secret. Acknowledge after</text>
       <text x="339.6" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">intake commits.</text>
@@ -149,25 +149,24 @@
     </a>
   </g>
   <g id="send-claim" data-source="app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id">
-    <a href="../../app/channels/telegram_delivery.py#L81">
-      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:81</title>
+    <a href="../../app/channels/telegram_delivery.py#L80">
+      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:80</title>
       <rect x="870.8000000000001" y="559" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="882.8000000000001" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reserve the send</text>
-      <text x="882.8000000000001" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:81</text>
+      <text x="882.8000000000001" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:80</text>
       <text x="882.8000000000001" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The sender wakes by outbox ID</text>
       <text x="882.8000000000001" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and reserves against ordering</text>
       <text x="882.8000000000001" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and rate limits.</text>
     </a>
   </g>
   <g id="deliver" data-source="app/channels/telegram_delivery.py#deliver_claimed">
-    <a href="../../app/channels/telegram_delivery.py#L229">
-      <title>deliver_claimed · app/channels/telegram_delivery.py:229</title>
+    <a href="../../app/channels/telegram_delivery.py#L224">
+      <title>deliver_claimed · app/channels/telegram_delivery.py:224</title>
       <rect x="1142.4" y="559" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="1154.4" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Call Telegram</text>
-      <text x="1154.4" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:229</text>
-      <text x="1154.4" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Call TelegramDelivery.send</text>
-      <text x="1154.4" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and record the delivery</text>
-      <text x="1154.4" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">outcome.</text>
+      <text x="1154.4" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:224</text>
+      <text x="1154.4" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Call send_reply and record</text>
+      <text x="1154.4" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the delivery outcome.</text>
     </a>
   </g>
   <text x="42" y="735" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Solid arrow · Call or control flow  /  Dashed arrow · Async handoff or framework delegation</text>

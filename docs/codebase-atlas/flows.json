@@ -92,7 +92,7 @@
         null,
         {"id":"finish","title":"Finish the turn","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","detail":"Commit the checkpoint pointer and reply in PostgreSQL.","tone":"data","why":"The reply and its checkpoint pointer become visible together, so a later answer can resume the state behind the reply."},
         {"id":"send-claim","title":"Reserve the send","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id","detail":"The sender wakes by outbox ID and reserves against ordering and rate limits.","why":"The reserve step coordinates reply order and rate budgets across sender processes."},
-        {"id":"deliver","title":"Call Telegram","ref":"app/channels/telegram_delivery.py#deliver_claimed","detail":"Call TelegramDelivery.send and record the delivery outcome.","tone":"success","why":"Recording the provider outcome lets the outbox distinguish a safe retry from a send Telegram may already have accepted."}
+        {"id":"deliver","title":"Call Telegram","ref":"app/channels/telegram_delivery.py#deliver_claimed","detail":"Call send_reply and record the delivery outcome.","tone":"success","why":"Recording the provider outcome lets the outbox distinguish a safe retry from a send Telegram may already have accepted."}
       ]}
     ],
     "edges": [
@@ -249,5 +249,57 @@
       ["manage","resolve"],["resolve","dispatch"],["dispatch","change"],["move","prepare-move"],["prepare-move","choose-move","async"],
       ["choose-move","commit-move"]
     ]
+  },
+  {
+    "id": "evaluation",
+    "title": "Evaluate a full conversation",
+    "subtitle": "Follow a scenario from the CLI and YAML assertions through the real graph and its evaluation report.",
+    "columns": 4,
+    "lanes": [
+      {"label": "Set up one or more scenario attempts", "nodes": [
+        {"id":"eval-cli","title":"Run the scenario CLI","ref":"app/evals/scenarios/__main__.py#main","detail":"Select the dataset, cases, providers, and repetition settings.","tone":"entry","why":"Explicit provider settings make offline regressions repeatable and enable separate live model checks."},
+        {"id":"eval-load","title":"Validate scenario YAML","ref":"app/evals/scenarios/spec.py#load_dataset","detail":"Load inputs, expected routes and writes, and final booking assertions.","why":"Validating the fixture catches malformed assertions before any model or scheduling operation runs."},
+        {"id":"eval-run","title":"Schedule attempts","ref":"app/evals/scenarios/runner.py#run_attempts","detail":"Run cases and repetitions concurrently. Keep each case’s turns sequential.","why":"Each attempt gets its own state, so concurrency can expose variance without mixing different conversations."},
+        {"id":"eval-case","title":"Set up one attempt","ref":"app/evals/scenarios/runner.py#_run_case","detail":"Set up observed providers, in-memory checkpoints, and fake scheduling actions.","why":"The workflow stays real while the fixture controls test dates, available slots, and booking writes."}
+      ]},
+      {"label": "Run the workflow and collect results", "nodes": [
+        {"id":"eval-report","title":"Review the HTML report","ref":"app/evals/scenarios/report.py#render_html","detail":"Inspect attempts, transcripts, failures, timing, and coverage.","tone":"success","why":"Per-case evidence shows which turn failed and gives a maintainer a concrete place to investigate."},
+        {"id":"eval-receipt","title":"Build the run receipt","ref":"app/evals/scenarios/runner.py#make_receipt","detail":"Record the revision, manifests, provider settings, and attempt results.","tone":"data","why":"A saved receipt ties a score to its exact inputs and allows a later result to be compared or replayed."},
+        {"id":"eval-assert","title":"Check writes and outcomes","ref":"app/evals/scenarios/runner.py#_compare_writes","detail":"Compare turn and final assertions. The optional judge reviews reply quality.","why":"Deterministic checks catch permission and write failures even when the response sounds plausible."},
+        {"id":"eval-turn","title":"Run each graph turn","ref":"app/graph/workflow.py#LangGraphWorkflow.handle_turn","detail":"Send each fixture message through the workflow and capture provider and reply evidence.","why":"Running the same graph exposes problems that only appear when interpretation, routing, and saved state interact."}
+      ]}
+    ],
+    "edges": [
+      ["eval-cli","eval-load"],["eval-load","eval-run"],["eval-run","eval-case"],["eval-case","eval-turn"],
+      ["eval-turn","eval-assert"],["eval-assert","eval-receipt"],["eval-receipt","eval-report"]
+    ]
+  },
+  {
+    "id": "tests",
+    "title": "Verify CAPY across test layers",
+    "subtitle": "See what CI exercises and open representative tests for routing, evaluation, and real scheduling services.",
+    "columns": 3,
+    "lanes": [
+      {"label": "GitHub Actions runs verification", "nodes": [
+        null,
+        {"id":"check-ci","title":"Run the CI checks","ref":".github/workflows/verify.yml","detail":"Start PostgreSQL, Redis, and RabbitMQ. Run pytest, the offline eval corpus, and Compose checks.","tone":"entry","why":"A controlled environment makes the required services available and catches changes before they land."},
+        null
+      ]},
+      {"label": "Three kinds of evidence", "nodes": [
+        {"id":"check-unit","title":"Unit and API tests","ref":"tests/unit/test_conversation_graph.py#test_unoffered_slot_does_not_write","detail":"Use fixtures and fakes to test graph, adapters, models, and readiness behavior.","why":"Small and deterministic checks make policy and request-contract failures easy to localize."},
+        {"id":"check-evals","title":"Evaluation tests","ref":"tests/evals/test_runner.py#test_smoke_task_dataset_passes_and_languages_are_explicit","detail":"Exercise task scoring and run controlled multi-turn scenarios.","why":"These checks catch implicit changes to datasets, scoring, or model configuration."},
+        {"id":"check-integration","title":"Integration tests","ref":"tests/integration/conftest.py#scheduling_db","detail":"Apply migrations and use disposable services for real scheduling, state, and broker checks.","why":"Locks, recovery, and database constraints need exercise against compatible services."}
+      ]},
+      {"label": "Open a representative test", "nodes": [
+        {"id":"check-consent-example","title":"Guard pending consent","ref":"tests/unit/test_conversation_graph.py#test_a_wrong_laya_cancel_cannot_mutate_an_existing_booking_during_new_booking_consent","detail":"Assert that an incorrect cancel proposal cannot mutate the existing booking.","tone":"success","why":"A model routing mistake should never become a booking change while another appointment is awaiting consent."},
+        {"id":"check-golden-example","title":"Verify the golden case","ref":"tests/evals/test_scenario_framework.py#test_golden_run_captures_gemma_laya_and_requires_a_separate_consent_turn","detail":"Inspect Gemma and Laya evidence and require a separate approval before the first write.","tone":"success","why":"The test ties model outputs to the observable booking effect of each turn."},
+        {"id":"check-booking-example","title":"Run a booking lifecycle","ref":"tests/integration/test_workflow_booking_journey.py#test_real_workflow_booking_reschedule_cancel","detail":"Book, move, and cancel an appointment through the real scheduling services.","tone":"success","why":"The lifecycle verifies that the conversation’s decisions make the intended PostgreSQL changes over multiple turns."}
+      ]}
+    ],
+    "edges": [
+      ["check-ci","check-unit"],["check-ci","check-evals"],["check-ci","check-integration"],
+      ["check-unit","check-consent-example"],["check-evals","check-golden-example"],["check-integration","check-booking-example"]
+    ],
+    "legend": "Arrows connect CI to test layers and each layer to a representative source test."
   }
 ]

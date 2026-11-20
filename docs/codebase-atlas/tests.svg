@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 763" width="1430" height="763" role="img" aria-label="Verify CAPY across test layers">
+  <title>Verify CAPY across test layers</title>
+  <desc>See what CI exercises and open representative tests for routing, evaluation, and real scheduling services.</desc>
+  <rect x="0" y="0" width="1430" height="763" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Verify CAPY across test layers</text>
+  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">See what CI exercises and open representative tests for routing, evaluation, and real scheduling services.</text>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#557383" />
+    </marker>
+  </defs>
+  <rect x="40" y="123" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="320" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="517" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <polyline points="715.0,264 715.0,313.0 262.33333333333337,313.0 262.33333333333337,362" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="check-ci" data-to="check-unit" data-kind="flow" />
+  <polyline points="715.0,264 715.0,313.0 715.0,313.0 715.0,362" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="check-ci" data-to="check-evals" data-kind="flow" />
+  <polyline points="715.0,264 715.0,313.0 1167.6666666666667,313.0 1167.6666666666667,362" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="check-ci" data-to="check-integration" data-kind="flow" />
+  <polyline points="262.33333333333337,461 262.33333333333337,510.0 262.33333333333337,510.0 262.33333333333337,559" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="check-unit" data-to="check-consent-example" data-kind="flow" />
+  <polyline points="715.0,461 715.0,510.0 715.0,510.0 715.0,559" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="check-evals" data-to="check-golden-example" data-kind="flow" />
+  <polyline points="1167.6666666666667,461 1167.6666666666667,510.0 1167.6666666666667,510.0 1167.6666666666667,559" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="check-integration" data-to="check-booking-example" data-kind="flow" />
+  <rect x="55" y="131" width="263" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">GitHub Actions runs verification</text>
+  <g id="check-ci" data-source=".github/workflows/verify.yml">
+    <a href="../../.github/workflows/verify.yml">
+      <title>.github/workflows/verify.yml</title>
+      <rect x="508.6666666666667" y="165" width="412.6666666666667" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="520.6666666666667" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Run the CI checks</text>
+      <text x="520.6666666666667" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">verify.yml</text>
+      <text x="520.6666666666667" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Start PostgreSQL, Redis, and RabbitMQ. Run pytest, the</text>
+      <text x="520.6666666666667" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">offline eval corpus, and Compose checks.</text>
+    </a>
+  </g>
+  <rect x="55" y="328" width="191" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Three kinds of evidence</text>
+  <g id="check-unit" data-source="tests/unit/test_conversation_graph.py#test_unoffered_slot_does_not_write">
+    <a href="../../tests/unit/test_conversation_graph.py#L124">
+      <title>test_unoffered_slot_does_not_write · tests/unit/test_conversation_graph.py:124</title>
+      <rect x="56.0" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Unit and API tests</text>
+      <text x="68.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">test_conversation_graph.py:124</text>
+      <text x="68.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Use fixtures and fakes to test graph, adapters, models,</text>
+      <text x="68.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and readiness behavior.</text>
+    </a>
+  </g>
+  <g id="check-evals" data-source="tests/evals/test_runner.py#test_smoke_task_dataset_passes_and_languages_are_explicit">
+    <a href="../../tests/evals/test_runner.py#L60">
+      <title>test_smoke_task_dataset_passes_and_languages_are_explicit · tests/evals/test_runner.py:60</title>
+      <rect x="508.6666666666667" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="520.6666666666667" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Evaluation tests</text>
+      <text x="520.6666666666667" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">test_runner.py:60</text>
+      <text x="520.6666666666667" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Exercise task scoring and run controlled multi-turn</text>
+      <text x="520.6666666666667" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">scenarios.</text>
+    </a>
+  </g>
+  <g id="check-integration" data-source="tests/integration/conftest.py#scheduling_db">
+    <a href="../../tests/integration/conftest.py#L18">
+      <title>scheduling_db · tests/integration/conftest.py:18</title>
+      <rect x="961.3333333333334" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="973.3333333333334" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Integration tests</text>
+      <text x="973.3333333333334" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">conftest.py:18</text>
+      <text x="973.3333333333334" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Apply migrations and use disposable services for real</text>
+      <text x="973.3333333333334" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">scheduling, state, and broker checks.</text>
+    </a>
+  </g>
+  <rect x="55" y="525" width="215" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Open a representative test</text>
+  <g id="check-consent-example" data-source="tests/unit/test_conversation_graph.py#test_a_wrong_laya_cancel_cannot_mutate_an_existing_booking_during_new_booking_consent">
+    <a href="../../tests/unit/test_conversation_graph.py#L190">
+      <title>test_a_wrong_laya_cancel_cannot_mutate_an_existing_booking_during_new_booking_consent · tests/unit/test_conversation_graph.py:190</title>
+      <rect x="56.0" y="559" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Guard pending consent</text>
+      <text x="68.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">test_conversation_graph.py:190</text>
+      <text x="68.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Assert that an incorrect cancel proposal cannot mutate</text>
+      <text x="68.0" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the existing booking.</text>
+    </a>
+  </g>
+  <g id="check-golden-example" data-source="tests/evals/test_scenario_framework.py#test_golden_run_captures_gemma_laya_and_requires_a_separate_consent_turn">
+    <a href="../../tests/evals/test_scenario_framework.py#L26">
+      <title>test_golden_run_captures_gemma_laya_and_requires_a_separate_consent_turn · tests/evals/test_scenario_framework.py:26</title>
+      <rect x="508.6666666666667" y="559" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="520.6666666666667" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Verify the golden case</text>
+      <text x="520.6666666666667" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">test_scenario_framework.py:26</text>
+      <text x="520.6666666666667" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Inspect Gemma and Laya evidence and require a separate</text>
+      <text x="520.6666666666667" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">approval before the first write.</text>
+    </a>
+  </g>
+  <g id="check-booking-example" data-source="tests/integration/test_workflow_booking_journey.py#test_real_workflow_booking_reschedule_cancel">
+    <a href="../../tests/integration/test_workflow_booking_journey.py#L16">
+      <title>test_real_workflow_booking_reschedule_cancel · tests/integration/test_workflow_booking_journey.py:16</title>
+      <rect x="961.3333333333334" y="559" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="973.3333333333334" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Run a booking lifecycle</text>
+      <text x="973.3333333333334" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">test_workflow_booking_journey.py:16</text>
+      <text x="973.3333333333334" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Book, move, and cancel an appointment through the real</text>
+      <text x="973.3333333333334" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">scheduling services.</text>
+    </a>
+  </g>
+  <text x="42" y="735" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Arrows connect CI to test layers and each layer to a representative source test.</text>
+</svg>

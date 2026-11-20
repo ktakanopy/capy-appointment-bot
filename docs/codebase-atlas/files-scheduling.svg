@@ -64,17 +64,17 @@
     </a>
     <text x="56" y="381" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Compute available appointments and revalidate proposed slots inside a write</text>
     <text x="56" y="399" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transaction.</text>
-    <a href="../../app/scheduling.py#L189">
-      <title>AvailabilityService.search · app/scheduling.py:189</title>
-      <text x="56" y="424" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">AvailabilityService.search  /  line 189</text>
+    <a href="../../app/scheduling.py#L196">
+      <title>AvailabilityService.search · app/scheduling.py:196</title>
+      <text x="56" y="424" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">AvailabilityService.search  /  line 196</text>
     </a>
     <text x="588" y="424" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="../../app/scheduling.py#L43">
-      <title>validate_slot_in_transaction · app/scheduling.py:43</title>
-      <text x="56" y="444" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">validate_slot_in_transaction  /  line 43</text>
+    <a href="../../app/scheduling.py#L55">
+      <title>validate_slot_in_transaction · app/scheduling.py:55</title>
+      <text x="56" y="444" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">validate_slot_in_transaction  /  line 55</text>
     </a>
-    <a href="../../app/scheduling.py#L189">
-      <title>AvailabilityService.search · app/scheduling.py:189</title>
+    <a href="../../app/scheduling.py#L196">
+      <title>AvailabilityService.search · app/scheduling.py:196</title>
       <text x="56" y="464" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AvailabilityService.search</text>
     </a>
     <text x="422" y="464" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Computes open slots against business</text>
@@ -154,9 +154,9 @@
       <text x="741" y="712" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/config.py</text>
     </a>
     <text x="741" y="735" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Read and validate environment-backed application configuration.</text>
-    <a href="../../app/config.py#L54">
-      <title>load_settings · app/config.py:54</title>
-      <text x="741" y="760" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">load_settings  /  line 54</text>
+    <a href="../../app/config.py#L58">
+      <title>load_settings · app/config.py:58</title>
+      <text x="741" y="760" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">load_settings  /  line 58</text>
     </a>
     <text x="1273" y="760" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
     <a href="../../app/config.py#L9">

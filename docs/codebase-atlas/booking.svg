@@ -25,11 +25,11 @@
   <rect x="55" y="131" width="239" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 1 · Find available times</text>
   <g id="request" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="../../app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="56.0" y="165" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Massage on Friday”</text>
-      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Gemma extracts the service and date.</text>
       <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Laya proposes a slot search.</text>
     </a>
@@ -45,11 +45,11 @@
     </a>
   </g>
   <g id="availability" data-source="app/scheduling.py#AvailabilityService.search">
-    <a href="../../app/scheduling.py#L189">
-      <title>AvailabilityService.search · app/scheduling.py:189</title>
+    <a href="../../app/scheduling.py#L196">
+      <title>AvailabilityService.search · app/scheduling.py:196</title>
       <rect x="735.0" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="747.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Apply schedule rules</text>
-      <text x="747.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:189</text>
+      <text x="747.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:196</text>
       <text x="747.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Filter by staff hours, buffers, blocks</text>
       <text x="747.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and occupied intervals.</text>
     </a>

@@ -14,18 +14,21 @@ Drag the canvas to pan, scroll to zoom, or click the minimap to jump. Selecting 
 | [Create a booking](booking.svg) | Search, select, then commit after a separate approval |
 | [Failure paths](failure-paths.svg) | Intake rejection, expired state, retries, interrupted turns, model errors, consent, slot conflicts, and delivery outcomes |
 | [Manage a booking](management.svg) | Cancel an appointment or move it to another time |
+| [Evaluation framework](evaluation.svg) | Scenario inputs, graph execution, assertions, receipts, and HTML reports |
+| [Test suites](tests.svg) | CI checks and representative unit, evaluation, and integration tests |
 
 ## Find a file or class
 
 Use **File connections** to explore which cataloged files import a Python file and what that file imports. Click a neighbor to change the selected file, or click an import’s line number to open its source. The graph is generated from static import statements. The walkthrough shows runtime calls and handoffs.
 
-The reference covers the Python modules and top-level classes under `app/`, plus the Alembic environment and migrations. Each file highlights its main reading entry. Class rows point to the method that best explains its role or to the declaration for data classes, protocols and types.
+The reference covers the Python modules and top-level classes under `app/` and `tests/`, the Alembic environment and migrations, the scenario YAML files, and the verification workflow. Each file highlights its main reading entry. Class rows point to the method that best explains its role or to the declaration for data classes, protocols and types.
 
 - [Telegram and workers](files-telegram.svg)
 - [Conversation, models and state](files-conversation.svg)
 - [Scheduling and setup](files-scheduling.svg)
 - [Domain contracts and database rows](files-data.svg)
 - [Evaluation programs](files-evaluation.svg)
+- [Verification and test files](files-tests.svg)
 
 ## Regenerate
 

@@ -48,11 +48,11 @@
   <rect x="55" y="131" width="367" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 1 · Customer asks for a massage tomorrow</text>
   <g id="request-text" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="../../app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="56.0" y="165" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Book Massage tomorrow.”</text>
-      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram POSTs a private</text>
       <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">message to the authenticated</text>
       <text x="68.0" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">webhook.</text>
@@ -116,11 +116,11 @@
     </a>
   </g>
   <g id="deliver-offer" data-source="app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id">
-    <a href="../../app/channels/telegram_delivery.py#L81">
-      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:81</title>
+    <a href="../../app/channels/telegram_delivery.py#L80">
+      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:80</title>
       <rect x="327.6" y="362" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="339.6" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reserve and deliver reply</text>
-      <text x="339.6" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:81</text>
+      <text x="339.6" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:80</text>
       <text x="339.6" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A sender wake-up contains an</text>
       <text x="339.6" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">outbox ID. The sender</text>
       <text x="339.6" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reserves the reply.</text>
@@ -138,11 +138,11 @@
     </a>
   </g>
   <g id="search-request" data-source="app/scheduling.py#AvailabilityService.search">
-    <a href="../../app/scheduling.py#L189">
-      <title>AvailabilityService.search · app/scheduling.py:189</title>
+    <a href="../../app/scheduling.py#L196">
+      <title>AvailabilityService.search · app/scheduling.py:196</title>
       <rect x="870.8000000000001" y="362" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="882.8000000000001" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Find available slots</text>
-      <text x="882.8000000000001" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:189</text>
+      <text x="882.8000000000001" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:196</text>
       <text x="882.8000000000001" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Search for fits. LangGraph</text>
       <text x="882.8000000000001" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">saves the numbered offer list</text>
       <text x="882.8000000000001" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">in Redis.</text>
@@ -162,11 +162,11 @@
   <rect x="55" y="525" width="327" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 2 · Customer chooses the first time</text>
   <g id="selection-text" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="../../app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="56.0" y="559" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“1”</text>
-      <text x="68.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="68.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram sends a new update</text>
       <text x="68.0" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">for the same chat.</text>
     </a>
@@ -227,11 +227,11 @@
     </a>
   </g>
   <g id="deliver-question" data-source="app/channels/telegram_delivery.py#TelegramOutbox.claim_by_id">
-    <a href="../../app/channels/telegram_delivery.py#L81">
-      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:81</title>
+    <a href="../../app/channels/telegram_delivery.py#L80">
+      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:80</title>
       <rect x="327.6" y="756" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="339.6" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reserve the consent reply</text>
-      <text x="339.6" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:81</text>
+      <text x="339.6" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:80</text>
       <text x="339.6" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The sender gets the outbox ID</text>
       <text x="339.6" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and enforces chat ordering</text>
       <text x="339.6" y="848" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and rate limits.</text>
@@ -273,11 +273,11 @@
   <rect x="55" y="919" width="343" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="937" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 3 · Customer gives permission to book</text>
   <g id="approval-text" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="../../app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="56.0" y="953" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Yes, book it.”</text>
-      <text x="68.0" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="68.0" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The approval arrives as a</text>
       <text x="68.0" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">separate Telegram update.</text>
     </a>

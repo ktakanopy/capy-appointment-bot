@@ -37,30 +37,30 @@
   <rect x="55" y="131" width="207" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Intake · Request rejected</text>
   <g id="bad-request" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="../../app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="56.0" y="165" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Bad secret, body or intake outage</text>
-      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The webhook cannot accept the update.</text>
     </a>
   </g>
   <g id="reject" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="../../app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="508.6666666666667" y="165" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reject the webhook</text>
-      <text x="520.6666666666667" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="520.6666666666667" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="520.6666666666667" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Return 403 for authentication, 413 for size, 400 for</text>
       <text x="520.6666666666667" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">invalid updates or 503 for database errors.</text>
     </a>
   </g>
   <g id="no-ack" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L77">
-      <title>telegram_webhook · app/main.py:77</title>
+    <a href="../../app/main.py#L76">
+      <title>telegram_webhook · app/main.py:76</title>
       <rect x="961.3333333333334" y="165" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">No HTTP 204</text>
-      <text x="973.3333333333334" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="973.3333333333334" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:76</text>
       <text x="973.3333333333334" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram can retry failed intake. Accepted duplicate</text>
       <text x="973.3333333333334" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">update IDs produce one durable receipt.</text>
     </a>
@@ -226,11 +226,11 @@
   <rect x="55" y="1313" width="351" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="1331" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Booking · A competing request wins the slot</text>
   <g id="taken" data-source="app/scheduling.py#validate_slot_in_transaction">
-    <a href="../../app/scheduling.py#L43">
-      <title>validate_slot_in_transaction · app/scheduling.py:43</title>
+    <a href="../../app/scheduling.py#L55">
+      <title>validate_slot_in_transaction · app/scheduling.py:55</title>
       <rect x="56.0" y="1347" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="1371" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">The slot is no longer bookable</text>
-      <text x="68.0" y="1390" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:43</text>
+      <text x="68.0" y="1390" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">scheduling.py:55</text>
       <text x="68.0" y="1409" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Availability changes after the offer was made.</text>
     </a>
   </g>
@@ -257,31 +257,31 @@
   <rect x="55" y="1510" width="415" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="1528" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Delivery · Throttle, rejection or uncertain outcome</text>
   <g id="send-error" data-source="app/channels/telegram_delivery.py#deliver_claimed">
-    <a href="../../app/channels/telegram_delivery.py#L229">
-      <title>deliver_claimed · app/channels/telegram_delivery.py:229</title>
+    <a href="../../app/channels/telegram_delivery.py#L224">
+      <title>deliver_claimed · app/channels/telegram_delivery.py:224</title>
       <rect x="56.0" y="1544" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="1568" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Telegram send fails or dispatch expires</text>
-      <text x="68.0" y="1587" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:229</text>
+      <text x="68.0" y="1587" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:224</text>
       <text x="68.0" y="1606" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The provider may have accepted the message before a</text>
       <text x="68.0" y="1621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">response was lost.</text>
     </a>
   </g>
   <g id="classify" data-source="app/channels/telegram_delivery.py#deliver_claimed">
-    <a href="../../app/channels/telegram_delivery.py#L229">
-      <title>deliver_claimed · app/channels/telegram_delivery.py:229</title>
+    <a href="../../app/channels/telegram_delivery.py#L224">
+      <title>deliver_claimed · app/channels/telegram_delivery.py:224</title>
       <rect x="508.6666666666667" y="1544" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="1568" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Classify and record the outcome</text>
-      <text x="520.6666666666667" y="1587" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:229</text>
+      <text x="520.6666666666667" y="1587" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:224</text>
       <text x="520.6666666666667" y="1606" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Retry transient rejection such as 429. Mark permanent</text>
       <text x="520.6666666666667" y="1621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">rejection or exhausted retries as failed.</text>
     </a>
   </g>
   <g id="ambiguous" data-source="app/channels/telegram_delivery.py#TelegramOutbox.recover_expired">
-    <a href="../../app/channels/telegram_delivery.py#L206">
-      <title>TelegramOutbox.recover_expired · app/channels/telegram_delivery.py:206</title>
+    <a href="../../app/channels/telegram_delivery.py#L205">
+      <title>TelegramOutbox.recover_expired · app/channels/telegram_delivery.py:205</title>
       <rect x="961.3333333333334" y="1544" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="1568" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Stop automatic resend if ambiguous</text>
-      <text x="973.3333333333334" y="1587" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:206</text>
+      <text x="973.3333333333334" y="1587" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:205</text>
       <text x="973.3333333333334" y="1606" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">An unknown transport outcome or expired dispatch lease</text>
       <text x="973.3333333333334" y="1621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">becomes ambiguous.</text>
     </a>

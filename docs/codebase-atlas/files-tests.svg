@@ -1,0 +1,495 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 2664" width="1430" height="2664" role="img" aria-label="Source reference · Verification and test suites">
+  <title>Source reference · Verification and test suites</title>
+  <desc>Open a representative assertion or fixture to see what a test file covers.</desc>
+  <rect x="0" y="0" width="1430" height="2664" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Verification and test suites</text>
+  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Open a representative assertion or fixture to see what a test file covers.</text>
+  <g id=".github-workflows-verify.yml" data-source=".github/workflows/verify.yml">
+    <rect x="40" y="123" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../.github/workflows/verify.yml">
+      <title>.github/workflows/verify.yml</title>
+      <text x="56" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">.github/workflows/verify.yml</text>
+    </a>
+    <text x="56" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run pytest, the deterministic corpus, and Compose checks in CI with</text>
+    <text x="56" y="191" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">disposable services.</text>
+    <a href="../../.github/workflows/verify.yml">
+      <title>.github/workflows/verify.yml</title>
+      <text x="56" y="216" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+    </a>
+    <text x="588" y="216" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-__init__.py" data-source="tests/__init__.py">
+    <rect x="725" y="123" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/__init__.py">
+      <title>tests/__init__.py</title>
+      <text x="741" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/__init__.py</text>
+    </a>
+    <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the tests package used by fixtures and helpers.</text>
+    <a href="../../tests/__init__.py">
+      <title>tests/__init__.py</title>
+      <text x="741" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+    </a>
+    <text x="1273" y="198" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-conftest.py" data-source="tests/conftest.py">
+    <rect x="40" y="269" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/conftest.py">
+      <title>tests/conftest.py</title>
+      <text x="56" y="296" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/conftest.py</text>
+    </a>
+    <text x="56" y="319" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Build repeatable catalog, slot, and booking objects for tests.</text>
+    <a href="../../tests/conftest.py#L12">
+      <title>sample_catalog · tests/conftest.py:12</title>
+      <text x="56" y="344" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">sample_catalog  /  line 12</text>
+    </a>
+    <text x="588" y="344" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-api-test_health.py" data-source="tests/api/test_health.py">
+    <rect x="725" y="269" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/api/test_health.py">
+      <title>tests/api/test_health.py</title>
+      <text x="741" y="296" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/api/test_health.py</text>
+    </a>
+    <text x="741" y="319" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check readiness, startup wiring, and the retired API surfaces.</text>
+    <a href="../../tests/api/test_health.py#L22">
+      <title>test_health_reports_storage_failure_as_unready · tests/api/test_health.py:22</title>
+      <text x="741" y="344" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_health_reports_storage_failure_as_unready  /  line 22</text>
+    </a>
+    <text x="1273" y="344" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-conftest.py" data-source="tests/integration/conftest.py">
+    <rect x="40" y="397" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/conftest.py">
+      <title>tests/integration/conftest.py</title>
+      <text x="56" y="424" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/conftest.py</text>
+    </a>
+    <text x="56" y="447" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Prepare a disposable PostgreSQL database, apply migrations, seed it, and</text>
+    <text x="56" y="465" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reset it after use.</text>
+    <a href="../../tests/integration/conftest.py#L18">
+      <title>scheduling_db · tests/integration/conftest.py:18</title>
+      <text x="56" y="490" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">scheduling_db  /  line 18</text>
+    </a>
+    <text x="588" y="490" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-helpers.py" data-source="tests/integration/helpers.py">
+    <rect x="725" y="397" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/helpers.py">
+      <title>tests/integration/helpers.py</title>
+      <text x="741" y="424" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/helpers.py</text>
+    </a>
+    <text x="741" y="447" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Compute open test days and create scheduling records for integration cases.</text>
+    <a href="../../tests/integration/helpers.py#L24">
+      <title>offered_slots · tests/integration/helpers.py:24</title>
+      <text x="741" y="472" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">offered_slots  /  line 24</text>
+    </a>
+    <text x="1273" y="472" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_database_session.py" data-source="tests/integration/test_database_session.py">
+    <rect x="40" y="543" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_database_session.py">
+      <title>tests/integration/test_database_session.py</title>
+      <text x="56" y="570" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_database_session.py</text>
+    </a>
+    <text x="56" y="593" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check database rollback recovery, registration locking, and calendar</text>
+    <text x="56" y="611" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">consistency.</text>
+    <a href="../../tests/integration/test_database_session.py#L12">
+      <title>test_session_hides_bound_values_and_recovers_after_rollback · tests/integration/test_database_session.py:12</title>
+      <text x="56" y="636" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_session_hides_bound_values_and_recovers_after_rollback  /  line 12</text>
+    </a>
+    <text x="588" y="636" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_migration_preservation.py" data-source="tests/integration/test_migration_preservation.py">
+    <rect x="725" y="543" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_migration_preservation.py">
+      <title>tests/integration/test_migration_preservation.py</title>
+      <text x="741" y="570" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_migration_preservation.py</text>
+    </a>
+    <text x="741" y="593" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check how the migration handles populated legacy data.</text>
+    <a href="../../tests/integration/test_migration_preservation.py#L15">
+      <title>test_populated_legacy_database_is_preserved · tests/integration/test_migration_preservation.py:15</title>
+      <text x="741" y="618" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_populated_legacy_database_is_preserved  /  line 15</text>
+    </a>
+    <text x="1273" y="618" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_postgres_booking_lifecycle.py" data-source="tests/integration/test_postgres_booking_lifecycle.py">
+    <rect x="40" y="689" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_postgres_booking_lifecycle.py">
+      <title>tests/integration/test_postgres_booking_lifecycle.py</title>
+      <text x="56" y="716" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_postgres_booking_lifecycle.py</text>
+    </a>
+    <text x="56" y="739" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check booking writes, idempotency, conflicts, and the full transaction</text>
+    <text x="56" y="757" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">lifecycle.</text>
+    <a href="../../tests/integration/test_postgres_booking_lifecycle.py#L331">
+      <title>test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once · tests/integration/test_postgres_booking_lifecycle.py:331</title>
+      <text x="56" y="782" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once  /  line 331</text>
+    </a>
+    <text x="588" y="782" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_redis_conversation.py" data-source="tests/integration/test_redis_conversation.py">
+    <rect x="725" y="689" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_redis_conversation.py">
+      <title>tests/integration/test_redis_conversation.py</title>
+      <text x="741" y="716" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_redis_conversation.py</text>
+    </a>
+    <text x="741" y="739" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check Redis restart recovery, expiry, and conversation isolation.</text>
+    <a href="../../tests/integration/test_redis_conversation.py#L16">
+      <title>test_checkpoint_restart_expiry_and_isolation · tests/integration/test_redis_conversation.py:16</title>
+      <text x="741" y="764" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_checkpoint_restart_expiry_and_isolation  /  line 16</text>
+    </a>
+    <text x="1273" y="764" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_telegram_broker.py" data-source="tests/integration/test_telegram_broker.py">
+    <rect x="40" y="835" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_telegram_broker.py">
+      <title>tests/integration/test_telegram_broker.py</title>
+      <text x="56" y="862" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_telegram_broker.py</text>
+    </a>
+    <text x="56" y="885" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check the RabbitMQ round trip, chat order, and duplicate or interrupted</text>
+    <text x="56" y="903" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">delivery.</text>
+    <a href="../../tests/integration/test_telegram_broker.py#L59">
+      <title>test_broker_round_trip_orders_chats_and_deduplicates_sends · tests/integration/test_telegram_broker.py:59</title>
+      <text x="56" y="928" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_broker_round_trip_orders_chats_and_deduplicates_sends  /  line 59</text>
+    </a>
+    <text x="588" y="928" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_telegram_ownership.py" data-source="tests/integration/test_telegram_ownership.py">
+    <rect x="725" y="835" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_telegram_ownership.py">
+      <title>tests/integration/test_telegram_ownership.py</title>
+      <text x="741" y="862" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_telegram_ownership.py</text>
+    </a>
+    <text x="741" y="885" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check trusted Telegram ownership and tenant boundaries at booking</text>
+    <text x="741" y="903" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">operations.</text>
+    <a href="../../tests/integration/test_telegram_ownership.py#L25">
+      <title>test_every_booking_operation_checks_customer_business_and_replay · tests/integration/test_telegram_ownership.py:25</title>
+      <text x="741" y="928" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_every_booking_operation_checks_customer_business_and_replay  /  line 25</text>
+    </a>
+    <text x="1273" y="928" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_telegram_production.py" data-source="tests/integration/test_telegram_production.py">
+    <rect x="40" y="981" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_telegram_production.py">
+      <title>tests/integration/test_telegram_production.py</title>
+      <text x="56" y="1008" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_telegram_production.py</text>
+    </a>
+    <text x="56" y="1031" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check durable intake, claims, checkpoint handoff, rate limits, and recovery.</text>
+    <a href="../../tests/integration/test_telegram_production.py#L162">
+      <title>test_completed_checkpoint_carries_slot_offer_into_next_attempt · tests/integration/test_telegram_production.py:162</title>
+      <text x="56" y="1056" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_completed_checkpoint_carries_slot_offer_into_next_attempt  /  line 162</text>
+    </a>
+    <text x="588" y="1056" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_workflow_booking_journey.py" data-source="tests/integration/test_workflow_booking_journey.py">
+    <rect x="725" y="981" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_workflow_booking_journey.py">
+      <title>tests/integration/test_workflow_booking_journey.py</title>
+      <text x="741" y="1008" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_workflow_booking_journey.py</text>
+    </a>
+    <text x="741" y="1031" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Follow booking, rescheduling, and cancellation through the real scheduling</text>
+    <text x="741" y="1049" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">services.</text>
+    <a href="../../tests/integration/test_workflow_booking_journey.py#L16">
+      <title>test_real_workflow_booking_reschedule_cancel · tests/integration/test_workflow_booking_journey.py:16</title>
+      <text x="741" y="1074" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_real_workflow_booking_reschedule_cancel  /  line 16</text>
+    </a>
+    <text x="1273" y="1074" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-evals-test_runner.py" data-source="tests/evals/test_runner.py">
+    <rect x="40" y="1127" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/evals/test_runner.py">
+      <title>tests/evals/test_runner.py</title>
+      <text x="56" y="1154" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/evals/test_runner.py</text>
+    </a>
+    <text x="56" y="1177" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check task runner scoring, validation, provider modes, and failure</text>
+    <text x="56" y="1195" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reporting.</text>
+    <a href="../../tests/evals/test_runner.py#L60">
+      <title>test_smoke_task_dataset_passes_and_languages_are_explicit · tests/evals/test_runner.py:60</title>
+      <text x="56" y="1220" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_smoke_task_dataset_passes_and_languages_are_explicit  /  line 60</text>
+    </a>
+    <text x="588" y="1220" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-evals-test_scenario_framework.py" data-source="tests/evals/test_scenario_framework.py">
+    <rect x="725" y="1127" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/evals/test_scenario_framework.py">
+      <title>tests/evals/test_scenario_framework.py</title>
+      <text x="741" y="1154" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/evals/test_scenario_framework.py</text>
+    </a>
+    <text x="741" y="1177" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check scenario loading, turn evidence, consent assertions, audio manifests,</text>
+    <text x="741" y="1195" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and HTML escaping.</text>
+    <a href="../../tests/evals/test_scenario_framework.py#L26">
+      <title>test_golden_run_captures_gemma_laya_and_requires_a_separate_consent_turn · tests/evals/test_scenario_framework.py:26</title>
+      <text x="741" y="1220" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_golden_run_captures_gemma_laya_and_requires_a_separate_consent_turn  /  line 26</text>
+    </a>
+    <text x="1273" y="1220" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-evals-test_scheduling_evals.py" data-source="tests/evals/test_scheduling_evals.py">
+    <rect x="40" y="1273" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/evals/test_scheduling_evals.py">
+      <title>tests/evals/test_scheduling_evals.py</title>
+      <text x="56" y="1300" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/evals/test_scheduling_evals.py</text>
+    </a>
+    <text x="56" y="1323" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check that extraction and route scoring work at the expected evaluation</text>
+    <text x="56" y="1341" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">boundary.</text>
+    <a href="../../tests/evals/test_scheduling_evals.py#L43">
+      <title>test_route_eval_keeps_decision_separate_from_workflow · tests/evals/test_scheduling_evals.py:43</title>
+      <text x="56" y="1366" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_route_eval_keeps_decision_separate_from_workflow  /  line 43</text>
+    </a>
+    <text x="588" y="1366" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_audio_pipeline.py" data-source="tests/unit/test_audio_pipeline.py">
+    <rect x="725" y="1273" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_audio_pipeline.py">
+      <title>tests/unit/test_audio_pipeline.py</title>
+      <text x="741" y="1300" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_audio_pipeline.py</text>
+    </a>
+    <text x="741" y="1323" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check full recording interpretation and failure behavior when a chunk is</text>
+    <text x="741" y="1341" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">invalid.</text>
+    <a href="../../tests/unit/test_audio_pipeline.py#L32">
+      <title>test_complete_long_recording_preserves_late_correction · tests/unit/test_audio_pipeline.py:32</title>
+      <text x="741" y="1366" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_complete_long_recording_preserves_late_correction  /  line 32</text>
+    </a>
+    <text x="1273" y="1366" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_config.py" data-source="tests/unit/test_config.py">
+    <rect x="40" y="1419" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_config.py">
+      <title>tests/unit/test_config.py</title>
+      <text x="56" y="1446" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_config.py</text>
+    </a>
+    <text x="56" y="1469" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check settings parsing and validation of timeout bounds.</text>
+    <a href="../../tests/unit/test_config.py#L19">
+      <title>test_audio_timeout_must_be_finite_and_positive · tests/unit/test_config.py:19</title>
+      <text x="56" y="1494" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_audio_timeout_must_be_finite_and_positive  /  line 19</text>
+    </a>
+    <text x="588" y="1494" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_conversation_graph.py" data-source="tests/unit/test_conversation_graph.py">
+    <rect x="725" y="1419" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_conversation_graph.py">
+      <title>tests/unit/test_conversation_graph.py</title>
+      <text x="741" y="1446" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_conversation_graph.py</text>
+    </a>
+    <text x="741" y="1469" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check graph routing, ownership, verified choices, and consent safeguards.</text>
+    <a href="../../tests/unit/test_conversation_graph.py#L190">
+      <title>test_a_wrong_laya_cancel_cannot_mutate_an_existing_booking_during_new_booking_consent · tests/unit/test_conversation_graph.py:190</title>
+      <text x="741" y="1494" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_a_wrong_laya_cancel_cannot_mutate_an_existing_booking_during_new_booking_consent  /  line 190</text>
+    </a>
+    <text x="1273" y="1494" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="../../tests/unit/test_conversation_graph.py#L13">
+      <title>FakeSchedulingActions · tests/unit/test_conversation_graph.py:13</title>
+      <text x="741" y="1514" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">FakeSchedulingActions</text>
+    </a>
+    <text x="1107" y="1514" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Supplies controlled catalog, booking,</text>
+    <text x="1107" y="1529" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and write state.</text>
+  </g>
+  <g id="tests-unit-test_gemma_laya.py" data-source="tests/unit/test_gemma_laya.py">
+    <rect x="40" y="1587" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_gemma_laya.py">
+      <title>tests/unit/test_gemma_laya.py</title>
+      <text x="56" y="1614" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_gemma_laya.py</text>
+    </a>
+    <text x="56" y="1637" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check real adapter request and response contracts with stubbed HTTP.</text>
+    <a href="../../tests/unit/test_gemma_laya.py#L59">
+      <title>test_laya_receives_only_the_interpreted_message_and_context · tests/unit/test_gemma_laya.py:59</title>
+      <text x="56" y="1662" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_laya_receives_only_the_interpreted_message_and_context  /  line 59</text>
+    </a>
+    <text x="588" y="1662" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="../../tests/unit/test_gemma_laya.py#L11">
+      <title>_Response · tests/unit/test_gemma_laya.py:11</title>
+      <text x="56" y="1682" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">_Response</text>
+    </a>
+    <text x="422" y="1682" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Stubbed response for model adapter</text>
+    <text x="422" y="1697" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">tests.</text>
+  </g>
+  <g id="tests-unit-test_graph_workflow.py" data-source="tests/unit/test_graph_workflow.py">
+    <rect x="725" y="1587" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_graph_workflow.py">
+      <title>tests/unit/test_graph_workflow.py</title>
+      <text x="741" y="1614" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_graph_workflow.py</text>
+    </a>
+    <text x="741" y="1637" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check LangGraph invocation, routing inputs, concurrency, and audio</text>
+    <text x="741" y="1655" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">isolation.</text>
+    <a href="../../tests/unit/test_graph_workflow.py#L66">
+      <title>test_concurrent_recordings_are_isolated_and_voice_matches_text · tests/unit/test_graph_workflow.py:66</title>
+      <text x="741" y="1680" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_concurrent_recordings_are_isolated_and_voice_matches_text  /  line 66</text>
+    </a>
+    <text x="1273" y="1680" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="../../tests/unit/test_graph_workflow.py#L16">
+      <title>ClearMessageInterpreter · tests/unit/test_graph_workflow.py:16</title>
+      <text x="741" y="1700" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ClearMessageInterpreter</text>
+    </a>
+    <text x="1107" y="1700" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Returns one stable interpretation for</text>
+    <text x="1107" y="1715" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">graph tests.</text>
+  </g>
+  <g id="tests-unit-test_health_access_log.py" data-source="tests/unit/test_health_access_log.py">
+    <rect x="40" y="1773" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_health_access_log.py">
+      <title>tests/unit/test_health_access_log.py</title>
+      <text x="56" y="1800" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_health_access_log.py</text>
+    </a>
+    <text x="56" y="1823" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check that health requests stay out of access logs while other requests</text>
+    <text x="56" y="1841" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">remain logged.</text>
+    <a href="../../tests/unit/test_health_access_log.py#L6">
+      <title>test_health_access_log_is_suppressed · tests/unit/test_health_access_log.py:6</title>
+      <text x="56" y="1866" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_health_access_log_is_suppressed  /  line 6</text>
+    </a>
+    <text x="588" y="1866" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_interpretation_routing.py" data-source="tests/unit/test_interpretation_routing.py">
+    <rect x="725" y="1773" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_interpretation_routing.py">
+      <title>tests/unit/test_interpretation_routing.py</title>
+      <text x="741" y="1800" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_interpretation_routing.py</text>
+    </a>
+    <text x="741" y="1823" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check model handoff, redaction, ambiguity, and stale choice handling.</text>
+    <a href="../../tests/unit/test_interpretation_routing.py#L41">
+      <title>test_real_clients_send_only_gemmas_message_and_current_context_to_laya · tests/unit/test_interpretation_routing.py:41</title>
+      <text x="741" y="1848" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_real_clients_send_only_gemmas_message_and_current_context_to_laya  /  line 41</text>
+    </a>
+    <text x="1273" y="1848" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_local_models.py" data-source="tests/unit/test_local_models.py">
+    <rect x="40" y="1919" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_local_models.py">
+      <title>tests/unit/test_local_models.py</title>
+      <text x="56" y="1946" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_local_models.py</text>
+    </a>
+    <text x="56" y="1969" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check the local model adapter's booking and cancellation behavior.</text>
+    <a href="../../tests/unit/test_local_models.py#L39">
+      <title>test_local_router_can_book_an_offered_time · tests/unit/test_local_models.py:39</title>
+      <text x="56" y="1994" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_local_router_can_book_an_offered_time  /  line 39</text>
+    </a>
+    <text x="588" y="1994" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_models.py" data-source="tests/unit/test_models.py">
+    <rect x="725" y="1919" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_models.py">
+      <title>tests/unit/test_models.py</title>
+      <text x="741" y="1946" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_models.py</text>
+    </a>
+    <text x="741" y="1969" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check timezone-aware dates, availability bounds, and strict contract fields.</text>
+    <a href="../../tests/unit/test_models.py#L13">
+      <title>test_booking_requires_timezone_aware_start · tests/unit/test_models.py:13</title>
+      <text x="741" y="1994" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_booking_requires_timezone_aware_start  /  line 13</text>
+    </a>
+    <text x="1273" y="1994" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_observability.py" data-source="tests/unit/test_observability.py">
+    <rect x="40" y="2047" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_observability.py">
+      <title>tests/unit/test_observability.py</title>
+      <text x="56" y="2074" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_observability.py</text>
+    </a>
+    <text x="56" y="2097" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check structured log redaction and debug scoping.</text>
+    <a href="../../tests/unit/test_observability.py#L6">
+      <title>test_sensitive_fields_and_capability_tokens_are_redacted · tests/unit/test_observability.py:6</title>
+      <text x="56" y="2122" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_sensitive_fields_and_capability_tokens_are_redacted  /  line 6</text>
+    </a>
+    <text x="588" y="2122" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_owner.py" data-source="tests/unit/test_owner.py">
+    <rect x="725" y="2047" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_owner.py">
+      <title>tests/unit/test_owner.py</title>
+      <text x="741" y="2074" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_owner.py</text>
+    </a>
+    <text x="741" y="2097" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check owner agenda output and date-range handling.</text>
+    <a href="../../tests/unit/test_owner.py#L12">
+      <title>test_owner_agenda_prints_bookings_with_one_catalog_read · tests/unit/test_owner.py:12</title>
+      <text x="741" y="2122" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_owner_agenda_prints_bookings_with_one_catalog_read  /  line 12</text>
+    </a>
+    <text x="1273" y="2122" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_privacy.py" data-source="tests/unit/test_privacy.py">
+    <rect x="40" y="2175" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_privacy.py">
+      <title>tests/unit/test_privacy.py</title>
+      <text x="56" y="2202" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_privacy.py</text>
+    </a>
+    <text x="56" y="2225" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check redaction before model calls and checkpoints, history bounds, and</text>
+    <text x="56" y="2243" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">isolation.</text>
+    <a href="../../tests/unit/test_privacy.py#L5">
+      <title>test_contacts_redacted_before_every_checkpoint_and_model_input · tests/unit/test_privacy.py:5</title>
+      <text x="56" y="2268" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_contacts_redacted_before_every_checkpoint_and_model_input  /  line 5</text>
+    </a>
+    <text x="588" y="2268" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_provider.py" data-source="tests/unit/test_provider.py">
+    <rect x="725" y="2175" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_provider.py">
+      <title>tests/unit/test_provider.py</title>
+      <text x="741" y="2202" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_provider.py</text>
+    </a>
+    <text x="741" y="2225" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check deterministic fact extraction and explicit provider selection.</text>
+    <a href="../../tests/unit/test_provider.py#L27">
+      <title>test_provider_selection_never_silently_substitutes · tests/unit/test_provider.py:27</title>
+      <text x="741" y="2250" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_provider_selection_never_silently_substitutes  /  line 27</text>
+    </a>
+    <text x="1273" y="2250" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_redis_checkpoint.py" data-source="tests/unit/test_redis_checkpoint.py">
+    <rect x="40" y="2321" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_redis_checkpoint.py">
+      <title>tests/unit/test_redis_checkpoint.py</title>
+      <text x="56" y="2348" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_redis_checkpoint.py</text>
+    </a>
+    <text x="56" y="2371" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check published state, checkpoint forks, and redacted voice text with a fake</text>
+    <text x="56" y="2389" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Redis store.</text>
+    <a href="../../tests/unit/test_redis_checkpoint.py#L61">
+      <title>test_audio_forks_published_offer_and_checkpoints_only_redacted_text · tests/unit/test_redis_checkpoint.py:61</title>
+      <text x="56" y="2414" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_audio_forks_published_offer_and_checkpoints_only_redacted_text  /  line 61</text>
+    </a>
+    <text x="588" y="2414" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="../../tests/unit/test_redis_checkpoint.py#L17">
+      <title>FakeRedis · tests/unit/test_redis_checkpoint.py:17</title>
+      <text x="56" y="2434" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">FakeRedis</text>
+    </a>
+    <text x="422" y="2434" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">In-memory Redis substitute for</text>
+    <text x="422" y="2449" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">checkpoint tests.</text>
+  </g>
+  <g id="tests-unit-test_scheduling.py" data-source="tests/unit/test_scheduling.py">
+    <rect x="725" y="2321" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_scheduling.py">
+      <title>tests/unit/test_scheduling.py</title>
+      <text x="741" y="2348" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_scheduling.py</text>
+    </a>
+    <text x="741" y="2371" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check schedule math, occupied intervals, and daylight saving transitions.</text>
+    <a href="../../tests/unit/test_scheduling.py#L56">
+      <title>test_availability_observes_work_hours_buffers_and_blocked_periods · tests/unit/test_scheduling.py:56</title>
+      <text x="741" y="2396" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_availability_observes_work_hours_buffers_and_blocked_periods  /  line 56</text>
+    </a>
+    <text x="1273" y="2396" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="../../tests/unit/test_scheduling.py#L8">
+      <title>ScheduleRepository · tests/unit/test_scheduling.py:8</title>
+      <text x="741" y="2416" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ScheduleRepository</text>
+    </a>
+    <text x="1107" y="2416" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Supplies controlled calendars for</text>
+    <text x="1107" y="2431" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">availability tests.</text>
+  </g>
+  <g id="tests-unit-test_telegram_api.py" data-source="tests/unit/test_telegram_api.py">
+    <rect x="40" y="2507" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_telegram_api.py">
+      <title>tests/unit/test_telegram_api.py</title>
+      <text x="56" y="2534" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_telegram_api.py</text>
+    </a>
+    <text x="56" y="2557" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check API parsing, retry metadata, network errors, and download limits.</text>
+    <a href="../../tests/unit/test_telegram_api.py#L81">
+      <title>test_transport_failure_hides_credentials · tests/unit/test_telegram_api.py:81</title>
+      <text x="56" y="2582" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_transport_failure_hides_credentials  /  line 81</text>
+    </a>
+    <text x="588" y="2582" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-unit-test_telegram_turn.py" data-source="tests/unit/test_telegram_turn.py">
+    <rect x="725" y="2507" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/unit/test_telegram_turn.py">
+      <title>tests/unit/test_telegram_turn.py</title>
+      <text x="741" y="2534" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/unit/test_telegram_turn.py</text>
+    </a>
+    <text x="741" y="2557" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check worker dispatch, identity scope, voice handling, and state promotion.</text>
+    <a href="../../tests/unit/test_telegram_turn.py#L202">
+      <title>test_checkpoint_is_promoted_only_after_a_completed_turn · tests/unit/test_telegram_turn.py:202</title>
+      <text x="741" y="2582" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_checkpoint_is_promoted_only_after_a_completed_turn  /  line 202</text>
+    </a>
+    <text x="1273" y="2582" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+</svg>

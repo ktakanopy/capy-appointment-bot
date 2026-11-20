@@ -12,8 +12,8 @@
       ["app/channels/telegram_turns.py","Lease the oldest eligible chat update and commit the resulting state pointer and reply.",["TelegramTurns.claim_chat","TelegramTurns.finish"],[
         ["TelegramTurns","Owns the chat lease and the turn lifecycle.","claim_chat"],["TurnClaim","Binds an attempt to proof of current ownership.","assert_owned"],["ClaimLost","Signals that an attempt can no longer write."]]],
       ["app/channels/telegram_intake.py","Identify supported private messages and save incoming updates idempotently.",["save_update","private_message"],[]],
-      ["app/channels/telegram_delivery.py","Enforce outgoing ordering, budgets and dispatch leases and classify send outcomes.",["deliver_claimed","TelegramOutbox.claim_by_id"],[
-        ["TelegramOutbox","Reserves and settles outgoing jobs.","claim_by_id"],["TelegramDelivery","Resolves bot credentials and sends the job.","send"]]],
+      ["app/channels/telegram_delivery.py","Enforce outgoing ordering, budgets and dispatch leases and classify send outcomes.",["deliver_claimed","TelegramOutbox.claim_by_id","send_reply"],[
+        ["TelegramOutbox","Reserves and settles outgoing jobs.","claim_by_id"]]],
       ["app/channels/telegram_publications.py","Journal wake-ups and relay or backfill pending publications from PostgreSQL.",["schedule_publication","publish_due","backfill_publications"],[]],
       ["app/channels/telegram_broker.py","Partition incoming wakes by chat, publish ID-only messages and consume them with acknowledgements.",["relay_publications","consume_wakeups","publish_wakeup"],[]],
       ["app/channels/telegram_repository.py","Link a verified Telegram sender to a business customer and save sender-owned contact details.",["TelegramRepository.ensure_customer_for_sender"],[
@@ -107,12 +107,9 @@
         ["BlockedPeriod","Calendar interval that cannot be offered."],
         ["Customer","Business-owned customer identity and contact data."],
         ["Booking","An appointment and its current status."],
-        ["AuditEvent","Audit-shaped contract still defined in the module."],
         ["AvailabilitySlot","A proposed start, end, service and professional."],
         ["CatalogResponse","Business with its services and professionals."],
         ["AvailabilitySearchRequest","Filters and time range for a slot search."],
-        ["AvailabilityResponse","Wraps available slots."],
-        ["CustomerInput","Validates customer name and contact fields."],
         ["BookingCreateRequest","Business, customer, service and requested start."],
         ["BookingRescheduleRequest","New time and scheduling context for a booking."],
         ["BookingSummary","Saved appointment and write outcome."],
@@ -154,6 +151,8 @@
     "title":"Source reference · Evaluation programs",
     "subtitle":"The task runner scores individual capabilities. The scenario CLI reuses the workflow to test full conversations.",
     "files":[
+      ["evals/scenarios/golden.yaml","Define stable bilingual reference conversations and deterministic assertions.",[""],[]],
+      ["evals/scenarios/challenge.yaml","Exercise harder edge cases and interactions across turns.",[""],[]],
       ["app/evals/scenarios/__main__.py","Dispatch scenario validation, execution, audio preparation and report commands.",["main"],[]],
       ["app/evals/scenarios/runner.py","Run scenario attempts through the workflow and collect per-turn evidence and assertions.",["run_attempts"],[
         ["ObservedInterpreter","Captures the validated Gemma result and latency.","interpret"],["ObservedDecision","Captures Laya's proposed route and latency.","decide"],["ObservedTranscriber","Captures transcription evidence and latency.","__call__"]]],
@@ -174,6 +173,47 @@
       ["app/evals/scenarios/report.py","Render a browsable HTML report from recorded attempts.",["render_html"],[]],
       ["app/evals/__init__.py","Defines the evaluation package.",[""],[]],
       ["app/evals/scenarios/__init__.py","Defines the conversation scenario package.",[""],[]]
+    ]
+  },
+  {
+    "id":"files-tests",
+    "title":"Source reference · Verification and test suites",
+    "subtitle":"Open a representative assertion or fixture to see what a test file covers.",
+    "files":[
+      [".github/workflows/verify.yml","Run pytest, the deterministic corpus, and Compose checks in CI with disposable services.",[""],[]],
+      ["tests/__init__.py","Defines the tests package used by fixtures and helpers.",[""],[]],
+      ["tests/conftest.py","Build repeatable catalog, slot, and booking objects for tests.",["sample_catalog"],[]],
+      ["tests/api/test_health.py","Check readiness, startup wiring, and the retired API surfaces.",["test_health_reports_storage_failure_as_unready"],[]],
+      ["tests/integration/conftest.py","Prepare a disposable PostgreSQL database, apply migrations, seed it, and reset it after use.",["scheduling_db"],[]],
+      ["tests/integration/helpers.py","Compute open test days and create scheduling records for integration cases.",["offered_slots"],[]],
+      ["tests/integration/test_database_session.py","Check database rollback recovery, registration locking, and calendar consistency.",["test_session_hides_bound_values_and_recovers_after_rollback"],[]],
+      ["tests/integration/test_migration_preservation.py","Check how the migration handles populated legacy data.",["test_populated_legacy_database_is_preserved"],[]],
+      ["tests/integration/test_postgres_booking_lifecycle.py","Check booking writes, idempotency, conflicts, and the full transaction lifecycle.",["test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once"],[]],
+      ["tests/integration/test_redis_conversation.py","Check Redis restart recovery, expiry, and conversation isolation.",["test_checkpoint_restart_expiry_and_isolation"],[]],
+      ["tests/integration/test_telegram_broker.py","Check the RabbitMQ round trip, chat order, and duplicate or interrupted delivery.",["test_broker_round_trip_orders_chats_and_deduplicates_sends"],[]],
+      ["tests/integration/test_telegram_ownership.py","Check trusted Telegram ownership and tenant boundaries at booking operations.",["test_every_booking_operation_checks_customer_business_and_replay"],[]],
+      ["tests/integration/test_telegram_production.py","Check durable intake, claims, checkpoint handoff, rate limits, and recovery.",["test_completed_checkpoint_carries_slot_offer_into_next_attempt"],[]],
+      ["tests/integration/test_workflow_booking_journey.py","Follow booking, rescheduling, and cancellation through the real scheduling services.",["test_real_workflow_booking_reschedule_cancel"],[]],
+      ["tests/evals/test_runner.py","Check task runner scoring, validation, provider modes, and failure reporting.",["test_smoke_task_dataset_passes_and_languages_are_explicit"],[]],
+      ["tests/evals/test_scenario_framework.py","Check scenario loading, turn evidence, consent assertions, audio manifests, and HTML escaping.",["test_golden_run_captures_gemma_laya_and_requires_a_separate_consent_turn"],[]],
+      ["tests/evals/test_scheduling_evals.py","Check that extraction and route scoring work at the expected evaluation boundary.",["test_route_eval_keeps_decision_separate_from_workflow"],[]],
+      ["tests/unit/test_audio_pipeline.py","Check full recording interpretation and failure behavior when a chunk is invalid.",["test_complete_long_recording_preserves_late_correction"],[]],
+      ["tests/unit/test_config.py","Check settings parsing and validation of timeout bounds.",["test_audio_timeout_must_be_finite_and_positive"],[]],
+      ["tests/unit/test_conversation_graph.py","Check graph routing, ownership, verified choices, and consent safeguards.",["test_a_wrong_laya_cancel_cannot_mutate_an_existing_booking_during_new_booking_consent"],[["FakeSchedulingActions","Supplies controlled catalog, booking, and write state."]]],
+      ["tests/unit/test_gemma_laya.py","Check real adapter request and response contracts with stubbed HTTP.",["test_laya_receives_only_the_interpreted_message_and_context"],[["_Response","Stubbed response for model adapter tests."]]],
+      ["tests/unit/test_graph_workflow.py","Check LangGraph invocation, routing inputs, concurrency, and audio isolation.",["test_concurrent_recordings_are_isolated_and_voice_matches_text"],[["ClearMessageInterpreter","Returns one stable interpretation for graph tests."]]],
+      ["tests/unit/test_health_access_log.py","Check that health requests stay out of access logs while other requests remain logged.",["test_health_access_log_is_suppressed"],[]],
+      ["tests/unit/test_interpretation_routing.py","Check model handoff, redaction, ambiguity, and stale choice handling.",["test_real_clients_send_only_gemmas_message_and_current_context_to_laya"],[]],
+      ["tests/unit/test_local_models.py","Check the local model adapter's booking and cancellation behavior.",["test_local_router_can_book_an_offered_time"],[]],
+      ["tests/unit/test_models.py","Check timezone-aware dates, availability bounds, and strict contract fields.",["test_booking_requires_timezone_aware_start"],[]],
+      ["tests/unit/test_observability.py","Check structured log redaction and debug scoping.",["test_sensitive_fields_and_capability_tokens_are_redacted"],[]],
+      ["tests/unit/test_owner.py","Check owner agenda output and date-range handling.",["test_owner_agenda_prints_bookings_with_one_catalog_read"],[]],
+      ["tests/unit/test_privacy.py","Check redaction before model calls and checkpoints, history bounds, and isolation.",["test_contacts_redacted_before_every_checkpoint_and_model_input"],[]],
+      ["tests/unit/test_provider.py","Check deterministic fact extraction and explicit provider selection.",["test_provider_selection_never_silently_substitutes"],[]],
+      ["tests/unit/test_redis_checkpoint.py","Check published state, checkpoint forks, and redacted voice text with a fake Redis store.",["test_audio_forks_published_offer_and_checkpoints_only_redacted_text"],[["FakeRedis","In-memory Redis substitute for checkpoint tests."]]],
+      ["tests/unit/test_scheduling.py","Check schedule math, occupied intervals, and daylight saving transitions.",["test_availability_observes_work_hours_buffers_and_blocked_periods"],[["ScheduleRepository","Supplies controlled calendars for availability tests."]]],
+      ["tests/unit/test_telegram_api.py","Check API parsing, retry metadata, network errors, and download limits.",["test_transport_failure_hides_credentials"],[]],
+      ["tests/unit/test_telegram_turn.py","Check worker dispatch, identity scope, voice handling, and state promotion.",["test_checkpoint_is_promoted_only_after_a_completed_turn"],[]]
     ]
   }
 ]
