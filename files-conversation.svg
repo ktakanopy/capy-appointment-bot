@@ -1,0 +1,473 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 2524" width="1430" height="2524" role="img" aria-label="Source reference · Conversation, models and state">
+  <title>Source reference · Conversation, models and state</title>
+  <desc>Start with runtime wiring, the workflow facade and graph steps. Provider adapters are called by the graph.</desc>
+  <rect x="0" y="0" width="1430" height="2524" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Conversation, models and state</text>
+  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Start with runtime wiring, the workflow facade and graph steps. Provider adapters are called by the graph.</text>
+  <g id="app-runtime.py" data-source="app/runtime.py">
+    <rect x="40" y="123" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/runtime.py">
+      <title>app/runtime.py</title>
+      <text x="56" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/runtime.py</text>
+    </a>
+    <text x="56" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Assemble the normal workflow, models, Redis checkpointer and scheduling</text>
+    <text x="56" y="191" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">services.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/runtime.py#L33">
+      <title>create_runtime · app/runtime.py:33</title>
+      <text x="56" y="216" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">create_runtime  /  line 33</text>
+    </a>
+    <text x="588" y="216" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/runtime.py#L90">
+      <title>close_runtime · app/runtime.py:90</title>
+      <text x="56" y="236" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">close_runtime  /  line 90</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/runtime.py#L22">
+      <title>RuntimeContext · app/runtime.py:22</title>
+      <text x="56" y="256" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">RuntimeContext</text>
+    </a>
+    <text x="422" y="256" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Holds worker-scoped dependencies.</text>
+  </g>
+  <g id="app-graph-workflow.py" data-source="app/graph/workflow.py">
+    <rect x="725" y="123" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/workflow.py">
+      <title>app/graph/workflow.py</title>
+      <text x="741" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/workflow.py</text>
+    </a>
+    <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Invoke the compiled graph with raw input and scheduling actions scoped to</text>
+    <text x="741" y="191" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">one turn.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/workflow.py#L13">
+      <title>LangGraphWorkflow.handle_turn · app/graph/workflow.py:13</title>
+      <text x="741" y="216" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">LangGraphWorkflow.handle_turn  /  line 13</text>
+    </a>
+    <text x="1273" y="216" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/workflow.py#L13">
+      <title>LangGraphWorkflow.handle_turn · app/graph/workflow.py:13</title>
+      <text x="741" y="236" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">LangGraphWorkflow.handle_turn</text>
+    </a>
+    <text x="1107" y="236" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Provides the turn and</text>
+    <text x="1107" y="251" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">checkpoint-reading interface.</text>
+  </g>
+  <g id="app-graph-builder.py" data-source="app/graph/builder.py">
+    <rect x="40" y="309" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/builder.py">
+      <title>app/graph/builder.py</title>
+      <text x="56" y="336" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/builder.py</text>
+    </a>
+    <text x="56" y="359" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Compile nodes and conditional transitions into the LangGraph workflow.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/builder.py#L28">
+      <title>build_graph · app/graph/builder.py:28</title>
+      <text x="56" y="384" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">build_graph  /  line 28</text>
+    </a>
+    <text x="588" y="384" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="app-graph-steps.py" data-source="app/graph/steps.py">
+    <rect x="725" y="309" width="665" height="206" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py">
+      <title>app/graph/steps.py</title>
+      <text x="741" y="336" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/steps.py</text>
+    </a>
+    <text x="741" y="359" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Implement the per-turn workflow from catalog load through interpretation,</text>
+    <text x="741" y="377" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">routing, guarded actions and persistence.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L111">
+      <title>understand_input · app/graph/steps.py:111</title>
+      <text x="741" y="402" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">understand_input  /  line 111</text>
+    </a>
+    <text x="1273" y="402" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L266">
+      <title>route_turn · app/graph/steps.py:266</title>
+      <text x="741" y="422" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">route_turn  /  line 266</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L776">
+      <title>prepare_action · app/graph/steps.py:776</title>
+      <text x="741" y="442" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">prepare_action  /  line 776</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L939">
+      <title>execute · app/graph/steps.py:939</title>
+      <text x="741" y="462" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">execute  /  line 939</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L1089">
+      <title>persist · app/graph/steps.py:1089</title>
+      <text x="741" y="482" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">persist  /  line 1089</text>
+    </a>
+  </g>
+  <g id="app-graph-redis_checkpoint.py" data-source="app/graph/redis_checkpoint.py">
+    <rect x="40" y="535" width="665" height="186" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/redis_checkpoint.py">
+      <title>app/graph/redis_checkpoint.py</title>
+      <text x="56" y="562" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/redis_checkpoint.py</text>
+    </a>
+    <text x="56" y="585" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Store expiring LangGraph progress and fork the last completed state into a</text>
+    <text x="56" y="603" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">worker attempt.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/redis_checkpoint.py#L44">
+      <title>RedisCheckpointSaver.fork_completed · app/graph/redis_checkpoint.py:44</title>
+      <text x="56" y="628" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">RedisCheckpointSaver.fork_completed  /  line 44</text>
+    </a>
+    <text x="588" y="628" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/redis_checkpoint.py#L118">
+      <title>RedisCheckpointSaver.put · app/graph/redis_checkpoint.py:118</title>
+      <text x="56" y="648" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">RedisCheckpointSaver.put  /  line 118</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/redis_checkpoint.py#L44">
+      <title>RedisCheckpointSaver.fork_completed · app/graph/redis_checkpoint.py:44</title>
+      <text x="56" y="668" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">RedisCheckpointSaver.fork_completed</text>
+    </a>
+    <text x="422" y="668" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Implements LangGraph's Redis-backed</text>
+    <text x="422" y="683" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">checkpoint store.</text>
+  </g>
+  <g id="app-graph-contracts.py" data-source="app/graph/contracts.py">
+    <rect x="725" y="535" width="665" height="326" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/contracts.py">
+      <title>app/graph/contracts.py</title>
+      <text x="741" y="562" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/contracts.py</text>
+    </a>
+    <text x="741" y="585" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Define the shape of drafts, model decisions, turn input metadata and</text>
+    <text x="741" y="603" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">results.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/contracts.py#L63">
+      <title>TurnContext · app/graph/contracts.py:63</title>
+      <text x="741" y="628" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TurnContext  /  line 63</text>
+    </a>
+    <text x="1273" y="628" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/contracts.py#L26">
+      <title>WorkflowDraft · app/graph/contracts.py:26</title>
+      <text x="741" y="648" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">WorkflowDraft  /  line 26</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/contracts.py#L26">
+      <title>WorkflowDraft · app/graph/contracts.py:26</title>
+      <text x="741" y="668" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">WorkflowDraft</text>
+    </a>
+    <text x="1107" y="668" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries facts, offers and the pending</text>
+    <text x="1107" y="683" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">consent marker.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/contracts.py#L45">
+      <title>DecisionOutput · app/graph/contracts.py:45</title>
+      <text x="741" y="708" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">DecisionOutput</text>
+    </a>
+    <text x="1107" y="708" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Validates the action proposed by Laya.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/contracts.py#L54">
+      <title>BookingRef · app/graph/contracts.py:54</title>
+      <text x="741" y="728" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingRef</text>
+    </a>
+    <text x="1107" y="728" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Presents a selectable customer</text>
+    <text x="1107" y="743" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">appointment.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/contracts.py#L63">
+      <title>TurnContext · app/graph/contracts.py:63</title>
+      <text x="741" y="768" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TurnContext</text>
+    </a>
+    <text x="1107" y="768" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries per-turn business, language and</text>
+    <text x="1107" y="783" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">identity.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/contracts.py#L78">
+      <title>TurnResult · app/graph/contracts.py:78</title>
+      <text x="741" y="808" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TurnResult</text>
+    </a>
+    <text x="1107" y="808" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Returns reply text and optional slot or</text>
+    <text x="1107" y="823" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking data.</text>
+  </g>
+  <g id="app-graph-context.py" data-source="app/graph/context.py">
+    <rect x="40" y="881" width="665" height="206" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/context.py">
+      <title>app/graph/context.py</title>
+      <text x="56" y="908" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/context.py</text>
+    </a>
+    <text x="56" y="931" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carry raw inputs and live action interfaces through LangGraph runtime</text>
+    <text x="56" y="949" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">context.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/context.py#L18">
+      <title>TurnRuntime · app/graph/context.py:18</title>
+      <text x="56" y="974" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TurnRuntime  /  line 18</text>
+    </a>
+    <text x="588" y="974" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/context.py#L9">
+      <title>TurnInput · app/graph/context.py:9</title>
+      <text x="56" y="994" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TurnInput</text>
+    </a>
+    <text x="422" y="994" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Keeps text, recording and display name</text>
+    <text x="422" y="1009" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">in memory.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/context.py#L18">
+      <title>TurnRuntime · app/graph/context.py:18</title>
+      <text x="56" y="1034" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TurnRuntime</text>
+    </a>
+    <text x="422" y="1034" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Combines raw input with scoped</text>
+    <text x="422" y="1049" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">operations.</text>
+  </g>
+  <g id="app-graph-state.py" data-source="app/graph/state.py">
+    <rect x="725" y="881" width="665" height="168" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/state.py">
+      <title>app/graph/state.py</title>
+      <text x="741" y="908" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/state.py</text>
+    </a>
+    <text x="741" y="931" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Declare graph state and bound the checkpointed message history.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/state.py#L14">
+      <title>SchedulingGraphState · app/graph/state.py:14</title>
+      <text x="741" y="956" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">SchedulingGraphState  /  line 14</text>
+    </a>
+    <text x="1273" y="956" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/state.py#L8">
+      <title>_append_messages · app/graph/state.py:8</title>
+      <text x="741" y="976" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">_append_messages  /  line 8</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/state.py#L14">
+      <title>SchedulingGraphState · app/graph/state.py:14</title>
+      <text x="741" y="996" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">SchedulingGraphState</text>
+    </a>
+    <text x="1107" y="996" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the shared fields graph nodes</text>
+    <text x="1107" y="1011" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">read and write.</text>
+  </g>
+  <g id="app-graph-actions.py" data-source="app/graph/actions.py">
+    <rect x="40" y="1107" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/actions.py">
+      <title>app/graph/actions.py</title>
+      <text x="56" y="1134" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/actions.py</text>
+    </a>
+    <text x="56" y="1157" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Define the scheduling operations injected into graph nodes.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/actions.py#L13">
+      <title>SchedulingActions · app/graph/actions.py:13</title>
+      <text x="56" y="1182" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">SchedulingActions  /  line 13</text>
+    </a>
+    <text x="588" y="1182" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/actions.py#L13">
+      <title>SchedulingActions · app/graph/actions.py:13</title>
+      <text x="56" y="1202" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">SchedulingActions</text>
+    </a>
+    <text x="422" y="1202" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Protocol for real and simulated</text>
+    <text x="422" y="1217" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">scheduling actions.</text>
+  </g>
+  <g id="app-graph-consent.py" data-source="app/graph/consent.py">
+    <rect x="725" y="1107" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/consent.py">
+      <title>app/graph/consent.py</title>
+      <text x="741" y="1134" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/consent.py</text>
+    </a>
+    <text x="741" y="1157" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Recognize explicit approval and rejection phrases in English and Portuguese.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/consent.py#L49">
+      <title>classify_booking_consent · app/graph/consent.py:49</title>
+      <text x="741" y="1182" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">classify_booking_consent  /  line 49</text>
+    </a>
+    <text x="1273" y="1182" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="app-graph-booking_messages.py" data-source="app/graph/booking_messages.py">
+    <rect x="40" y="1275" width="665" height="146" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/booking_messages.py">
+      <title>app/graph/booking_messages.py</title>
+      <text x="56" y="1302" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/booking_messages.py</text>
+    </a>
+    <text x="56" y="1325" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Build localized consent and success replies with concrete appointment</text>
+    <text x="56" y="1343" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">details.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/booking_messages.py#L44">
+      <title>booking_confirmation_question · app/graph/booking_messages.py:44</title>
+      <text x="56" y="1368" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">booking_confirmation_question  /  line 44</text>
+    </a>
+    <text x="588" y="1368" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/booking_messages.py#L72">
+      <title>booking_created_reply · app/graph/booking_messages.py:72</title>
+      <text x="56" y="1388" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">booking_created_reply  /  line 72</text>
+    </a>
+  </g>
+  <g id="app-chat_helpers.py" data-source="app/chat_helpers.py">
+    <rect x="725" y="1275" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/chat_helpers.py">
+      <title>app/chat_helpers.py</title>
+      <text x="741" y="1302" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/chat_helpers.py</text>
+    </a>
+    <text x="741" y="1325" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Resolve service and professional choices and format offered slot lists.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/chat_helpers.py#L4">
+      <title>_choose_service · app/chat_helpers.py:4</title>
+      <text x="741" y="1350" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">_choose_service  /  line 4</text>
+    </a>
+    <text x="1273" y="1350" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/chat_helpers.py#L34">
+      <title>_slot_message · app/chat_helpers.py:34</title>
+      <text x="741" y="1370" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">_slot_message  /  line 34</text>
+    </a>
+  </g>
+  <g id="app-privacy.py" data-source="app/privacy.py">
+    <rect x="40" y="1441" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/privacy.py">
+      <title>app/privacy.py</title>
+      <text x="56" y="1468" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/privacy.py</text>
+    </a>
+    <text x="56" y="1491" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Redact recognized contact details and the supplied display name from free</text>
+    <text x="56" y="1509" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">text.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/privacy.py#L17">
+      <title>sanitize_message · app/privacy.py:17</title>
+      <text x="56" y="1534" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">sanitize_message  /  line 17</text>
+    </a>
+    <text x="588" y="1534" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="app-graph-laya.py" data-source="app/graph/laya.py">
+    <rect x="725" y="1441" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/laya.py">
+      <title>app/graph/laya.py</title>
+      <text x="741" y="1468" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/laya.py</text>
+    </a>
+    <text x="741" y="1491" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Send the interpreted message and draft to the Laya route endpoint and</text>
+    <text x="741" y="1509" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">validate its result.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/laya.py#L23">
+      <title>LayaDecision.decide · app/graph/laya.py:23</title>
+      <text x="741" y="1534" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">LayaDecision.decide  /  line 23</text>
+    </a>
+    <text x="1273" y="1534" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/laya.py#L23">
+      <title>LayaDecision.decide · app/graph/laya.py:23</title>
+      <text x="741" y="1554" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">LayaDecision.decide</text>
+    </a>
+    <text x="1107" y="1554" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Implements the production routing</text>
+    <text x="1107" y="1569" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">provider.</text>
+  </g>
+  <g id="app-graph-decision.py" data-source="app/graph/decision.py">
+    <rect x="40" y="1627" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/decision.py">
+      <title>app/graph/decision.py</title>
+      <text x="56" y="1654" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/decision.py</text>
+    </a>
+    <text x="56" y="1677" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Propose actions with deterministic rules for evaluation baselines.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/decision.py#L39">
+      <title>DeterministicDecision.decide · app/graph/decision.py:39</title>
+      <text x="56" y="1702" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">DeterministicDecision.decide  /  line 39</text>
+    </a>
+    <text x="588" y="1702" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/decision.py#L39">
+      <title>DeterministicDecision.decide · app/graph/decision.py:39</title>
+      <text x="56" y="1722" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">DeterministicDecision.decide</text>
+    </a>
+    <text x="422" y="1722" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Provides offline routing from the</text>
+    <text x="422" y="1737" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">message and draft.</text>
+  </g>
+  <g id="app-llm-gemma.py" data-source="app/llm/gemma.py">
+    <rect x="725" y="1627" width="665" height="226" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/gemma.py">
+      <title>app/llm/gemma.py</title>
+      <text x="741" y="1654" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/llm/gemma.py</text>
+    </a>
+    <text x="741" y="1677" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Call Gemma for structured facts and transcribe and join the chunks of one</text>
+    <text x="741" y="1695" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">recording.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/gemma.py#L33">
+      <title>GemmaUnderstanding.interpret · app/llm/gemma.py:33</title>
+      <text x="741" y="1720" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">GemmaUnderstanding.interpret  /  line 33</text>
+    </a>
+    <text x="1273" y="1720" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/gemma.py#L45">
+      <title>GemmaUnderstanding.transcribe_recording · app/llm/gemma.py:45</title>
+      <text x="741" y="1740" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">GemmaUnderstanding.transcribe_recording  /  line 45</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/gemma.py#L33">
+      <title>GemmaUnderstanding.interpret · app/llm/gemma.py:33</title>
+      <text x="741" y="1760" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">GemmaUnderstanding.interpret</text>
+    </a>
+    <text x="1107" y="1760" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Implements understanding and</text>
+    <text x="1107" y="1775" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transcription.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/gemma.py#L18">
+      <title>ProviderError · app/llm/gemma.py:18</title>
+      <text x="741" y="1800" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ProviderError</text>
+    </a>
+    <text x="1107" y="1800" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports an unusable provider result or</text>
+    <text x="1107" y="1815" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">call failure.</text>
+  </g>
+  <g id="app-llm-provider.py" data-source="app/llm/provider.py">
+    <rect x="40" y="1873" width="665" height="206" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/provider.py">
+      <title>app/llm/provider.py</title>
+      <text x="56" y="1900" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/llm/provider.py</text>
+    </a>
+    <text x="56" y="1923" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Select understanding and routing providers and supply an offline</text>
+    <text x="56" y="1941" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">interpretation baseline.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/provider.py#L118">
+      <title>build_interpreter · app/llm/provider.py:118</title>
+      <text x="56" y="1966" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">build_interpreter  /  line 118</text>
+    </a>
+    <text x="588" y="1966" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/provider.py#L131">
+      <title>build_decision · app/llm/provider.py:131</title>
+      <text x="56" y="1986" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">build_decision  /  line 131</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/provider.py#L15">
+      <title>Interpreter.interpret · app/llm/provider.py:15</title>
+      <text x="56" y="2006" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Interpreter.interpret</text>
+    </a>
+    <text x="422" y="2006" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Protocol for text-to-facts providers.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/provider.py#L21">
+      <title>DeterministicInterpreter.interpret · app/llm/provider.py:21</title>
+      <text x="56" y="2026" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">DeterministicInterpreter.interpret</text>
+    </a>
+    <text x="422" y="2026" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Extracts common scheduling facts</text>
+    <text x="422" y="2041" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">without a model.</text>
+  </g>
+  <g id="app-llm-schemas.py" data-source="app/llm/schemas.py">
+    <rect x="725" y="1873" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/schemas.py">
+      <title>app/llm/schemas.py</title>
+      <text x="741" y="1900" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/llm/schemas.py</text>
+    </a>
+    <text x="741" y="1923" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Validate the plain-language interpretation and extracted booking facts.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/schemas.py#L6">
+      <title>SchedulingInterpretation · app/llm/schemas.py:6</title>
+      <text x="741" y="1948" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">SchedulingInterpretation  /  line 6</text>
+    </a>
+    <text x="1273" y="1948" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/schemas.py#L6">
+      <title>SchedulingInterpretation · app/llm/schemas.py:6</title>
+      <text x="741" y="1968" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">SchedulingInterpretation</text>
+    </a>
+    <text x="1107" y="1968" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries message, service, date, time</text>
+    <text x="1107" y="1983" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and choice facts.</text>
+  </g>
+  <g id="app-local_models.py" data-source="app/local_models.py">
+    <rect x="40" y="2099" width="665" height="248" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/local_models.py">
+      <title>app/local_models.py</title>
+      <text x="56" y="2126" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/local_models.py</text>
+    </a>
+    <text x="56" y="2149" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Serve local Gemma and Laya HTTP endpoints and manage model startup.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/local_models.py#L247">
+      <title>main · app/local_models.py:247</title>
+      <text x="56" y="2174" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 247</text>
+    </a>
+    <text x="588" y="2174" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/local_models.py#L148">
+      <title>create_app · app/local_models.py:148</title>
+      <text x="56" y="2194" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">create_app  /  line 148</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/local_models.py#L75">
+      <title>TextTurn · app/local_models.py:75</title>
+      <text x="56" y="2214" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TextTurn</text>
+    </a>
+    <text x="422" y="2214" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Validates a text interpretation</text>
+    <text x="422" y="2229" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">request.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/local_models.py#L82">
+      <title>AudioChunk · app/local_models.py:82</title>
+      <text x="56" y="2254" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioChunk</text>
+    </a>
+    <text x="422" y="2254" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Validates an encoded transcription</text>
+    <text x="422" y="2269" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">request.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/local_models.py#L89">
+      <title>RoutingTurn · app/local_models.py:89</title>
+      <text x="56" y="2294" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">RoutingTurn</text>
+    </a>
+    <text x="422" y="2294" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Validates Laya's message and draft</text>
+    <text x="422" y="2309" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">request.</text>
+  </g>
+  <g id="app-graph-__init__.py" data-source="app/graph/__init__.py">
+    <rect x="725" y="2099" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/__init__.py">
+      <title>app/graph/__init__.py</title>
+      <text x="741" y="2126" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/graph/__init__.py</text>
+    </a>
+    <text x="741" y="2149" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the conversation graph package.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/__init__.py">
+      <title>app/graph/__init__.py</title>
+      <text x="741" y="2174" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+    </a>
+    <text x="1273" y="2174" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="app-llm-__init__.py" data-source="app/llm/__init__.py">
+    <rect x="40" y="2367" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/__init__.py">
+      <title>app/llm/__init__.py</title>
+      <text x="56" y="2394" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/llm/__init__.py</text>
+    </a>
+    <text x="56" y="2417" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the understanding adapters package.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/llm/__init__.py">
+      <title>app/llm/__init__.py</title>
+      <text x="56" y="2442" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+    </a>
+    <text x="588" y="2442" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+</svg>

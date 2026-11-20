@@ -1,0 +1,110 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 566" width="1430" height="566" role="img" aria-label="Manage an existing booking">
+  <title>Manage an existing booking</title>
+  <desc>Follow cancellation and rescheduling through the customer-scoped graph and the PostgreSQL write boundary.</desc>
+  <rect x="0" y="0" width="1430" height="566" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Manage an existing booking</text>
+  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Follow cancellation and rescheduling through the customer-scoped graph and the PostgreSQL write boundary.</text>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#557383" />
+    </marker>
+  </defs>
+  <rect x="40" y="123" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="320" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <polyline points="355.5,214.5 395.5,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="manage" data-to="resolve" data-kind="flow" />
+  <polyline points="695.0,214.5 735.0,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="resolve" data-to="dispatch" data-kind="flow" />
+  <polyline points="1034.5,214.5 1074.5,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="dispatch" data-to="change" data-kind="flow" />
+  <polyline points="355.5,411.5 395.5,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="move" data-to="prepare-move" data-kind="flow" />
+  <polyline points="695.0,411.5 735.0,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="prepare-move" data-to="choose-move" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="1034.5,411.5 1074.5,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="choose-move" data-to="commit-move" data-kind="flow" />
+  <rect x="55" y="131" width="263" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Customer starts a booking change</text>
+  <g id="manage" data-source="app/main.py#telegram_webhook">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/main.py#L77">
+      <title>telegram_webhook · app/main.py:77</title>
+      <rect x="56.0" y="165" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Cancel my appointment”</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A private Telegram turn resolves the</text>
+      <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">trusted customer.</text>
+    </a>
+  </g>
+  <g id="resolve" data-source="app/graph/steps.py#_prepare_booking_status_change">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L908">
+      <title>_prepare_booking_status_change · app/graph/steps.py:908</title>
+      <rect x="395.5" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="407.5" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Resolve the owned booking</text>
+      <text x="407.5" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:908</text>
+      <text x="407.5" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Find a selected appointment from the</text>
+      <text x="407.5" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">customer's references or ask them to</text>
+      <text x="407.5" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">choose.</text>
+    </a>
+  </g>
+  <g id="dispatch" data-source="app/customer_scheduling_actions.py#CustomerSchedulingActions.cancel">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/customer_scheduling_actions.py#L86">
+      <title>CustomerSchedulingActions.cancel · app/customer_scheduling_actions.py:86</title>
+      <rect x="735.0" y="165" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="747.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Call the scoped action</text>
+      <text x="747.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">customer_scheduling_actions.py:86</text>
+      <text x="747.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pass the business, customer and stable</text>
+      <text x="747.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">turn idempotency key.</text>
+    </a>
+  </g>
+  <g id="change" data-source="app/booking.py#BookingService.cancel">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/booking.py#L299">
+      <title>BookingService.cancel · app/booking.py:299</title>
+      <rect x="1074.5" y="165" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="1086.5" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Cancel and release the time</text>
+      <text x="1086.5" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:299</text>
+      <text x="1086.5" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Commit the canceled status and retry</text>
+      <text x="1086.5" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">result. The old slot is available to</text>
+      <text x="1086.5" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">offer again.</text>
+    </a>
+  </g>
+  <rect x="55" y="328" width="199" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Customer moves a booking</text>
+  <g id="move" data-source="app/main.py#telegram_webhook">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/main.py#L77">
+      <title>telegram_webhook · app/main.py:77</title>
+      <rect x="56.0" y="362" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Move my appointment”</text>
+      <text x="68.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:77</text>
+      <text x="68.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The private Telegram turn supplies a</text>
+      <text x="68.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">trusted customer and a new scheduling</text>
+      <text x="68.0" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">request.</text>
+    </a>
+  </g>
+  <g id="prepare-move" data-source="app/graph/steps.py#_prepare_reschedule">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L797">
+      <title>_prepare_reschedule · app/graph/steps.py:797</title>
+      <rect x="395.5" y="362" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="407.5" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Identify booking and offer times</text>
+      <text x="407.5" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:797</text>
+      <text x="407.5" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Resolve an upcoming owned booking and</text>
+      <text x="407.5" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">search for replacement slots.</text>
+    </a>
+  </g>
+  <g id="choose-move" data-source="app/graph/steps.py#select">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/graph/steps.py#L733">
+      <title>select · app/graph/steps.py:733</title>
+      <rect x="735.0" y="362" width="299.5" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="747.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Match a replacement slot</text>
+      <text x="747.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">steps.py:733</text>
+      <text x="747.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A later turn matches the number to the</text>
+      <text x="747.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">saved offer and prepares the move.</text>
+    </a>
+  </g>
+  <g id="commit-move" data-source="app/booking.py#BookingService.reschedule">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/72bab8b361b592df1df9eb6e5e6993bb513bc036/app/booking.py#L403">
+      <title>BookingService.reschedule · app/booking.py:403</title>
+      <rect x="1074.5" y="362" width="299.5" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="1086.5" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Validate and commit the move</text>
+      <text x="1086.5" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">booking.py:403</text>
+      <text x="1086.5" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check the new interval while excluding</text>
+      <text x="1086.5" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the previous one. A failed move</text>
+      <text x="1086.5" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">preserves the appointment.</text>
+    </a>
+  </g>
+  <text x="42" y="538" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Solid arrow · Call or control flow  /  Dashed arrow · Async handoff or framework delegation</text>
+</svg>
