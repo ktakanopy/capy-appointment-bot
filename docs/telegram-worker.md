@@ -15,8 +15,8 @@ The API accepts incoming Telegram messages. One background process checks Postgr
 
 | Table | What it holds |
 | --- | --- |
-| `telegram_inbox` | Messages and receipt status. The key `(bot_id, update_id)` deduplicates Telegram retries. |
-| `telegram_conversations` | The current turn claim, last processed message position and the last completed checkpoint reference for each chat. |
+| `telegram_inbox` | Update receipts with status `received`, `processing`, or `processed`. The key `(bot_id, update_id)` deduplicates Telegram retries. |
+| `telegram_chat_processing_state` | The current turn claim, last processed message position and the last completed checkpoint reference for each chat. |
 | `telegram_outbox` | Reply text, dispatch status, retry time and send result. |
 
 Redis holds the checkpoint itself. When the worker finishes a message, it clears the raw payload and keeps the receipt for deduplication. After a terminal send result, it clears the reply content. Cleanup later removes completed rows. [Schema](database.md)

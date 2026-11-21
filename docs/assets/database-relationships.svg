@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1170" height="690" viewBox="0 0 1170 690" role="img" aria-labelledby="title desc">
   <title id="title">Studio database relationships</title>
-  <desc id="desc">Foreign key columns in the studio tables point to referenced primary keys. The unique business index allows at most one per business.</desc>
+  <desc id="desc">Foreign keys in the studio tables point to primary or unique keys. The professional business index allows at most one professional per business.</desc>
   <style>
 text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
 .title { font-size: 28px; font-weight: 700; }
@@ -18,7 +18,7 @@ text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
   <text x="570" y="124" class="key">REFERENCED KEY</text>
   <text x="815" y="124" class="key">CARDINALITY</text>
   <rect x="30" y="143" width="1110" height="49" fill="#fffefa"/>
-  <text x="48" y="173" class="field">massagistas.business_id</text>
+  <text x="48" y="173" class="field">professionals.business_id</text>
   <text x="570" y="173" class="field">businesses.id</text>
   <text x="815" y="173" class="label">at most one per business</text>
   <path d="M510 168 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
@@ -34,27 +34,27 @@ text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
   <path d="M510 266 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
   <rect x="30" y="290" width="1110" height="49" fill="#f5f8f3"/>
   <text x="48" y="320" class="field">weekly_availability_rules.professional_id</text>
-  <text x="570" y="320" class="field">massagistas.id</text>
+  <text x="570" y="320" class="field">professionals.id</text>
   <text x="815" y="320" class="label">one massagista · many rules</text>
   <path d="M510 315 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
   <rect x="30" y="339" width="1110" height="49" fill="#fffefa"/>
   <text x="48" y="369" class="field">blocked_periods.professional_id</text>
-  <text x="570" y="369" class="field">massagistas.id</text>
+  <text x="570" y="369" class="field">professionals.id</text>
   <text x="815" y="369" class="label">one massagista · many blocks</text>
   <path d="M510 364 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
   <rect x="30" y="388" width="1110" height="49" fill="#f5f8f3"/>
-  <text x="48" y="418" class="field">bookings.professional_id</text>
-  <text x="570" y="418" class="field">massagistas.id</text>
-  <text x="815" y="418" class="label">one massagista · many bookings</text>
+  <text x="48" y="418" class="field">bookings (professional_id, business_id)</text>
+  <text x="570" y="418" class="field">professionals (id, business_id)</text>
+  <text x="855" y="418" class="label">one professional · many bookings</text>
   <path d="M510 413 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
   <rect x="30" y="437" width="1110" height="49" fill="#fffefa"/>
-  <text x="48" y="467" class="field">bookings.service_id</text>
-  <text x="570" y="467" class="field">services.id</text>
+  <text x="48" y="467" class="field">bookings (service_id, business_id)</text>
+  <text x="570" y="467" class="field">services (id, business_id)</text>
   <text x="815" y="467" class="label">one service · many bookings</text>
   <path d="M510 462 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
   <rect x="30" y="486" width="1110" height="49" fill="#f5f8f3"/>
-  <text x="48" y="516" class="field">bookings.customer_id</text>
-  <text x="570" y="516" class="field">customers.id</text>
+  <text x="48" y="516" class="field">bookings (customer_id, business_id)</text>
+  <text x="570" y="516" class="field">customers (id, business_id)</text>
   <text x="815" y="516" class="label">one customer · many bookings</text>
   <path d="M510 511 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
   <rect x="30" y="535" width="1110" height="49" fill="#fffefa"/>

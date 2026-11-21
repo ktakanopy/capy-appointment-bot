@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from app.channels.bots import TelegramBot
 from app.database import database_session
-from app.db_models import TelegramConversation, TelegramUpdate
+from app.db_models import TelegramChatProcessingState, TelegramUpdate
 from app.observability import debug_event
 
 
@@ -79,7 +79,7 @@ def save_update(
             chat_id=chat_id if supported else None,
             telegram_user_id=user_id if supported else None,
             payload=payload,
-            status="received" if supported else "delivered",
+            status="received" if supported else "processed",
             message_date=date,
             ready_at=func.clock_timestamp() + timedelta(seconds=0.3),
             expires_at=func.clock_timestamp() + timedelta(days=30),
@@ -87,7 +87,7 @@ def save_update(
             index_elements=idempotency_key_columns,
         ).returning(TelegramUpdate.update_id))
         if supported and inserted_update_id is not None:
-            session.execute(insert(TelegramConversation).values(
+            session.execute(insert(TelegramChatProcessingState).values(
                 bot_id=bot.bot_id, chat_id=chat_id, business_id=bot.business_id,
             ).on_conflict_do_nothing())
     debug_event(

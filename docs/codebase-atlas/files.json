@@ -117,10 +117,10 @@
         ["HealthResponse","Describes API and dependency readiness."],
         ["DomainError","Carries a handled business rule violation."]
       ]],
-      ["app/db_models.py","Map business, scheduling and Telegram tables to SQLAlchemy models.",["Base","BookingRow","TelegramUpdate","TelegramConversation","TelegramOutboxRow"],[
+      ["app/db_models.py","Map business, scheduling and Telegram tables to SQLAlchemy models.",["Base","BookingRow","TelegramUpdate","TelegramChatProcessingState","TelegramOutboxRow"],[
         ["Base","SQLAlchemy declarative metadata root."],
         ["BusinessRow","Tenant data and booking policy."],
-        ["ProfessionalRow","Bookable massage therapist in the massagistas table."],
+        ["ProfessionalRow","Bookable massage therapist in the professionals table."],
         ["ServiceRow","Service type, duration, price and generated name."],
         ["WeeklyAvailabilityRule","Recurring working-hours interval."],
         ["BlockedPeriod","Staff calendar hold."],
@@ -128,7 +128,7 @@
         ["BookingRow","Appointment and the staff interval it occupies."],
         ["IdempotencyRecord","Request fingerprint and prior write outcome."],
         ["TelegramUpdate","Durable receipt and pending inbound payload."],
-        ["TelegramConversation","Chat lease, update order and checkpoint pointer."],
+        ["TelegramChatProcessingState","Chat lease, update order and checkpoint pointer."],
         ["TelegramOutboxRow","Pending or settled Telegram send."]
       ]],
       ["alembic/env.py","Run Alembic against the application's SQLAlchemy metadata.",["run_migrations_online","run_migrations_offline"],[]],
@@ -141,7 +141,8 @@
       ["alembic/versions/0007_massage_studio.py","Reshape a fresh database for the massage studio catalog and reply-only Telegram delivery.",["upgrade"],[]],
       ["alembic/versions/0008_telegram_customers.py","Move Telegram identities onto customers and remove the legacy polling cursor and reply fields.",["upgrade"],[]],
       ["alembic/versions/0009_telegram_postgres_queue.py","Preserve pending Telegram work and remove the former broker tables.",["upgrade"],[]],
-      ["alembic/versions/0010_telegram_inbox.py","Rename the incoming Telegram queue in place while preserving stored updates.",["upgrade","downgrade"],[]]
+      ["alembic/versions/0010_telegram_inbox.py","Rename the incoming Telegram queue in place while preserving stored updates.",["upgrade","downgrade"],[]],
+      ["alembic/versions/0011_clarify_schema.py","Rename chat processing and professional tables, mark completed inbox updates as processed, and enforce same-business booking references.",["upgrade","downgrade"],[]]
     ]
   },
   {

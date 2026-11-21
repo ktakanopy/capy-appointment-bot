@@ -107,7 +107,7 @@ def _check_bot_scope(database_url: str, bot: TelegramBot) -> None:
                 WHERE (bot_id, business_id) <> (:bot_id, :business_id)
                   AND (status IN ('received', 'processing') OR bot_id = :bot_id)
                 UNION ALL
-                SELECT 1 FROM telegram_conversations
+                SELECT 1 FROM telegram_chat_processing_state
                 WHERE bot_id = :bot_id AND business_id <> :business_id
                 UNION ALL
                 SELECT 1 FROM telegram_outbox
@@ -452,7 +452,7 @@ def prune_history(database_url: str, limit: int = 500) -> None:
         session.execute(
             text("""DELETE FROM telegram_inbox WHERE (bot_id,update_id) IN (
                    SELECT u.bot_id,u.update_id FROM telegram_inbox u
-                   WHERE u.status='delivered' AND u.expires_at<clock_timestamp()
+                   WHERE u.status='processed' AND u.expires_at<clock_timestamp()
                      AND NOT EXISTS (SELECT 1 FROM telegram_outbox o
                          WHERE o.bot_id=u.bot_id AND o.update_id=u.update_id
                            AND o.status IN ('ready','dispatching'))

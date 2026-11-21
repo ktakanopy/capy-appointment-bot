@@ -24,7 +24,7 @@ class BusinessRow(Base):
 
 
 class ProfessionalRow(Base):
-    __tablename__ = "massagistas"
+    __tablename__ = "professionals"
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)
     business_id: Mapped[str] = mapped_column(Text)
@@ -134,8 +134,8 @@ class TelegramUpdate(Base):
     ready_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
 
 
-class TelegramConversation(Base):
-    __tablename__ = "telegram_conversations"
+class TelegramChatProcessingState(Base):
+    __tablename__ = "telegram_chat_processing_state"
 
     bot_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     chat_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)

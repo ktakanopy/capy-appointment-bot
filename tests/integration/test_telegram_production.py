@@ -99,7 +99,7 @@ def test_webhook_dedupes_and_rejects_invalid_requests(scheduling_db, monkeypatch
         receipts = connection.execute(
             """SELECT status,payload FROM telegram_inbox WHERE bot_id=42 ORDER BY update_id"""
         ).fetchall()
-    assert [row["status"] for row in receipts] == ["received", "delivered"]
+    assert [row["status"] for row in receipts] == ["received", "processed"]
     assert receipts[1]["payload"] is None
 
 
@@ -120,7 +120,7 @@ def test_claims_isolate_chats_and_reject_stale_booking_and_checkpoint(scheduling
     turns.finish(other_chat, "Prices", "other-checkpoint")
     with connect(url) as connection:
         connection.execute(
-            "UPDATE telegram_conversations SET lease_until=now()-interval '1 second' WHERE chat_id=101"
+            "UPDATE telegram_chat_processing_state SET lease_until=now()-interval '1 second' WHERE chat_id=101"
         )
     recovery = turns.claim_chat(42, 101)
     assert recovery.interrupted and recovery.generation > voice.generation
@@ -201,7 +201,7 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
                         process_turn(turns, third, runtime)
                 with connect(url) as connection:
                     connection.execute(
-                        "UPDATE telegram_conversations SET lease_until=now()-interval '1 second' "
+                        "UPDATE telegram_chat_processing_state SET lease_until=now()-interval '1 second' "
                         "WHERE bot_id=42 AND chat_id=%s", (chat,),
                     )
                 recovery = turns.claim_chat(42, chat)
@@ -278,7 +278,11 @@ def test_late_update_requests_a_fresh_offer(scheduling_db):
             "SELECT message FROM telegram_outbox WHERE update_id=19"
         ).fetchone()
         last = connection.execute(
-            "SELECT last_update_id FROM telegram_conversations"
+            "SELECT last_update_id FROM telegram_chat_processing_state"
         ).fetchone()
+        receipts = connection.execute(
+            "SELECT status FROM telegram_inbox WHERE bot_id=42 ORDER BY update_id"
+        ).fetchall()
     assert "arrived late" in reply["message"]
     assert last["last_update_id"] == 20
+    assert receipts == [{"status": "processed"}, {"status": "processed"}]

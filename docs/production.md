@@ -24,11 +24,15 @@ python -m app.telegram_service register --webhook-base-url https://bot.example.c
 
 ## Upgrade an existing deployment
 
-For deployments already on `0009_telegram_postgres_queue`, stop the API and
-worker, run `alembic upgrade head` to rename the inbox table, and start both
-services with the updated application. To revert this rename, stop both services,
-run `alembic downgrade 0009_telegram_postgres_queue`, and start the previous
-application version.
+For deployments already on `0009_telegram_postgres_queue` or `0010_telegram_inbox`,
+stop the API and worker, run `alembic upgrade head`, and start both services with
+the updated application. Migration `0011_clarify_schema` validates existing
+bookings against the new same-business foreign keys. If validation fails,
+PostgreSQL rolls back the upgrade. Reconcile the affected booking references
+before retrying.
+
+To roll back, stop both services, run `alembic downgrade` to the revision used by
+the previous application image, and start both services with that image.
 
 For older deployments migrating off RabbitMQ:
 

@@ -120,9 +120,9 @@
     </a>
     <text x="56" y="739" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check booking writes, idempotency, conflicts, and the full transaction</text>
     <text x="56" y="757" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">lifecycle.</text>
-    <a href="../../tests/integration/test_postgres_booking_lifecycle.py#L331">
-      <title>test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once · tests/integration/test_postgres_booking_lifecycle.py:331</title>
-      <text x="56" y="782" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once  /  line 331</text>
+    <a href="../../tests/integration/test_postgres_booking_lifecycle.py#L361">
+      <title>test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once · tests/integration/test_postgres_booking_lifecycle.py:361</title>
+      <text x="56" y="782" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once  /  line 361</text>
     </a>
     <text x="588" y="782" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>

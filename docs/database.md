@@ -5,7 +5,7 @@ PostgreSQL stores the massage catalog, working hours, customers, bookings, and T
 ## Business tables
 
 The arrows show the columns that reference another table. The unique index on
-`massagistas.business_id` allows at most one massagista for each business.
+`professionals.business_id` allows at most one professional for each business.
 
 ![Foreign keys between the studio business tables](assets/database-relationships.svg)
 
@@ -18,7 +18,7 @@ foreign key to the business.
 | Table | Purpose |
 | --- | --- |
 | `businesses` | Studio name, timezone, booking notice, and booking horizon. |
-| `massagistas` | The professional who takes appointments. A business has one massagista. |
+| `professionals` | The massage therapist who takes appointments. |
 | `services` | One row per massage type and duration, with price and buffers. PostgreSQL generates the name from the type and minutes. |
 | `weekly_availability_rules` | Recurring local work intervals. A day can have multiple intervals. |
 | `blocked_periods` | Dates and times when the professional is unavailable. |
@@ -26,7 +26,7 @@ foreign key to the business.
 | `bookings` | Customer, service, actual appointment times, occupied interval including buffers, and status. |
 | `idempotency_records` | Request hash and result for each booking write key. |
 
-A unique index prevents duplicate service type and duration combinations. All services share the massagista's calendar. The booking stores its interval at creation, so later catalog changes do not change an appointment's recorded time. PostgreSQL excludes overlapping occupied intervals for scheduled and confirmed bookings.
+A unique index prevents duplicate service type and duration combinations. All services share the professional's calendar. The booking stores its interval at creation, so later catalog changes do not change an appointment's recorded time. PostgreSQL excludes overlapping occupied intervals for scheduled and confirmed bookings.
 
 The combination of business, bot, and Telegram user ID identifies a single
 customer row. A phone number is optional contact information.
@@ -42,7 +42,7 @@ These three tables store incoming work, per-chat state and outbound replies.
 | Table | Purpose |
 | --- | --- |
 | `telegram_inbox` | Incoming Telegram updates, deduplication and pending turn state. |
-| `telegram_conversations` | Per-chat lease, ordering information and reference to the completed Redis checkpoint. |
+| `telegram_chat_processing_state` | Per-chat lease, ordering information and reference to the completed Redis checkpoint. |
 | `telegram_outbox` | Replies, pending delivery state, retry timing and send outcomes. |
 
 Bot configuration comes from the environment. The worker queries pending updates and replies directly. [Telegram worker guide](telegram-worker.md).
@@ -52,8 +52,9 @@ Alembic also maintains `alembic_version`, which records the applied migration.
 ## Booking transaction
 
 The booking transaction checks the retry key and customer, locks the
-massagista, and validates the selected slot again. The booking and retry result
-commit together. PostgreSQL rejects overlapping occupied intervals.
+professional, and validates the selected slot again. The booking and retry result
+commit together. PostgreSQL also checks that the customer, service, and professional
+each belong to the booking's business through composite foreign keys.
 
 [Availability](../app/scheduling.py) · [Booking service](../app/booking.py)
 
@@ -64,4 +65,4 @@ Migration `0007_massage_studio` requires an empty business database. It refuses 
 An existing massage-studio database can upgrade from `0007_massage_studio` to
 `0008_telegram_customers`. The migration copies sender identities onto their
 existing customer rows and creates customer rows for unlinked identities.
-`0009_telegram_postgres_queue` removes the broker publication and delivery coordination tables while preserving pending messages and replies. `0010_telegram_inbox` renames the incoming update table in place, preserving pending messages and deduplication receipts. See the [deployment guide](production.md) for upgrade and rollback steps.
+`0009_telegram_postgres_queue` removes the broker publication and delivery coordination tables while preserving pending messages and replies. `0010_telegram_inbox` renames the incoming update table in place. `0011_clarify_schema` renames the chat-state and professional tables, converts completed inbox rows to `processed`, and adds the booking foreign keys. See the [deployment guide](production.md) for upgrade and rollback steps.

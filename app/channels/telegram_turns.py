@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app.channels.bots import TelegramBot
 from app.database import database_session
 from app.db_models import (
-    TelegramConversation,
+    TelegramChatProcessingState,
     TelegramOutboxRow,
     TelegramUpdate,
 )
@@ -63,12 +63,12 @@ class TurnClaim:
         for expiry so every worker checks the same deadline.
         """
         return (
-            TelegramConversation.bot_id == self.bot.bot_id,
-            TelegramConversation.chat_id == self.row["chat_id"],
-            TelegramConversation.business_id == self.bot.business_id,
-            TelegramConversation.active_update_id == self.row["update_id"],
-            TelegramConversation.generation == self.generation,
-            TelegramConversation.lease_until > func.clock_timestamp(),
+            TelegramChatProcessingState.bot_id == self.bot.bot_id,
+            TelegramChatProcessingState.chat_id == self.row["chat_id"],
+            TelegramChatProcessingState.business_id == self.bot.business_id,
+            TelegramChatProcessingState.active_update_id == self.row["update_id"],
+            TelegramChatProcessingState.generation == self.generation,
+            TelegramChatProcessingState.lease_until > func.clock_timestamp(),
         )
 
     def assert_owned(self, session: Session) -> None:
@@ -79,9 +79,9 @@ class TurnClaim:
         and a booking or reply update. Raise ClaimLost if the check fails.
         """
         found = session.scalar(
-            select(TelegramConversation.bot_id)
+            select(TelegramChatProcessingState.bot_id)
             .where(*self.active_lease_conditions())
-            .with_for_update(of=TelegramConversation, key_share=True)
+            .with_for_update(of=TelegramChatProcessingState, key_share=True)
         )
         if not found:
             raise ClaimLost("Telegram turn lease expired or was superseded.")
@@ -102,17 +102,17 @@ class TelegramTurns:
         self.bot = bot
 
     def claim_next(self) -> TurnClaim | None:
-        head = self._chat_head_query(TelegramConversation.chat_id).lateral()
+        head = self._chat_head_query(TelegramChatProcessingState.chat_id).lateral()
         now = func.clock_timestamp()
         with database_session(self.database_url) as session:
             chat_id = session.scalar(
-                select(TelegramConversation.chat_id)
+                select(TelegramChatProcessingState.chat_id)
                 .join(head, true())
                 .where(
-                    TelegramConversation.bot_id == self.bot.bot_id,
-                    TelegramConversation.business_id == self.bot.business_id,
-                    or_(TelegramConversation.lease_until.is_(None),
-                        TelegramConversation.lease_until <= now),
+                    TelegramChatProcessingState.bot_id == self.bot.bot_id,
+                    TelegramChatProcessingState.business_id == self.bot.business_id,
+                    or_(TelegramChatProcessingState.lease_until.is_(None),
+                        TelegramChatProcessingState.lease_until <= now),
                     or_(head.c.status == "processing", head.c.ready_at <= now),
                 )
                 .order_by(head.c.received_at, head.c.update_id)
@@ -126,13 +126,13 @@ class TelegramTurns:
             return None
         with database_session(self.database_url) as session:
             chat = session.scalar(
-                select(TelegramConversation)
+                select(TelegramChatProcessingState)
                 .where(
-                    TelegramConversation.bot_id == bot_id,
-                    TelegramConversation.chat_id == chat_id,
-                    TelegramConversation.business_id == self.bot.business_id,
+                    TelegramChatProcessingState.bot_id == bot_id,
+                    TelegramChatProcessingState.chat_id == chat_id,
+                    TelegramChatProcessingState.business_id == self.bot.business_id,
                 )
-                .with_for_update(of=TelegramConversation, key_share=True)
+                .with_for_update(of=TelegramChatProcessingState, key_share=True)
             )
             if chat is None:
                 return None
@@ -200,10 +200,10 @@ class TelegramTurns:
             return None
         generation = row["previous_generation"] + 1
         session.execute(
-            update(TelegramConversation)
+            update(TelegramChatProcessingState)
             .where(
-                TelegramConversation.bot_id == row["bot_id"],
-                TelegramConversation.chat_id == row["chat_id"],
+                TelegramChatProcessingState.bot_id == row["bot_id"],
+                TelegramChatProcessingState.chat_id == row["chat_id"],
             )
             .values(
                 generation=generation,
@@ -237,7 +237,7 @@ class TelegramTurns:
         """
         with database_session(self.database_url) as session:
             renewed = session.scalar(
-                update(TelegramConversation)
+                update(TelegramChatProcessingState)
                 .where(
                     *claim.active_lease_conditions(),
                 )
@@ -245,7 +245,7 @@ class TelegramTurns:
                     lease_until=func.clock_timestamp()
                     + timedelta(seconds=LEASE_SECONDS),
                 )
-                .returning(TelegramConversation.generation)
+                .returning(TelegramChatProcessingState.generation)
             )
             return renewed is not None
 
@@ -272,10 +272,10 @@ class TelegramTurns:
                 )
             )
             session.execute(
-                update(TelegramConversation)
+                update(TelegramChatProcessingState)
                 .where(
-                    TelegramConversation.bot_id == claim.bot.bot_id,
-                    TelegramConversation.chat_id == claim.row["chat_id"],
+                    TelegramChatProcessingState.bot_id == claim.bot.bot_id,
+                    TelegramChatProcessingState.chat_id == claim.row["chat_id"],
                 )
                 .values(active_update_id=None, lease_until=None)
             )
@@ -318,14 +318,14 @@ class TelegramTurns:
                     TelegramUpdate.update_id == row["update_id"],
                 )
                 .values(
-                    status="delivered",
+                    status="processed",
                     payload=None,
                     last_error=None,
                     expires_at=func.clock_timestamp() + timedelta(days=30),
                 )
             )
             conversation = session.get(
-                TelegramConversation, (row["bot_id"], row["chat_id"])
+                TelegramChatProcessingState, (row["bot_id"], row["chat_id"])
             )
             conversation.active_update_id = None
             conversation.lease_until = None

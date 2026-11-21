@@ -150,9 +150,19 @@ def test_telegram_customer_migration_preserves_ownership_and_pending_work(migrat
     assert "Finish pending work for other Telegram bots" in rejected.stderr
     with connect(url) as conn:
         conn.execute("UPDATE telegram_outbox SET status='sent', message=NULL WHERE bot_id=43")
+    migrate("0010_telegram_inbox")
+    with connect(url) as conn:
+        conn.execute("""
+            UPDATE telegram_conversations SET generation=7, checkpoint_thread='saved-draft'
+            WHERE bot_id=42 AND chat_id=101
+        """)
     migrate("head")
     with connect(url) as conn:
         assert conn.execute("SELECT customer_id FROM bookings").fetchone() == {"customer_id": "c"}
+        assert conn.execute("SELECT id FROM professionals").fetchone() == {"id": "p"}
+        assert conn.execute(
+            "SELECT status FROM telegram_inbox WHERE bot_id=42 AND update_id=1"
+        ).fetchone() == {"status": "processed"}
         rows = conn.execute("""
             SELECT id, full_name, phone, telegram_user_id, telegram_username, telegram_display_name
             FROM customers ORDER BY telegram_user_id NULLS LAST
@@ -179,13 +189,13 @@ def test_telegram_customer_migration_preserves_ownership_and_pending_work(migrat
             FROM telegram_outbox WHERE bot_id=42
         """).fetchone() == {"message": "Pending reply", "delayed": True}
         assert conn.execute(
-            "SELECT chat_id FROM telegram_conversations"
-        ).fetchone() == {"chat_id": 101}
+            "SELECT chat_id, generation, checkpoint_thread FROM telegram_chat_processing_state"
+        ).fetchone() == {"chat_id": 101, "generation": 7, "checkpoint_thread": "saved-draft"}
         assert conn.execute("""
             SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename ~ '^telegram_'
             ORDER BY tablename
         """).fetchall() == [
-            {"tablename": "telegram_conversations"}, {"tablename": "telegram_inbox"},
+            {"tablename": "telegram_chat_processing_state"}, {"tablename": "telegram_inbox"},
             {"tablename": "telegram_outbox"},
         ]
         assert conn.execute("""
@@ -199,6 +209,13 @@ def test_telegram_customer_migration_preserves_ownership_and_pending_work(migrat
 
     migrate("0009_telegram_postgres_queue", direction="downgrade")
     with connect(url) as conn:
+        assert conn.execute("SELECT id FROM massagistas").fetchone() == {"id": "p"}
+        assert conn.execute(
+            "SELECT generation, checkpoint_thread FROM telegram_conversations"
+        ).fetchone() == {"generation": 7, "checkpoint_thread": "saved-draft"}
+        assert conn.execute(
+            "SELECT status FROM telegram_updates WHERE bot_id=42 AND update_id=1"
+        ).fetchone() == {"status": "delivered"}
         assert conn.execute(
             "SELECT status, payload->'message'->>'text' AS message "
             "FROM telegram_updates WHERE bot_id=42 AND update_id=2"

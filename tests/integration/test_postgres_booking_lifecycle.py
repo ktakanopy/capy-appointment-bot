@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import psycopg
 import pytest
+from psycopg import sql
 from sqlalchemy import update
 
 import app.booking as booking_module
@@ -49,6 +50,35 @@ def test_migration_and_seed_are_repeatable(scheduling_db):
             ).fetchone()["n"]
             == 6
         )
+
+
+@pytest.mark.parametrize("reference", ["service", "professional", "customer"])
+def test_postgres_rejects_booking_references_in_another_business(scheduling_db, reference):
+    slot = offered_slots(scheduling_db)[0]
+    booking = create_booking(scheduling_db, slot, key="same-business", phone="+5511999900008").booking
+    url = scheduling_db["url"]
+    with connect(url) as connection:
+        connection.execute(
+            "INSERT INTO businesses (id, name, category, timezone) "
+            "VALUES ('other', 'Other Studio', 'wellness', 'UTC')"
+        )
+        connection.execute(
+            "INSERT INTO services (id, business_id, service_type, duration_minutes, price_minor) "
+            "VALUES ('other-service', 'other', 'Shiatsu', 60, 100)"
+        )
+        connection.execute(
+            "INSERT INTO professionals (id, business_id, name) VALUES ('other-professional', 'other', 'Alex')"
+        )
+        connection.execute(
+            "INSERT INTO customers (id, business_id, full_name) VALUES ('other-customer', 'other', 'Pat')"
+        )
+
+    with pytest.raises(psycopg.errors.ForeignKeyViolation) as error, connect(url) as connection:
+        connection.execute(
+            sql.SQL("UPDATE bookings SET {} = %s WHERE id = %s").format(sql.Identifier(f"{reference}_id")),
+            (f"other-{reference}", booking.id),
+        )
+    assert error.value.diag.constraint_name == f"bookings_{reference}_business_fkey"
 
 
 def test_service_options_are_data_and_durations_are_unique(scheduling_db):

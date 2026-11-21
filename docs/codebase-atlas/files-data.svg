@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1784" width="1430" height="1784" role="img" aria-label="Source reference · Domain contracts and PostgreSQL rows">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1802" width="1430" height="1802" role="img" aria-label="Source reference · Domain contracts and PostgreSQL rows">
   <title>Source reference · Domain contracts and PostgreSQL rows</title>
   <desc>Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.</desc>
-  <rect x="0" y="0" width="1430" height="1784" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <rect x="0" y="0" width="1430" height="1802" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Domain contracts and PostgreSQL rows</text>
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.</text>
   <g id="app-models.py" data-source="app/models.py">
@@ -150,8 +150,8 @@
       <text x="741" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramUpdate  /  line 119</text>
     </a>
     <a href="../../app/db_models.py#L137">
-      <title>TelegramConversation · app/db_models.py:137</title>
-      <text x="741" y="258" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramConversation  /  line 137</text>
+      <title>TelegramChatProcessingState · app/db_models.py:137</title>
+      <text x="741" y="258" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramChatProcessingState  /  line 137</text>
     </a>
     <a href="../../app/db_models.py#L152">
       <title>TelegramOutboxRow · app/db_models.py:152</title>
@@ -172,7 +172,7 @@
       <text x="741" y="338" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ProfessionalRow</text>
     </a>
     <text x="1107" y="338" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bookable massage therapist in the</text>
-    <text x="1107" y="353" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">massagistas table.</text>
+    <text x="1107" y="353" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">professionals table.</text>
     <a href="../../app/db_models.py#L35">
       <title>ServiceRow · app/db_models.py:35</title>
       <text x="741" y="378" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ServiceRow</text>
@@ -214,8 +214,8 @@
     <text x="1107" y="578" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Durable receipt and pending inbound</text>
     <text x="1107" y="593" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">payload.</text>
     <a href="../../app/db_models.py#L137">
-      <title>TelegramConversation · app/db_models.py:137</title>
-      <text x="741" y="618" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramConversation</text>
+      <title>TelegramChatProcessingState · app/db_models.py:137</title>
+      <text x="741" y="618" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramChatProcessingState</text>
     </a>
     <text x="1107" y="618" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Chat lease, update order and checkpoint</text>
     <text x="1107" y="633" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">pointer.</text>
@@ -376,6 +376,24 @@
     <a href="../../alembic/versions/0010_telegram_inbox.py#L26">
       <title>downgrade · alembic/versions/0010_telegram_inbox.py:26</title>
       <text x="56" y="1702" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">downgrade  /  line 26</text>
+    </a>
+  </g>
+  <g id="alembic-versions-0011_clarify_schema.py" data-source="alembic/versions/0011_clarify_schema.py">
+    <rect x="725" y="1607" width="665" height="146" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../alembic/versions/0011_clarify_schema.py">
+      <title>alembic/versions/0011_clarify_schema.py</title>
+      <text x="741" y="1634" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0011_clarify_schema.py</text>
+    </a>
+    <text x="741" y="1657" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Rename chat processing and professional tables, mark completed inbox updates</text>
+    <text x="741" y="1675" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">as processed, and enforce same-business booking references.</text>
+    <a href="../../alembic/versions/0011_clarify_schema.py#L11">
+      <title>upgrade · alembic/versions/0011_clarify_schema.py:11</title>
+      <text x="741" y="1700" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
+    </a>
+    <text x="1273" y="1700" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="../../alembic/versions/0011_clarify_schema.py#L45">
+      <title>downgrade · alembic/versions/0011_clarify_schema.py:45</title>
+      <text x="741" y="1720" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">downgrade  /  line 45</text>
     </a>
   </g>
 </svg>
