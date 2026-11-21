@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 763" width="1430" height="763" role="img" aria-label="How a Telegram message moves through CAPY">
   <title>How a Telegram message moves through CAPY</title>
-  <desc>Follow a saved update from the webhook to a PostgreSQL claim, a conversation turn and a Telegram reply.</desc>
+  <desc>Current notification path, direct database recovery, and independent processor/sender lifetimes.</desc>
   <rect x="0" y="0" width="1430" height="763" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">How a Telegram message moves through CAPY</text>
-  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Follow a saved update from the webhook to a PostgreSQL claim, a conversation turn and a Telegram reply.</text>
+  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Current notification path, direct database recovery, and independent processor/sender lifetimes.</text>
   <defs>
     <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
       <path d="M0 0L8 4L0 8Z" fill="#557383" />
@@ -15,7 +15,6 @@
   <rect x="40" y="517" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
   <polyline points="287.6,214.5 327.6,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="update" data-to="webhook" data-kind="flow" />
   <polyline points="559.2,214.5 599.2,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="webhook" data-to="save" data-kind="flow" />
-  <polyline points="715.0,264 715.0,313.0 1258.2,313.0 1258.2,362" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="save" data-to="consumer" data-kind="async" stroke-dasharray="6 5" />
   <polyline points="1142.4,411.5 1102.4,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="consumer" data-to="claim" data-kind="flow" />
   <polyline points="870.8000000000001,411.5 830.8000000000001,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="claim" data-to="process" data-kind="flow" />
   <polyline points="599.2,411.5 559.2,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="process" data-to="worker" data-kind="flow" />
@@ -23,38 +22,62 @@
   <polyline points="715.0,461 715.0,510.0 715.0,510.0 715.0,559" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="process" data-to="finish" data-kind="flow" />
   <polyline points="830.8000000000001,608.5 870.8000000000001,608.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="finish" data-to="send-claim" data-kind="async" stroke-dasharray="6 5" />
   <polyline points="1102.4,608.5 1142.4,608.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="send-claim" data-to="deliver" data-kind="flow" />
+  <polyline points="830.8000000000001,214.5 870.8000000000001,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="save" data-to="runtime-notify" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="986.6,264 986.6,313.0 1258.2,313.0 1258.2,362" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="runtime-notify" data-to="consumer" data-kind="async" stroke-dasharray="6 5" />
+  <polyline points="1258.2,264 1258.2,313.0 1258.2,313.0 1258.2,362" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="runtime-recover" data-to="consumer" data-kind="flow" />
   <rect x="55" y="131" width="119" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Webhook intake</text>
   <g id="update" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L93">
-      <title>telegram_webhook · app/main.py:93</title>
+    <a href="../../app/main.py#L101">
+      <title>telegram_webhook · app/main.py:101</title>
       <rect x="56.0" y="165" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Telegram update</text>
-      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:93</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:101</text>
       <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A customer sends text, voice</text>
       <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">or a contact to the bot.</text>
     </a>
   </g>
   <g id="webhook" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L93">
-      <title>telegram_webhook · app/main.py:93</title>
+    <a href="../../app/main.py#L101">
+      <title>telegram_webhook · app/main.py:101</title>
       <rect x="327.6" y="165" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="339.6" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Authenticate webhook</text>
-      <text x="339.6" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:93</text>
+      <text x="339.6" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:101</text>
       <text x="339.6" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Resolve the bot and verify</text>
       <text x="339.6" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the secret. Acknowledge after</text>
       <text x="339.6" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">intake commits.</text>
     </a>
   </g>
   <g id="save" data-source="app/channels/telegram_intake.py#save_update">
-    <a href="../../app/channels/telegram_intake.py#L40">
-      <title>save_update · app/channels/telegram_intake.py:40</title>
+    <a href="../../app/channels/telegram_intake.py#L48">
+      <title>save_update · app/channels/telegram_intake.py:48</title>
       <rect x="599.2" y="165" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="611.2" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save update</text>
-      <text x="611.2" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_intake.py:40</text>
+      <text x="611.2" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_intake.py:48</text>
       <text x="611.2" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Deduplicate the update and</text>
       <text x="611.2" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">record due work in</text>
       <text x="611.2" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">PostgreSQL.</text>
+    </a>
+  </g>
+  <g id="runtime-notify" data-source="app/channels/telegram_queue.py#TelegramQueue.try_publish">
+    <a href="../../app/channels/telegram_queue.py#L117">
+      <title>TelegramQueue.try_publish · app/channels/telegram_queue.py:117</title>
+      <rect x="870.8000000000001" y="165" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
+      <text x="882.8000000000001" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Publish after commit</text>
+      <text x="882.8000000000001" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_queue.py:117</text>
+      <text x="882.8000000000001" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bound connection and confirm</text>
+      <text x="882.8000000000001" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">wait to one second.</text>
+    </a>
+  </g>
+  <g id="runtime-recover" data-source="app/channels/telegram_turns.py#TelegramTurns.claim_next">
+    <a href="../../app/channels/telegram_turns.py#L112">
+      <title>TelegramTurns.claim_next · app/channels/telegram_turns.py:112</title>
+      <rect x="1142.4" y="165" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="1154.4" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Recover without RabbitMQ</text>
+      <text x="1154.4" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:112</text>
+      <text x="1154.4" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Startup and periodic</text>
+      <text x="1154.4" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">PostgreSQL claims use the</text>
+      <text x="1154.4" y="257" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">same slot.</text>
     </a>
   </g>
   <rect x="55" y="328" width="231" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
@@ -71,55 +94,56 @@
     </a>
   </g>
   <g id="worker" data-source="app/telegram_worker.py#TelegramWorker.handle_message">
-    <a href="../../app/telegram_worker.py#L276">
-      <title>TelegramWorker.handle_message · app/telegram_worker.py:276</title>
+    <a href="../../app/telegram_worker.py#L323">
+      <title>TelegramWorker.handle_message · app/telegram_worker.py:323</title>
       <rect x="327.6" y="362" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="339.6" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Handle the message</text>
-      <text x="339.6" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:276</text>
+      <text x="339.6" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:323</text>
       <text x="339.6" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Resolve commands and contacts</text>
       <text x="339.6" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">or hand text and voice to the</text>
       <text x="339.6" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">workflow.</text>
     </a>
   </g>
   <g id="process" data-source="app/telegram_worker.py#process_turn">
-    <a href="../../app/telegram_worker.py#L122">
-      <title>process_turn · app/telegram_worker.py:122</title>
+    <a href="../../app/telegram_worker.py#L166">
+      <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="599.2" y="362" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="611.2" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Process claimed turn</text>
-      <text x="611.2" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:122</text>
+      <text x="611.2" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:166</text>
       <text x="611.2" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Fork the prior Redis draft</text>
       <text x="611.2" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and resolve the customer</text>
       <text x="611.2" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">before running the turn.</text>
     </a>
   </g>
   <g id="claim" data-source="app/channels/telegram_turns.py#TelegramTurns.claim_chat">
-    <a href="../../app/channels/telegram_turns.py#L123">
-      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:123</title>
+    <a href="../../app/channels/telegram_turns.py#L131">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:131</title>
       <rect x="870.8000000000001" y="362" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="882.8000000000001" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Lease chat head</text>
-      <text x="882.8000000000001" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:123</text>
+      <text x="882.8000000000001" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:131</text>
       <text x="882.8000000000001" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Claim the earliest eligible</text>
       <text x="882.8000000000001" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">update for this bot and chat.</text>
     </a>
   </g>
-  <g id="consumer" data-source="app/telegram_worker.py#run_worker">
-    <a href="../../app/telegram_worker.py#L44">
-      <title>run_worker · app/telegram_worker.py:44</title>
+  <g id="consumer" data-source="app/telegram_worker.py#process_pending">
+    <a href="../../app/telegram_worker.py#L105">
+      <title>process_pending · app/telegram_worker.py:105</title>
       <rect x="1142.4" y="362" width="231.6" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
-      <text x="1154.4" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Poll pending updates</text>
-      <text x="1154.4" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:44</text>
-      <text x="1154.4" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The worker checks PostgreSQL</text>
-      <text x="1154.4" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">for the next eligible chat.</text>
+      <text x="1154.4" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">One processor slot</text>
+      <text x="1154.4" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:105</text>
+      <text x="1154.4" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Handle a RabbitMQ hint or a</text>
+      <text x="1154.4" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">direct database recovery</text>
+      <text x="1154.4" y="454" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">turn.</text>
     </a>
   </g>
   <rect x="55" y="525" width="375" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Commit the reply and let the sender deliver it</text>
   <g id="finish" data-source="app/channels/telegram_turns.py#TelegramTurns.finish">
-    <a href="../../app/channels/telegram_turns.py#L284">
-      <title>TelegramTurns.finish · app/channels/telegram_turns.py:284</title>
+    <a href="../../app/channels/telegram_turns.py#L296">
+      <title>TelegramTurns.finish · app/channels/telegram_turns.py:296</title>
       <rect x="599.2" y="559" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="611.2" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Finish the turn</text>
-      <text x="611.2" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:284</text>
+      <text x="611.2" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:296</text>
       <text x="611.2" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Commit the checkpoint pointer</text>
       <text x="611.2" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and reply in PostgreSQL.</text>
     </a>
@@ -130,16 +154,17 @@
       <rect x="870.8000000000001" y="559" width="231.6" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="882.8000000000001" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reserve the send</text>
       <text x="882.8000000000001" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:23</text>
-      <text x="882.8000000000001" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The worker reserves the next</text>
-      <text x="882.8000000000001" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">due reply in chat order.</text>
+      <text x="882.8000000000001" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The independent sender</text>
+      <text x="882.8000000000001" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reserves the next due reply</text>
+      <text x="882.8000000000001" y="651" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">in chat order.</text>
     </a>
   </g>
   <g id="deliver" data-source="app/telegram_sender.py#deliver_claimed">
-    <a href="../../app/telegram_sender.py#L15">
-      <title>deliver_claimed · app/telegram_sender.py:15</title>
+    <a href="../../app/telegram_sender.py#L84">
+      <title>deliver_claimed · app/telegram_sender.py:84</title>
       <rect x="1142.4" y="559" width="231.6" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="1154.4" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Call Telegram</text>
-      <text x="1154.4" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_sender.py:15</text>
+      <text x="1154.4" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_sender.py:84</text>
       <text x="1154.4" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Call the Telegram API and</text>
       <text x="1154.4" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">record the delivery outcome.</text>
     </a>

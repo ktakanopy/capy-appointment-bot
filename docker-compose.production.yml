@@ -1,6 +1,6 @@
-# Hosted deployment with external PostgreSQL and Redis.
+# Hosted deployment with external PostgreSQL, Redis, and RabbitMQ.
 # Use docker-compose.yml for the local demo described in README.md.
-# Supply external PostgreSQL and Redis through CAPY_ENV_FILE.
+# Supply external service URLs through CAPY_ENV_FILE.
 x-capy: &capy
   image: ${CAPY_IMAGE:?Set CAPY_IMAGE to the tested application image}
   env_file: ${CAPY_ENV_FILE:?Set CAPY_ENV_FILE to a private runtime environment file}
@@ -42,3 +42,14 @@ services:
     restart: unless-stopped
     command: python -m app.telegram_service process
     stop_grace_period: 16m
+    deploy:
+      replicas: 5
+
+  sender:
+    <<: *capy
+    env_file:
+      - ${CAPY_ENV_FILE:?Set CAPY_ENV_FILE to a private runtime environment file}
+      - ${CAPY_BOT_ENV_FILE:?Set CAPY_BOT_ENV_FILE to the bot token environment file}
+    restart: unless-stopped
+    command: python -m app.telegram_service send
+    stop_grace_period: 1m

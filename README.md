@@ -48,14 +48,14 @@ Check `http://localhost:8081/health`. [Model setup options](docs/model-contracts
 
 ### Start the Telegram demo
 
-Start the web API and Telegram worker in a second terminal.
+Start the API, RabbitMQ, five processing workers and one independent sender in a second terminal.
 
 ```bash
 docker compose -p capy-massage-studio --profile telegram up -d --build --wait
 ```
 
 The project name gives this demo its own database volume. Compose seeds the studio and
-connects the worker to the local model server. Check
+connects the processors to the local model server. The Compose `deploy.replicas: 5` setting applies to `telegram-worker`; each process runs one turn at a time. Check
 `http://localhost:8000/health`. Point a public HTTPS reverse proxy or tunnel at
 `http://127.0.0.1:8000`. Telegram will send incoming messages to that HTTPS address.
 
@@ -111,7 +111,11 @@ Open `http://localhost:3000` and make a test booking to generate a trace. Langfu
 
 ## Flow and guarantees
 
-The Telegram webhook saves each update in PostgreSQL. One worker reads pending messages, uses Gemma, Laya and the scheduling services, then sends saved replies. Redis holds conversation checkpoints. The worker can resume pending work after a restart.
+The Telegram webhook commits each update to PostgreSQL, then makes a bounded attempt to publish bot/chat identifiers to one RabbitMQ queue, `telegram.chat_ready`. Five initial processors use PostgreSQL chat claims to run independent chats concurrently. Each has one processing slot for notifications and direct database recovery. One independent sender reads PostgreSQL replies, paced at roughly one send per second. Redis holds conversation checkpoints. Broker downtime leaves durable intake and recovery available. Five processors are an initial configuration, not a measured capacity claim.
+
+![Current runtime: durable inbox, RabbitMQ notifications, five processors and an independent sender](docs/codebase-atlas/architecture-overview.svg)
+
+Open the [interactive architecture atlas](docs/codebase-atlas/index.html) for ownership, transaction boundaries and recovery examples.
 
 Availability results are references, not reservations. Selecting a time asks for approval and creates no booking. A later explicit approval allows the transaction to revalidate policy and save the booking. PostgreSQL rejects overlapping active bookings, and idempotency protects retries. Redis holds a bounded, temporary conversation draft, offered slots, pending consent and history. PostgreSQL keeps update receipts and saved replies across restarts.
 
@@ -143,13 +147,13 @@ The seed corpus has 16 English/Portuguese text task cases and two synthetic spee
 ## Verify
 
 ```bash
-# Disposable PostgreSQL and Redis; does not use application data volumes:
+# Disposable PostgreSQL, Redis and RabbitMQ; does not use application data volumes:
 docker compose -p capy-simplification-test -f docker-compose.test.yml run --build --rm checks
 # Remove the disposable containers when finished:
 docker compose -p capy-simplification-test -f docker-compose.test.yml down
 ```
 
-For host tests, set `TEST_DATABASE_URL` to a disposable PostgreSQL database ending in `_test` and set `TEST_REDIS_URL` to a disposable Redis database. Run `uv run --extra dev pytest -q`. CI requires both services. ffmpeg is required for audio tests.
+For host tests, set `TEST_DATABASE_URL` to a disposable PostgreSQL database ending in `_test` and set `TEST_REDIS_URL` to a disposable Redis database and `TEST_RABBITMQ_URL` to a disposable RabbitMQ vhost ending in `_test`. Run `uv run --extra dev pytest -q`. CI requires all three services. ffmpeg is required for audio tests.
 
 ## Migration and current limits
 
@@ -158,7 +162,7 @@ Migration `0007_massage_studio` requires a fresh database and stops if an older 
 The smoke corpus exercises the local models with synthetic data. A live Telegram walkthrough
 requires a test bot, a test chat, and a public HTTPS address for the webhook.
 
-The demo uses one registered bot and a rate-limited sender. The production Compose file is a deployment reference.
+The demo uses one configured bot, five processors and one rate-limited sender. Transition from the combined worker by stopping it before starting the new roles; see the [changeover guide](docs/production.md#changeover-and-rollback). The production Compose file is a deployment reference.
 
 ## Documentation
 

@@ -108,21 +108,21 @@ def test_claims_isolate_chats_and_reject_stale_booking_and_checkpoint(scheduling
     bot = register(url)
     for item in (update(1, voice={"file_id": "clip"}), update(2, text="1"),
                  update(3, chat=102, text="prices")):
-        assert save_update(url, bot, item)
+        assert save_update(url, bot, item).accepted
     ready_updates(url)
     turns = TelegramTurns(url, bot)
     voice = turns.claim_next()
     assert voice.row["update_id"] == 1
-    assert turns.claim_chat(42, 101) is None
+    assert turns.claim_chat(42, 101).outcome == "busy"
     other_chat = turns.claim_next()
     assert other_chat.row["update_id"] == 3
-    assert turns.claim_chat(42, 102) is None
+    assert turns.claim_chat(42, 102).outcome == "busy"
     turns.finish(other_chat, "Prices", "other-checkpoint")
     with connect(url) as connection:
         connection.execute(
             "UPDATE telegram_conversations SET lease_until=now()-interval '1 second' WHERE chat_id=101"
         )
-    recovery = turns.claim_chat(42, 101)
+    recovery = turns.claim_chat(42, 101).claim
     assert recovery.interrupted and recovery.generation > voice.generation
     slot = offered_slots(scheduling_db)[0]
     bookings = BookingService(scheduling_db["repository"], turn_guard=voice.assert_owned)
@@ -134,8 +134,13 @@ def test_claims_isolate_chats_and_reject_stale_booking_and_checkpoint(scheduling
         ), "expired-lease")
     with pytest.raises(ClaimLost):
         turns.finish(voice, "Old reply", "stale-checkpoint")
+    stale_identity = TelegramRepository(url, turn_guard=voice.assert_owned)
+    with pytest.raises(ClaimLost):
+        stale_identity.ensure_customer_for_sender(bot.business_id, bot.bot_id, 101, "Stale")
+    with pytest.raises(ClaimLost):
+        stale_identity.save_contact(bot.business_id, "unreachable", "+5511999999999")
     process_turn(turns, recovery, None)
-    follow_up = turns.claim_chat(42, 101)
+    follow_up = turns.claim_chat(42, 101).claim
     assert follow_up.row["update_id"] == 2
     assert follow_up.checkpoint_thread is None
     assert not turns.renew(voice)
@@ -174,13 +179,13 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
         )
         save_update(url, bot, update(1, chat=chat, **first_message))
         ready_updates(url)
-        process_turn(turns, turns.claim_chat(42, chat), runtime)
+        process_turn(turns, turns.claim_chat(42, chat).claim, runtime)
         assert recordings == ([b"synthetic voice"] if first_input == "voice" else [])
         selection = update(2, chat=chat, text="1")
         selection["message"]["from"]["first_name"] = "DebugExamplePrivateName"
         save_update(url, bot, selection)
         ready_updates(url)
-        second = turns.claim_chat(42, chat)
+        second = turns.claim_chat(42, chat).claim
         assert second.checkpoint_thread
         if outcome == "draft_expired":
             runtime.workflow.graph.checkpointer.delete_thread(second.checkpoint_thread)
@@ -190,7 +195,7 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
         if outcome != "draft_expired":
             save_update(url, bot, update(3, chat=chat, text="Yes, book it."))
             ready_updates(url)
-            third = turns.claim_chat(42, chat)
+            third = turns.claim_chat(42, chat).claim
             if outcome == "worker_crash":
                 def lose_reply(*_):
                     raise RuntimeError("simulated loss after booking commit")
@@ -204,7 +209,7 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
                         "UPDATE telegram_conversations SET lease_until=now()-interval '1 second' "
                         "WHERE bot_id=42 AND chat_id=%s", (chat,),
                     )
-                recovery = turns.claim_chat(42, chat)
+                recovery = turns.claim_chat(42, chat).claim
                 assert recovery.interrupted
                 process_turn(turns, recovery, runtime)
             else:
@@ -240,7 +245,7 @@ def test_sender_cooldown_and_expired_send_survive_restart(scheduling_db):
     ready_updates(url)
     turns = TelegramTurns(url, bot)
     for number in (1, 2, 3):
-        turns.finish(turns.claim_chat(bot.bot_id, 100 + number), "Hello", None)
+        turns.finish(turns.claim_chat(bot.bot_id, 100 + number).claim, "Hello", None)
     sender = TelegramOutbox(url, bot)
     first = sender.claim_next()
     assert first["update_id"] == 1
@@ -267,10 +272,10 @@ def test_late_update_requests_a_fresh_offer(scheduling_db):
     turns = TelegramTurns(url, bot)
     save_update(url, bot, update(20, date=2000, text="Newer turn"))
     ready_updates(url)
-    turns.finish(turns.claim_chat(42, 101), "Available times", "published")
+    turns.finish(turns.claim_chat(42, 101).claim, "Available times", "published")
     save_update(url, bot, update(19, date=1999, text="1"))
     ready_updates(url)
-    late = turns.claim_chat(42, 101)
+    late = turns.claim_chat(42, 101).claim
     assert late.late
     process_turn(turns, late, None)
     with connect(url) as connection:

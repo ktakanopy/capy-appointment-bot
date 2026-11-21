@@ -6,16 +6,16 @@ Booking writes lock the business row to serialize the retry boundary, then valid
 
 The booking change and retry result commit together. A failed move preserves the old appointment.
 
-Webhook intake saves the receipt before acknowledging the update. It deduplicates by bot ID and update ID.
+Webhook intake commits the receipt before publishing an identifier notification and returning HTTP 204. It deduplicates by bot ID and update ID. Publication is best effort within one second. A failed or lost hint leaves accepted work in PostgreSQL; an available processor checks recovery on startup and every 1–1.1 seconds between turns. RabbitMQ acknowledgment settles a hint, not an inbox turn. Duplicate, busy and deferred hints can be acknowledged without completing durable work. [Lost notification example](codebase-atlas/index.html#notification-recovery).
 
 A claim generation fences booking writes and publication of replies and Redis checkpoint references. When an interrupted claim expires, its replacement asks the customer to check their appointments. It discards the draft and preserves every committed booking. Automatic replay after an uncertain booking result remains gated on durable action commands.
 
-The shared outbox stores one logical reply per update. The worker throttles sends and records Telegram cooldowns in the outbox. It retries definitive transient errors and mark lost responses or expired dispatches ambiguous for inspection. [Classify the send outcome](../app/telegram_sender.py#L15)
+The shared outbox stores one logical reply per update. The independent sender throttles sends and records Telegram cooldowns in the outbox. It retries definitive transient errors and marks lost responses or expired dispatches ambiguous for inspection. [Classify the send outcome](../app/telegram_sender.py#L15)
 
 ## Interrupted work
 
 The webhook confirms receipt after PostgreSQL commits the update. After a restart,
-the worker selects pending messages and replies from the same tables. Before a
+processors recover pending messages directly from PostgreSQL; the independent sender selects replies from the outbox. Before a
 booking or reply write, PostgreSQL checks whether the attempt still owns the chat.
 
 Booking commit and turn completion use separate transactions. If an attempt is

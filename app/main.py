@@ -14,6 +14,7 @@ from redis import Redis
 from app.agenda_api import router as agenda_router
 from app.channels.bots import configured_bot
 from app.channels.telegram_intake import save_update
+from app.channels.telegram_queue import TelegramQueue
 from app.config import Settings, load_settings
 from app.database import DATABASE_ERRORS, database_is_ready
 from app.models import DomainError, HealthResponse
@@ -46,6 +47,7 @@ _silence_health_access_logs()
 class HealthDependencies:
     settings: Settings
     redis: Redis
+    queue: TelegramQueue | None = None
 
 
 @asynccontextmanager
@@ -55,11 +57,17 @@ async def lifespan(app):
         settings.chat_redis_url, socket_connect_timeout=2, socket_timeout=2
     )
     app.state.settings = settings
-    app.state.health_dependencies = HealthDependencies(settings, redis_client)
+    bot = configured_bot(settings)
+    queue = TelegramQueue(settings.rabbitmq_url.get_secret_value(), bot.bot_id, get_logger()) if bot else None
+    if queue:
+        queue.start()
+    app.state.health_dependencies = HealthDependencies(settings, redis_client, queue)
     debug_event("api.started")
     try:
         yield
     finally:
+        if queue:
+            await queue.close()
         redis_client.close()
 
 
@@ -124,13 +132,18 @@ async def telegram_webhook(
             ) from exc
 
         # Save before acknowledging so Telegram can retry if durable intake fails.
-        if not isinstance(update, dict) or not await run_in_threadpool(
-            save_update, database_url, bot, update
-        ):
+        if not isinstance(update, dict):
+            raise HTTPException(status_code=400, detail="Invalid Telegram update")
+        result = await run_in_threadpool(save_update, database_url, bot, update)
+        if not result.accepted:
             raise HTTPException(status_code=400, detail="Invalid Telegram update")
     except DATABASE_ERRORS as exc:
         debug_event("telegram.webhook.rejected", reason="database_unavailable")
         raise HTTPException(status_code=503, detail="Intake unavailable") from exc
+    if result.notification is not None and dependencies.queue is not None:
+        await dependencies.queue.try_publish(
+            result.notification, timeout=dependencies.settings.telegram_notification_timeout_seconds,
+        )
     log_event(
         get_logger(),
         "telegram.webhook.accepted",
@@ -146,15 +159,18 @@ def health(dependencies: HealthDependencies = Depends(get_health_dependencies)):
         redis_ok = bool(dependencies.redis.ping())
     except Exception:
         redis_ok = False
+    queue = getattr(dependencies, "queue", None)
+    broker = "ok" if queue and queue.connected else "unavailable" if queue else "disabled"
     response = HealthResponse(
-        status="ok" if database_ok and redis_ok else "degraded",
+        status="ok" if database_ok and redis_ok and broker != "unavailable" else "degraded",
         database="ok" if database_ok else "unavailable",
         chat_history="ok" if redis_ok else "unavailable",
+        broker=broker,
     )
     if not database_ok or not redis_ok:
         debug_event("api.health.degraded", database_ok=database_ok, redis_ok=redis_ok)
     return (
         response
-        if response.status == "ok"
+        if database_ok and redis_ok
         else JSONResponse(status_code=503, content=response.model_dump())
     )

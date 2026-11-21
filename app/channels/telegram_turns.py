@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import Literal
 
 from sqlalchemy import BigInteger, cast, extract, func, or_, select, true, update
 from sqlalchemy.dialects.postgresql import insert
@@ -87,6 +88,13 @@ class TurnClaim:
             raise ClaimLost("Telegram turn lease expired or was superseded.")
 
 
+@dataclass(frozen=True)
+class ChatClaimResult:
+    outcome: Literal["claimed", "busy", "not_ready", "empty"]
+    claim: TurnClaim | None = None
+    retry_after: float | None = None
+
+
 class TelegramTurns:
     """Give one worker at a time permission to handle messages in a chat.
 
@@ -118,12 +126,12 @@ class TelegramTurns:
                 .order_by(head.c.received_at, head.c.update_id)
                 .limit(1)
             )
-        return self.claim_chat(self.bot.bot_id, chat_id) if chat_id is not None else None
+        return self.claim_chat(self.bot.bot_id, chat_id).claim if chat_id is not None else None
 
-    def claim_chat(self, bot_id: int, chat_id: int) -> TurnClaim | None:
+    def claim_chat(self, bot_id: int, chat_id: int) -> ChatClaimResult:
         """Reserve the first unfinished message for this chat in PostgreSQL."""
         if bot_id != self.bot.bot_id:
-            return None
+            return ChatClaimResult("empty")
         with database_session(self.database_url) as session:
             chat = session.scalar(
                 select(TelegramConversation)
@@ -132,16 +140,19 @@ class TelegramTurns:
                     TelegramConversation.chat_id == chat_id,
                     TelegramConversation.business_id == self.bot.business_id,
                 )
-                .with_for_update(of=TelegramConversation, key_share=True)
+                .with_for_update(of=TelegramConversation, key_share=True, skip_locked=True)
             )
             if chat is None:
-                return None
+                exists = session.get(TelegramConversation, (bot_id, chat_id))
+                return ChatClaimResult("busy" if exists and exists.business_id == self.bot.business_id else "empty")
             checked_at = session.scalar(select(func.clock_timestamp()))
             if chat.lease_until and chat.lease_until > checked_at:
-                return None
+                return ChatClaimResult("busy")
             head = session.execute(self._chat_head_query(chat_id)).mappings().first()
             if not head:
-                return None
+                return ChatClaimResult("empty")
+            if head["status"] != "processing" and head["ready_at"] > checked_at:
+                return ChatClaimResult("not_ready", retry_after=(head["ready_at"] - checked_at).total_seconds())
             row = {
                 **head,
                 "previous_generation": chat.generation,
@@ -149,7 +160,8 @@ class TelegramTurns:
                 "last_message_date": chat.last_message_date,
                 "last_update_id": chat.last_update_id,
             }
-            return self._start_attempt(session, row)
+            claim = self._start_attempt(session, row)
+            return ChatClaimResult("claimed", claim) if claim else ChatClaimResult("empty")
 
     def _chat_head_query(self, chat_id):
         """Find the oldest unfinished message, including work interrupted by a crash."""

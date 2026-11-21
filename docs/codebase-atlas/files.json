@@ -5,15 +5,18 @@
     "subtitle":"Start with the webhook and service CLI. Class rows link to the defining class or its most useful method.",
     "files":[
       ["app/main.py","Serve FastAPI health probes and authenticate and persist Telegram updates.",["telegram_webhook","lifespan","health"],[
-        ["HealthDependencies","Bundles settings and the Redis client for health checks."],["_SuppressHealthAccess","Filters routine health requests from access logs.","filter"]]],
-      ["app/telegram_service.py","Start the worker or configure the webhook.",["main","register"],[]],
-      ["app/telegram_worker.py","Consume incoming notifications, process chat turns and save replies.",["run_worker","process_turn","TelegramWorker.handle_message"],[
+        ["HealthDependencies","Bundles settings, Redis and optional lifecycle-managed broker adapter."],["_SuppressHealthAccess","Filters routine health requests from access logs.","filter"]]],
+      ["app/telegram_service.py","Start processor, sender or webhook registration roles.",["main","register"],[]],
+      ["app/telegram_worker.py","Schedule RabbitMQ hints and direct database recovery through one execution slot.",["run_worker","process_pending","process_turn","_execute","_notification_claim","TelegramWorker.handle_message"],[
         ["TelegramWorker","Handles commands, contacts, text and voice for a turn.","handle_message"]]],
-      ["app/telegram_sender.py","Send reserved replies and record delivery outcomes.",["deliver_claimed"],[]],
+      ["app/channels/telegram_queue.py","Manage one shared queue, bounded publication, reconnects and channel-bound delivery settlement.",["TelegramQueue.try_publish","TelegramQueue._connect_loop","TelegramQueue.acknowledge"],[
+        ["ChatReady","Carries only validated bot/chat integer IDs."],["ChatDelivery","Binds a hint to the original channel delivery."],["TelegramQueue","Owns reused asynchronous transport and a bounded local delivery buffer.","try_publish"]]],
+      ["app/telegram_sender.py","Run independent paced delivery, sender locking, recovery and bounded maintenance.",["run_sender","send_pending","acquire_sender_lock","deliver_claimed","prune_history"],[]],
       ["app/agenda_api.py","Expose the studio catalog, available slots and bookings to an authorized caller.",["catalog","slots","create","reschedule","cancel"],[]],
-      ["app/channels/telegram_turns.py","Lease the oldest eligible chat update and commit the resulting state pointer and reply.",["TelegramTurns.claim_chat","TelegramTurns.finish"],[
-        ["TelegramTurns","Owns the chat lease and the turn lifecycle.","claim_chat"],["TurnClaim","Binds an attempt to proof of current ownership.","assert_owned"],["ClaimLost","Signals that an attempt can no longer write."]]],
-      ["app/channels/telegram_intake.py","Identify supported private messages and save incoming updates idempotently.",["save_update","private_message"],[]],
+      ["app/channels/telegram_turns.py","Lease the oldest eligible chat update and commit the resulting state pointer and reply.",["TelegramTurns.claim_chat","TelegramTurns.finish","TelegramTurns.claim_next"],[
+        ["TelegramTurns","Owns the chat lease and the turn lifecycle.","claim_chat"],["TurnClaim","Binds an attempt to proof of current ownership.","assert_owned"],["ClaimLost","Signals that an attempt can no longer write."],["ChatClaimResult","Distinguishes claimed, busy, not-ready and empty chat outcomes."]]],
+      ["app/channels/telegram_intake.py","Identify supported private messages and save incoming updates idempotently.",["save_update","private_message"],[
+        ["IntakeResult","Reports acceptance and a validated optional post-commit notification."]]],
       ["app/channels/telegram_delivery.py","Reserve and settle replies in chat order, respecting retry delays.",["TelegramOutbox.claim_next","TelegramOutbox.finish"],[
         ["TelegramOutbox","Reserves and settles outgoing jobs.","claim_next"]]],
       ["app/channels/telegram_repository.py","Link a verified Telegram sender to a business customer and save sender-owned contact details.",["TelegramRepository.ensure_customer_for_sender"],[
@@ -211,7 +214,10 @@
       ["tests/unit/test_redis_checkpoint.py","Check published state, checkpoint forks, and redacted voice text with a fake Redis store.",["test_audio_forks_published_offer_and_checkpoints_only_redacted_text"],[["FakeRedis","In-memory Redis substitute for checkpoint tests."]]],
       ["tests/unit/test_scheduling.py","Check schedule math, occupied intervals, and daylight saving transitions.",["test_availability_observes_work_hours_buffers_and_blocked_periods"],[["ScheduleRepository","Supplies controlled calendars for availability tests."]]],
       ["tests/unit/test_telegram_api.py","Check API parsing, retry metadata, network errors, and download limits.",["test_transport_failure_hides_credentials"],[]],
-      ["tests/unit/test_telegram_turn.py","Check worker dispatch, identity scope, voice handling, and state promotion.",["test_checkpoint_is_promoted_only_after_a_completed_turn"],[]]
+      ["tests/unit/test_telegram_turn.py","Check worker dispatch, identity scope, voice handling, and state promotion.",["test_checkpoint_is_promoted_only_after_a_completed_turn"],[]],
+      ["tests/integration/test_telegram_processors.py","Verify five-instance scheduling, fairness, reconnects, cancellation and independent delivery.",["test_five_processors_serialize_each_chat_and_sender_progresses"],[]],
+      ["tests/integration/test_telegram_broker.py","Verify real transport, bounded publication, post-commit failure and sender lock ownership.",["test_real_transport_validates_payload_and_bounds_unroutable_publication"],[]],
+      ["tests/integration/test_telegram_shutdown.py","Verify actual SIGTERM/SIGKILL process boundaries.",["test_process_signals_drain_or_leave_an_interrupted_claim"],[]]
     ]
   }
 ]

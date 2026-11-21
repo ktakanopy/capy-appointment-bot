@@ -1,48 +1,58 @@
-# Telegram worker
+# Telegram processors and sender
 
-The API accepts incoming Telegram messages. One background process checks PostgreSQL for eligible messages and replies. It uses Redis to restore each chat's LangGraph checkpoint and sends replies through the Telegram Bot API.
+The API commits accepted work to PostgreSQL before attempting a RabbitMQ notification. Five initial processors share one notification queue; each runs one active turn across normal notifications and direct database recovery. One independent sender delivers already-saved replies even while inference is slow or the broker is down. [Architecture overview](codebase-atlas/index.html#architecture-overview) · [Independent progress](codebase-atlas/index.html#independent-progress)
 
 ## Start reading the code
 
 | Step | Code | What happens |
 | --- | --- | --- |
-| Receive | [Webhook](../app/main.py#L93) · [Save update](../app/channels/telegram_intake.py#L41) | Authenticate the webhook. Insert a receipt and create a chat record if needed. Return HTTP 204 after the transaction commits. |
-| Process | [Worker loop](../app/telegram_worker.py#L63) · [Turn claims](../app/channels/telegram_turns.py#L104) | Look for the oldest eligible message in a chat. Reserve the chat while the turn runs. |
-| Save | [Complete the turn](../app/channels/telegram_turns.py#L284) | Record the reply, the completed receipt and the pointer to the new Redis checkpoint in one PostgreSQL transaction. |
-| Deliver | [Reserve a reply](../app/channels/telegram_delivery.py#L23) · [Send to Telegram](../app/telegram_sender.py#L15) | Send the saved reply after checking chat order and delivery timing. Record the result. |
+| Receive | [Webhook](../app/main.py) · [IntakeResult](../app/channels/telegram_intake.py) | Authenticate, deduplicate and commit supported input and initial chat state. Unsupported updates get completed receipts. |
+| Notify | [TelegramQueue](../app/channels/telegram_queue.py) | Publish only bot/chat IDs after the session has closed, with one bounded attempt on a reused lifecycle connection. |
+| Schedule | [process_pending](../app/telegram_worker.py) | One executor thread shares notification and recovery work; startup recovery runs without connecting to RabbitMQ. |
+| Claim | [ChatClaimResult](../app/channels/telegram_turns.py) | PostgreSQL returns claimed, busy, not_ready (with delay), or empty. A hint grants no ownership. |
+| Execute | [process_turn](../app/telegram_worker.py) | Renew the claim during slow inference; guarded booking/customer writes reject stale attempts. |
+| Save | [TelegramTurns.finish](../app/channels/telegram_turns.py) | Commit completed receipt, optional reply, checkpoint reference and chat release together. |
+| Deliver | [run_sender](../app/telegram_sender.py) · [TelegramOutbox](../app/channels/telegram_delivery.py) | Hold the bot's sender lock, claim replies in chat order, pace sends, classify outcomes and maintain history. |
 
-## Tables used by this worker
+## Tables used by this runtime
 
-| Table | What it holds |
+| Physical table | What it holds |
 | --- | --- |
-| `telegram_updates` | Messages and receipt status. The key `(bot_id, update_id)` deduplicates Telegram retries. |
-| `telegram_conversations` | The current turn claim, last processed message position and the last completed checkpoint reference for each chat. |
-| `telegram_outbox` | Reply text, dispatch status, retry time and send result. |
+| `telegram_updates` | Durable inbox; `(bot_id, update_id)` deduplicates Telegram retries. |
+| `telegram_conversations` | Chat claim, generation, last processed position and last completed checkpoint reference. This is processing coordination and checkpoint linkage, not a transcript table. |
+| `telegram_outbox` | Reply content, attempt, dispatch lease, retry/cooldown and terminal result. |
 
-Redis holds the checkpoint itself. When the worker finishes a message, it clears the raw payload and keeps the receipt for deduplication. After a terminal send result, it clears the reply content. Cleanup later removes completed rows. [Schema](database.md)
+These are the checkout's physical names for the inbox and chat processing state described in the brief. Redis stores the actual checkpoint contents. Turn completion clears raw intake payload; terminal send results clear reply content. The sender owns bounded history pruning. [Schema](database.md)
 
 ## Full call sequence
 
-1. Compose starts the API and runs `python -m app.telegram_service process` to start the worker.
-2. Telegram sends a private message. The webhook authenticates it and commits a receipt with its content.
-3. The worker reads eligible work in PostgreSQL. A long audio turn can delay the next chat because one process handles one turn at a time.
-4. The worker restores the last completed Redis checkpoint, runs the turn and commits the reply together with the updated checkpoint reference.
-5. The same worker reads the pending reply, calls Telegram and records the result. A safe retry is scheduled via the reply's `ready_at`.
+1. `python -m app.telegram_service process` starts one processor; Compose launches five replicas. `python -m app.telegram_service send` starts the independent singleton sender.
+2. The authenticated webhook commits an inbox record, initial chat coordination if needed, and the existing 0.3-second readiness window. An `IntakeResult` carries only a validated optional `ChatReady`.
+3. The webhook attempts publication for at most one second, including connection/confirm wait. A failure is logged and still returns HTTP 204. Duplicate or unsupported updates do not need new hints.
+4. RabbitMQ distributes hints to available consumers, manually acknowledged with prefetch one. PostgreSQL chooses the earliest unfinished stored message and grants a lease. Its existing late-update policy remains; RabbitMQ does not provide chronological Telegram ordering.
+5. For readiness within 0.5 seconds, the processor waits once asynchronously, holding no transaction, row lock or claim, then rechecks PostgreSQL. Busy, empty or longer-deferred hints are acknowledged with durable work intact.
+6. The processor forks the last completed Redis draft, runs Gemma/Laya and deterministic scheduling under database ownership checks, then commits turn completion. Broker acknowledgment follows completion or durable pre-execution deferral. A reconnect does not revoke the database claim or transfer an old delivery to a new channel.
+7. A free processor also claims directly from PostgreSQL on startup and every 1–1.1 seconds, scheduled from the end of each recovery opportunity. Each opportunity takes at most one turn. Busy/duplicate hints do not postpone recovery; recovery backlog does not monopolize notification handling. [Lost notification](codebase-atlas/index.html#notification-recovery)
+8. The sender reads replies independently. It retains roughly one send per second, persisted 429 cooldown and retry_after, at most five attempts, and ambiguous outcomes for uncertain sends or expired dispatches. A second sender cannot enter the loop; loss of its direct/session-pooled lock connection stops it.
+9. SIGTERM stops new turns and drains the active synchronous turn with lease renewal. Cancelling an executor await also drains it; it cannot free a second execution slot. Forced termination relies on lease expiry and conservative interrupted-turn handling.
 
-The worker holds a PostgreSQL session lock for the configured bot so a second instance cannot start work. Chat and reply claims have deadlines to distinguish work that is still running from work interrupted by a restart. An expired send becomes ambiguous because Telegram may already have delivered it.
+Booking commit, turn completion and Telegram acceptance are distinct boundaries. Redis contents and RabbitMQ operations are outside PostgreSQL transactions. If a booking commits before a crash, recovery preserves it and asks the customer to check appointments rather than automatically replaying the business action. A lost broker acknowledgment can redeliver a harmless hint without duplicating the completed turn or saved reply. [Transaction examples](codebase-atlas/index.html#notification-recovery)
 
 ## Follow a message in the logs
 
-Use `CAPY_LOG_LEVEL=DEBUG` and correlate `bot_id` and `update_id`.
+Use `CAPY_LOG_LEVEL=DEBUG` for per-update detail. Application logs exclude message bodies, contact values, tokens and broker URLs.
 
-| Event | What to check |
+| Event | Meaning |
 | --- | --- |
-| `telegram.inbox.recorded` | `inserted=True` marks a new update record. |
-| `telegram.turn.claimed` | `attempt` identifies the claim generation. |
-| `workflow.checkpoint.forked` | `found=True` means the worker restored the previous state. |
-| `booking.saved` | The booking transaction committed. |
-| `telegram.turn.saved` | `has_reply=True` means the reply is ready for delivery. |
-| `telegram.outbox.result` | `outcome=sent` means Telegram accepted it and the worker saved the result. |
+| `telegram.notification.published` / `publish_failed` | The post-commit hint was confirmed or failed within its deadline. |
+| `telegram.broker.connected` / `unavailable` / `disconnected` | Transport lifecycle, independently of database recovery. |
+| `telegram.turn.claim_result` | Work source and explicit claim outcome. |
+| `telegram.turn.started` | Inbox wait measured before processing; `telegram.turn.finished` separates wait, processing and elapsed time. |
+| `telegram.turn.claim_lost` | Ownership was superseded or expired; guarded writes remain fenced. |
+| `booking.saved` / `telegram.turn.saved` | Separate booking and turn-completion commits. |
+| `telegram.outbox.finished` | Wait measured before sending, provider result, retry delay and total elapsed time. |
+
+Queue depth counts notifications rather than unfinished turns. Monitor PostgreSQL backlog and oldest-work age, plus outbox age. [Startup, changeover, monitoring and benchmark commands](production.md)
 
 ## Run the example without Telegram
 

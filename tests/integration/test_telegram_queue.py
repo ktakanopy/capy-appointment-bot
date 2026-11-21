@@ -10,6 +10,7 @@ from app.channels.telegram import TelegramBotApi
 from app.config import load_settings
 from app.main import app
 from app.telegram_worker import run_worker
+from app.telegram_sender import run_sender
 from tests.integration.helpers import connect
 from tests.integration.test_telegram_production import update
 
@@ -35,13 +36,15 @@ def test_worker_delivers_a_saved_reply_without_a_broker(scheduling_db, monkeypat
             )
             assert response.status_code == 204
 
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        job = executor.submit(run_worker, load_settings(), stop, logging.getLogger(__name__))
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        jobs = [executor.submit(role, load_settings(), stop, logging.getLogger(__name__))
+                for role in (run_worker, run_sender)]
         try:
             assert sent.wait(5)
         finally:
             stop.set()
-            job.result(timeout=5)
+            for job in jobs:
+                job.result(timeout=5)
 
     with connect(url) as connection:
         assert connection.execute("SELECT status FROM telegram_outbox").fetchall() == [{"status": "sent"}]

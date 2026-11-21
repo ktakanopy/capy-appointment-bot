@@ -182,6 +182,7 @@ class HealthResponse(Contract):
     status: str
     database: str = "ok"
     chat_history: str = "ok"
+    broker: str = "unavailable"
 
 
 class DomainError(Exception):

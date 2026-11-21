@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import random
 import time
 import uuid
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import replace
 from datetime import datetime
@@ -19,8 +22,8 @@ from app.booking import BookingService
 from app.channels.bots import TelegramBot, configured_bot
 from app.channels.phone import canonical_phone
 from app.channels.telegram import TelegramBotApi
-from app.channels.telegram_delivery import TelegramOutbox
 from app.channels.telegram_intake import private_message
+from app.channels.telegram_queue import ChatReady, TelegramQueue
 from app.channels.telegram_repository import TelegramRepository
 from app.channels.telegram_turns import (
     LEASE_SECONDS,
@@ -38,62 +41,103 @@ from app.llm.gemma import ProviderError
 from app.models import DomainError
 from app.observability import debug_event, debug_turn, log_event, timed_event
 from app.runtime import RuntimeContext, close_runtime, create_runtime
-from app.telegram_sender import deliver_claimed
 
 
 def run_worker(settings: Settings, stop: Event, logger) -> None:
     bot = configured_bot(settings)
     if bot is None:
-        raise RuntimeError("Set TELEGRAM_BOT_ID to start the worker.")
+        raise RuntimeError("Set TELEGRAM_BOT_ID to start the processor.")
     bot.client()
-    database_url = settings.database_url
-    repository = TelegramRepository(database_url)
-    lock = repository.acquire_worker_lock(bot.bot_id)
-    if lock is None:
-        raise RuntimeError("A worker is already running for this bot.")
-    with lock:
-        _check_bot_scope(database_url, bot)
-        runtime = create_runtime(settings)
+    _check_bot_scope(settings.database_url, bot)
+    runtime = create_runtime(settings)
+    try:
+        asyncio.run(_run_processor(settings, bot, runtime, stop, logger))
+    finally:
+        close_runtime(runtime)
+
+
+async def _run_processor(settings, bot, runtime, stop, logger) -> None:
+    queue = TelegramQueue(settings.rabbitmq_url.get_secret_value(), bot.bot_id, logger, consume=True)
+    queue.start()
+    try:
+        await process_pending(
+            TelegramTurns(settings.database_url, bot), runtime, queue, stop, logger,
+            recovery_interval=settings.telegram_recovery_interval_seconds,
+        )
+    finally:
+        await queue.close()
+
+
+async def _execute(executor, function, *args):
+    future = asyncio.get_running_loop().run_in_executor(executor, function, *args)
+    cancelled = False
+    while True:
         try:
-            _run_pending(database_url, bot, runtime, stop, logger, lock)
-        finally:
-            close_runtime(runtime)
+            result = await asyncio.shield(future)
+            break
+        except asyncio.CancelledError:
+            # Cancelling the await cannot stop a synchronous booking operation.
+            cancelled = True
+    if cancelled:
+        raise asyncio.CancelledError
+    return result
 
 
-def _run_pending(database_url: str, bot: TelegramBot, runtime: RuntimeContext, stop: Event, logger, lock) -> None:
-    turns, outbox = TelegramTurns(database_url, bot), TelegramOutbox(database_url, bot)
-    next_send = next_recovery = next_prune = 0.0
+async def _pause(stop: Event, delay: float) -> None:
+    deadline = asyncio.get_running_loop().time() + delay
     while not stop.is_set():
-        # Exit and reacquire the worker lock if its PostgreSQL connection dies.
-        lock.execute("SELECT 1")
-        now = time.monotonic()
-        try:
-            if now >= next_recovery:
-                outbox.recover_expired()
-                next_recovery = now + 5
-            if now >= next_prune:
-                prune_history(database_url)
-                next_prune = now + 60
+        remaining = deadline - asyncio.get_running_loop().time()
+        if remaining <= 0:
+            return
+        await asyncio.sleep(min(remaining, 0.1))
 
-            reply = outbox.claim_next() if now >= next_send else None
-            if reply is not None:
-                # A single send per second also covers the limit for any individual chat.
-                try:
-                    deliver_claimed(outbox, logger, reply)
-                finally:
-                    next_send = time.monotonic() + 1
-            if stop.is_set():
-                break
-            claim = turns.claim_next()
-            if claim is not None:
-                process_turn(turns, claim, runtime)
-            if claim is None and reply is None:
-                stop.wait(0.25)
-        except ClaimLost:
-            log_event(logger, "telegram.turn.claim_lost")
-        except DATABASE_ERRORS as error:
-            log_event(logger, "telegram.worker.database_retry", failure_type=type(error).__name__)
-            stop.wait(1)
+
+async def _notification_claim(turns, notification: ChatReady, executor, stop, logger):
+    result = await _execute(executor, turns.claim_chat, notification.bot_id, notification.chat_id)
+    if result.outcome == "not_ready" and result.retry_after <= 0.5 and not stop.is_set():
+        await _pause(stop, result.retry_after)
+        if not stop.is_set():
+            result = await _execute(executor, turns.claim_chat, notification.bot_id, notification.chat_id)
+    log_event(logger, "telegram.turn.claim_result", source="notification", outcome=result.outcome)
+    return result.claim
+
+
+async def process_pending(turns, runtime, queue, stop: Event, logger, *, recovery_interval: float = 1) -> None:
+    loop = asyncio.get_running_loop()
+    next_recovery = 0.0
+    pending = None
+    with ThreadPoolExecutor(max_workers=1, thread_name_prefix="telegram-turn") as executor:
+        while not stop.is_set():
+            try:
+                if loop.time() >= next_recovery:
+                    try:
+                        claim = await _execute(executor, turns.claim_next)
+                        log_event(logger, "telegram.turn.claim_result", source="recovery",
+                                  outcome="claimed" if claim else "empty")
+                        if claim is not None:
+                            await _execute(executor, process_turn, turns, claim, runtime)
+                    finally:
+                        # Schedule from completion so backlog cannot monopolize the slot.
+                        next_recovery = loop.time() + recovery_interval * random.uniform(1, 1.1)
+                if stop.is_set():
+                    break
+                if pending is None:
+                    pending = await queue.next_delivery(min(0.25, max(0.001, next_recovery - loop.time())))
+                if pending is None or stop.is_set():
+                    continue
+                claim = await _notification_claim(turns, pending.notification, executor, stop, logger)
+                if claim is not None:
+                    await _execute(executor, process_turn, turns, claim, runtime)
+                await queue.acknowledge(pending)
+                pending = None
+            except ClaimLost:
+                log_event(logger, "telegram.turn.claim_lost")
+                if pending is not None:
+                    await queue.acknowledge(pending)
+                    pending = None
+            except DATABASE_ERRORS as error:
+                log_event(logger, "telegram.processor.database_retry", failure_type=type(error).__name__)
+                await _pause(stop, 1)
 
 
 def _check_bot_scope(database_url: str, bot: TelegramBot) -> None:
@@ -123,6 +167,8 @@ def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
     with debug_turn(claim.bot.bot_id, claim.row["update_id"]):
         debug_event("telegram.turn.claimed", attempt=claim.generation)
         started = time.monotonic()
+        queue_ms = round((time.time() - claim.row["received_at"].timestamp()) * 1000)
+        debug_event("telegram.turn.started", queue_ms=queue_ms)
         message = private_message(claim.row)
         if message is None:
             debug_event("telegram.turn.skipped", reason="unsupported_message")
@@ -147,7 +193,8 @@ def process_turn(turns: TelegramTurns, claim: TurnClaim, runtime) -> None:
             turns.finish(claim, reply, checkpoint)
             log_event(
                 runtime.logger, "telegram.turn.finished", bot_id=claim.bot.bot_id,
-                queue_ms=round((time.time() - claim.row["received_at"].timestamp()) * 1000),
+                queue_ms=queue_ms,
+                elapsed_since_origin_ms=round((time.time() - claim.row["received_at"].timestamp()) * 1000),
                 processing_ms=round((time.monotonic() - started) * 1000),
             )
 
@@ -444,28 +491,3 @@ def _optional_text(value, max_length: int) -> str | None:
         return None
     result = " ".join(value.split())
     return result[:max_length] if result else None
-
-
-def prune_history(database_url: str, limit: int = 500) -> None:
-    """Delete old terminal records in bounded batches while retaining active jobs."""
-    with database_session(database_url) as session:
-        session.execute(
-            text("""DELETE FROM telegram_updates WHERE (bot_id,update_id) IN (
-                   SELECT u.bot_id,u.update_id FROM telegram_updates u
-                   WHERE u.status='delivered' AND u.expires_at<clock_timestamp()
-                     AND NOT EXISTS (SELECT 1 FROM telegram_outbox o
-                         WHERE o.bot_id=u.bot_id AND o.update_id=u.update_id
-                           AND o.status IN ('ready','dispatching'))
-                   ORDER BY u.expires_at LIMIT :limit FOR UPDATE OF u SKIP LOCKED
-               )"""),
-            {"limit": limit},
-        )
-        session.execute(
-            text("""DELETE FROM telegram_outbox WHERE id IN (
-                   SELECT o.id FROM telegram_outbox o
-                   WHERE o.finished_at<clock_timestamp()-interval '30 days'
-                     AND o.status IN ('sent','failed','canceled','ambiguous')
-                   ORDER BY o.finished_at LIMIT :limit FOR UPDATE OF o SKIP LOCKED
-               )"""),
-            {"limit": limit},
-        )

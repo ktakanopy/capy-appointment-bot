@@ -2,37 +2,20 @@ from __future__ import annotations
 
 import uuid
 
-import psycopg
 from sqlalchemy import update
 from sqlalchemy.dialects.postgresql import insert
 
-from app.database import database_session, psycopg_url
+from app.database import database_session
 from app.db_models import CustomerRow
 from app.observability import debug_event
 
 
 class TelegramRepository:
-    """Keep customer identity links and serialize execution of the bot worker."""
+    """Keep customer identity links under the active turn ownership guard."""
 
     def __init__(self, database_url: str, *, turn_guard=None):
         self.database_url = database_url
         self.turn_guard = turn_guard
-
-    def acquire_worker_lock(self, bot_id: int):
-        """Hold a session lock for the lifetime of a bot worker."""
-        connection = psycopg.connect(psycopg_url(self.database_url), autocommit=True, connect_timeout=3)
-        try:
-            locked = connection.execute(
-                "SELECT pg_try_advisory_lock(hashtextextended(%s, 0)) AS locked",
-                (f"telegram-worker:{bot_id}",),
-            ).fetchone()[0]
-        except Exception:
-            connection.close()
-            raise
-        if not locked:
-            connection.close()
-            return None
-        return connection
 
     def ensure_customer_for_sender(
         self,

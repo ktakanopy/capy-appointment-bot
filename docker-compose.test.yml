@@ -1,5 +1,20 @@
 # Disposable verification services. Never mount application data volumes here.
 services:
+  rabbitmq:
+    image: rabbitmq:4.2-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: capy_test
+      RABBITMQ_DEFAULT_PASS: capy_test
+      RABBITMQ_DEFAULT_VHOST: capy_test
+    ports: ["127.0.0.1:15673:5672"]
+    tmpfs: [/var/lib/rabbitmq]
+    volumes:
+      - ./config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
   postgres:
     image: postgres:17
     environment:
@@ -24,9 +39,12 @@ services:
     environment:
       TEST_DATABASE_URL: postgresql://scheduling:scheduling@postgres:5432/capy_simplification_test
       TEST_REDIS_URL: redis://redis:6379/15
+      TEST_RABBITMQ_URL: amqp://capy_test:capy_test@rabbitmq:5672/capy_test?heartbeat=2
       CAPY_REQUIRE_INTEGRATION: "1"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_started
+      rabbitmq:
+        condition: service_healthy

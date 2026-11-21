@@ -25,11 +25,11 @@
   <rect x="55" y="131" width="239" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 1 · Find available times</text>
   <g id="request" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L93">
-      <title>telegram_webhook · app/main.py:93</title>
+    <a href="../../app/main.py#L101">
+      <title>telegram_webhook · app/main.py:101</title>
       <rect x="56.0" y="165" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“Massage on Friday”</text>
-      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:93</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:101</text>
       <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Gemma extracts the service and date.</text>
       <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Laya proposes a slot search.</text>
     </a>
@@ -67,11 +67,11 @@
   <rect x="55" y="328" width="255" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Turn 2 · Select a specific time</text>
   <g id="choice" data-source="app/telegram_worker.py#_restore_turn_checkpoint">
-    <a href="../../app/telegram_worker.py#L193">
-      <title>_restore_turn_checkpoint · app/telegram_worker.py:193</title>
+    <a href="../../app/telegram_worker.py#L240">
+      <title>_restore_turn_checkpoint · app/telegram_worker.py:240</title>
       <rect x="56.0" y="362" width="299.5" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“1”</text>
-      <text x="68.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:193</text>
+      <text x="68.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:240</text>
       <text x="68.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The worker forks the last completed</text>
       <text x="68.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Redis checkpoint into this attempt.</text>
     </a>

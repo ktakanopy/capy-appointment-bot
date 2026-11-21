@@ -16,7 +16,7 @@ Hosted webhooks resolve the tenant through a configured bot route and verify the
 
 ## Telegram work and agenda access
 
-The worker reads pending messages and replies directly from PostgreSQL. Restrict
+Processors read messages from PostgreSQL under chat ownership. RabbitMQ carries only validated bot/chat IDs, with no message body, booking, token or contact data. The independent sender reads pending replies directly from PostgreSQL. Keep `RABBITMQ_URL` credentials in a secret store; `Settings` uses a secret value and application logs record failure types without broker URLs. Use separate development, test and production vhosts and TLS for external brokers. Restrict
 database access to the application and operators who need it. The private
 scheduling API accepts an owner bearer token. Keep it in the deployment secret
 store and use HTTPS.

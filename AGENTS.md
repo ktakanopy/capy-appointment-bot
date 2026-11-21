@@ -4,7 +4,7 @@ Auto-generated from the general service scheduling MVP plan. Last updated: 2026-
 
 ## Active Technologies
 
-- Python 3.11+ with FastAPI, LangGraph, Pydantic v2, psycopg 3, Alembic, PostgreSQL, and Redis.
+- Python 3.11+ with FastAPI, LangGraph, Pydantic v2, psycopg 3, Alembic, PostgreSQL, Redis, and RabbitMQ through aio-pika.
 - Gemma text/audio understanding and Laya routing are required in the application; deterministic providers are explicit evaluation baselines.
 - Gemma returns a plain-language interpreted message and booking facts without intent/action labels. Laya receives only `message` and draft `context`; it chooses the next action. See `docs/model-contracts.md`.
 - Langfuse Python SDK for optional observability.
@@ -37,7 +37,7 @@ docs/
 
 - The massage studio demo uses one professional, a table of service durations, PostgreSQL availability, and Telegram customer ownership.
 - Made Telegram the only customer channel with text/audio and a local owner CLI; historical WhatsApp, SMS, and Streamlit implementations are in Git history.
-- The Telegram webhook and worker use PostgreSQL directly for pending work. The private agenda API reuses the same scheduling and booking services as the worker.
+- The Telegram webhook commits inbox work before publishing identifier hints to one RabbitMQ queue. Five initial processors share PostgreSQL chat claims and direct recovery; one independent sender reads the outbox. The private agenda API reuses the same scheduling and booking services as the worker.
 - Laya is required in the app and bypassable in evaluations. Large bilingual datasets and Gemma/Laya fine-tuning remain follow-up work.
 
 <!-- MANUAL ADDITIONS START -->

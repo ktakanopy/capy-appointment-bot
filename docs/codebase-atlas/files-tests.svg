@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 2832" width="1430" height="2832" role="img" aria-label="Source reference · Verification and test suites">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 2996" width="1430" height="2996" role="img" aria-label="Source reference · Verification and test suites">
   <title>Source reference · Verification and test suites</title>
   <desc>Open a representative assertion or fixture to see what a test file covers.</desc>
-  <rect x="0" y="0" width="1430" height="2832" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <rect x="0" y="0" width="1430" height="2996" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Verification and test suites</text>
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Open a representative assertion or fixture to see what a test file covers.</text>
   <g id=".github-workflows-verify.yml" data-source=".github/workflows/verify.yml">
@@ -52,9 +52,9 @@
       <text x="741" y="296" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/api/test_health.py</text>
     </a>
     <text x="741" y="319" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check readiness, startup wiring, and the retired API surfaces.</text>
-    <a href="../../tests/api/test_health.py#L22">
-      <title>test_health_reports_storage_failure_as_unready · tests/api/test_health.py:22</title>
-      <text x="741" y="344" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_health_reports_storage_failure_as_unready  /  line 22</text>
+    <a href="../../tests/api/test_health.py#L23">
+      <title>test_health_reports_storage_failure_as_unready · tests/api/test_health.py:23</title>
+      <text x="741" y="344" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_health_reports_storage_failure_as_unready  /  line 23</text>
     </a>
     <text x="1273" y="344" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
@@ -66,9 +66,9 @@
     </a>
     <text x="56" y="447" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Prepare a disposable PostgreSQL database, apply migrations, seed it, and</text>
     <text x="56" y="465" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reset it after use.</text>
-    <a href="../../tests/integration/conftest.py#L18">
-      <title>scheduling_db · tests/integration/conftest.py:18</title>
-      <text x="56" y="490" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">scheduling_db  /  line 18</text>
+    <a href="../../tests/integration/conftest.py#L20">
+      <title>scheduling_db · tests/integration/conftest.py:20</title>
+      <text x="56" y="490" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">scheduling_db  /  line 20</text>
     </a>
     <text x="588" y="490" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
@@ -147,9 +147,9 @@
     </a>
     <text x="56" y="885" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check the real webhook and worker using PostgreSQL and a stub Telegram</text>
     <text x="56" y="903" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">response.</text>
-    <a href="../../tests/integration/test_telegram_queue.py#L17">
-      <title>test_worker_delivers_a_saved_reply_without_a_broker · tests/integration/test_telegram_queue.py:17</title>
-      <text x="56" y="928" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_worker_delivers_a_saved_reply_without_a_broker  /  line 17</text>
+    <a href="../../tests/integration/test_telegram_queue.py#L18">
+      <title>test_worker_delivers_a_saved_reply_without_a_broker · tests/integration/test_telegram_queue.py:18</title>
+      <text x="56" y="928" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_worker_delivers_a_saved_reply_without_a_broker  /  line 18</text>
     </a>
     <text x="588" y="928" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
@@ -187,9 +187,9 @@
       <text x="741" y="1008" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_telegram_production.py</text>
     </a>
     <text x="741" y="1031" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check durable intake, claims, checkpoint handoff, rate limits, and recovery.</text>
-    <a href="../../tests/integration/test_telegram_production.py#L146">
-      <title>test_completed_checkpoint_carries_slot_offer_into_next_attempt · tests/integration/test_telegram_production.py:146</title>
-      <text x="741" y="1056" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_completed_checkpoint_carries_slot_offer_into_next_attempt  /  line 146</text>
+    <a href="../../tests/integration/test_telegram_production.py#L151">
+      <title>test_completed_checkpoint_carries_slot_offer_into_next_attempt · tests/integration/test_telegram_production.py:151</title>
+      <text x="741" y="1056" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_completed_checkpoint_carries_slot_offer_into_next_attempt  /  line 151</text>
     </a>
     <text x="1273" y="1056" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
@@ -504,5 +504,46 @@
       <text x="56" y="2750" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_checkpoint_is_promoted_only_after_a_completed_turn  /  line 202</text>
     </a>
     <text x="588" y="2750" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_telegram_processors.py" data-source="tests/integration/test_telegram_processors.py">
+    <rect x="725" y="2675" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_telegram_processors.py">
+      <title>tests/integration/test_telegram_processors.py</title>
+      <text x="741" y="2702" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_telegram_processors.py</text>
+    </a>
+    <text x="741" y="2725" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Verify five-instance scheduling, fairness, reconnects, cancellation and</text>
+    <text x="741" y="2743" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">independent delivery.</text>
+    <a href="../../tests/integration/test_telegram_processors.py#L60">
+      <title>test_five_processors_serialize_each_chat_and_sender_progresses · tests/integration/test_telegram_processors.py:60</title>
+      <text x="741" y="2768" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_five_processors_serialize_each_chat_and_sender_progresses  /  line 60</text>
+    </a>
+    <text x="1273" y="2768" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_telegram_broker.py" data-source="tests/integration/test_telegram_broker.py">
+    <rect x="40" y="2821" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_telegram_broker.py">
+      <title>tests/integration/test_telegram_broker.py</title>
+      <text x="56" y="2848" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_telegram_broker.py</text>
+    </a>
+    <text x="56" y="2871" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Verify real transport, bounded publication, post-commit failure and sender</text>
+    <text x="56" y="2889" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">lock ownership.</text>
+    <a href="../../tests/integration/test_telegram_broker.py#L25">
+      <title>test_real_transport_validates_payload_and_bounds_unroutable_publication · tests/integration/test_telegram_broker.py:25</title>
+      <text x="56" y="2914" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_real_transport_validates_payload_and_bounds_unroutable_publication  /  line 25</text>
+    </a>
+    <text x="588" y="2914" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="tests-integration-test_telegram_shutdown.py" data-source="tests/integration/test_telegram_shutdown.py">
+    <rect x="725" y="2821" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../tests/integration/test_telegram_shutdown.py">
+      <title>tests/integration/test_telegram_shutdown.py</title>
+      <text x="741" y="2848" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">tests/integration/test_telegram_shutdown.py</text>
+    </a>
+    <text x="741" y="2871" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Verify actual SIGTERM/SIGKILL process boundaries.</text>
+    <a href="../../tests/integration/test_telegram_shutdown.py#L19">
+      <title>test_process_signals_drain_or_leave_an_interrupted_claim · tests/integration/test_telegram_shutdown.py:19</title>
+      <text x="741" y="2896" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">test_process_signals_drain_or_leave_an_interrupted_claim  /  line 19</text>
+    </a>
+    <text x="1273" y="2896" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
 </svg>

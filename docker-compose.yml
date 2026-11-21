@@ -1,4 +1,22 @@
 services:
+  rabbitmq:
+    image: docker.io/rabbitmq:4.2-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-capy}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-capy}
+      RABBITMQ_DEFAULT_VHOST: capy
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    ports:
+      - "127.0.0.1:5672:5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
   app-postgres:
     image: docker.io/postgres:17
     restart: unless-stopped
@@ -46,6 +64,8 @@ services:
       GEMMA_BASE_URL: ${GEMMA_BASE_URL:-http://host.docker.internal:8081}
       LAYA_BASE_URL: ${LAYA_BASE_URL:-http://host.docker.internal:8081}
       CHAT_REDIS_URL: redis://chat-redis:6379/0
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-capy}:${RABBITMQ_PASSWORD:-capy}@rabbitmq:5672/capy?heartbeat=30
+      TELEGRAM_NOTIFICATION_TIMEOUT_SECONDS: ${TELEGRAM_NOTIFICATION_TIMEOUT_SECONDS:-1}
       AGENDA_API_TOKEN: ${AGENDA_API_TOKEN:-}
       TELEGRAM_BOT_ID: ${TELEGRAM_BOT_ID:-}
       TELEGRAM_WEBHOOK_ROUTE: ${TELEGRAM_WEBHOOK_ROUTE:-webhook}
@@ -72,6 +92,8 @@ services:
       context: .
     command: python -m app.telegram_service process
     stop_grace_period: 16m
+    deploy:
+      replicas: 5
     environment:
       CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
       TRACING_ENABLED: ${TRACING_ENABLED:-false}
@@ -81,6 +103,8 @@ services:
       DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
       DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
       CHAT_REDIS_URL: redis://chat-redis:6379/0
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-capy}:${RABBITMQ_PASSWORD:-capy}@rabbitmq:5672/capy?heartbeat=30
+      TELEGRAM_RECOVERY_INTERVAL_SECONDS: ${TELEGRAM_RECOVERY_INTERVAL_SECONDS:-1}
       SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-60}
       UNDERSTANDING_PROVIDER: gemma
       DECISION_PROVIDER: laya
@@ -93,6 +117,23 @@ services:
       TELEGRAM_AUDIO_DECODE_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_DECODE_TIMEOUT_SECONDS:-120}
       TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_CHUNK_TIMEOUT_SECONDS:-60}
       TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS: ${TELEGRAM_AUDIO_PROCESSING_TIMEOUT_SECONDS:-900}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  telegram-sender:
+    profiles: ["telegram"]
+    restart: unless-stopped
+    build:
+      context: .
+    command: python -m app.telegram_service send
+    stop_grace_period: 1m
+    environment:
+      CAPY_LOG_LEVEL: ${CAPY_LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql://${APP_POSTGRES_USER:-scheduling}:${APP_POSTGRES_PASSWORD:-scheduling}@app-postgres:5432/${APP_POSTGRES_DB:-scheduling}
+      DEMO_BUSINESS_ID: ${DEMO_BUSINESS_ID:-demo-studio}
+      TELEGRAM_BOT_ID: ${TELEGRAM_BOT_ID:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     depends_on:
       api:
         condition: service_healthy
@@ -115,3 +156,4 @@ services:
 volumes:
   app_postgres_data:
   app_redis_data:
+  rabbitmq_data:

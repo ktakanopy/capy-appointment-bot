@@ -1,5 +1,40 @@
 [
   {
+    "id": "architecture-overview",
+    "title": "CAPY architecture · Current runtime",
+    "subtitle": "PostgreSQL owns work. RabbitMQ carries hints. Five initial processors and one sender run independently.",
+    "columns": 3,
+    "lanes": [
+      {"label": "Accept work durably", "nodes": [
+        {"id":"ov-telegram","title":"Telegram update","detail":"Private text, voice or contact reaches the webhook.","why":"The authenticated transport supplies trusted bot and customer scope.","ref":"app/main.py#telegram_webhook","tone":"entry"},
+        {"id":"ov-api","title":"Webhook API","detail":"Commit intake, then attempt a bounded notification.","why":"Acceptance survives a failed publication because the inbox is durable.","ref":"app/main.py#telegram_webhook","tone":"entry"},
+        {"id":"ov-inbox","title":"PostgreSQL inbox","detail":"Accepted updates remain authoritative until completed.","why":"A hint can be duplicated or lost without losing the stored turn.","ref":"app/channels/telegram_intake.py#save_update","tone":"data"}
+      ]},
+      {"label": "Distribute hints and claim turns", "nodes": [
+        {"id":"ov-rabbit","title":"RabbitMQ · chat_ready","detail":"One shared queue carries only bot_id and chat_id.","why":"Available consumers receive persistent hints with prefetch one.","ref":"app/channels/telegram_queue.py#TelegramQueue","tone":"entry"},
+        {"id":"ov-processors","title":"5 initial processors","detail":"One turn each; PostgreSQL chat claims grant ownership.","why":"Different chats progress concurrently; models, booking and Redis stay inside the owned turn.","ref":"app/telegram_worker.py#process_pending","tone":"success"},
+        {"id":"ov-outbox","title":"PostgreSQL outbox","detail":"Turn completion atomically saves an optional reply.","why":"Delivery is independent of processor and broker progress.","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","tone":"data"}
+      ]},
+      {"label": "Recover missed hints and deliver replies", "nodes": [
+        {"id":"ov-recovery","title":"Direct database recovery","detail":"A free processor checks on startup and between turns.","why":"The same execution slot recovers accepted work without a usable hint.","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_next"},
+        {"id":"ov-sender","title":"1 independent sender","detail":"Read replies directly; one sender lock per bot.","why":"Inference and broker downtime cannot delay an already-ready send.","ref":"app/telegram_sender.py#run_sender","tone":"success"},
+        {"id":"ov-reply","title":"Telegram reply","detail":"Paced sends preserve retry, cooldown and ambiguity.","why":"More processors do not remove the approximate one-send-per-second limit.","ref":"app/telegram_sender.py#deliver_claimed","tone":"entry"}
+      ]}
+    ],
+    "edges": [
+      ["ov-telegram","ov-api"],
+      ["ov-api","ov-inbox"],
+      ["ov-api","ov-rabbit","async"],
+      ["ov-rabbit","ov-processors","async"],
+      ["ov-inbox","ov-processors"],
+      ["ov-recovery","ov-processors"],
+      ["ov-processors","ov-outbox"],
+      ["ov-outbox","ov-sender","async"],
+      ["ov-sender","ov-reply"]
+    ],
+    "legend": "Implemented runtime. Five processors are an initial configuration, not measured model or production capacity. Open Recovery or Independent progress for focused examples."
+  },
+  {
     "id": "walkthrough",
     "title": "Booking walkthrough · Three messages, one appointment",
     "subtitle": "Follow one example Telegram conversation from the first webhook to the committed booking and final reply.",
@@ -17,13 +52,13 @@
       {"label": "Turn 1 · Customer asks for a massage tomorrow", "nodes": [
         {"id":"request-text","title":"“Book Massage tomorrow.”","ref":"app/main.py#telegram_webhook","detail":"Telegram POSTs a private message to the authenticated webhook.","tone":"entry","why":"Authenticating the bot at the webhook gives the turn a trusted business identity before CAPY uses the message."},
         {"id":"store-request","title":"Accept update","ref":"app/channels/telegram_intake.py#save_update","detail":"Save the incoming update before returning HTTP 204.","tone":"data","why":"The database commit gives Telegram a safe acknowledgment boundary. If the webhook fails earlier, Telegram can retry without creating a second inbox row."},
-        {"id":"wake-request","title":"Find pending chat work","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_next","detail":"The worker checks PostgreSQL for a chat with an eligible update.","why":"The pending message stays available after a worker restart."},
+        {"id":"wake-request","title":"Notify through RabbitMQ","ref":"app/channels/telegram_queue.py#TelegramQueue.try_publish","detail":"After intake commits, publish a bot/chat hint to the shared queue.","why":"A missed publication remains recoverable through direct PostgreSQL claiming."},
         {"id":"claim-request","title":"Claim the chat head","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_chat","detail":"Lease this update. The worker resolves the sender and invokes LangGraph.","why":"A chat lease prevents competing workers from applying messages to different versions of the same draft."},
         {"id":"interpret-request","title":"Extract service and date","ref":"app/graph/steps.py#understand_input","detail":"Gemma resolves Massage on October 20, 2026 from the sanitized message.","why":"Separating fact extraction from routing lets a later step make a decision from explicit service and date values."}
       ]},
       {"label": "Turn 1 · Find and send two numbered times", "nodes": [
         {"id":"offer-text","title":"Send the two choices","ref":"app/channels/telegram.py#TelegramBotApi.send_message","detail":"CAPY offers 15:00 and 17:00 UTC with Alex. The business still has no new booking.","tone":"success","why":"Numbered choices let the customer select a concrete appointment with a short reply that CAPY can resolve later."},
-        {"id":"deliver-offer","title":"Reserve and deliver reply","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_next","detail":"The worker reserves the next due reply in chat order.","why":"A persistent claim and result keep delivery retries separate from conversation processing."},
+        {"id":"deliver-offer","title":"Reserve and deliver reply","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_next","detail":"The independent sender reserves the next due reply in chat order.","why":"A persistent claim and result keep delivery retries separate from conversation processing."},
         {"id":"finish-request","title":"Save offer and queue reply","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","detail":"Publish the Redis checkpoint pointer and queue the reply in PostgreSQL.","tone":"data","why":"Committing the checkpoint pointer and reply together makes the stored offers available as soon as the customer can see them."},
         {"id":"search-request","title":"Find available slots","ref":"app/scheduling.py#AvailabilityService.search","detail":"Search for fits. LangGraph saves the numbered offer list in Redis.","why":"Availability comes from business hours and current bookings, so the options reflect the actual calendar."},
         {"id":"route-request","title":"Choose availability search","ref":"app/graph/steps.py#route_turn","detail":"Laya proposes a search. Python checks service and date.","why":"A model proposal can guide the conversation while Python checks that the catalog and date support a search."}
@@ -31,13 +66,13 @@
       {"label": "Turn 2 · Customer chooses the first time", "nodes": [
         {"id":"selection-text","title":"“1”","ref":"app/main.py#telegram_webhook","detail":"Telegram sends a new update for the same chat.","tone":"entry","why":"A separate update preserves the sequence from the offered list to the selected appointment."},
         {"id":"store-selection","title":"Save the selection update","ref":"app/channels/telegram_intake.py#save_update","detail":"Record this update under its own Telegram update ID.","tone":"data","why":"A stable update ID lets the inbox recognize a redelivery of the same choice."},
-        {"id":"wake-selection","title":"Find pending chat work","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_next","detail":"The worker checks PostgreSQL for a chat with an eligible update.","why":"The pending message stays available after a worker restart."},
+        {"id":"wake-selection","title":"Notify through RabbitMQ","ref":"app/channels/telegram_queue.py#TelegramQueue.try_publish","detail":"After intake commits, publish a bot/chat hint to the shared queue.","why":"A missed publication remains recoverable through direct PostgreSQL claiming."},
         {"id":"claim-selection","title":"Claim the selection","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_chat","detail":"Lease the new head and read the published checkpoint reference.","why":"The worker must use the draft published by the last completed turn for the number to keep its original meaning."},
         {"id":"restore-offer","title":"Restore the previous offer","ref":"app/graph/redis_checkpoint.py#RedisCheckpointSaver.fork_completed","detail":"Copy the completed Redis state into the selection attempt.","tone":"data","why":"A fresh attempt thread keeps partial work separate from the last successful copy of the offered times."}
       ]},
       {"label": "Turn 2 · Ask for consent to the 15:00 appointment", "nodes": [
         {"id":"consent-text","title":"Send the consent question","ref":"app/channels/telegram.py#TelegramBotApi.send_message","detail":"Ask for explicit approval of Massage with Alex at 15:00 UTC.","tone":"success","why":"Repeating the exact service and time gives the customer a chance to catch a mistaken choice before it is booked."},
-        {"id":"deliver-question","title":"Reserve the consent reply","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_next","detail":"The worker reserves the next due reply in chat order.","why":"A persistent claim and result keep delivery retries separate from conversation processing."},
+        {"id":"deliver-question","title":"Reserve the consent reply","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_next","detail":"The independent sender reserves the next due reply in chat order.","why":"A persistent claim and result keep delivery retries separate from conversation processing."},
         {"id":"finish-selection","title":"Save pending consent","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","detail":"Publish the selected slot’s Redis state and queue the consent question.","tone":"data","why":"Publishing pending consent with the reply gives the next turn a durable reference to the exact slot shown to the customer."},
         {"id":"prepare-selection","title":"Ask before writing","ref":"app/graph/steps.py#_prepare_create","detail":"Mark the exact slot as awaiting approval and format the question.","why":"Binding consent to a slot prevents a later approval from applying to a different appointment."},
         {"id":"match-selection","title":"Resolve option 1","ref":"app/graph/steps.py#select","detail":"Gemma finds choice 1. Laya proposes BOOK. Python matches the saved 15:00 slot.","why":"The number is an index into a saved list, so matching it against that list preserves what the customer selected."}
@@ -45,7 +80,7 @@
       {"label": "Turn 3 · Customer gives permission to book", "nodes": [
         {"id":"approval-text","title":"“Yes, book it.”","ref":"app/main.py#telegram_webhook","detail":"The approval arrives as a separate Telegram update.","tone":"entry","why":"Explicit approval in a later message separates an appointment choice from authorization to write it."},
         {"id":"store-approval","title":"Save the approval update","ref":"app/channels/telegram_intake.py#save_update","detail":"Record the approval. Its update ID will identify any booking retry.","tone":"data","why":"The approval update ID supplies a stable key that lets the booking operation recognize a retry."},
-        {"id":"wake-approval","title":"Find pending chat work","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_next","detail":"The worker checks PostgreSQL for a chat with an eligible update.","why":"The pending message stays available after a worker restart."},
+        {"id":"wake-approval","title":"Notify through RabbitMQ","ref":"app/channels/telegram_queue.py#TelegramQueue.try_publish","detail":"After intake commits, publish a bot/chat hint to the shared queue.","why":"A missed publication remains recoverable through direct PostgreSQL claiming."},
         {"id":"claim-approval","title":"Claim the approval","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_chat","detail":"Lease the message and load the pointer saved after choosing option 1.","why":"Per-chat ownership ensures the approval operates on the published consent state rather than racing with another turn."},
         {"id":"restore-consent","title":"Restore pending consent","ref":"app/graph/redis_checkpoint.py#RedisCheckpointSaver.fork_completed","detail":"Bring the exact proposed slot into this attempt’s graph state.","tone":"data","why":"The restored marker identifies the exact pending slot that the approval must authorize."}
       ]},
@@ -58,47 +93,79 @@
       ]}
     ],
     "edges": [
-      ["request-text","store-request"],["store-request","wake-request","async"],["wake-request","claim-request","async"],["claim-request","interpret-request"],["interpret-request","route-request"],
-      ["route-request","search-request"],["search-request","finish-request"],["finish-request","deliver-offer","async"],["deliver-offer","offer-text"],["offer-text","selection-text","async"],
-      ["selection-text","store-selection"],["store-selection","wake-selection","async"],["wake-selection","claim-selection","async"],["claim-selection","restore-offer"],["restore-offer","match-selection"],
-      ["match-selection","prepare-selection"],["prepare-selection","finish-selection"],["finish-selection","deliver-question","async"],["deliver-question","consent-text"],["consent-text","approval-text","async"],
-      ["approval-text","store-approval"],["store-approval","wake-approval","async"],["wake-approval","claim-approval","async"],["claim-approval","restore-consent"],["restore-consent","guard-approval"],
-      ["guard-approval","execute-approval"],["execute-approval","commit-approval"],["commit-approval","finish-approval"],["finish-approval","confirmation-text","async"]
+      ["request-text","store-request"],
+      ["store-request","wake-request","async"],
+      ["wake-request","claim-request","async"],
+      ["claim-request","interpret-request"],
+      ["interpret-request","route-request"],
+      ["route-request","search-request"],
+      ["search-request","finish-request"],
+      ["finish-request","deliver-offer","async"],
+      ["deliver-offer","offer-text"],
+      ["offer-text","selection-text","async"],
+      ["selection-text","store-selection"],
+      ["store-selection","wake-selection","async"],
+      ["wake-selection","claim-selection","async"],
+      ["claim-selection","restore-offer"],
+      ["restore-offer","match-selection"],
+      ["match-selection","prepare-selection"],
+      ["prepare-selection","finish-selection"],
+      ["finish-selection","deliver-question","async"],
+      ["deliver-question","consent-text"],
+      ["consent-text","approval-text","async"],
+      ["approval-text","store-approval"],
+      ["store-approval","wake-approval","async"],
+      ["wake-approval","claim-approval","async"],
+      ["claim-approval","restore-consent"],
+      ["restore-consent","guard-approval"],
+      ["guard-approval","execute-approval"],
+      ["execute-approval","commit-approval"],
+      ["commit-approval","finish-approval"],
+      ["finish-approval","confirmation-text","async"]
     ],
     "legend": "Bold labels show the three customer turns. Dashed arrows include queue handoffs and the wait for the next Telegram message."
   },
   {
     "id": "runtime",
     "title": "How a Telegram message moves through CAPY",
-    "subtitle": "Follow a saved update from the webhook to a PostgreSQL claim, a conversation turn and a Telegram reply.",
+    "subtitle": "Current notification path, direct database recovery, and independent processor/sender lifetimes.",
     "columns": 5,
     "lanes": [
       {"label": "Webhook intake", "nodes": [
         {"id":"update","title":"Telegram update","detail":"A customer sends text, voice or a contact to the bot.","tone":"entry","ref":"app/main.py#telegram_webhook","why":"A private bot update carries trusted chat and sender identifiers that CAPY can tie to the customer."},
         {"id":"webhook","title":"Authenticate webhook","ref":"app/main.py#telegram_webhook","detail":"Resolve the bot and verify the secret. Acknowledge after intake commits.","tone":"entry","why":"Verifying the bot route and secret protects the business-scoped inbox before the request is processed."},
         {"id":"save","title":"Save update","ref":"app/channels/telegram_intake.py#save_update","detail":"Deduplicate the update and record due work in PostgreSQL.","tone":"data","why":"Persisting a unique update ID lets Telegram retry after a lost acknowledgment."},
-        null,
-        null
+        {"id":"runtime-notify","title":"Publish after commit","detail":"Bound connection and confirm wait to one second.","why":"Publication failure cannot undo accepted intake.","ref":"app/channels/telegram_queue.py#TelegramQueue.try_publish","tone":"entry"},
+        {"id":"runtime-recover","title":"Recover without RabbitMQ","detail":"Startup and periodic PostgreSQL claims use the same slot.","why":"Broker startup is never a gate on durable-work recovery.","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_next"}
       ]},
       {"label": "Worker follows the chat head", "nodes": [
         {"id":"workflow","title":"Invoke LangGraph","ref":"app/graph/workflow.py#LangGraphWorkflow.handle_turn","detail":"Run one turn in its Redis attempt thread and return the reply.","why":"The invocation context keeps raw input and service objects scoped to a turn while the graph saves the conversation draft."},
         {"id":"worker","title":"Handle the message","ref":"app/telegram_worker.py#TelegramWorker.handle_message","detail":"Resolve commands and contacts or hand text and voice to the workflow.","why":"Handling commands and contacts directly keeps routine channel operations out of model inference."},
         {"id":"process","title":"Process claimed turn","ref":"app/telegram_worker.py#process_turn","detail":"Fork the prior Redis draft and resolve the customer before running the turn.","tone":"entry","why":"A single coordinator can restore the published draft, run one owned attempt, and decide which state to publish."},
         {"id":"claim","title":"Lease chat head","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_chat","detail":"Claim the earliest eligible update for this bot and chat.","tone":"data","why":"Serializing attempts for one chat preserves the meaning of short replies such as a numbered choice."},
-        {"id":"consumer","title":"Poll pending updates","ref":"app/telegram_worker.py#run_worker","detail":"The worker checks PostgreSQL for the next eligible chat.","tone":"entry","why":"Polling the receipts directly keeps pending work recoverable without separate notification records."}
+        {"id":"consumer","title":"One processor slot","ref":"app/telegram_worker.py#process_pending","detail":"Handle a RabbitMQ hint or a direct database recovery turn.","tone":"entry","why":"A single executor prevents notification and recovery turns from overlapping in this process."}
       ]},
       {"label": "Commit the reply and let the sender deliver it", "nodes": [
         null,
         null,
         {"id":"finish","title":"Finish the turn","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","detail":"Commit the checkpoint pointer and reply in PostgreSQL.","tone":"data","why":"The reply and its checkpoint pointer become visible together, so a later answer can resume the state behind the reply."},
-        {"id":"send-claim","title":"Reserve the send","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_next","detail":"The worker reserves the next due reply in chat order.","why":"A persistent claim and result keep delivery retries separate from conversation processing."},
+        {"id":"send-claim","title":"Reserve the send","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_next","detail":"The independent sender reserves the next due reply in chat order.","why":"A persistent claim and result keep delivery retries separate from conversation processing."},
         {"id":"deliver","title":"Call Telegram","ref":"app/telegram_sender.py#deliver_claimed","detail":"Call the Telegram API and record the delivery outcome.","tone":"success","why":"Recording the provider outcome lets the outbox distinguish a safe retry from a send Telegram may already have accepted."}
       ]}
     ],
     "edges": [
-      ["update","webhook"],["webhook","save"],["save","consumer","async"],
-      ["consumer","claim"],["claim","process"],["process","worker"],["worker","workflow"],["process","finish"],
-      ["finish","send-claim","async"],["send-claim","deliver"]
+      ["update","webhook"],
+      ["webhook","save"],
+      ["consumer","claim"],
+      ["claim","process"],
+      ["process","worker"],
+      ["worker","workflow"],
+      ["process","finish"],
+      ["finish","send-claim","async"],
+      ["send-claim","deliver"],
+      ["save","runtime-notify","async"],
+      ["runtime-notify","consumer","async"],
+      ["runtime-recover","consumer"]
     ]
   },
   {
@@ -133,10 +200,20 @@
       ]}
     ],
     "edges": [
-      ["entry","load"],["load","understand"],["understand","merge"],["understand","gemma"],["merge","decision"],["decision","laya"],
+      ["entry","load"],
+      ["load","understand"],
+      ["understand","merge"],
+      ["understand","gemma"],
+      ["merge","decision"],
+      ["decision","laya"],
       ["decision","action"],
-      ["decision","offers"],["decision","respond"],["action","actions"],["actions","booking"],["offers","persist"],
-      ["respond","persist"],["persist","checkpoint","async"]
+      ["decision","offers"],
+      ["decision","respond"],
+      ["action","actions"],
+      ["actions","booking"],
+      ["offers","persist"],
+      ["respond","persist"],
+      ["persist","checkpoint","async"]
     ],
     "legend": "Selected routes. The compiled graph in app/graph/builder.py shows how all reply branches converge on persist."
   },
@@ -166,8 +243,15 @@
       ]}
     ],
     "edges": [
-      ["request","search"],["search","availability"],["availability","offer"],["choice","select"],["select","prepare"],
-      ["prepare","ask"],["yes","gate"],["gate","create"],["create","done"]
+      ["request","search"],
+      ["search","availability"],
+      ["availability","offer"],
+      ["choice","select"],
+      ["select","prepare"],
+      ["prepare","ask"],
+      ["yes","gate"],
+      ["gate","create"],
+      ["create","done"]
     ],
     "legend": "Arrows follow each customer turn. The booking write and Telegram reply commit in separate transactions."
   },
@@ -216,13 +300,46 @@
         {"id":"send-error","title":"Telegram send fails or dispatch expires","detail":"The provider may have accepted the message before a response was lost.","tone":"failure","ref":"app/telegram_sender.py#deliver_claimed","why":"A timeout can happen after Telegram accepted a reply, so retrying blindly risks a duplicate message."},
         {"id":"classify","title":"Classify and record the outcome","ref":"app/telegram_sender.py#deliver_claimed","detail":"Retry transient rejection such as 429. Mark permanent rejection or exhausted retries as failed.","why":"A confirmed temporary rejection can be retried while permanent and uncertain outcomes need different handling."},
         {"id":"ambiguous","title":"Stop automatic resend if ambiguous","ref":"app/channels/telegram_delivery.py#TelegramOutbox.recover_expired","detail":"An unknown transport outcome or expired dispatch lease becomes ambiguous.","why":"An expired dispatch lease leaves delivery uncertain, which makes automatic resend unsafe."}
+      ]},
+      {"label": "Transport · Missing or malformed notification", "nodes": [
+        {"id":"hint-failed","title":"Commit succeeds; hint fails","detail":"A broker outage prevents confirmation.","why":"Intake remains durable and accepted.","ref":"app/channels/telegram_queue.py#TelegramQueue.try_publish","tone":"failure"},
+        {"id":"hint-recover","title":"Recover directly from PostgreSQL","detail":"A free slot claims an eligible database row.","why":"No publication relay or repeated republishing is needed.","ref":"app/telegram_worker.py#process_pending"},
+        {"id":"hint-safe","title":"HTTP 204 remains valid","detail":"Malformed or out-of-scope hints are rejected without requeue.","why":"Broker messages never replace durable jobs or grant ownership.","ref":"app/channels/telegram_queue.py#TelegramQueue._receive","tone":"success"}
+      ]},
+      {"label": "Transport · Early, duplicate or busy hint", "nodes": [
+        {"id":"hint-early","title":"Not ready, busy or empty","detail":"PostgreSQL returns an explicit claim result.","why":"The database clock and generation control eligibility.","ref":"app/channels/telegram_turns.py#ChatClaimResult","tone":"failure"},
+        {"id":"hint-wait","title":"One bounded readiness wait","detail":"Wait once for at most 0.5 seconds, without a database lock.","why":"A one-minute setup deferral must leave the processing slot available.","ref":"app/telegram_worker.py#_notification_claim"},
+        {"id":"hint-ack","title":"Acknowledge the hint","detail":"Leave unfinished work durable for recovery.","why":"Acknowledgment does not mean inbox completion.","ref":"app/channels/telegram_queue.py#TelegramQueue.acknowledge","tone":"success"}
+      ]},
+      {"label": "Ownership · Broker reconnect or stale attempt", "nodes": [
+        {"id":"hint-disconnect","title":"Connection closes during inference","detail":"The original delivery handle becomes invalid.","why":"AMQP loss does not revoke a valid PostgreSQL lease.","ref":"app/channels/telegram_queue.py#TelegramQueue._connect_loop","tone":"failure"},
+        {"id":"hint-drain","title":"Keep the active slot and renew","detail":"Synchronous processing drains before cancellation returns.","why":"Cancelling an executor await cannot stop its thread.","ref":"app/telegram_worker.py#_execute"},
+        {"id":"hint-fenced","title":"Fence all protected writes","detail":"Check the database lease and generation.","why":"A stale owner cannot change booking/customer state or promote a checkpoint.","ref":"app/channels/telegram_turns.py#TurnClaim.assert_owned","tone":"success"}
       ]}
     ],
     "edges": [
-      ["bad-request","reject"],["reject","no-ack"],["expired","refresh"],["refresh","new-offer"],["setup","defer"],
-      ["defer","retry"],["interruption","skip"],["skip","verify"],["model-error","recover-model"],["recover-model","safe-model"],
-      ["consent","check-consent"],["check-consent","no-write"],["taken","recheck"],["recheck","recover-slot"],["send-error","classify"],
-      ["classify","ambiguous"]
+      ["bad-request","reject"],
+      ["reject","no-ack"],
+      ["expired","refresh"],
+      ["refresh","new-offer"],
+      ["setup","defer"],
+      ["defer","retry"],
+      ["interruption","skip"],
+      ["skip","verify"],
+      ["model-error","recover-model"],
+      ["recover-model","safe-model"],
+      ["consent","check-consent"],
+      ["check-consent","no-write"],
+      ["taken","recheck"],
+      ["recheck","recover-slot"],
+      ["send-error","classify"],
+      ["classify","ambiguous"],
+      ["hint-failed","hint-recover"],
+      ["hint-recover","hint-safe"],
+      ["hint-early","hint-wait"],
+      ["hint-wait","hint-ack"],
+      ["hint-disconnect","hint-drain"],
+      ["hint-drain","hint-fenced"]
     ],
     "legend": "Coral marks the trigger. Links open the relevant definition in the repository."
   },
@@ -246,7 +363,11 @@
       ]}
     ],
     "edges": [
-      ["manage","resolve"],["resolve","dispatch"],["dispatch","change"],["move","prepare-move"],["prepare-move","choose-move","async"],
+      ["manage","resolve"],
+      ["resolve","dispatch"],
+      ["dispatch","change"],
+      ["move","prepare-move"],
+      ["prepare-move","choose-move","async"],
       ["choose-move","commit-move"]
     ]
   },
@@ -270,8 +391,13 @@
       ]}
     ],
     "edges": [
-      ["eval-cli","eval-load"],["eval-load","eval-run"],["eval-run","eval-case"],["eval-case","eval-turn"],
-      ["eval-turn","eval-assert"],["eval-assert","eval-receipt"],["eval-receipt","eval-report"]
+      ["eval-cli","eval-load"],
+      ["eval-load","eval-run"],
+      ["eval-run","eval-case"],
+      ["eval-case","eval-turn"],
+      ["eval-turn","eval-assert"],
+      ["eval-assert","eval-receipt"],
+      ["eval-receipt","eval-report"]
     ]
   },
   {
@@ -282,7 +408,7 @@
     "lanes": [
       {"label": "GitHub Actions runs verification", "nodes": [
         null,
-        {"id":"check-ci","title":"Run the CI checks","ref":".github/workflows/verify.yml","detail":"Start PostgreSQL and Redis. Run pytest, offline evaluations and Compose checks.","tone":"entry","why":"A controlled environment makes the required services available and catches changes before they land."},
+        {"id":"check-ci","title":"Run the CI checks","ref":".github/workflows/verify.yml","detail":"Start PostgreSQL, Redis and RabbitMQ. Run required integrations, offline evaluations and Compose checks.","tone":"entry","why":"A controlled environment makes the required services available and catches changes before they land."},
         null
       ]},
       {"label": "Three kinds of evidence", "nodes": [
@@ -294,12 +420,90 @@
         {"id":"check-consent-example","title":"Guard pending consent","ref":"tests/unit/test_conversation_graph.py#test_a_wrong_laya_cancel_cannot_mutate_an_existing_booking_during_new_booking_consent","detail":"Assert that an incorrect cancel proposal cannot mutate the existing booking.","tone":"success","why":"A model routing mistake should never become a booking change while another appointment is awaiting consent."},
         {"id":"check-golden-example","title":"Verify the golden case","ref":"tests/evals/test_scenario_framework.py#test_golden_run_captures_gemma_laya_and_requires_a_separate_consent_turn","detail":"Inspect Gemma and Laya evidence and require a separate approval before the first write.","tone":"success","why":"The test ties model outputs to the observable booking effect of each turn."},
         {"id":"check-booking-example","title":"Run a booking lifecycle","ref":"tests/integration/test_workflow_booking_journey.py#test_real_workflow_booking_reschedule_cancel","detail":"Book, move, and cancel an appointment through the real scheduling services.","tone":"success","why":"The lifecycle verifies that the conversation’s decisions make the intended PostgreSQL changes over multiple turns."}
+      ]},
+      {"label": "Concurrent runtime and failure boundaries", "nodes": [
+        {"id":"test-processors","title":"Five processors, one chat owner","detail":"Block five chats and send an already-saved reply independently.","why":"This checks actual scheduling with real PostgreSQL and RabbitMQ.","ref":"tests/integration/test_telegram_processors.py#test_five_processors_serialize_each_chat_and_sender_progresses","tone":"success"},
+        {"id":"test-redelivery","title":"Reconnect and redelivery","detail":"Retain one slot and save one reply across reconnect/cancellation.","why":"A lost acknowledgment must not replay completed effects.","ref":"tests/integration/test_telegram_processors.py#test_reconnect_during_slow_turn_preserves_slot_lease_and_idempotency","tone":"success"},
+        {"id":"test-signals","title":"Graceful and forced shutdown","detail":"SIGTERM drains; SIGKILL leaves an interrupted turn.","why":"Real process signals verify the lease-based restart boundary.","ref":"tests/integration/test_telegram_shutdown.py#test_process_signals_drain_or_leave_an_interrupted_claim","tone":"success"}
       ]}
     ],
     "edges": [
-      ["check-ci","check-unit"],["check-ci","check-evals"],["check-ci","check-integration"],
-      ["check-unit","check-consent-example"],["check-evals","check-golden-example"],["check-integration","check-booking-example"]
+      ["check-ci","check-unit"],
+      ["check-ci","check-evals"],
+      ["check-ci","check-integration"],
+      ["check-unit","check-consent-example"],
+      ["check-evals","check-golden-example"],
+      ["check-integration","check-booking-example"],
+      ["check-integration","test-processors"],
+      ["check-integration","test-redelivery"],
+      ["check-integration","test-signals"]
     ],
     "legend": "Arrows connect CI to test layers and each layer to a representative source test."
+  },
+  {
+    "id": "notification-recovery",
+    "title": "Lost notification · Durable work and separate commits",
+    "subtitle": "A confirmed inbox commit survives broker publication failure. A free processor recovers directly.",
+    "columns": 3,
+    "lanes": [
+      {"label": "The commit-to-publication gap", "nodes": [
+        {"id":"rec-commit","title":"Commit intake","detail":"Save a supported update and initial chat state.","why":"HTTP acceptance requires a committed receipt.","ref":"app/channels/telegram_intake.py#save_update","tone":"data"},
+        {"id":"rec-fail","title":"Publication fails","detail":"The bounded broker attempt returns failure.","why":"Confirms and acknowledgments do not close this application gap.","ref":"app/channels/telegram_queue.py#TelegramQueue.try_publish","tone":"failure"},
+        {"id":"rec-accept","title":"Return HTTP 204","detail":"The inbox row remains received.","why":"The caller need not repeat durable intake after broker failure.","ref":"app/main.py#telegram_webhook","tone":"success"}
+      ]},
+      {"label": "An available processor closes the gap", "nodes": [
+        {"id":"rec-slot","title":"Recovery opportunity","detail":"On startup and every 1–1.1 seconds after recovery finishes.","why":"One recovery turn then return to scheduling prevents starvation.","ref":"app/telegram_worker.py#process_pending"},
+        {"id":"rec-claim","title":"Claim eligible stored work","detail":"Use the database clock, generation and chat lease.","why":"No hint is required to authorize a pending turn.","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_next","tone":"data"},
+        {"id":"rec-finish","title":"Complete the turn","detail":"Commit receipt, optional reply, checkpoint reference and release.","why":"Redis contents remain outside the PostgreSQL transaction.","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","tone":"success"}
+      ]},
+      {"label": "Business commit and delivery are separate", "nodes": [
+        {"id":"rec-booking","title":"Booking transaction","detail":"A booking and its idempotency result commit together.","why":"A crash after this commit must not blindly replay business actions.","ref":"app/booking.py#BookingService.create","tone":"data"},
+        {"id":"rec-redis","title":"Attempt checkpoint contents","detail":"Redis stores draft and bounded sanitized history.","why":"Chat processing state links the checkpoint; it is not a transcript table.","ref":"app/graph/redis_checkpoint.py#RedisCheckpointSaver","tone":"data"},
+        {"id":"rec-send","title":"Independent delivery","detail":"Sender claims the PostgreSQL reply and calls Telegram.","why":"Ambiguous acceptance cannot guarantee exactly-once Telegram delivery.","ref":"app/telegram_sender.py#run_sender","tone":"success"}
+      ]}
+    ],
+    "edges": [
+      ["rec-commit","rec-fail"],
+      ["rec-fail","rec-accept"],
+      ["rec-accept","rec-slot","async"],
+      ["rec-slot","rec-claim"],
+      ["rec-claim","rec-booking"],
+      ["rec-booking","rec-redis"],
+      ["rec-redis","rec-finish"],
+      ["rec-finish","rec-send","async"]
+    ],
+    "legend": "Intake, booking and turn-completion transactions are distinct. Rabbit publication/acknowledgment, Redis contents and Telegram HTTP are external operations."
+  },
+  {
+    "id": "independent-progress",
+    "title": "Independent progress · Alice, Bob and an already-ready reply",
+    "subtitle": "Example concurrency, verified with controlled inference and delivery; no production throughput claim.",
+    "columns": 3,
+    "lanes": [
+      {"label": "Processor 1 · Alice", "nodes": [
+        {"id":"alice-claim","title":"Claim Alice’s chat","detail":"PostgreSQL grants one owned turn.","why":"Another worker cannot process Alice’s follow-up concurrently.","ref":"app/channels/telegram_turns.py#TelegramTurns.claim_chat","tone":"data"},
+        {"id":"alice-slow","title":"Slow synchronous turn","detail":"Inference runs on the processor’s one executor thread.","why":"The event loop stays responsive to broker I/O and reconnects.","ref":"app/telegram_worker.py#process_pending"},
+        {"id":"alice-heartbeat","title":"Renew the database lease","detail":"The heartbeat continues while Alice’s turn drains.","why":"The same slot stays occupied until synchronous work actually finishes.","ref":"app/telegram_worker.py#_keep_turn_claim_alive"}
+      ]},
+      {"label": "Processor 2 · Bob", "nodes": [
+        {"id":"bob-hint","title":"Receive Bob’s notification","detail":"RabbitMQ distributes one bot/chat hint.","why":"A free processor can work independently of Alice.","ref":"app/channels/telegram_queue.py#TelegramQueue._receive","tone":"entry"},
+        {"id":"bob-turn","title":"Claim and run Bob’s turn","detail":"Use the same ownership and processing functions.","why":"PostgreSQL serializes only the chat coordination, with booking locks preserved.","ref":"app/telegram_worker.py#process_turn"},
+        {"id":"bob-finish","title":"Save Bob’s reply","detail":"Complete the inbox turn and promote its checkpoint reference.","why":"Bob need not wait for Alice’s inference to finish.","ref":"app/channels/telegram_turns.py#TelegramTurns.finish","tone":"success"}
+      ]},
+      {"label": "Independent sender · Already-saved reply", "nodes": [
+        {"id":"progress-ready","title":"Ready PostgreSQL reply","detail":"The sender finds a reply committed earlier.","why":"Outbox work does not depend on RabbitMQ or free processing slots.","ref":"app/channels/telegram_delivery.py#TelegramOutbox.claim_next","tone":"data"},
+        {"id":"progress-lock","title":"Hold the bot sender lock","detail":"Only one sender enters the delivery loop.","why":"Central pacing and persisted cooldown survive processor scaling.","ref":"app/telegram_sender.py#acquire_sender_lock"},
+        {"id":"progress-send","title":"Deliver while turns are busy","detail":"Call Telegram and save the classified result.","why":"Separate lifetimes remove inference from the sending critical path.","ref":"app/telegram_sender.py#deliver_claimed","tone":"success"}
+      ]}
+    ],
+    "edges": [
+      ["alice-claim","alice-slow"],
+      ["alice-slow","alice-heartbeat"],
+      ["bob-hint","bob-turn"],
+      ["bob-turn","bob-finish"],
+      ["progress-ready","progress-lock"],
+      ["progress-lock","progress-send"]
+    ],
+    "legend": "Five processor replicas initially, one slot each. One sender retains roughly one send per second. See the concurrent runtime integration tests for controlled evidence."
   }
 ]
