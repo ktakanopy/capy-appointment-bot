@@ -15,7 +15,7 @@ The API accepts incoming Telegram messages. One background process checks Postgr
 
 | Table | What it holds |
 | --- | --- |
-| `telegram_updates` | Messages and receipt status. The key `(bot_id, update_id)` deduplicates Telegram retries. |
+| `telegram_inbox` | Messages and receipt status. The key `(bot_id, update_id)` deduplicates Telegram retries. |
 | `telegram_conversations` | The current turn claim, last processed message position and the last completed checkpoint reference for each chat. |
 | `telegram_outbox` | Reply text, dispatch status, retry time and send result. |
 

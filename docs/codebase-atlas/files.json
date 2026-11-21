@@ -140,7 +140,8 @@
       ["alembic/versions/0006_telegram_publications.py","Add durable publication work for the RabbitMQ relay.",["upgrade"],[]],
       ["alembic/versions/0007_massage_studio.py","Reshape a fresh database for the massage studio catalog and reply-only Telegram delivery.",["upgrade"],[]],
       ["alembic/versions/0008_telegram_customers.py","Move Telegram identities onto customers and remove the legacy polling cursor and reply fields.",["upgrade"],[]],
-      ["alembic/versions/0009_telegram_postgres_queue.py","Preserve pending Telegram work and remove the former broker tables.",["upgrade"],[]]
+      ["alembic/versions/0009_telegram_postgres_queue.py","Preserve pending Telegram work and remove the former broker tables.",["upgrade"],[]],
+      ["alembic/versions/0010_telegram_inbox.py","Rename the incoming Telegram queue in place while preserving stored updates.",["upgrade","downgrade"],[]]
     ]
   },
   {

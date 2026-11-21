@@ -103,7 +103,7 @@ def _check_bot_scope(database_url: str, bot: TelegramBot) -> None:
                 SELECT 1 FROM customers
                 WHERE telegram_bot_id = :bot_id AND business_id <> :business_id
                 UNION ALL
-                SELECT 1 FROM telegram_updates
+                SELECT 1 FROM telegram_inbox
                 WHERE (bot_id, business_id) <> (:bot_id, :business_id)
                   AND (status IN ('received', 'processing') OR bot_id = :bot_id)
                 UNION ALL
@@ -450,8 +450,8 @@ def prune_history(database_url: str, limit: int = 500) -> None:
     """Delete old terminal records in bounded batches while retaining active jobs."""
     with database_session(database_url) as session:
         session.execute(
-            text("""DELETE FROM telegram_updates WHERE (bot_id,update_id) IN (
-                   SELECT u.bot_id,u.update_id FROM telegram_updates u
+            text("""DELETE FROM telegram_inbox WHERE (bot_id,update_id) IN (
+                   SELECT u.bot_id,u.update_id FROM telegram_inbox u
                    WHERE u.status='delivered' AND u.expires_at<clock_timestamp()
                      AND NOT EXISTS (SELECT 1 FROM telegram_outbox o
                          WHERE o.bot_id=u.bot_id AND o.update_id=u.update_id

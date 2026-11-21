@@ -24,6 +24,14 @@ python -m app.telegram_service register --webhook-base-url https://bot.example.c
 
 ## Upgrade an existing deployment
 
+For deployments already on `0009_telegram_postgres_queue`, stop the API and
+worker, run `alembic upgrade head` to rename the inbox table, and start both
+services with the updated application. To revert this rename, stop both services,
+run `alembic downgrade 0009_telegram_postgres_queue`, and start the previous
+application version.
+
+For older deployments migrating off RabbitMQ:
+
 1. Stop the old API, relay, worker and sender. Take a PostgreSQL backup and retain the deployed image and Redis checkpoint data.
 2. Before migrating, read the old `telegram_bots` row to identify the bot ID, business and webhook route. Supply those values and the existing secrets in the new environment. If several bots have pending work, finish that work before switching to the single configured bot.
 3. Apply the migrations. `0008_telegram_customers` preserves Telegram customer ownership. `0009_telegram_postgres_queue` keeps receipts, chat state and replies, copies pending send delays, and removes obsolete transport tables.
@@ -39,7 +47,7 @@ database errors, ambiguous sends or growing delays. The worker can process one
 turn at a time, so model latency affects queue wait times across chats.
 
 ```sql
-SELECT min(ready_at) FROM telegram_updates WHERE status = 'received';
+SELECT min(ready_at) FROM telegram_inbox WHERE status = 'received';
 SELECT min(ready_at) FROM telegram_outbox WHERE status = 'ready';
 SELECT count(*) FROM telegram_outbox WHERE status = 'ambiguous';
 ```

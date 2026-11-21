@@ -24,7 +24,7 @@
   <rect class="green" x="30" y="198" width="660" height="117" rx="13"/>
   <text class="heading" x="52" y="228">One PostgreSQL transaction</text>
   <rect class="panel" x="52" y="243" width="293" height="54" rx="8"/>
-  <text class="code" x="68" y="265">telegram_updates</text>
+  <text class="code" x="68" y="265">telegram_inbox</text>
   <text class="body" x="68" y="288">Incoming update record.</text>
   <rect class="panel" x="371" y="243" width="297" height="54" rx="8"/>
   <text class="code" x="387" y="265">telegram_publications</text>

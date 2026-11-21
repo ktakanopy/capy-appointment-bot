@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1636" width="1430" height="1636" role="img" aria-label="Source reference · Domain contracts and PostgreSQL rows">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1784" width="1430" height="1784" role="img" aria-label="Source reference · Domain contracts and PostgreSQL rows">
   <title>Source reference · Domain contracts and PostgreSQL rows</title>
   <desc>Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.</desc>
-  <rect x="0" y="0" width="1430" height="1636" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <rect x="0" y="0" width="1430" height="1784" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Domain contracts and PostgreSQL rows</text>
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.</text>
   <g id="app-models.py" data-source="app/models.py">
@@ -360,5 +360,22 @@
       <text x="741" y="1536" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
     </a>
     <text x="1273" y="1536" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="alembic-versions-0010_telegram_inbox.py" data-source="alembic/versions/0010_telegram_inbox.py">
+    <rect x="40" y="1607" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../alembic/versions/0010_telegram_inbox.py">
+      <title>alembic/versions/0010_telegram_inbox.py</title>
+      <text x="56" y="1634" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0010_telegram_inbox.py</text>
+    </a>
+    <text x="56" y="1657" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Rename the incoming Telegram queue in place while preserving stored updates.</text>
+    <a href="../../alembic/versions/0010_telegram_inbox.py#L22">
+      <title>upgrade · alembic/versions/0010_telegram_inbox.py:22</title>
+      <text x="56" y="1682" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 22</text>
+    </a>
+    <text x="588" y="1682" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="../../alembic/versions/0010_telegram_inbox.py#L26">
+      <title>downgrade · alembic/versions/0010_telegram_inbox.py:26</title>
+      <text x="56" y="1702" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">downgrade  /  line 26</text>
+    </a>
   </g>
 </svg>

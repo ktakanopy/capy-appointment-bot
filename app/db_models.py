@@ -117,7 +117,7 @@ class IdempotencyRecord(Base):
 
 
 class TelegramUpdate(Base):
-    __tablename__ = "telegram_updates"
+    __tablename__ = "telegram_inbox"
 
     bot_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     update_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)

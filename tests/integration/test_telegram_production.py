@@ -41,7 +41,7 @@ def register(url, bot_id=42, *, business="demo-studio"):
 
 def ready_updates(url):
     with connect(url) as connection:
-        connection.execute("UPDATE telegram_updates SET ready_at=now()-interval '1 second'")
+        connection.execute("UPDATE telegram_inbox SET ready_at=now()-interval '1 second'")
 
 
 def test_register_configures_the_webhook_from_settings(scheduling_db, monkeypatch):
@@ -97,7 +97,7 @@ def test_webhook_dedupes_and_rejects_invalid_requests(scheduling_db, monkeypatch
         assert client.post(path, headers=headers, json={"update_id": 11, "edited_message": {}}).status_code == 204
     with connect(url) as connection:
         receipts = connection.execute(
-            """SELECT status,payload FROM telegram_updates WHERE bot_id=42 ORDER BY update_id"""
+            """SELECT status,payload FROM telegram_inbox WHERE bot_id=42 ORDER BY update_id"""
         ).fetchall()
     assert [row["status"] for row in receipts] == ["received", "delivered"]
     assert receipts[1]["payload"] is None

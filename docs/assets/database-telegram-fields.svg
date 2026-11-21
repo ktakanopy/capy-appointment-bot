@@ -14,7 +14,7 @@ text {font-family:Inter,Arial,sans-serif; fill:#19362d}
   <text x="30" y="70" class="subtitle">PK  primary key    ·    FK  foreign key    ·    Composite keys include all marked fields</text>
   <rect x="30" y="100" width="350" height="207" rx="12" fill="#fffefa" stroke="#aec3b2"/>
   <rect x="30" y="100" width="350" height="42" rx="12" fill="#e8f2e8"/>
-  <text x="46" y="127" class="name">telegram_updates</text>
+  <text x="46" y="127" class="name">telegram_inbox</text>
   <text x="46" y="162" class="field">PK  bot_id · update_id</text>
   <text x="46" y="184" class="field">FK  business_id</text>
   <text x="46" y="206" class="field">chat_id · telegram_user_id</text>

@@ -41,7 +41,7 @@ These three tables store incoming work, per-chat state and outbound replies.
 
 | Table | Purpose |
 | --- | --- |
-| `telegram_updates` | Incoming Telegram updates, deduplication and pending turn state. |
+| `telegram_inbox` | Incoming Telegram updates, deduplication and pending turn state. |
 | `telegram_conversations` | Per-chat lease, ordering information and reference to the completed Redis checkpoint. |
 | `telegram_outbox` | Replies, pending delivery state, retry timing and send outcomes. |
 
@@ -64,4 +64,4 @@ Migration `0007_massage_studio` requires an empty business database. It refuses 
 An existing massage-studio database can upgrade from `0007_massage_studio` to
 `0008_telegram_customers`. The migration copies sender identities onto their
 existing customer rows and creates customer rows for unlinked identities.
-`0009_telegram_postgres_queue` removes the broker publication and delivery coordination tables while preserving pending messages and replies. See the [deployment guide](production.md) for upgrade and rollback steps.
+`0009_telegram_postgres_queue` removes the broker publication and delivery coordination tables while preserving pending messages and replies. `0010_telegram_inbox` renames the incoming update table in place, preserving pending messages and deduplication receipts. See the [deployment guide](production.md) for upgrade and rollback steps.

@@ -23,9 +23,9 @@ def migration_db(scheduling_db):
     admin.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(name)))
     env = {**os.environ, "DATABASE_URL": url}
 
-    def migrate(target, *, check=True):
+    def migrate(target, *, check=True, direction="upgrade"):
         return subprocess.run(
-            [sys.executable, "-m", "alembic", "upgrade", target],
+            [sys.executable, "-m", "alembic", direction, target],
             env=env,
             check=check,
             capture_output=True,
@@ -166,8 +166,14 @@ def test_telegram_customer_migration_preserves_ownership_and_pending_work(migrat
         assert rows[1]["phone"] == "+5511999998888"
         assert rows[2]["id"] == "manual" and rows[2]["telegram_user_id"] is None
         assert conn.execute(
-            "SELECT status FROM telegram_updates WHERE update_id=2"
-        ).fetchone() == {"status": "received"}
+            "SELECT status, payload FROM telegram_inbox WHERE bot_id=42 AND update_id=2"
+        ).fetchone() == {
+            "status": "received",
+            "payload": {
+                "message": {"chat": {"id": 101, "type": "private"},
+                            "from": {"id": 101}, "text": "Pending"},
+            },
+        }
         assert conn.execute("""
             SELECT message, ready_at > now() + interval '14 minutes' AS delayed
             FROM telegram_outbox WHERE bot_id=42
@@ -179,8 +185,8 @@ def test_telegram_customer_migration_preserves_ownership_and_pending_work(migrat
             SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename ~ '^telegram_'
             ORDER BY tablename
         """).fetchall() == [
-            {"tablename": "telegram_conversations"}, {"tablename": "telegram_outbox"},
-            {"tablename": "telegram_updates"},
+            {"tablename": "telegram_conversations"}, {"tablename": "telegram_inbox"},
+            {"tablename": "telegram_outbox"},
         ]
         assert conn.execute("""
             SELECT to_regclass('telegram_identities') IS NULL
@@ -190,3 +196,10 @@ def test_telegram_customer_migration_preserves_ownership_and_pending_work(migrat
     repo = TelegramRepository(url)
     assert repo.ensure_customer_for_sender("b", 42, 101, "Renamed")["customer_id"] == "c"
     assert repo.ensure_customer_for_sender("b", 42, 102, "Renamed")["customer_id"] == rows[1]["id"]
+
+    migrate("0009_telegram_postgres_queue", direction="downgrade")
+    with connect(url) as conn:
+        assert conn.execute(
+            "SELECT status, payload->'message'->>'text' AS message "
+            "FROM telegram_updates WHERE bot_id=42 AND update_id=2"
+        ).fetchone() == {"status": "received", "message": "Pending"}

@@ -16,7 +16,7 @@ text {font-family:Inter,Arial,sans-serif; fill:#19362d}
   <text x="48" y="122" class="key">FOREIGN KEY</text>
   <text x="650" y="122" class="key">REFERENCED KEY</text>
   <rect x="30" y="140" width="1110" height="49" fill="#fffefa"/>
-  <text x="48" y="170" class="field">telegram_updates.business_id</text>
+  <text x="48" y="170" class="field">telegram_inbox.business_id</text>
   <text x="650" y="170" class="field">businesses.id</text>
   <path d="M590 165 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
   <rect x="30" y="189" width="1110" height="49" fill="#f5f8f3"/>
