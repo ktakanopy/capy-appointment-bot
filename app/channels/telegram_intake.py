@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 
 from app.channels.bots import TelegramBot
-from app.channels.telegram_publications import schedule_publication
 from app.database import database_session
-from app.db_models import TelegramBotRow, TelegramConversation, TelegramUpdate
+from app.db_models import TelegramConversation, TelegramUpdate
 from app.observability import debug_event
 
 
@@ -45,9 +44,8 @@ def save_update(
 
     Use (bot_id, update_id) as the idempotency key because update IDs are scoped
     to a bot. An update with an existing key counts as accepted without another
-    inbox row or notification. Store only fields the worker uses. Other valid
-    updates get a completed receipt. Return False for an invalid update ID or
-    a bot that is no longer enabled for webhook intake.
+    inbox row. Store only fields the worker uses. Other valid
+    updates get a completed receipt. Return False for an invalid update ID.
     """
     update_id = update.get("update_id")
     if not telegram_integer(update_id):
@@ -73,17 +71,6 @@ def save_update(
     message_date = message.get("date")
     date = message_date if telegram_integer(message_date) else None
     with database_session(database_url) as session:
-        # The bot may have been disabled after route lookup; recheck before accepting its update.
-        registered = session.scalar(select(TelegramBotRow.bot_id).where(
-            TelegramBotRow.bot_id == bot.bot_id,
-            TelegramBotRow.business_id == bot.business_id,
-            TelegramBotRow.enabled,
-            TelegramBotRow.webhook_route.is_not(None),
-        ).with_for_update(read=True))
-        if registered is None:
-            debug_event("telegram.inbox.ignored", bot_id=bot.bot_id, update_id=update_id,
-                        reason="bot_not_registered_for_intake")
-            return False
         idempotency_key_columns = (TelegramUpdate.bot_id, TelegramUpdate.update_id)
         inserted_update_id = session.scalar(insert(TelegramUpdate).values(
             bot_id=bot.bot_id,
@@ -103,7 +90,6 @@ def save_update(
             session.execute(insert(TelegramConversation).values(
                 bot_id=bot.bot_id, chat_id=chat_id, business_id=bot.business_id,
             ).on_conflict_do_nothing())
-            schedule_publication(session, bot_id=bot.bot_id, chat_id=chat_id, delay=0.3)
     debug_event(
         "telegram.inbox.recorded", bot_id=bot.bot_id, update_id=update_id,
         source="webhook",

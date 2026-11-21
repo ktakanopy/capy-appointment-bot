@@ -18,16 +18,7 @@ jobs:
         image: redis:7-alpine
         ports: [6379:6379]
         options: --health-cmd 'redis-cli ping' --health-interval 2s --health-retries 20
-      rabbitmq:
-        image: rabbitmq:4.2
-        env:
-          RABBITMQ_DEFAULT_USER: capy
-          RABBITMQ_DEFAULT_PASS: capy
-          RABBITMQ_DEFAULT_VHOST: capy_test
-        ports: [5672:5672]
-        options: --health-cmd 'rabbitmq-diagnostics -q check_running' --health-interval 5s --health-retries 15
     env:
-      TEST_AMQP_URL: amqp://capy:capy@localhost:5672/capy_test
       TEST_DATABASE_URL: postgresql://scheduling:scheduling@localhost:5432/scheduling_test
       TEST_REDIS_URL: redis://localhost:6379/15
       CAPY_REQUIRE_INTEGRATION: "1"

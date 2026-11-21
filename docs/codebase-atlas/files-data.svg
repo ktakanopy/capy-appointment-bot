@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1490" width="1430" height="1490" role="img" aria-label="Source reference · Domain contracts and PostgreSQL rows">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1636" width="1430" height="1636" role="img" aria-label="Source reference · Domain contracts and PostgreSQL rows">
   <title>Source reference · Domain contracts and PostgreSQL rows</title>
   <desc>Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.</desc>
-  <rect x="0" y="0" width="1430" height="1490" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <rect x="0" y="0" width="1430" height="1636" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Domain contracts and PostgreSQL rows</text>
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.</text>
   <g id="app-models.py" data-source="app/models.py">
@@ -130,7 +130,7 @@
     <text x="422" y="853" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">violation.</text>
   </g>
   <g id="app-db_models.py" data-source="app/db_models.py">
-    <rect x="725" y="123" width="665" height="728" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="725" y="123" width="665" height="568" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/db_models.py">
       <title>app/db_models.py</title>
       <text x="741" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/db_models.py</text>
@@ -141,120 +141,89 @@
       <text x="741" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Base  /  line 10</text>
     </a>
     <text x="1273" y="198" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="../../app/db_models.py#L86">
-      <title>BookingRow · app/db_models.py:86</title>
-      <text x="741" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingRow  /  line 86</text>
+    <a href="../../app/db_models.py#L90">
+      <title>BookingRow · app/db_models.py:90</title>
+      <text x="741" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingRow  /  line 90</text>
     </a>
-    <a href="../../app/db_models.py#L129">
-      <title>TelegramUpdate · app/db_models.py:129</title>
-      <text x="741" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramUpdate  /  line 129</text>
+    <a href="../../app/db_models.py#L119">
+      <title>TelegramUpdate · app/db_models.py:119</title>
+      <text x="741" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramUpdate  /  line 119</text>
     </a>
-    <a href="../../app/db_models.py#L161">
-      <title>TelegramConversation · app/db_models.py:161</title>
-      <text x="741" y="258" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramConversation  /  line 161</text>
+    <a href="../../app/db_models.py#L137">
+      <title>TelegramConversation · app/db_models.py:137</title>
+      <text x="741" y="258" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramConversation  /  line 137</text>
     </a>
-    <a href="../../app/db_models.py#L176">
-      <title>TelegramOutboxRow · app/db_models.py:176</title>
-      <text x="741" y="278" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutboxRow  /  line 176</text>
-    </a>
-    <a href="../../app/db_models.py#L210">
-      <title>TelegramPublication · app/db_models.py:210</title>
-      <text x="741" y="298" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramPublication  /  line 210</text>
+    <a href="../../app/db_models.py#L152">
+      <title>TelegramOutboxRow · app/db_models.py:152</title>
+      <text x="741" y="278" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutboxRow  /  line 152</text>
     </a>
     <a href="../../app/db_models.py#L10">
       <title>Base · app/db_models.py:10</title>
-      <text x="741" y="318" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Base</text>
+      <text x="741" y="298" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Base</text>
     </a>
-    <text x="1107" y="318" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">SQLAlchemy declarative metadata root.</text>
+    <text x="1107" y="298" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">SQLAlchemy declarative metadata root.</text>
     <a href="../../app/db_models.py#L14">
       <title>BusinessRow · app/db_models.py:14</title>
-      <text x="741" y="338" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BusinessRow</text>
+      <text x="741" y="318" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BusinessRow</text>
     </a>
-    <text x="1107" y="338" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Tenant data and booking policy.</text>
+    <text x="1107" y="318" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Tenant data and booking policy.</text>
     <a href="../../app/db_models.py#L26">
       <title>ProfessionalRow · app/db_models.py:26</title>
-      <text x="741" y="358" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ProfessionalRow</text>
+      <text x="741" y="338" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ProfessionalRow</text>
     </a>
-    <text x="1107" y="358" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bookable massage therapist in the</text>
-    <text x="1107" y="373" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">massagistas table.</text>
+    <text x="1107" y="338" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bookable massage therapist in the</text>
+    <text x="1107" y="353" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">massagistas table.</text>
     <a href="../../app/db_models.py#L35">
       <title>ServiceRow · app/db_models.py:35</title>
-      <text x="741" y="398" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ServiceRow</text>
+      <text x="741" y="378" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ServiceRow</text>
     </a>
-    <text x="1107" y="398" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Service type, duration, price and</text>
-    <text x="1107" y="413" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">generated name.</text>
+    <text x="1107" y="378" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Service type, duration, price and</text>
+    <text x="1107" y="393" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">generated name.</text>
     <a href="../../app/db_models.py#L53">
       <title>WeeklyAvailabilityRule · app/db_models.py:53</title>
-      <text x="741" y="438" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">WeeklyAvailabilityRule</text>
+      <text x="741" y="418" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">WeeklyAvailabilityRule</text>
     </a>
-    <text x="1107" y="438" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Recurring working-hours interval.</text>
+    <text x="1107" y="418" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Recurring working-hours interval.</text>
     <a href="../../app/db_models.py#L64">
       <title>BlockedPeriod · app/db_models.py:64</title>
-      <text x="741" y="458" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BlockedPeriod</text>
+      <text x="741" y="438" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BlockedPeriod</text>
     </a>
-    <text x="1107" y="458" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Staff calendar hold.</text>
+    <text x="1107" y="438" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Staff calendar hold.</text>
     <a href="../../app/db_models.py#L75">
       <title>CustomerRow · app/db_models.py:75</title>
-      <text x="741" y="478" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">CustomerRow</text>
+      <text x="741" y="458" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">CustomerRow</text>
     </a>
-    <text x="1107" y="478" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Business-owned customer record.</text>
-    <a href="../../app/db_models.py#L86">
-      <title>BookingRow · app/db_models.py:86</title>
+    <text x="1107" y="458" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Business-owned customer record with</text>
+    <text x="1107" y="473" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">optional Telegram sender identity.</text>
+    <a href="../../app/db_models.py#L90">
+      <title>BookingRow · app/db_models.py:90</title>
       <text x="741" y="498" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingRow</text>
     </a>
     <text x="1107" y="498" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Appointment and the staff interval it</text>
     <text x="1107" y="513" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">occupies.</text>
-    <a href="../../app/db_models.py#L103">
-      <title>IdempotencyRecord · app/db_models.py:103</title>
+    <a href="../../app/db_models.py#L107">
+      <title>IdempotencyRecord · app/db_models.py:107</title>
       <text x="741" y="538" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">IdempotencyRecord</text>
     </a>
     <text x="1107" y="538" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Request fingerprint and prior write</text>
     <text x="1107" y="553" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">outcome.</text>
-    <a href="../../app/db_models.py#L115">
-      <title>TelegramIdentity · app/db_models.py:115</title>
-      <text x="741" y="578" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramIdentity</text>
+    <a href="../../app/db_models.py#L119">
+      <title>TelegramUpdate · app/db_models.py:119</title>
+      <text x="741" y="578" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramUpdate</text>
     </a>
-    <text x="1107" y="578" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Maps a bot sender to a business</text>
-    <text x="1107" y="593" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">customer.</text>
-    <a href="../../app/db_models.py#L129">
-      <title>TelegramUpdate · app/db_models.py:129</title>
-      <text x="741" y="618" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramUpdate</text>
+    <text x="1107" y="578" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Durable receipt and pending inbound</text>
+    <text x="1107" y="593" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">payload.</text>
+    <a href="../../app/db_models.py#L137">
+      <title>TelegramConversation · app/db_models.py:137</title>
+      <text x="741" y="618" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramConversation</text>
     </a>
-    <text x="1107" y="618" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Durable receipt and pending inbound</text>
-    <text x="1107" y="633" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">payload.</text>
-    <a href="../../app/db_models.py#L150">
-      <title>TelegramBotRow · app/db_models.py:150</title>
-      <text x="741" y="658" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBotRow</text>
+    <text x="1107" y="618" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Chat lease, update order and checkpoint</text>
+    <text x="1107" y="633" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">pointer.</text>
+    <a href="../../app/db_models.py#L152">
+      <title>TelegramOutboxRow · app/db_models.py:152</title>
+      <text x="741" y="658" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramOutboxRow</text>
     </a>
-    <text x="1107" y="658" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Registered bot, business and credential</text>
-    <text x="1107" y="673" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">references.</text>
-    <a href="../../app/db_models.py#L161">
-      <title>TelegramConversation · app/db_models.py:161</title>
-      <text x="741" y="698" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramConversation</text>
-    </a>
-    <text x="1107" y="698" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Chat lease, update order and checkpoint</text>
-    <text x="1107" y="713" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">pointer.</text>
-    <a href="../../app/db_models.py#L176">
-      <title>TelegramOutboxRow · app/db_models.py:176</title>
-      <text x="741" y="738" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramOutboxRow</text>
-    </a>
-    <text x="1107" y="738" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pending or settled Telegram send.</text>
-    <a href="../../app/db_models.py#L195">
-      <title>TelegramBotDelivery · app/db_models.py:195</title>
-      <text x="741" y="758" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBotDelivery</text>
-    </a>
-    <text x="1107" y="758" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bot-wide send timing and cooldown.</text>
-    <a href="../../app/db_models.py#L202">
-      <title>TelegramChatDelivery · app/db_models.py:202</title>
-      <text x="741" y="778" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramChatDelivery</text>
-    </a>
-    <text x="1107" y="778" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Per-chat send timing and cooldown.</text>
-    <a href="../../app/db_models.py#L210">
-      <title>TelegramPublication · app/db_models.py:210</title>
-      <text x="741" y="798" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramPublication</text>
-    </a>
-    <text x="1107" y="798" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Durable metadata for chat or sender</text>
-    <text x="1107" y="813" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">wake-ups.</text>
+    <text x="1107" y="658" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pending or settled Telegram send.</text>
   </g>
   <g id="alembic-env.py" data-source="alembic/env.py">
     <rect x="40" y="911" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
@@ -364,5 +333,32 @@
       <text x="741" y="1408" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
     </a>
     <text x="1273" y="1408" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="alembic-versions-0008_telegram_customers.py" data-source="alembic/versions/0008_telegram_customers.py">
+    <rect x="40" y="1461" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../alembic/versions/0008_telegram_customers.py">
+      <title>alembic/versions/0008_telegram_customers.py</title>
+      <text x="56" y="1488" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0008_telegram_customers.py</text>
+    </a>
+    <text x="56" y="1511" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Move Telegram identities onto customers and remove the legacy polling cursor</text>
+    <text x="56" y="1529" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and reply fields.</text>
+    <a href="../../alembic/versions/0008_telegram_customers.py#L11">
+      <title>upgrade · alembic/versions/0008_telegram_customers.py:11</title>
+      <text x="56" y="1554" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
+    </a>
+    <text x="588" y="1554" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="alembic-versions-0009_telegram_postgres_queue.py" data-source="alembic/versions/0009_telegram_postgres_queue.py">
+    <rect x="725" y="1461" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="../../alembic/versions/0009_telegram_postgres_queue.py">
+      <title>alembic/versions/0009_telegram_postgres_queue.py</title>
+      <text x="741" y="1488" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0009_telegram_postgres_queue.py</text>
+    </a>
+    <text x="741" y="1511" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Preserve pending Telegram work and remove the former broker tables.</text>
+    <a href="../../alembic/versions/0009_telegram_postgres_queue.py#L11">
+      <title>upgrade · alembic/versions/0009_telegram_postgres_queue.py:11</title>
+      <text x="741" y="1536" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
+    </a>
+    <text x="1273" y="1536" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
 </svg>

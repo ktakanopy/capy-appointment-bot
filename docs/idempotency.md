@@ -10,10 +10,15 @@ Webhook intake saves the receipt before acknowledging the update. It deduplicate
 
 A claim generation fences booking writes and publication of replies and Redis checkpoint references. When an interrupted claim expires, its replacement asks the customer to check their appointments. It discards the draft and preserves every committed booking. Automatic replay after an uncertain booking result remains gated on durable action commands.
 
-The shared outbox stores one logical reply per update. Sender replicas share bot and chat rate limits. They retry definitive transient errors and mark lost responses or expired dispatches ambiguous for inspection. [Delivery worker](../app/channels/telegram_delivery.py)
+The shared outbox stores one logical reply per update. The worker throttles sends and records Telegram cooldowns in the outbox. It retries definitive transient errors and mark lost responses or expired dispatches ambiguous for inspection. [Classify the send outcome](../app/telegram_sender.py#L15)
 
-## RabbitMQ redelivery
+## Interrupted work
 
-A webhook or scheduler saves its work and its publication in the same PostgreSQL transaction. A relay can publish twice if it crashes after broker confirmation. A consumer that sees an already finished receipt or send can acknowledge the repeat. When there is more work for the chat, the same wake-up may process its next eligible turn. PostgreSQL records and checks ownership of each attempt.
+The webhook confirms receipt after PostgreSQL commits the update. After a restart,
+the worker selects pending messages and replies from the same tables. Before a
+booking or reply write, PostgreSQL checks whether the attempt still owns the chat.
 
-The worker acknowledges after durable completion or after saving a replacement wake-up. Booking commit and turn completion use separate transactions. Recovery from an interrupted attempt reports that the outcome is unknown and directs the customer to check their appointments. A redelivered send observes the dispatch status. An expired dispatch becomes ambiguous through maintenance. [Relay storage](../app/channels/telegram_publications.py) · [Consumer](../app/channels/telegram_broker.py#L105)
+Booking commit and turn completion use separate transactions. If an attempt is
+interrupted, CAPY asks the customer to check their appointments. A send whose
+lease expires becomes ambiguous because Telegram may already have accepted it.
+[Turn claim](../app/channels/telegram_turns.py) · [Send recovery](../app/channels/telegram_delivery.py)

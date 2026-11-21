@@ -1,5 +1,7 @@
 # CAPY scale study: 100,000 monthly active customers
 
+> Architecture exercise based on the former RabbitMQ deployment. The [current deployment](production.md) uses a single PostgreSQL worker.
+
 > **Status:** Planning exercise only. The traffic figures below are assumptions. The repository has not been tested with 100,000 monthly active customers, and no hosted availability or latency objective has been verified.
 
 This document separates the current code path from a hypothetical workload estimate. It is not a deployment runbook. See the [production guide](production.md) for the current worker commands and the short, local queue benchmarks.
@@ -58,7 +60,7 @@ This is a workload estimate, not a worker count. Per-chat ordering, per-business
 ## Constraints that shape scaling
 
 - **Conversation order:** A voice turn can hold its chat until transcription and processing finish. More workers help other chats, but they cannot safely process later messages in the same chat at the same time.
-- **Partitions:** RabbitMQ routes each chat to a partition. Add capacity only after measuring queue age and processing time. Change the partition count with the drain procedure in the [production guide](production.md#capacity-checks).
+- **Partitions:** RabbitMQ routes each chat to a partition. Add capacity only after measuring queue age and processing time. Plan a drain before changing the partition count.
 - **Model throughput:** Adding workers can make the inference queue longer if Gemma or Laya is already saturated. Measure both model wait time and execution time.
 - **Database connections and locks:** Worker replicas share PostgreSQL. Budget each process's connection pool and watch lock waits on booking and claim transactions.
 - **Telegram delivery:** More sender processes do not increase a bot's allowed send rate. Account for replies, retries, and rate-limit responses.

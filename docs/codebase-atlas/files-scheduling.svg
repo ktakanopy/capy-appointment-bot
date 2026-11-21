@@ -154,9 +154,9 @@
       <text x="741" y="712" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/config.py</text>
     </a>
     <text x="741" y="735" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Read and validate environment-backed application configuration.</text>
-    <a href="../../app/config.py#L58">
-      <title>load_settings · app/config.py:58</title>
-      <text x="741" y="760" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">load_settings  /  line 58</text>
+    <a href="../../app/config.py#L66">
+      <title>load_settings · app/config.py:66</title>
+      <text x="741" y="760" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">load_settings  /  line 66</text>
     </a>
     <text x="1273" y="760" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
     <a href="../../app/config.py#L9">

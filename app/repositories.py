@@ -157,9 +157,12 @@ class PostgresRepository:
         with database_session(self.database_url) as session:
             return [booking_from_row(row) for row in session.execute(statement).mappings()]
 
-    def booking(self, booking_id: str) -> Booking | None:
+    def booking(self, booking_id: str, *, business_id: str | None = None) -> Booking | None:
+        statement = booking_query().where(BookingRow.id == booking_id)
+        if business_id is not None:
+            statement = statement.where(BookingRow.business_id == business_id)
         with database_session(self.database_url) as session:
-            row = session.execute(booking_query().where(BookingRow.id == booking_id)).mappings().first()
+            row = session.execute(statement).mappings().first()
             return booking_from_row(row) if row else None
 
     def list_owner_bookings(self, business_id: str, start: datetime, end: datetime) -> list[Booking]:

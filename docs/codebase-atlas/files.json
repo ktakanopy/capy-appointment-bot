@@ -6,20 +6,20 @@
     "files":[
       ["app/main.py","Serve FastAPI health probes and authenticate and persist Telegram updates.",["telegram_webhook","lifespan","health"],[
         ["HealthDependencies","Bundles settings and the Redis client for health checks."],["_SuppressHealthAccess","Filters routine health requests from access logs.","filter"]]],
-      ["app/telegram_service.py","Connect worker roles to RabbitMQ and coordinate a claimed turn.",["main","run_broker_worker","process_turn"],[]],
-      ["app/telegram_worker.py","Prepare one message, resolve account context and invoke the graph for scheduling input.",["TelegramWorker.handle_message","TelegramWorker._run_turn"],[
+      ["app/telegram_service.py","Start the worker or configure the webhook.",["main","register"],[]],
+      ["app/telegram_worker.py","Consume incoming notifications, process chat turns and save replies.",["run_worker","process_turn","TelegramWorker.handle_message"],[
         ["TelegramWorker","Handles commands, contacts, text and voice for a turn.","handle_message"]]],
+      ["app/telegram_sender.py","Send reserved replies and record delivery outcomes.",["deliver_claimed"],[]],
+      ["app/agenda_api.py","Expose the studio catalog, available slots and bookings to an authorized caller.",["catalog","slots","create","reschedule","cancel"],[]],
       ["app/channels/telegram_turns.py","Lease the oldest eligible chat update and commit the resulting state pointer and reply.",["TelegramTurns.claim_chat","TelegramTurns.finish"],[
         ["TelegramTurns","Owns the chat lease and the turn lifecycle.","claim_chat"],["TurnClaim","Binds an attempt to proof of current ownership.","assert_owned"],["ClaimLost","Signals that an attempt can no longer write."]]],
       ["app/channels/telegram_intake.py","Identify supported private messages and save incoming updates idempotently.",["save_update","private_message"],[]],
-      ["app/channels/telegram_delivery.py","Enforce outgoing ordering, budgets and dispatch leases and classify send outcomes.",["deliver_claimed","TelegramOutbox.claim_by_id","send_reply"],[
-        ["TelegramOutbox","Reserves and settles outgoing jobs.","claim_by_id"]]],
-      ["app/channels/telegram_publications.py","Journal wake-ups and relay or backfill pending publications from PostgreSQL.",["schedule_publication","publish_due","backfill_publications"],[]],
-      ["app/channels/telegram_broker.py","Partition incoming wakes by chat, publish ID-only messages and consume them with acknowledgements.",["relay_publications","consume_wakeups","publish_wakeup"],[]],
+      ["app/channels/telegram_delivery.py","Reserve and settle replies in chat order, respecting retry delays.",["TelegramOutbox.claim_next","TelegramOutbox.finish"],[
+        ["TelegramOutbox","Reserves and settles outgoing jobs.","claim_next"]]],
       ["app/channels/telegram_repository.py","Link a verified Telegram sender to a business customer and save sender-owned contact details.",["TelegramRepository.ensure_customer_for_sender"],[
         ["TelegramRepository","Owns Telegram-specific identity and contact queries.","ensure_customer_for_sender"]]],
-      ["app/channels/bots.py","Map a webhook route to a business bot and manage bot registration.",["BotRegistry.by_route","BotRegistry.register"],[
-        ["BotRegistry","Looks up and writes bot registrations.","by_route"],["TelegramBot","Checks webhook credentials and builds the API client.","accepts_webhook"]]],
+      ["app/channels/bots.py","Resolve the configured bot and its credentials.",["configured_bot","TelegramBot.accepts_webhook"],[
+        ["TelegramBot","Checks webhook credentials and builds the API client.","accepts_webhook"]]],
       ["app/channels/telegram.py","Wrap Telegram Bot API calls for registration, sending and bounded audio downloads.",["TelegramBotApi.call"],[
         ["TelegramBotApi","Sends requests and parses Telegram responses.","call"],["TelegramApiError","Reports a typed API rejection or transport failure.","is_permanent_rejection"]]],
       ["app/channels/audio_chunks.py","Decode bounded audio with FFmpeg and emit overlapping WAV chunks for transcription.",["AudioChunker.chunks"],[
@@ -117,24 +117,19 @@
         ["HealthResponse","Describes API and dependency readiness."],
         ["DomainError","Carries a handled business rule violation."]
       ]],
-      ["app/db_models.py","Map business, scheduling and Telegram tables to SQLAlchemy models.",["Base","BookingRow","TelegramUpdate","TelegramConversation","TelegramOutboxRow","TelegramPublication"],[
+      ["app/db_models.py","Map business, scheduling and Telegram tables to SQLAlchemy models.",["Base","BookingRow","TelegramUpdate","TelegramConversation","TelegramOutboxRow"],[
         ["Base","SQLAlchemy declarative metadata root."],
         ["BusinessRow","Tenant data and booking policy."],
         ["ProfessionalRow","Bookable massage therapist in the massagistas table."],
         ["ServiceRow","Service type, duration, price and generated name."],
         ["WeeklyAvailabilityRule","Recurring working-hours interval."],
         ["BlockedPeriod","Staff calendar hold."],
-        ["CustomerRow","Business-owned customer record."],
+        ["CustomerRow","Business-owned customer record with optional Telegram sender identity."],
         ["BookingRow","Appointment and the staff interval it occupies."],
         ["IdempotencyRecord","Request fingerprint and prior write outcome."],
-        ["TelegramIdentity","Maps a bot sender to a business customer."],
         ["TelegramUpdate","Durable receipt and pending inbound payload."],
-        ["TelegramBotRow","Registered bot, business and credential references."],
         ["TelegramConversation","Chat lease, update order and checkpoint pointer."],
-        ["TelegramOutboxRow","Pending or settled Telegram send."],
-        ["TelegramBotDelivery","Bot-wide send timing and cooldown."],
-        ["TelegramChatDelivery","Per-chat send timing and cooldown."],
-        ["TelegramPublication","Durable metadata for chat or sender wake-ups."]
+        ["TelegramOutboxRow","Pending or settled Telegram send."]
       ]],
       ["alembic/env.py","Run Alembic against the application's SQLAlchemy metadata.",["run_migrations_online","run_migrations_offline"],[]],
       ["alembic/versions/0001_general_scheduling.py","Establish the original general scheduling schema.",["upgrade"],[]],
@@ -143,7 +138,9 @@
       ["alembic/versions/0004_remove_audit_events.py","Remove the audit events table.",["upgrade"],[]],
       ["alembic/versions/0005_telegram_jobs.py","Add hosted Telegram turn and delivery infrastructure.",["upgrade"],[]],
       ["alembic/versions/0006_telegram_publications.py","Add durable publication work for the RabbitMQ relay.",["upgrade"],[]],
-      ["alembic/versions/0007_massage_studio.py","Reshape a fresh database for the massage studio catalog and reply-only Telegram delivery.",["upgrade"],[]]
+      ["alembic/versions/0007_massage_studio.py","Reshape a fresh database for the massage studio catalog and reply-only Telegram delivery.",["upgrade"],[]],
+      ["alembic/versions/0008_telegram_customers.py","Move Telegram identities onto customers and remove the legacy polling cursor and reply fields.",["upgrade"],[]],
+      ["alembic/versions/0009_telegram_postgres_queue.py","Preserve pending Telegram work and remove the former broker tables.",["upgrade"],[]]
     ]
   },
   {
@@ -190,7 +187,8 @@
       ["tests/integration/test_migration_preservation.py","Check how the migration handles populated legacy data.",["test_populated_legacy_database_is_preserved"],[]],
       ["tests/integration/test_postgres_booking_lifecycle.py","Check booking writes, idempotency, conflicts, and the full transaction lifecycle.",["test_concurrent_same_key_replays_and_overlapping_creates_only_commit_once"],[]],
       ["tests/integration/test_redis_conversation.py","Check Redis restart recovery, expiry, and conversation isolation.",["test_checkpoint_restart_expiry_and_isolation"],[]],
-      ["tests/integration/test_telegram_broker.py","Check the RabbitMQ round trip, chat order, and duplicate or interrupted delivery.",["test_broker_round_trip_orders_chats_and_deduplicates_sends"],[]],
+      ["tests/integration/test_telegram_queue.py","Check the real webhook and worker using PostgreSQL and a stub Telegram response.",["test_worker_delivers_a_saved_reply_without_a_broker"],[]],
+      ["tests/integration/test_agenda_api.py","Check the authenticated agenda and booking lifecycle.",["test_agenda_authentication_and_booking_lifecycle"],[]],
       ["tests/integration/test_telegram_ownership.py","Check trusted Telegram ownership and tenant boundaries at booking operations.",["test_every_booking_operation_checks_customer_business_and_replay"],[]],
       ["tests/integration/test_telegram_production.py","Check durable intake, claims, checkpoint handoff, rate limits, and recovery.",["test_completed_checkpoint_carries_slot_offer_into_next_attempt"],[]],
       ["tests/integration/test_workflow_booking_journey.py","Follow booking, rescheduling, and cancellation through the real scheduling services.",["test_real_workflow_booking_reschedule_cancel"],[]],

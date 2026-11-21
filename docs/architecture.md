@@ -1,6 +1,6 @@
 # Architecture
 
-Telegram is the customer interface. Separate services receive updates, process conversations and deliver replies. PostgreSQL keeps business records and pending work. RabbitMQ signals that work is ready. Redis holds the conversation state used by the graph.
+Telegram is the customer interface. The API receives updates. One worker reads and processes pending messages, then delivers saved replies. PostgreSQL keeps the work and business records. Redis holds the conversation state used by the graph.
 
 The graph's `understand_input` node waits for a complete transcript so a correction at the end of a recording can affect the next action. The audio chunker splits decoded speech near pauses and enforces size and time limits. The node redacts recognizable sensitive data from text and transcripts, then asks Gemma for a plain-language interpretation and booking facts. Laya receives the interpreted message and the draft context. It proposes an action, which Python checks against required facts, valid references and booking authorization. A new booking uses three turns: search, select and request consent, then approve and create. Selecting alone never writes a booking. The app loads Gemma and Laya through the same constructors used by evaluations. [Runtime](../app/runtime.py#L33) · [Graph flow](graph.md) · [Model contracts](model-contracts.md)
 
@@ -14,7 +14,7 @@ The YAML scenario evaluations run sequential turns inside each conversation and 
 
 ## How the Telegram worker works
 
-Follow one message through the webhook, RabbitMQ, the conversation worker and the sender, with Python excerpts and the numbered sequence diagram. [Telegram worker guide](telegram-worker.md)
+Follow one message through the webhook, the PostgreSQL queue and the Telegram worker. [Telegram worker guide](telegram-worker.md)
 
 ## How to read the code
 
@@ -50,7 +50,7 @@ Follow “Book Shiatsu 60 min tomorrow,” then “1.” Read the arrows from to
 | **C06** | The service returns slots that fit working hours, duration, setup and cleanup buffers, and the business’s notice and booking horizon rules. The slots represent current availability, which may change before the booking is written. | [`AvailabilityService.search()`](../app/scheduling.py#L189) |
 | **C07** | The workflow formats the slots as numbered choices and saves the offered slots in the Redis checkpoint. This lets the following turn resolve a reply such as “1” to the exact time it offered. | [`_slot_message()`](../app/chat_helpers.py#L34) · [Offered slots](../app/graph/steps.py#L715-L729) · [Redis checkpoint setup](../app/runtime.py#L72) |
 | **C08** | The worker saves the offer reply for delivery. | [Finish the turn](../app/channels/telegram_turns.py#L304) |
-| **C09** | The sender delivers the offered times through the originating bot. | [Sender](../app/channels/telegram_delivery.py) |
+| **C09** | The sender delivers the offered times through the originating bot. | [Sender](../app/telegram_sender.py#L15) |
 
 #### Select a time and ask for consent
 
@@ -61,7 +61,7 @@ Follow “Book Shiatsu 60 min tomorrow,” then “1.” Read the arrows from to
 | **C12** | `select` matches the number to the saved offered-slot list. The selected slot ID is carried into create preparation so the next message refers to this exact offer. | [Workflow](../app/graph/workflow.py) · [Selection](../app/graph/steps.py#L733) |
 | **C13** | `_prepare_create` stores the selected slot as pending consent and returns the service, professional, date, time and timezone question. It does not call the booking service. | [`_prepare_create()`](../app/graph/steps.py#L858) · [Question formatter](../app/graph/booking_messages.py#L44) |
 | **C14** | The worker saves the consent question as its reply to this Telegram update. The selected offer remains in checkpoint state for the next turn. | [Finish the turn](../app/channels/telegram_turns.py#L304) |
-| **C15** | The sender delivers the question. The customer can approve or decline before an appointment row exists. | [Outbound sender](../app/channels/telegram_delivery.py) |
+| **C15** | The sender delivers the question. The customer can approve or decline before an appointment row exists. | [Outbound sender](../app/telegram_sender.py#L15) |
 
 #### Approve and create the booking
 
@@ -78,7 +78,7 @@ Follow “Book Shiatsu 60 min tomorrow,” then “1.” Read the arrows from to
 | **C24** | The service returns the saved booking after the transaction exits. This is the persisted result the workflow will report. | [Read and return booking](../app/booking.py#L149) |
 | **C25** | The formatter resolves names from the business catalog and converts the saved start time to the business timezone. The success message therefore reports the data the database stored. | [`booking_created_reply()`](../app/graph/booking_messages.py#L72) · [`booking_details()`](../app/graph/booking_messages.py#L14) |
 | **C26** | The worker saves the success reply after the create transaction commits. | [Finish the turn](../app/channels/telegram_turns.py#L304) |
-| **C27** | The sender delivers the saved booking details to the customer. | [Outbound sender](../app/channels/telegram_delivery.py) |
+| **C27** | The sender delivers the saved booking details to the customer. | [Outbound sender](../app/telegram_sender.py#L15) |
 
 ### Confirm, cancel or reschedule
 

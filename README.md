@@ -25,7 +25,8 @@ The worker guide shows which debug events appear as CAPY books the chosen time. 
 ## Try the Telegram voice demo
 
 Create a private `.env` from [`.env.example`](.env.example). Set `TELEGRAM_BOT_TOKEN` for
-a dedicated test bot and `TELEGRAM_WEBHOOK_SECRET` to a random value. You can generate
+a dedicated test bot, set `TELEGRAM_BOT_ID` to the numeric prefix of that token,
+and set `TELEGRAM_WEBHOOK_SECRET` to a random value. You can generate
 the secret with `openssl rand -hex 32`.
 
 ### Run the local models on Apple Silicon
@@ -47,7 +48,7 @@ Check `http://localhost:8081/health`. [Model setup options](docs/model-contracts
 
 ### Start the Telegram demo
 
-Start the web API, RabbitMQ, relay, conversation worker, and sender in a second terminal.
+Start the web API and Telegram worker in a second terminal.
 
 ```bash
 docker compose -p capy-massage-studio --profile telegram up -d --build --wait
@@ -59,19 +60,14 @@ connects the worker to the local model server. Check
 `http://127.0.0.1:8000`. Telegram will send incoming messages to that HTTPS address.
 
 Replace the example HTTPS address below with your own, then register the test bot.
-Use the same route when retrying registration. Replace `demo-studio` if you set a
-different `DEMO_BUSINESS_ID`.
+Set `TELEGRAM_WEBHOOK_ROUTE` in `.env` if you want a path other than `/telegram/webhook`.
 
 ```bash
 docker compose -p capy-massage-studio run --build --rm telegram-register \
-  --business demo-studio \
-  --route demo_telegram_webhook \
-  --webhook-secret-env TELEGRAM_WEBHOOK_SECRET \
   --webhook-base-url https://bot.example.com
 ```
 
-The setup command registers the bot in CAPY and tells Telegram where to send its
-updates. Pending Telegram updates are preserved. If the public address of your tunnel
+The setup command tells Telegram where to send its updates. Pending Telegram updates are preserved. If the public address of your tunnel
 changes, run registration again with the new address.
 
 ### Make a test booking
@@ -115,9 +111,16 @@ Open `http://localhost:3000` and make a test booking to generate a trace. Langfu
 
 ## Flow and guarantees
 
-The Telegram webhook saves each update. RabbitMQ signals the worker, which uses Gemma, Laya and the scheduling services. The sender delivers the saved reply. Redis stores the conversation state and PostgreSQL stores the calendar and Telegram work.
+The Telegram webhook saves each update in PostgreSQL. One worker reads pending messages, uses Gemma, Laya and the scheduling services, then sends saved replies. Redis holds conversation checkpoints. The worker can resume pending work after a restart.
 
 Availability results are references, not reservations. Selecting a time asks for approval and creates no booking. A later explicit approval allows the transaction to revalidate policy and save the booking. PostgreSQL rejects overlapping active bookings, and idempotency protects retries. Redis holds a bounded, temporary conversation draft, offered slots, pending consent and history. PostgreSQL keeps update receipts and saved replies across restarts.
+
+## Private scheduling API
+
+Set an owner-only `AGENDA_API_TOKEN` of at least 32 characters to enable
+`/agenda`. Use it as a bearer token. The API exposes the existing catalog,
+availability, and booking logic. For routes and examples, see the
+[scheduling API guide](docs/agenda-api.md).
 
 ## Evaluate with and without Laya
 
@@ -146,7 +149,7 @@ docker compose -p capy-simplification-test -f docker-compose.test.yml run --buil
 docker compose -p capy-simplification-test -f docker-compose.test.yml down
 ```
 
-For host tests, set `TEST_DATABASE_URL` and `TEST_AMQP_URL` to a disposable PostgreSQL database and RabbitMQ virtual host ending in `_test`, and set `TEST_REDIS_URL`. Run `uv run --extra dev pytest -q`. CI requires all three services. ffmpeg is required for audio tests.
+For host tests, set `TEST_DATABASE_URL` to a disposable PostgreSQL database ending in `_test` and set `TEST_REDIS_URL` to a disposable Redis database. Run `uv run --extra dev pytest -q`. CI requires both services. ffmpeg is required for audio tests.
 
 ## Migration and current limits
 

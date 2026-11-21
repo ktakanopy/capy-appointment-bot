@@ -27,8 +27,8 @@
       <rect x="508.6666666666667" y="165" width="412.6666666666667" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="520.6666666666667" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Run the CI checks</text>
       <text x="520.6666666666667" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">verify.yml</text>
-      <text x="520.6666666666667" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Start PostgreSQL, Redis, and RabbitMQ. Run pytest, the</text>
-      <text x="520.6666666666667" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">offline eval corpus, and Compose checks.</text>
+      <text x="520.6666666666667" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Start PostgreSQL and Redis. Run pytest, offline</text>
+      <text x="520.6666666666667" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">evaluations and Compose checks.</text>
     </a>
   </g>
   <rect x="55" y="328" width="191" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
@@ -59,8 +59,8 @@
       <rect x="961.3333333333334" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Integration tests</text>
       <text x="973.3333333333334" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">conftest.py:18</text>
-      <text x="973.3333333333334" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Apply migrations and use disposable services for real</text>
-      <text x="973.3333333333334" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">scheduling, state, and broker checks.</text>
+      <text x="973.3333333333334" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Apply migrations and exercise scheduling, state, and</text>
+      <text x="973.3333333333334" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">delivery against disposable services.</text>
     </a>
   </g>
   <rect x="55" y="525" width="215" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />

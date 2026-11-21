@@ -1,4 +1,4 @@
-"""Exercise the multi-bot boundaries with disposable PostgreSQL and Redis."""
+"""Exercise Telegram turn and send recovery with PostgreSQL and Redis."""
 
 import logging
 import os
@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.booking import BookingService
-from app.channels.bots import BotRegistry, TelegramBot
+from app.channels.bots import TelegramBot
 from app.channels.telegram import TelegramBotApi
 from app.channels.telegram_delivery import TelegramOutbox
 from app.channels.telegram_intake import save_update
@@ -24,8 +24,8 @@ from app.llm.provider import DeterministicInterpreter
 from app.main import app
 from app.models import BookingCreateRequest, BookingRescheduleRequest
 from app.runtime import close_runtime, create_runtime
-from app.telegram_service import process_turn
 from app.telegram_service import register as register_bot
+from app.telegram_worker import process_turn
 from tests.integration.helpers import connect, next_open_day, offered_slots
 
 
@@ -36,12 +36,7 @@ def update(number, chat=101, **content):
 
 
 def register(url, bot_id=42, *, business="demo-studio"):
-    bot = TelegramBot(bot_id, business, f"TEST_BOT_{bot_id}", f"TEST_SECRET_{bot_id}")
-    BotRegistry(url).register(
-        bot_id, business, bot.token_env, webhook_route=f"private_test_route_{bot_id}",
-        webhook_secret_env=bot.webhook_secret_env,
-    )
-    return bot
+    return TelegramBot(bot_id, business, f"TEST_BOT_{bot_id}")
 
 
 def ready_updates(url):
@@ -49,9 +44,11 @@ def ready_updates(url):
         connection.execute("UPDATE telegram_updates SET ready_at=now()-interval '1 second'")
 
 
-def test_register_configures_webhook_after_saving_route(scheduling_db, monkeypatch):
+def test_register_configures_the_webhook_from_settings(scheduling_db, monkeypatch):
     route = "local_demo_webhook"
     secret = "synthetic-webhook-secret"
+    monkeypatch.setenv("TELEGRAM_BOT_ID", "44")
+    monkeypatch.setenv("TELEGRAM_WEBHOOK_ROUTE", route)
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "44:test-token")
     monkeypatch.setenv("TELEGRAM_WEBHOOK_SECRET", secret)
     settings = load_settings()
@@ -61,19 +58,16 @@ def test_register_configures_webhook_after_saving_route(scheduling_db, monkeypat
         if method == "getMe":
             return {"id": 44}
         assert method == "setWebhook"
-        bot = BotRegistry(settings.database_url).by_route(route)
-        assert bot is not None and bot.bot_id == 44 and bot.accepts_webhook(secret)
         registered_webhooks.append(payload)
         return True
 
     monkeypatch.setattr(TelegramBotApi, "call", call)
     args = Namespace(
-        business="demo-studio", token_env="TELEGRAM_BOT_TOKEN", route=route,
-        webhook_secret_env="TELEGRAM_WEBHOOK_SECRET", webhook_base_url="http://example.test",
+        webhook_base_url="http://example.test",
     )
     with pytest.raises(ValueError, match="HTTPS origin"):
         register_bot(settings, args)
-    assert BotRegistry(settings.database_url).by_route(route) is None
+    assert not registered_webhooks
 
     args.webhook_base_url = "https://example.test/"
     register_bot(settings, args)
@@ -86,37 +80,27 @@ def test_register_configures_webhook_after_saving_route(scheduling_db, monkeypat
     }]
 
 
-def test_webhook_dedupes_per_bot(scheduling_db, monkeypatch):
+def test_webhook_dedupes_and_rejects_invalid_requests(scheduling_db, monkeypatch):
     url = scheduling_db["url"]
-    with connect(url) as connection:
-        connection.execute(
-            "INSERT INTO businesses (id,name,category,timezone) VALUES "
-            "('second-demo-studio','Other Studio','Massage','UTC')"
-        )
-    first = register(url)
-    second = register(url, 43, business="second-demo-studio")
-    for bot in (first, second):
-        monkeypatch.setenv(bot.webhook_secret_env, f"test-webhook-secret-{bot.bot_id}")
+    monkeypatch.setenv("TELEGRAM_BOT_ID", "42")
+    monkeypatch.setenv("TELEGRAM_WEBHOOK_ROUTE", "test-webhook")
+    monkeypatch.setenv("TELEGRAM_WEBHOOK_SECRET", "test-webhook-secret")
+    path = "/telegram/test-webhook"
+    headers = {"X-Telegram-Bot-Api-Secret-Token": "test-webhook-secret"}
     with TestClient(app) as client:
-        for bot in (first, second):
-            path = f"/telegram/private_test_route_{bot.bot_id}"
-            headers = {"X-Telegram-Bot-Api-Secret-Token": f"test-webhook-secret-{bot.bot_id}"}
-            assert client.post(path, json=update(10, text="/start")).status_code == 403
-            assert client.post(path, headers=headers, content=b"x" * (256 * 1024 + 1)).status_code == 413
-            assert client.post(path, headers=headers, content=b"{invalid").status_code == 400
+        assert client.post(path, json=update(10)).status_code == 403
+        assert client.post("/telegram/wrong", headers=headers, json=update(10)).status_code == 403
+        assert client.post(path, headers=headers, content=b"x" * (256 * 1024 + 1)).status_code == 413
+        assert client.post(path, headers=headers, content=b"{invalid").status_code == 400
+        for _ in range(2):
             assert client.post(path, headers=headers, json=update(10, text="/start")).status_code == 204
-            assert client.post(path, headers=headers, json=update(10, text="/start")).status_code == 204
-            assert client.post(path, headers=headers, json={"update_id": 11, "edited_message": {}}).status_code == 204
+        assert client.post(path, headers=headers, json={"update_id": 11, "edited_message": {}}).status_code == 204
     with connect(url) as connection:
         receipts = connection.execute(
-            """SELECT bot_id,business_id,status,payload FROM telegram_updates
-               WHERE bot_id IN (42,43) ORDER BY bot_id,update_id"""
+            """SELECT status,payload FROM telegram_updates WHERE bot_id=42 ORDER BY update_id"""
         ).fetchall()
-    assert [(r["business_id"], r["status"]) for r in receipts] == [
-        ("demo-studio", "received"), ("demo-studio", "delivered"),
-        ("second-demo-studio", "received"), ("second-demo-studio", "delivered"),
-    ]
-    assert receipts[1]["payload"] is receipts[3]["payload"] is None
+    assert [row["status"] for row in receipts] == ["received", "delivered"]
+    assert receipts[1]["payload"] is None
 
 
 def test_claims_isolate_chats_and_reject_stale_booking_and_checkpoint(scheduling_db):
@@ -126,11 +110,11 @@ def test_claims_isolate_chats_and_reject_stale_booking_and_checkpoint(scheduling
                  update(3, chat=102, text="prices")):
         assert save_update(url, bot, item)
     ready_updates(url)
-    turns = TelegramTurns(url)
-    voice = turns.claim_chat(42, 101)
+    turns = TelegramTurns(url, bot)
+    voice = turns.claim_next()
     assert voice.row["update_id"] == 1
     assert turns.claim_chat(42, 101) is None
-    other_chat = turns.claim_chat(42, 102)
+    other_chat = turns.claim_next()
     assert other_chat.row["update_id"] == 3
     assert turns.claim_chat(42, 102) is None
     turns.finish(other_chat, "Prices", "other-checkpoint")
@@ -182,7 +166,7 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
         transcribe=transcribe,
     ))
     caplog.set_level(logging.DEBUG, logger=runtime.logger.name)
-    turns = TelegramTurns(url)
+    turns = TelegramTurns(url, bot)
     chat = time.time_ns() % 1_000_000_000
     try:
         first_message = (
@@ -227,8 +211,8 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
                 process_turn(turns, third, runtime)
         with connect(url) as connection:
             booking = connection.execute(
-                "SELECT count(*) AS total FROM bookings b JOIN telegram_identities i "
-                "ON i.customer_id=b.customer_id WHERE i.bot_id=42 AND i.telegram_user_id=%s",
+                "SELECT count(*) AS total FROM bookings b JOIN customers c "
+                "ON c.id=b.customer_id WHERE c.telegram_bot_id=42 AND c.telegram_user_id=%s",
                 (chat,),
             ).fetchone()
             assert booking["total"] == (0 if outcome == "draft_expired" else 1)
@@ -248,75 +232,39 @@ def test_completed_checkpoint_carries_slot_offer_into_next_attempt(
         close_runtime(runtime)
 
 
-def test_sender_cooldown_is_shared_but_other_bot_can_send(scheduling_db):
+def test_sender_cooldown_and_expired_send_survive_restart(scheduling_db):
     url = scheduling_db["url"]
-    with connect(url) as connection:
-        connection.execute(
-            "INSERT INTO businesses (id,name,category,timezone) VALUES "
-            "('second-demo-studio','Other Studio','Massage','UTC')"
-        )
-    first = register(url)
-    second = register(url, 43, business="second-demo-studio")
-    for bot, number in ((first, 1), (first, 2), (second, 3)):
+    bot = register(url)
+    for number in (1, 2, 3):
         save_update(url, bot, update(number, chat=100 + number, text="/start"))
     ready_updates(url)
-    turns = TelegramTurns(url)
-    for bot, number in ((first, 1), (first, 2), (second, 3)):
-        claim = turns.claim_chat(bot.bot_id, 100 + number)
-        turns.finish(claim, "Hello", None)
+    turns = TelegramTurns(url, bot)
+    for number in (1, 2, 3):
+        turns.finish(turns.claim_chat(bot.bot_id, 100 + number), "Hello", None)
+    sender = TelegramOutbox(url, bot)
+    first = sender.claim_next()
+    assert first["update_id"] == 1
+    assert sender.finish(first, "ready", error="telegram_api_429", retry_after=4000)
+    assert TelegramOutbox(url, bot).claim_next() is None
     with connect(url) as connection:
-        ids = {row["update_id"]: row["id"] for row in connection.execute(
-            "SELECT id, update_id FROM telegram_outbox"
-        ).fetchall()}
-    sender_a, sender_b = TelegramOutbox(url), TelegramOutbox(url)
-    job = sender_a.claim_by_id(ids[1])
-    assert job["bot_id"] == first.bot_id
-    assert sender_a.finish(job, "ready", retry_after=4000, bot_cooldown=4000)
-    other = sender_b.claim_by_id(ids[3])
-    assert other["bot_id"] == second.bot_id
-    assert sender_a.claim_by_id(ids[2]) is None
-    with connect(url) as connection:
-        connection.execute(
-            "UPDATE telegram_outbox SET lease_until=now()-interval '1 second' WHERE id=%s",
-            (other["id"],),
-        )
         remaining = connection.execute(
-            "SELECT extract(epoch FROM available_at-now()) AS seconds FROM telegram_bot_delivery WHERE bot_id=42"
+            "SELECT extract(epoch FROM ready_at-now()) AS seconds FROM telegram_outbox WHERE update_id=1"
         ).fetchone()["seconds"]
+        connection.execute("UPDATE telegram_outbox SET ready_at=now() WHERE update_id=1")
     assert remaining > 3900
-    assert sender_a.recover_expired() == 1
-    assert not sender_b.finish(other, "sent")
-    assert sender_b.claim_by_id(ids[3]) is None
-
-
-def test_bad_bot_credentials_defer_only_its_turn(scheduling_db, monkeypatch):
-    url = scheduling_db["url"]
-    bad, good = register(url), register(url, 43)
-    monkeypatch.setenv(bad.token_env, "999:wrong-bot")
-    monkeypatch.setenv(good.token_env, "43:synthetic")
-    save_update(url, bad, update(1, text="/start"))
-    save_update(url, good, update(2, text="/start"))
-    ready_updates(url)
-    runtime = create_runtime(load_settings())
-    turns = TelegramTurns(url)
-    try:
-        process_turn(turns, turns.claim_chat(42, 101), runtime)
-        process_turn(turns, turns.claim_chat(43, 101), runtime)
-    finally:
-        close_runtime(runtime)
+    second = sender.claim_next()
+    assert second["update_id"] == 2
     with connect(url) as connection:
-        deferred = connection.execute(
-            "SELECT status,last_error FROM telegram_updates WHERE bot_id=42"
-        ).fetchone()
-        job = connection.execute("SELECT bot_id FROM telegram_outbox").fetchone()
-    assert deferred == {"status": "received", "last_error": "bot_credentials"}
-    assert job["bot_id"] == 43
+        connection.execute("UPDATE telegram_outbox SET lease_until=now() WHERE id=%s", (second["id"],))
+    assert sender.recover_expired() == 1
+    assert not sender.finish(second, "sent")
+    assert sender.claim_next()["update_id"] == 3
 
 
 def test_late_update_requests_a_fresh_offer(scheduling_db):
     url = scheduling_db["url"]
     bot = register(url)
-    turns = TelegramTurns(url)
+    turns = TelegramTurns(url, bot)
     save_update(url, bot, update(20, date=2000, text="Newer turn"))
     ready_updates(url)
     turns.finish(turns.claim_chat(42, 101), "Available times", "published")

@@ -12,8 +12,11 @@ New checkpoints contain bounded history and expire with the session TTL. Old che
 
 Logs/traces contain safe event names, IDs and outcomes, not raw messages, audio, provider exception bodies or contact values. Provider failure makes no booking write. An interrupted or otherwise ambiguous turn reports uncertainty rather than claiming rollback.
 
-Hosted webhooks resolve the tenant through a configured bot route and verify the bot's secret header before reading the update. Tokens and webhook secrets come from the deployment environment. The database stores references to them. Receipt and delivery outcomes have bounded retention. [Deployment and cutover](production.md)
+Hosted webhooks resolve the tenant through a configured bot route and verify the bot's secret header before reading the update. Tokens and webhook secrets come from the deployment environment. Receipt and delivery outcomes have bounded retention. [Deployment and cutover](production.md)
 
-## RabbitMQ message data
+## Telegram work and agenda access
 
-The broker receives a bot/chat ID pair or an outgoing record ID. Treat the bot/chat pair as customer-linked metadata. Message and reply bodies, files, contact details and tokens stay out of CAPY's broker envelopes. Configure `TELEGRAM_AMQP_URL` through the deployment secret store. Use a private virtual host, restricted credentials and encrypted transport for hosted connections. The webhook validates the bot and its secret in the API. Consumers read the current bot and work state from PostgreSQL before acting. [Broker envelope](../app/channels/telegram_broker.py#L62)
+The worker reads pending messages and replies directly from PostgreSQL. Restrict
+database access to the application and operators who need it. The private
+scheduling API accepts an owner bearer token. Keep it in the deployment secret
+store and use HTTPS.

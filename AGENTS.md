@@ -37,6 +37,7 @@ docs/
 
 - The massage studio demo uses one professional, a table of service durations, PostgreSQL availability, and Telegram customer ownership.
 - Made Telegram the only customer channel with text/audio and a local owner CLI; historical WhatsApp, SMS, and Streamlit implementations are in Git history.
+- The Telegram webhook and worker use PostgreSQL directly for pending work. The private agenda API reuses the same scheduling and booking services as the worker.
 - Laya is required in the app and bypassable in evaluations. Large bilingual datasets and Gemma/Laya fine-tuning remain follow-up work.
 
 <!-- MANUAL ADDITIONS START -->

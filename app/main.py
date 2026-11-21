@@ -7,14 +7,16 @@ from dataclasses import dataclass
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.concurrency import run_in_threadpool
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from redis import Redis
 
-from app.channels.bots import BotRegistry
+from app.agenda_api import router as agenda_router
+from app.channels.bots import configured_bot
 from app.channels.telegram_intake import save_update
 from app.config import Settings, load_settings
 from app.database import DATABASE_ERRORS, database_is_ready
-from app.models import HealthResponse
+from app.models import DomainError, HealthResponse
 from app.observability import debug_event, get_logger, log_event
 
 WEBHOOK_BODY_LIMIT = 256 * 1024
@@ -52,6 +54,7 @@ async def lifespan(app):
     redis_client = Redis.from_url(
         settings.chat_redis_url, socket_connect_timeout=2, socket_timeout=2
     )
+    app.state.settings = settings
     app.state.health_dependencies = HealthDependencies(settings, redis_client)
     debug_event("api.started")
     try:
@@ -61,6 +64,20 @@ async def lifespan(app):
 
 
 app = FastAPI(title="CAPY scheduling", lifespan=lifespan)
+app.include_router(agenda_router)
+
+
+@app.exception_handler(DomainError)
+async def domain_error(_request: Request, error: DomainError):
+    return JSONResponse(
+        status_code=error.status_code, content={"code": error.code, "detail": error.message}
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def invalid_request(_request: Request, _error: RequestValidationError):
+    return JSONResponse(status_code=422, content={"detail": "Invalid request fields"})
+
 
 
 def get_health_dependencies(request: Request) -> HealthDependencies:
@@ -88,10 +105,13 @@ async def telegram_webhook(
     started = time.monotonic()
     database_url = dependencies.settings.database_url
     try:
-        # Registry lookup performs synchronous database I/O, so keep it off the event loop.
-        bot = await run_in_threadpool(BotRegistry(database_url).by_route, route)
+        bot = configured_bot(dependencies.settings)
         secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-        if bot is None or not bot.accepts_webhook(secret):
+        if (
+            bot is None
+            or route != dependencies.settings.telegram_webhook_route
+            or not bot.accepts_webhook(secret)
+        ):
             debug_event("telegram.webhook.rejected", reason="authentication")
             raise HTTPException(status_code=403, detail="Webhook rejected")
 

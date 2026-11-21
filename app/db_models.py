@@ -81,6 +81,10 @@ class CustomerRow(Base):
     phone: Mapped[str | None] = mapped_column(Text)
     email: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
+    telegram_bot_id: Mapped[int | None] = mapped_column(BigInteger)
+    telegram_user_id: Mapped[int | None] = mapped_column(BigInteger)
+    telegram_username: Mapped[str | None] = mapped_column(Text)
+    telegram_display_name: Mapped[str | None] = mapped_column(Text)
 
 
 class BookingRow(Base):
@@ -112,20 +116,6 @@ class IdempotencyRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
 
 
-class TelegramIdentity(Base):
-    __tablename__ = "telegram_identities"
-
-    business_id: Mapped[str] = mapped_column(Text, primary_key=True)
-    bot_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
-    telegram_user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
-    username: Mapped[str | None] = mapped_column(Text)
-    customer_id: Mapped[str | None] = mapped_column(Text)
-    contact_phone: Mapped[str | None] = mapped_column(Text)
-    display_name: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
-
-
 class TelegramUpdate(Base):
     __tablename__ = "telegram_updates"
 
@@ -136,26 +126,12 @@ class TelegramUpdate(Base):
     telegram_user_id: Mapped[int | None] = mapped_column(BigInteger)
     status: Mapped[str] = mapped_column(Text, server_default=text("'received'"))
     payload: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
-    reply_text: Mapped[str | None] = mapped_column(Text)
-    reply_markup: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
     attempts: Mapped[int] = mapped_column(Integer, server_default=text("0"))
-    next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
     last_error: Mapped[str | None] = mapped_column(Text)
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now() + interval '7 days'"))
     message_date: Mapped[int | None] = mapped_column(BigInteger)
     ready_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
-
-
-class TelegramBotRow(Base):
-    __tablename__ = "telegram_bots"
-
-    bot_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
-    business_id: Mapped[str] = mapped_column(Text)
-    token_env: Mapped[str] = mapped_column(Text)
-    webhook_route: Mapped[str | None] = mapped_column(Text)
-    webhook_secret_env: Mapped[str | None] = mapped_column(Text)
-    enabled: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
 
 
 class TelegramConversation(Base):
@@ -190,29 +166,3 @@ class TelegramOutboxRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_error: Mapped[str | None] = mapped_column(Text)
-
-
-class TelegramBotDelivery(Base):
-    __tablename__ = "telegram_bot_delivery"
-
-    bot_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
-    available_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"))
-
-
-class TelegramChatDelivery(Base):
-    __tablename__ = "telegram_chat_delivery"
-
-    bot_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
-    chat_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
-    available_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-
-
-class TelegramPublication(Base):
-    __tablename__ = "telegram_publications"
-
-    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
-    bot_id: Mapped[int | None] = mapped_column(BigInteger)
-    chat_id: Mapped[int | None] = mapped_column(BigInteger)
-    outgoing_id: Mapped[int | None] = mapped_column(BigInteger)
-    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    claimed_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

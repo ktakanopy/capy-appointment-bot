@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -19,11 +19,19 @@ class Settings(BaseSettings):
     decision_provider: str = "laya"
     gemma_base_url: str = "http://localhost:8081"
     laya_base_url: str = "http://localhost:8081"
+    telegram_bot_id: int | None = Field(default=None, gt=0, lt=2**63)
+    telegram_webhook_route: str = Field(default="webhook", pattern=r"^[A-Za-z0-9_-]{1,128}$")
+    agenda_api_token: SecretStr | None = None
     telegram_audio_max_bytes: int = Field(default=20_000_000, gt=0)
     telegram_audio_max_decoded_bytes: int = Field(default=512 * 1024 * 1024, ge=960_000)
     telegram_audio_decode_timeout_seconds: float = 120
     telegram_audio_chunk_timeout_seconds: float = 60
     telegram_audio_processing_timeout_seconds: float = 900
+
+    @field_validator("telegram_bot_id", mode="before")
+    @classmethod
+    def blank_bot_id(cls, value):
+        return None if value == "" else value
 
     @field_validator("understanding_provider", "decision_provider")
     @classmethod

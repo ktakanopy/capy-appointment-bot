@@ -11,7 +11,7 @@ Start with the [repository README](../README.md) to run the offline booking exam
 | [Source map](source-map.md) | Files to open for each part of the application |
 | [Conversation graph](graph.md) | How one text or audio turn updates the draft and reaches a booking action |
 | [Model contracts](model-contracts.md) | What Gemma interprets, what Laya decides, and what Python checks |
-| [Telegram worker](telegram-worker.md) | Webhook intake, RabbitMQ notifications, chat leases, checkpoint recovery, and reply delivery |
+| [Telegram worker](telegram-worker.md) | Webhook intake, PostgreSQL work, chat claims and reply delivery |
 | [Database](database.md) | Tables, relationships, ORM queries, and transaction boundaries |
 | [Ownership and data handling](security.md) | Trusted identity, contact data, redaction, and retention |
 | [Idempotency and recovery](idempotency.md) | Retry keys, duplicate updates, and uncertain outcomes |

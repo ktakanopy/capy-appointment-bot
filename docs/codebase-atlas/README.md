@@ -9,7 +9,7 @@ Drag the canvas to pan, scroll to zoom, or click the minimap to jump. Selecting 
 | Flow | What to follow |
 | --- | --- |
 | [Booking walkthrough](walkthrough.svg) | One conversation from incoming Telegram updates through the committed appointment and final reply |
-| [Telegram runtime](runtime.svg) | Webhook intake, RabbitMQ wake-ups, chat ownership, processing and reply delivery |
+| [Telegram runtime](runtime.svg) | Webhook intake, PostgreSQL queue, chat ownership, processing and reply delivery |
 | [Conversation turn](conversation.svg) | LangGraph entry, model interpretation and routing, scheduling actions, and state |
 | [Create a booking](booking.svg) | Search, select, then commit after a separate approval |
 | [Failure paths](failure-paths.svg) | Intake rejection, expired state, retries, interrupted turns, model errors, consent, slot conflicts, and delivery outcomes |

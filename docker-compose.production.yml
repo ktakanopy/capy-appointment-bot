@@ -1,4 +1,4 @@
-# Deprecated. Retained as a reference for existing hosted deployments.
+# Hosted deployment with external PostgreSQL and Redis.
 # Use docker-compose.yml for the local demo described in README.md.
 # Supply external PostgreSQL and Redis through CAPY_ENV_FILE.
 x-capy: &capy
@@ -17,6 +17,7 @@ services:
     env_file:
       - ${CAPY_ENV_FILE:?Set CAPY_ENV_FILE to a private runtime environment file}
       - ${CAPY_BOT_ENV_FILE:?Set CAPY_BOT_ENV_FILE to the bot token environment file}
+      - ${CAPY_WEBHOOK_ENV_FILE:?Set CAPY_WEBHOOK_ENV_FILE to the webhook secret environment file}
     entrypoint: ["python", "-m", "app.telegram_service", "register"]
 
   api:
@@ -35,21 +36,9 @@ services:
 
   worker:
     <<: *capy
-    env_file: &with-bot-tokens
+    env_file:
       - ${CAPY_ENV_FILE:?Set CAPY_ENV_FILE to a private runtime environment file}
       - ${CAPY_BOT_ENV_FILE:?Set CAPY_BOT_ENV_FILE to the bot token environment file}
     restart: unless-stopped
     command: python -m app.telegram_service process
     stop_grace_period: 16m
-
-  sender:
-    <<: *capy
-    env_file: *with-bot-tokens
-    restart: unless-stopped
-    command: python -m app.telegram_service send
-    stop_grace_period: 45s
-
-  relay:
-    <<: *capy
-    restart: unless-stopped
-    command: python -m app.telegram_service relay

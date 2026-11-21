@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1170" height="320" viewBox="0 0 1170 320" role="img" aria-labelledby="title desc">
+  <title id="title">Telegram foreign key relationships</title>
+  <desc id="desc">The enforced Telegram foreign keys and their referenced database keys.</desc>
+  <style>
+text {font-family:Inter,Arial,sans-serif; fill:#19362d}
+.title {font-size:28px;font-weight:700}
+.subtitle {font-size:15px;fill:#536d60}
+.name {font:700 16px ui-monospace,Menlo,monospace;fill:#173f32}
+.field {font:14px ui-monospace,Menlo,monospace;fill:#314a40}
+.key {font-size:13px;font-weight:700;fill:#5e6e91}
+</style>
+  <rect width="1170" height="320" rx="20" fill="#fbfaf5"/>
+  <text x="30" y="44" class="title">Telegram table relationships</text>
+  <text x="30" y="70" class="subtitle">Arrows point from each foreign key to its referenced key.</text>
+  <rect x="30" y="92" width="1110" height="48" rx="10" fill="#e8f2e8"/>
+  <text x="48" y="122" class="key">FOREIGN KEY</text>
+  <text x="650" y="122" class="key">REFERENCED KEY</text>
+  <rect x="30" y="140" width="1110" height="49" fill="#fffefa"/>
+  <text x="48" y="170" class="field">telegram_updates.business_id</text>
+  <text x="650" y="170" class="field">businesses.id</text>
+  <path d="M590 165 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
+  <rect x="30" y="189" width="1110" height="49" fill="#f5f8f3"/>
+  <text x="48" y="219" class="field">telegram_conversations.business_id</text>
+  <text x="650" y="219" class="field">businesses.id</text>
+  <path d="M590 214 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
+  <rect x="30" y="238" width="1110" height="49" fill="#fffefa"/>
+  <text x="48" y="268" class="field">telegram_outbox.business_id</text>
+  <text x="650" y="268" class="field">businesses.id</text>
+  <path d="M590 263 h33 m-7 -6 7 6 -7 6" fill="none" stroke="#31785a" stroke-width="2"/>
+  <text x="30" y="307" class="subtitle">Application queries link incoming and outgoing work by bot and chat.</text>
+</svg>

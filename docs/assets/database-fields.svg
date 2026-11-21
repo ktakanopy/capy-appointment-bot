@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1170" height="750" viewBox="0 0 1170 750" role="img" aria-labelledby="title desc">
+  <title id="title">Studio database fields</title>
+  <desc id="desc">Business tables and their columns. PK marks a primary key and FK marks a foreign key.</desc>
+  <style>
+text { font-family: Inter, Arial, sans-serif; fill: #19362d; }
+.title { font-size: 28px; font-weight: 700; }
+.subtitle { font-size: 15px; fill: #536d60; }
+.name { font: 700 17px ui-monospace, Menlo, monospace; fill: #173f32; }
+.field { font: 14px ui-monospace, Menlo, monospace; fill: #314a40; }
+.label { font-size: 14px; fill: #536d60; }
+.key { font-size: 13px; font-weight: 700; fill: #5e6e91; }
+</style>
+  <rect width="1170" height="750" rx="20" fill="#fbfaf5"/>
+  <text x="30" y="44" class="title">Studio tables and fields</text>
+  <text x="30" y="70" class="subtitle">PK  primary key    ·    FK  foreign key    ·    Multiple field names on a line are separate columns</text>
+  <rect x="30" y="100" width="350" height="163" rx="12" fill="#fffefa" stroke="#aec3b2"/>
+  <rect x="30" y="100" width="350" height="42" rx="12" fill="#e8f2e8"/>
+  <text x="46" y="127" class="name">businesses</text>
+  <text x="46" y="162" class="field">PK  id</text>
+  <text x="46" y="184" class="field">name · category · timezone</text>
+  <text x="46" y="206" class="field">minimum_notice_minutes</text>
+  <text x="46" y="228" class="field">booking_horizon_days</text>
+  <text x="46" y="250" class="field">created_at</text>
+  <rect x="410" y="100" width="350" height="119" rx="12" fill="#fffefa" stroke="#aec3b2"/>
+  <rect x="410" y="100" width="350" height="42" rx="12" fill="#e8f2e8"/>
+  <text x="426" y="127" class="name">massagistas</text>
+  <text x="426" y="162" class="field">PK  id</text>
+  <text x="426" y="184" class="field">FK  business_id</text>
+  <text x="426" y="206" class="field">name · active</text>
+  <rect x="790" y="100" width="350" height="207" rx="12" fill="#fffefa" stroke="#aec3b2"/>
+  <rect x="790" y="100" width="350" height="42" rx="12" fill="#e8f2e8"/>
+  <text x="806" y="127" class="name">services</text>
+  <text x="806" y="162" class="field">PK  id</text>
+  <text x="806" y="184" class="field">FK  business_id</text>
+  <text x="806" y="206" class="field">service_type · name (generated)</text>
+  <text x="806" y="228" class="field">description · duration_minutes</text>
+  <text x="806" y="250" class="field">buffer_before_minutes</text>
+  <text x="806" y="272" class="field">buffer_after_minutes</text>
+  <text x="806" y="294" class="field">price_minor · currency · active</text>
+  <rect x="30" y="290" width="350" height="141" rx="12" fill="#fffefa" stroke="#aec3b2"/>
+  <rect x="30" y="290" width="350" height="42" rx="12" fill="#e8f2e8"/>
+  <text x="46" y="317" class="name">weekly_availability_rules</text>
+  <text x="46" y="352" class="field">PK  id</text>
+  <text x="46" y="374" class="field">FK  business_id</text>
+  <text x="46" y="396" class="field">FK  professional_id</text>
+  <text x="46" y="418" class="field">weekday · opens_at · closes_at</text>
+  <rect x="410" y="250" width="350" height="141" rx="12" fill="#fffefa" stroke="#aec3b2"/>
+  <rect x="410" y="250" width="350" height="42" rx="12" fill="#e8f2e8"/>
+  <text x="426" y="277" class="name">blocked_periods</text>
+  <text x="426" y="312" class="field">PK  id</text>
+  <text x="426" y="334" class="field">FK  business_id</text>
+  <text x="426" y="356" class="field">FK  professional_id</text>
+  <text x="426" y="378" class="field">starts_at · ends_at · reason</text>
+  <rect x="790" y="335" width="350" height="207" rx="12" fill="#fffefa" stroke="#aec3b2"/>
+  <rect x="790" y="335" width="350" height="42" rx="12" fill="#e8f2e8"/>
+  <text x="806" y="362" class="name">customers</text>
+  <text x="806" y="397" class="field">PK  id</text>
+  <text x="806" y="419" class="field">FK  business_id</text>
+  <text x="806" y="441" class="field">full_name · phone · email</text>
+  <text x="806" y="463" class="field">created_at</text>
+  <text x="806" y="485" class="field">telegram_bot_id · telegram_user_id</text>
+  <text x="806" y="507" class="field">telegram_username</text>
+  <text x="806" y="529" class="field">telegram_display_name</text>
+  <rect x="30" y="500" width="350" height="185" rx="12" fill="#fffefa" stroke="#aec3b2"/>
+  <rect x="30" y="500" width="350" height="42" rx="12" fill="#e8f2e8"/>
+  <text x="46" y="527" class="name">bookings</text>
+  <text x="46" y="562" class="field">PK  id</text>
+  <text x="46" y="584" class="field">FK  business_id · service_id</text>
+  <text x="46" y="606" class="field">FK  professional_id · customer_id</text>
+  <text x="46" y="628" class="field">starts_at · ends_at</text>
+  <text x="46" y="650" class="field">occupied_from · occupied_until</text>
+  <text x="46" y="672" class="field">status · created_at · updated_at</text>
+  <rect x="410" y="440" width="350" height="141" rx="12" fill="#fffefa" stroke="#aec3b2"/>
+  <rect x="410" y="440" width="350" height="42" rx="12" fill="#e8f2e8"/>
+  <text x="426" y="467" class="name">idempotency_records</text>
+  <text x="426" y="502" class="field">PK/FK business_id</text>
+  <text x="426" y="524" class="field">PK  operation · idempotency_key</text>
+  <text x="426" y="546" class="field">request_hash · resource_id</text>
+  <text x="426" y="568" class="field">result_code · created_at</text>
+</svg>
