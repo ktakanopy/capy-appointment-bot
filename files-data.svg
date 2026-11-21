@@ -1,286 +1,255 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1490" width="1430" height="1490" role="img" aria-label="Source reference · Domain contracts and PostgreSQL rows">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1636" width="1430" height="1636" role="img" aria-label="Source reference · Domain contracts and PostgreSQL rows">
   <title>Source reference · Domain contracts and PostgreSQL rows</title>
   <desc>Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.</desc>
-  <rect x="0" y="0" width="1430" height="1490" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <rect x="0" y="0" width="1430" height="1636" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Domain contracts and PostgreSQL rows</text>
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.</text>
   <g id="app-models.py" data-source="app/models.py">
     <rect x="40" y="123" width="665" height="768" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py">
       <title>app/models.py</title>
       <text x="56" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/models.py</text>
     </a>
     <text x="56" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Define domain data, service input and output contracts and expected errors.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L118">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L118">
       <title>AvailabilitySearchRequest · app/models.py:118</title>
       <text x="56" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">AvailabilitySearchRequest  /  line 118</text>
     </a>
     <text x="588" y="198" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L140">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L140">
       <title>BookingCreateRequest · app/models.py:140</title>
       <text x="56" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingCreateRequest  /  line 140</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L187">
-      <title>DomainError · app/models.py:187</title>
-      <text x="56" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">DomainError  /  line 187</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L188">
+      <title>DomainError · app/models.py:188</title>
+      <text x="56" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">DomainError  /  line 188</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L10">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L10">
       <title>Contract · app/models.py:10</title>
       <text x="56" y="258" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Contract</text>
     </a>
     <text x="422" y="258" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Base class for validated domain</text>
     <text x="422" y="273" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contracts.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L14">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L14">
       <title>BookingStatus · app/models.py:14</title>
       <text x="56" y="298" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingStatus</text>
     </a>
     <text x="422" y="298" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Enumerates appointment lifecycle</text>
     <text x="422" y="313" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">states.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L20">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L20">
       <title>Business · app/models.py:20</title>
       <text x="56" y="338" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Business</text>
     </a>
     <text x="422" y="338" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Tenant identity, timezone and booking</text>
     <text x="422" y="353" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">policies.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L31">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L31">
       <title>Professional · app/models.py:31</title>
       <text x="56" y="378" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Professional</text>
     </a>
     <text x="422" y="378" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bookable staff member.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L38">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L38">
       <title>Service · app/models.py:38</title>
       <text x="56" y="398" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Service</text>
     </a>
     <text x="422" y="398" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Offered work, duration, buffers and</text>
     <text x="422" y="413" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">price.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L51">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L51">
       <title>WeeklyAvailabilityRule · app/models.py:51</title>
       <text x="56" y="438" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">WeeklyAvailabilityRule</text>
     </a>
     <text x="422" y="438" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Recurring staff opening hours.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L60">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L60">
       <title>BlockedPeriod · app/models.py:60</title>
       <text x="56" y="458" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BlockedPeriod</text>
     </a>
     <text x="422" y="458" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Calendar interval that cannot be</text>
     <text x="422" y="473" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">offered.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L68">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L68">
       <title>Customer · app/models.py:68</title>
       <text x="56" y="498" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Customer</text>
     </a>
     <text x="422" y="498" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Business-owned customer identity and</text>
     <text x="422" y="513" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contact data.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L76">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L76">
       <title>Booking · app/models.py:76</title>
       <text x="56" y="538" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Booking</text>
     </a>
     <text x="422" y="538" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">An appointment and its current status.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L91">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L91">
       <title>AvailabilitySlot · app/models.py:91</title>
       <text x="56" y="558" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AvailabilitySlot</text>
     </a>
     <text x="422" y="558" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A proposed start, end, service and</text>
     <text x="422" y="573" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">professional.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L112">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L112">
       <title>CatalogResponse · app/models.py:112</title>
       <text x="56" y="598" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">CatalogResponse</text>
     </a>
     <text x="422" y="598" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Business with its services and</text>
     <text x="422" y="613" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">professionals.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L118">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L118">
       <title>AvailabilitySearchRequest · app/models.py:118</title>
       <text x="56" y="638" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AvailabilitySearchRequest</text>
     </a>
     <text x="422" y="638" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Filters and time range for a slot</text>
     <text x="422" y="653" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">search.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L140">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L140">
       <title>BookingCreateRequest · app/models.py:140</title>
       <text x="56" y="678" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingCreateRequest</text>
     </a>
     <text x="422" y="678" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Business, customer, service and</text>
     <text x="422" y="693" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">requested start.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L156">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L156">
       <title>BookingRescheduleRequest · app/models.py:156</title>
       <text x="56" y="718" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingRescheduleRequest</text>
     </a>
     <text x="422" y="718" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">New time and scheduling context for a</text>
     <text x="422" y="733" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L171">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L171">
       <title>BookingSummary · app/models.py:171</title>
       <text x="56" y="758" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingSummary</text>
     </a>
     <text x="422" y="758" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Saved appointment and write outcome.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L176">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L176">
       <title>OwnerBookingsResponse · app/models.py:176</title>
       <text x="56" y="778" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">OwnerBookingsResponse</text>
     </a>
     <text x="422" y="778" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Agenda response for a business and</text>
     <text x="422" y="793" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">date.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L181">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L181">
       <title>HealthResponse · app/models.py:181</title>
       <text x="56" y="818" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">HealthResponse</text>
     </a>
     <text x="422" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Describes API and dependency readiness.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/models.py#L187">
-      <title>DomainError · app/models.py:187</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/models.py#L188">
+      <title>DomainError · app/models.py:188</title>
       <text x="56" y="838" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">DomainError</text>
     </a>
     <text x="422" y="838" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries a handled business rule</text>
     <text x="422" y="853" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">violation.</text>
   </g>
   <g id="app-db_models.py" data-source="app/db_models.py">
-    <rect x="725" y="123" width="665" height="728" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py">
+    <rect x="725" y="123" width="665" height="568" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py">
       <title>app/db_models.py</title>
       <text x="741" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/db_models.py</text>
     </a>
     <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Map business, scheduling and Telegram tables to SQLAlchemy models.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L10">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L10">
       <title>Base · app/db_models.py:10</title>
       <text x="741" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Base  /  line 10</text>
     </a>
     <text x="1273" y="198" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L86">
-      <title>BookingRow · app/db_models.py:86</title>
-      <text x="741" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingRow  /  line 86</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L90">
+      <title>BookingRow · app/db_models.py:90</title>
+      <text x="741" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingRow  /  line 90</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L129">
-      <title>TelegramUpdate · app/db_models.py:129</title>
-      <text x="741" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramUpdate  /  line 129</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L119">
+      <title>TelegramUpdate · app/db_models.py:119</title>
+      <text x="741" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramUpdate  /  line 119</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L161">
-      <title>TelegramConversation · app/db_models.py:161</title>
-      <text x="741" y="258" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramConversation  /  line 161</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L137">
+      <title>TelegramConversation · app/db_models.py:137</title>
+      <text x="741" y="258" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramConversation  /  line 137</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L176">
-      <title>TelegramOutboxRow · app/db_models.py:176</title>
-      <text x="741" y="278" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutboxRow  /  line 176</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L152">
+      <title>TelegramOutboxRow · app/db_models.py:152</title>
+      <text x="741" y="278" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutboxRow  /  line 152</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L210">
-      <title>TelegramPublication · app/db_models.py:210</title>
-      <text x="741" y="298" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramPublication  /  line 210</text>
-    </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L10">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L10">
       <title>Base · app/db_models.py:10</title>
-      <text x="741" y="318" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Base</text>
+      <text x="741" y="298" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Base</text>
     </a>
-    <text x="1107" y="318" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">SQLAlchemy declarative metadata root.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L14">
+    <text x="1107" y="298" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">SQLAlchemy declarative metadata root.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L14">
       <title>BusinessRow · app/db_models.py:14</title>
-      <text x="741" y="338" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BusinessRow</text>
+      <text x="741" y="318" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BusinessRow</text>
     </a>
-    <text x="1107" y="338" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Tenant data and booking policy.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L26">
+    <text x="1107" y="318" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Tenant data and booking policy.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L26">
       <title>ProfessionalRow · app/db_models.py:26</title>
-      <text x="741" y="358" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ProfessionalRow</text>
+      <text x="741" y="338" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ProfessionalRow</text>
     </a>
-    <text x="1107" y="358" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bookable massage therapist in the</text>
-    <text x="1107" y="373" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">massagistas table.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L35">
+    <text x="1107" y="338" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bookable massage therapist in the</text>
+    <text x="1107" y="353" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">massagistas table.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L35">
       <title>ServiceRow · app/db_models.py:35</title>
-      <text x="741" y="398" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ServiceRow</text>
+      <text x="741" y="378" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ServiceRow</text>
     </a>
-    <text x="1107" y="398" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Service type, duration, price and</text>
-    <text x="1107" y="413" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">generated name.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L53">
+    <text x="1107" y="378" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Service type, duration, price and</text>
+    <text x="1107" y="393" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">generated name.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L53">
       <title>WeeklyAvailabilityRule · app/db_models.py:53</title>
-      <text x="741" y="438" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">WeeklyAvailabilityRule</text>
+      <text x="741" y="418" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">WeeklyAvailabilityRule</text>
     </a>
-    <text x="1107" y="438" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Recurring working-hours interval.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L64">
+    <text x="1107" y="418" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Recurring working-hours interval.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L64">
       <title>BlockedPeriod · app/db_models.py:64</title>
-      <text x="741" y="458" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BlockedPeriod</text>
+      <text x="741" y="438" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BlockedPeriod</text>
     </a>
-    <text x="1107" y="458" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Staff calendar hold.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L75">
+    <text x="1107" y="438" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Staff calendar hold.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L75">
       <title>CustomerRow · app/db_models.py:75</title>
-      <text x="741" y="478" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">CustomerRow</text>
+      <text x="741" y="458" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">CustomerRow</text>
     </a>
-    <text x="1107" y="478" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Business-owned customer record.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L86">
-      <title>BookingRow · app/db_models.py:86</title>
+    <text x="1107" y="458" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Business-owned customer record with</text>
+    <text x="1107" y="473" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">optional Telegram sender identity.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L90">
+      <title>BookingRow · app/db_models.py:90</title>
       <text x="741" y="498" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingRow</text>
     </a>
     <text x="1107" y="498" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Appointment and the staff interval it</text>
     <text x="1107" y="513" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">occupies.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L103">
-      <title>IdempotencyRecord · app/db_models.py:103</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L107">
+      <title>IdempotencyRecord · app/db_models.py:107</title>
       <text x="741" y="538" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">IdempotencyRecord</text>
     </a>
     <text x="1107" y="538" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Request fingerprint and prior write</text>
     <text x="1107" y="553" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">outcome.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L115">
-      <title>TelegramIdentity · app/db_models.py:115</title>
-      <text x="741" y="578" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramIdentity</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L119">
+      <title>TelegramUpdate · app/db_models.py:119</title>
+      <text x="741" y="578" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramUpdate</text>
     </a>
-    <text x="1107" y="578" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Maps a bot sender to a business</text>
-    <text x="1107" y="593" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">customer.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L129">
-      <title>TelegramUpdate · app/db_models.py:129</title>
-      <text x="741" y="618" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramUpdate</text>
+    <text x="1107" y="578" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Durable receipt and pending inbound</text>
+    <text x="1107" y="593" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">payload.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L137">
+      <title>TelegramConversation · app/db_models.py:137</title>
+      <text x="741" y="618" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramConversation</text>
     </a>
-    <text x="1107" y="618" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Durable receipt and pending inbound</text>
-    <text x="1107" y="633" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">payload.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L150">
-      <title>TelegramBotRow · app/db_models.py:150</title>
-      <text x="741" y="658" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBotRow</text>
+    <text x="1107" y="618" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Chat lease, update order and checkpoint</text>
+    <text x="1107" y="633" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">pointer.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/db_models.py#L152">
+      <title>TelegramOutboxRow · app/db_models.py:152</title>
+      <text x="741" y="658" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramOutboxRow</text>
     </a>
-    <text x="1107" y="658" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Registered bot, business and credential</text>
-    <text x="1107" y="673" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">references.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L161">
-      <title>TelegramConversation · app/db_models.py:161</title>
-      <text x="741" y="698" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramConversation</text>
-    </a>
-    <text x="1107" y="698" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Chat lease, update order and checkpoint</text>
-    <text x="1107" y="713" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">pointer.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L176">
-      <title>TelegramOutboxRow · app/db_models.py:176</title>
-      <text x="741" y="738" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramOutboxRow</text>
-    </a>
-    <text x="1107" y="738" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pending or settled Telegram send.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L195">
-      <title>TelegramBotDelivery · app/db_models.py:195</title>
-      <text x="741" y="758" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBotDelivery</text>
-    </a>
-    <text x="1107" y="758" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bot-wide send timing and cooldown.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L202">
-      <title>TelegramChatDelivery · app/db_models.py:202</title>
-      <text x="741" y="778" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramChatDelivery</text>
-    </a>
-    <text x="1107" y="778" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Per-chat send timing and cooldown.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/db_models.py#L210">
-      <title>TelegramPublication · app/db_models.py:210</title>
-      <text x="741" y="798" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramPublication</text>
-    </a>
-    <text x="1107" y="798" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Durable metadata for chat or sender</text>
-    <text x="1107" y="813" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">wake-ups.</text>
+    <text x="1107" y="658" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pending or settled Telegram send.</text>
   </g>
   <g id="alembic-env.py" data-source="alembic/env.py">
     <rect x="40" y="911" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/env.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/env.py">
       <title>alembic/env.py</title>
       <text x="56" y="938" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/env.py</text>
     </a>
     <text x="56" y="961" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run Alembic against the application's SQLAlchemy metadata.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/env.py#L28">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/env.py#L28">
       <title>run_migrations_online · alembic/env.py:28</title>
       <text x="56" y="986" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_migrations_online  /  line 28</text>
     </a>
     <text x="588" y="986" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/env.py#L22">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/env.py#L22">
       <title>run_migrations_offline · alembic/env.py:22</title>
       <text x="56" y="1006" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_migrations_offline  /  line 22</text>
     </a>
   </g>
   <g id="alembic-versions-0001_general_scheduling.py" data-source="alembic/versions/0001_general_scheduling.py">
     <rect x="725" y="911" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0001_general_scheduling.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0001_general_scheduling.py">
       <title>alembic/versions/0001_general_scheduling.py</title>
       <text x="741" y="938" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0001_general_scheduling.py</text>
     </a>
     <text x="741" y="961" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Establish the original general scheduling schema.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0001_general_scheduling.py#L16">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0001_general_scheduling.py#L16">
       <title>upgrade · alembic/versions/0001_general_scheduling.py:16</title>
       <text x="741" y="986" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 16</text>
     </a>
@@ -288,12 +257,12 @@
   </g>
   <g id="alembic-versions-0002_telegram_channel.py" data-source="alembic/versions/0002_telegram_channel.py">
     <rect x="40" y="1059" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0002_telegram_channel.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0002_telegram_channel.py">
       <title>alembic/versions/0002_telegram_channel.py</title>
       <text x="56" y="1086" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0002_telegram_channel.py</text>
     </a>
     <text x="56" y="1109" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Add initial Telegram update and sender identity storage.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0002_telegram_channel.py#L16">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0002_telegram_channel.py#L16">
       <title>upgrade · alembic/versions/0002_telegram_channel.py:16</title>
       <text x="56" y="1134" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 16</text>
     </a>
@@ -301,12 +270,12 @@
   </g>
   <g id="alembic-versions-0003_telegram_ownership.py" data-source="alembic/versions/0003_telegram_ownership.py">
     <rect x="725" y="1059" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0003_telegram_ownership.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0003_telegram_ownership.py">
       <title>alembic/versions/0003_telegram_ownership.py</title>
       <text x="741" y="1086" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0003_telegram_ownership.py</text>
     </a>
     <text x="741" y="1109" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Scope Telegram ownership and connect bookings to customers.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0003_telegram_ownership.py#L14">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0003_telegram_ownership.py#L14">
       <title>upgrade · alembic/versions/0003_telegram_ownership.py:14</title>
       <text x="741" y="1134" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 14</text>
     </a>
@@ -314,12 +283,12 @@
   </g>
   <g id="alembic-versions-0004_remove_audit_events.py" data-source="alembic/versions/0004_remove_audit_events.py">
     <rect x="40" y="1187" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0004_remove_audit_events.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0004_remove_audit_events.py">
       <title>alembic/versions/0004_remove_audit_events.py</title>
       <text x="56" y="1214" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0004_remove_audit_events.py</text>
     </a>
     <text x="56" y="1237" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Remove the audit events table.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0004_remove_audit_events.py#L11">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0004_remove_audit_events.py#L11">
       <title>upgrade · alembic/versions/0004_remove_audit_events.py:11</title>
       <text x="56" y="1262" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
     </a>
@@ -327,12 +296,12 @@
   </g>
   <g id="alembic-versions-0005_telegram_jobs.py" data-source="alembic/versions/0005_telegram_jobs.py">
     <rect x="725" y="1187" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0005_telegram_jobs.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0005_telegram_jobs.py">
       <title>alembic/versions/0005_telegram_jobs.py</title>
       <text x="741" y="1214" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0005_telegram_jobs.py</text>
     </a>
     <text x="741" y="1237" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Add hosted Telegram turn and delivery infrastructure.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0005_telegram_jobs.py#L11">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0005_telegram_jobs.py#L11">
       <title>upgrade · alembic/versions/0005_telegram_jobs.py:11</title>
       <text x="741" y="1262" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
     </a>
@@ -340,12 +309,12 @@
   </g>
   <g id="alembic-versions-0006_telegram_publications.py" data-source="alembic/versions/0006_telegram_publications.py">
     <rect x="40" y="1315" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0006_telegram_publications.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0006_telegram_publications.py">
       <title>alembic/versions/0006_telegram_publications.py</title>
       <text x="56" y="1342" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0006_telegram_publications.py</text>
     </a>
     <text x="56" y="1365" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Add durable publication work for the RabbitMQ relay.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0006_telegram_publications.py#L11">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0006_telegram_publications.py#L11">
       <title>upgrade · alembic/versions/0006_telegram_publications.py:11</title>
       <text x="56" y="1390" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
     </a>
@@ -353,16 +322,43 @@
   </g>
   <g id="alembic-versions-0007_massage_studio.py" data-source="alembic/versions/0007_massage_studio.py">
     <rect x="725" y="1315" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0007_massage_studio.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0007_massage_studio.py">
       <title>alembic/versions/0007_massage_studio.py</title>
       <text x="741" y="1342" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0007_massage_studio.py</text>
     </a>
     <text x="741" y="1365" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reshape a fresh database for the massage studio catalog and reply-only</text>
     <text x="741" y="1383" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram delivery.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/alembic/versions/0007_massage_studio.py#L11">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0007_massage_studio.py#L11">
       <title>upgrade · alembic/versions/0007_massage_studio.py:11</title>
       <text x="741" y="1408" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
     </a>
     <text x="1273" y="1408" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="alembic-versions-0008_telegram_customers.py" data-source="alembic/versions/0008_telegram_customers.py">
+    <rect x="40" y="1461" width="665" height="126" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0008_telegram_customers.py">
+      <title>alembic/versions/0008_telegram_customers.py</title>
+      <text x="56" y="1488" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0008_telegram_customers.py</text>
+    </a>
+    <text x="56" y="1511" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Move Telegram identities onto customers and remove the legacy polling cursor</text>
+    <text x="56" y="1529" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and reply fields.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0008_telegram_customers.py#L11">
+      <title>upgrade · alembic/versions/0008_telegram_customers.py:11</title>
+      <text x="56" y="1554" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
+    </a>
+    <text x="588" y="1554" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+  </g>
+  <g id="alembic-versions-0009_telegram_postgres_queue.py" data-source="alembic/versions/0009_telegram_postgres_queue.py">
+    <rect x="725" y="1461" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0009_telegram_postgres_queue.py">
+      <title>alembic/versions/0009_telegram_postgres_queue.py</title>
+      <text x="741" y="1488" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">alembic/versions/0009_telegram_postgres_queue.py</text>
+    </a>
+    <text x="741" y="1511" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Preserve pending Telegram work and remove the former broker tables.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/alembic/versions/0009_telegram_postgres_queue.py#L11">
+      <title>upgrade · alembic/versions/0009_telegram_postgres_queue.py:11</title>
+      <text x="741" y="1536" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">upgrade  /  line 11</text>
+    </a>
+    <text x="1273" y="1536" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
 </svg>

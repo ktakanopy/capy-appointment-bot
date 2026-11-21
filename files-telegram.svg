@@ -1,341 +1,416 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1680" width="1430" height="1680" role="img" aria-label="Source reference · Telegram and worker processes">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 2084" width="1430" height="2084" role="img" aria-label="Source reference · Telegram and worker processes">
   <title>Source reference · Telegram and worker processes</title>
   <desc>Start with the webhook and service CLI. Class rows link to the defining class or its most useful method.</desc>
-  <rect x="0" y="0" width="1430" height="1680" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <rect x="0" y="0" width="1430" height="2084" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Telegram and worker processes</text>
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Start with the webhook and service CLI. Class rows link to the defining class or its most useful method.</text>
   <g id="app-main.py" data-source="app/main.py">
     <rect x="40" y="123" width="665" height="228" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/main.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/main.py">
       <title>app/main.py</title>
       <text x="56" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/main.py</text>
     </a>
     <text x="56" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Serve FastAPI health probes and authenticate and persist Telegram updates.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/main.py#L76">
-      <title>telegram_webhook · app/main.py:76</title>
-      <text x="56" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">telegram_webhook  /  line 76</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/main.py#L101">
+      <title>telegram_webhook · app/main.py:101</title>
+      <text x="56" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">telegram_webhook  /  line 101</text>
     </a>
     <text x="588" y="198" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/main.py#L50">
-      <title>lifespan · app/main.py:50</title>
-      <text x="56" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">lifespan  /  line 50</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/main.py#L54">
+      <title>lifespan · app/main.py:54</title>
+      <text x="56" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">lifespan  /  line 54</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/main.py#L123">
-      <title>health · app/main.py:123</title>
-      <text x="56" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">health  /  line 123</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/main.py#L156">
+      <title>health · app/main.py:156</title>
+      <text x="56" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">health  /  line 156</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/main.py#L44">
-      <title>HealthDependencies · app/main.py:44</title>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/main.py#L47">
+      <title>HealthDependencies · app/main.py:47</title>
       <text x="56" y="258" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">HealthDependencies</text>
     </a>
-    <text x="422" y="258" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bundles settings and the Redis client</text>
-    <text x="422" y="273" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">for health checks.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/main.py#L24">
-      <title>_SuppressHealthAccess.filter · app/main.py:24</title>
+    <text x="422" y="258" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bundles settings, Redis and optional</text>
+    <text x="422" y="273" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">lifecycle-managed broker adapter.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/main.py#L27">
+      <title>_SuppressHealthAccess.filter · app/main.py:27</title>
       <text x="56" y="298" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">_SuppressHealthAccess.filter</text>
     </a>
     <text x="422" y="298" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Filters routine health requests from</text>
     <text x="422" y="313" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">access logs.</text>
   </g>
   <g id="app-telegram_service.py" data-source="app/telegram_service.py">
-    <rect x="725" y="123" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/telegram_service.py">
+    <rect x="725" y="123" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_service.py">
       <title>app/telegram_service.py</title>
       <text x="741" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/telegram_service.py</text>
     </a>
-    <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Connect worker roles to RabbitMQ and coordinate a claimed turn.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/telegram_service.py#L312">
-      <title>main · app/telegram_service.py:312</title>
-      <text x="741" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 312</text>
+    <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Start processor, sender or webhook registration roles.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_service.py#L47">
+      <title>main · app/telegram_service.py:47</title>
+      <text x="741" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 47</text>
     </a>
     <text x="1273" y="198" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/telegram_service.py#L185">
-      <title>run_broker_worker · app/telegram_service.py:185</title>
-      <text x="741" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_broker_worker  /  line 185</text>
-    </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/telegram_service.py#L39">
-      <title>process_turn · app/telegram_service.py:39</title>
-      <text x="741" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">process_turn  /  line 39</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_service.py#L17">
+      <title>register · app/telegram_service.py:17</title>
+      <text x="741" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">register  /  line 17</text>
     </a>
   </g>
   <g id="app-telegram_worker.py" data-source="app/telegram_worker.py">
-    <rect x="40" y="371" width="665" height="186" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/telegram_worker.py">
+    <rect x="40" y="371" width="665" height="266" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py">
       <title>app/telegram_worker.py</title>
       <text x="56" y="398" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/telegram_worker.py</text>
     </a>
-    <text x="56" y="421" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Prepare one message, resolve account context and invoke the graph for</text>
-    <text x="56" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">scheduling input.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/telegram_worker.py#L45">
-      <title>TelegramWorker.handle_message · app/telegram_worker.py:45</title>
-      <text x="56" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramWorker.handle_message  /  line 45</text>
+    <text x="56" y="421" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Schedule RabbitMQ hints and direct database recovery through one execution</text>
+    <text x="56" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">slot.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L46">
+      <title>run_worker · app/telegram_worker.py:46</title>
+      <text x="56" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_worker  /  line 46</text>
     </a>
     <text x="588" y="464" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/telegram_worker.py#L135">
-      <title>TelegramWorker._run_turn · app/telegram_worker.py:135</title>
-      <text x="56" y="484" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramWorker._run_turn  /  line 135</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L105">
+      <title>process_pending · app/telegram_worker.py:105</title>
+      <text x="56" y="484" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">process_pending  /  line 105</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/telegram_worker.py#L45">
-      <title>TelegramWorker.handle_message · app/telegram_worker.py:45</title>
-      <text x="56" y="504" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramWorker.handle_message</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L166">
+      <title>process_turn · app/telegram_worker.py:166</title>
+      <text x="56" y="504" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">process_turn  /  line 166</text>
     </a>
-    <text x="422" y="504" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Handles commands, contacts, text and</text>
-    <text x="422" y="519" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">voice for a turn.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L71">
+      <title>_execute · app/telegram_worker.py:71</title>
+      <text x="56" y="524" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">_execute  /  line 71</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L95">
+      <title>_notification_claim · app/telegram_worker.py:95</title>
+      <text x="56" y="544" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">_notification_claim  /  line 95</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L323">
+      <title>TelegramWorker.handle_message · app/telegram_worker.py:323</title>
+      <text x="56" y="564" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramWorker.handle_message  /  line 323</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L323">
+      <title>TelegramWorker.handle_message · app/telegram_worker.py:323</title>
+      <text x="56" y="584" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramWorker.handle_message</text>
+    </a>
+    <text x="422" y="584" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Handles commands, contacts, text and</text>
+    <text x="422" y="599" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">voice for a turn.</text>
   </g>
-  <g id="app-channels-telegram_turns.py" data-source="app/channels/telegram_turns.py">
-    <rect x="725" y="371" width="665" height="266" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py">
-      <title>app/channels/telegram_turns.py</title>
-      <text x="741" y="398" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_turns.py</text>
+  <g id="app-channels-telegram_queue.py" data-source="app/channels/telegram_queue.py">
+    <rect x="725" y="371" width="665" height="286" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py">
+      <title>app/channels/telegram_queue.py</title>
+      <text x="741" y="398" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_queue.py</text>
     </a>
-    <text x="741" y="421" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Lease the oldest eligible chat update and commit the resulting state pointer</text>
-    <text x="741" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and reply.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L106">
-      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:106</title>
-      <text x="741" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramTurns.claim_chat  /  line 106</text>
+    <text x="741" y="421" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Manage one shared queue, bounded publication, reconnects and channel-bound</text>
+    <text x="741" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">delivery settlement.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L117">
+      <title>TelegramQueue.try_publish · app/channels/telegram_queue.py:117</title>
+      <text x="741" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramQueue.try_publish  /  line 117</text>
     </a>
     <text x="1273" y="464" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L304">
-      <title>TelegramTurns.finish · app/channels/telegram_turns.py:304</title>
-      <text x="741" y="484" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramTurns.finish  /  line 304</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L76">
+      <title>TelegramQueue._connect_loop · app/channels/telegram_queue.py:76</title>
+      <text x="741" y="484" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramQueue._connect_loop  /  line 76</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L106">
-      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:106</title>
-      <text x="741" y="504" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramTurns.claim_chat</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L160">
+      <title>TelegramQueue.acknowledge · app/channels/telegram_queue.py:160</title>
+      <text x="741" y="504" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramQueue.acknowledge  /  line 160</text>
     </a>
-    <text x="1107" y="504" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Owns the chat lease and the turn</text>
-    <text x="1107" y="519" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">lifecycle.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L75">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L17">
+      <title>ChatReady · app/channels/telegram_queue.py:17</title>
+      <text x="741" y="524" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ChatReady</text>
+    </a>
+    <text x="1107" y="524" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries only validated bot/chat integer</text>
+    <text x="1107" y="539" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">IDs.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L43">
+      <title>ChatDelivery · app/channels/telegram_queue.py:43</title>
+      <text x="741" y="564" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ChatDelivery</text>
+    </a>
+    <text x="1107" y="564" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Binds a hint to the original channel</text>
+    <text x="1107" y="579" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">delivery.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L117">
+      <title>TelegramQueue.try_publish · app/channels/telegram_queue.py:117</title>
+      <text x="741" y="604" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramQueue.try_publish</text>
+    </a>
+    <text x="1107" y="604" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Owns reused asynchronous transport and</text>
+    <text x="1107" y="619" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">a bounded local delivery buffer.</text>
+  </g>
+  <g id="app-telegram_sender.py" data-source="app/telegram_sender.py">
+    <rect x="40" y="677" width="665" height="206" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_sender.py">
+      <title>app/telegram_sender.py</title>
+      <text x="56" y="704" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/telegram_sender.py</text>
+    </a>
+    <text x="56" y="727" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run independent paced delivery, sender locking, recovery and bounded</text>
+    <text x="56" y="745" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">maintenance.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_sender.py#L43">
+      <title>run_sender · app/telegram_sender.py:43</title>
+      <text x="56" y="770" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_sender  /  line 43</text>
+    </a>
+    <text x="588" y="770" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_sender.py#L56">
+      <title>send_pending · app/telegram_sender.py:56</title>
+      <text x="56" y="790" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">send_pending  /  line 56</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_sender.py#L23">
+      <title>acquire_sender_lock · app/telegram_sender.py:23</title>
+      <text x="56" y="810" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">acquire_sender_lock  /  line 23</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_sender.py#L84">
+      <title>deliver_claimed · app/telegram_sender.py:84</title>
+      <text x="56" y="830" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">deliver_claimed  /  line 84</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_sender.py#L119">
+      <title>prune_history · app/telegram_sender.py:119</title>
+      <text x="56" y="850" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">prune_history  /  line 119</text>
+    </a>
+  </g>
+  <g id="app-agenda_api.py" data-source="app/agenda_api.py">
+    <rect x="725" y="677" width="665" height="206" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/agenda_api.py">
+      <title>app/agenda_api.py</title>
+      <text x="741" y="704" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/agenda_api.py</text>
+    </a>
+    <text x="741" y="727" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Expose the studio catalog, available slots and bookings to an authorized</text>
+    <text x="741" y="745" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">caller.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/agenda_api.py#L60">
+      <title>catalog · app/agenda_api.py:60</title>
+      <text x="741" y="770" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">catalog  /  line 60</text>
+    </a>
+    <text x="1273" y="770" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/agenda_api.py#L65">
+      <title>slots · app/agenda_api.py:65</title>
+      <text x="741" y="790" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">slots  /  line 65</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/agenda_api.py#L87">
+      <title>create · app/agenda_api.py:87</title>
+      <text x="741" y="810" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">create  /  line 87</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/agenda_api.py#L103">
+      <title>reschedule · app/agenda_api.py:103</title>
+      <text x="741" y="830" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">reschedule  /  line 103</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/agenda_api.py#L93">
+      <title>cancel · app/agenda_api.py:93</title>
+      <text x="741" y="850" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">cancel  /  line 93</text>
+    </a>
+  </g>
+  <g id="app-channels-telegram_turns.py" data-source="app/channels/telegram_turns.py">
+    <rect x="40" y="903" width="665" height="326" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py">
+      <title>app/channels/telegram_turns.py</title>
+      <text x="56" y="930" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_turns.py</text>
+    </a>
+    <text x="56" y="953" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Lease the oldest eligible chat update and commit the resulting state pointer</text>
+    <text x="56" y="971" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and reply.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L131">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:131</title>
+      <text x="56" y="996" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramTurns.claim_chat  /  line 131</text>
+    </a>
+    <text x="588" y="996" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L296">
+      <title>TelegramTurns.finish · app/channels/telegram_turns.py:296</title>
+      <text x="56" y="1016" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramTurns.finish  /  line 296</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L112">
+      <title>TelegramTurns.claim_next · app/channels/telegram_turns.py:112</title>
+      <text x="56" y="1036" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramTurns.claim_next  /  line 112</text>
+    </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L131">
+      <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:131</title>
+      <text x="56" y="1056" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramTurns.claim_chat</text>
+    </a>
+    <text x="422" y="1056" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Owns the chat lease and the turn</text>
+    <text x="422" y="1071" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">lifecycle.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L75">
       <title>TurnClaim.assert_owned · app/channels/telegram_turns.py:75</title>
-      <text x="741" y="544" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TurnClaim.assert_owned</text>
+      <text x="56" y="1096" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TurnClaim.assert_owned</text>
     </a>
-    <text x="1107" y="544" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Binds an attempt to proof of current</text>
-    <text x="1107" y="559" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">ownership.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_turns.py#L36">
-      <title>ClaimLost · app/channels/telegram_turns.py:36</title>
-      <text x="741" y="584" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ClaimLost</text>
+    <text x="422" y="1096" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Binds an attempt to proof of current</text>
+    <text x="422" y="1111" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">ownership.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L35">
+      <title>ClaimLost · app/channels/telegram_turns.py:35</title>
+      <text x="56" y="1136" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ClaimLost</text>
     </a>
-    <text x="1107" y="584" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Signals that an attempt can no longer</text>
-    <text x="1107" y="599" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">write.</text>
+    <text x="422" y="1136" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Signals that an attempt can no longer</text>
+    <text x="422" y="1151" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">write.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L92">
+      <title>ChatClaimResult · app/channels/telegram_turns.py:92</title>
+      <text x="56" y="1176" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ChatClaimResult</text>
+    </a>
+    <text x="422" y="1176" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Distinguishes claimed, busy, not-ready</text>
+    <text x="422" y="1191" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and empty chat outcomes.</text>
   </g>
   <g id="app-channels-telegram_intake.py" data-source="app/channels/telegram_intake.py">
-    <rect x="40" y="657" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_intake.py">
+    <rect x="725" y="903" width="665" height="168" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_intake.py">
       <title>app/channels/telegram_intake.py</title>
-      <text x="56" y="684" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_intake.py</text>
+      <text x="741" y="930" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_intake.py</text>
     </a>
-    <text x="56" y="707" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Identify supported private messages and save incoming updates idempotently.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_intake.py#L41">
-      <title>save_update · app/channels/telegram_intake.py:41</title>
-      <text x="56" y="732" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">save_update  /  line 41</text>
+    <text x="741" y="953" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Identify supported private messages and save incoming updates idempotently.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_intake.py#L48">
+      <title>save_update · app/channels/telegram_intake.py:48</title>
+      <text x="741" y="978" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">save_update  /  line 48</text>
     </a>
-    <text x="588" y="732" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_intake.py#L21">
-      <title>private_message · app/channels/telegram_intake.py:21</title>
-      <text x="56" y="752" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">private_message  /  line 21</text>
+    <text x="1273" y="978" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_intake.py#L22">
+      <title>private_message · app/channels/telegram_intake.py:22</title>
+      <text x="741" y="998" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">private_message  /  line 22</text>
     </a>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_intake.py#L43">
+      <title>IntakeResult · app/channels/telegram_intake.py:43</title>
+      <text x="741" y="1018" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">IntakeResult</text>
+    </a>
+    <text x="1107" y="1018" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports acceptance and a validated</text>
+    <text x="1107" y="1033" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">optional post-commit notification.</text>
   </g>
   <g id="app-channels-telegram_delivery.py" data-source="app/channels/telegram_delivery.py">
-    <rect x="725" y="657" width="665" height="186" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_delivery.py">
+    <rect x="40" y="1249" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_delivery.py">
       <title>app/channels/telegram_delivery.py</title>
-      <text x="741" y="684" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_delivery.py</text>
+      <text x="56" y="1276" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_delivery.py</text>
     </a>
-    <text x="741" y="707" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Enforce outgoing ordering, budgets and dispatch leases and classify send</text>
-    <text x="741" y="725" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">outcomes.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_delivery.py#L224">
-      <title>deliver_claimed · app/channels/telegram_delivery.py:224</title>
-      <text x="741" y="750" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">deliver_claimed  /  line 224</text>
+    <text x="56" y="1299" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reserve and settle replies in chat order, respecting retry delays.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_delivery.py#L23">
+      <title>TelegramOutbox.claim_next · app/channels/telegram_delivery.py:23</title>
+      <text x="56" y="1324" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_next  /  line 23</text>
     </a>
-    <text x="1273" y="750" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_delivery.py#L80">
-      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:80</title>
-      <text x="741" y="770" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_by_id  /  line 80</text>
+    <text x="588" y="1324" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_delivery.py#L73">
+      <title>TelegramOutbox.finish · app/channels/telegram_delivery.py:73</title>
+      <text x="56" y="1344" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.finish  /  line 73</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_delivery.py#L71">
-      <title>send_reply · app/channels/telegram_delivery.py:71</title>
-      <text x="741" y="790" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">send_reply  /  line 71</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_delivery.py#L23">
+      <title>TelegramOutbox.claim_next · app/channels/telegram_delivery.py:23</title>
+      <text x="56" y="1364" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_next</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_delivery.py#L80">
-      <title>TelegramOutbox.claim_by_id · app/channels/telegram_delivery.py:80</title>
-      <text x="741" y="810" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_by_id</text>
-    </a>
-    <text x="1107" y="810" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reserves and settles outgoing jobs.</text>
-  </g>
-  <g id="app-channels-telegram_publications.py" data-source="app/channels/telegram_publications.py">
-    <rect x="40" y="863" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_publications.py">
-      <title>app/channels/telegram_publications.py</title>
-      <text x="56" y="890" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_publications.py</text>
-    </a>
-    <text x="56" y="913" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Journal wake-ups and relay or backfill pending publications from PostgreSQL.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_publications.py#L17">
-      <title>schedule_publication · app/channels/telegram_publications.py:17</title>
-      <text x="56" y="938" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">schedule_publication  /  line 17</text>
-    </a>
-    <text x="588" y="938" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_publications.py#L39">
-      <title>publish_due · app/channels/telegram_publications.py:39</title>
-      <text x="56" y="958" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">publish_due  /  line 39</text>
-    </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_publications.py#L119">
-      <title>backfill_publications · app/channels/telegram_publications.py:119</title>
-      <text x="56" y="978" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">backfill_publications  /  line 119</text>
-    </a>
-  </g>
-  <g id="app-channels-telegram_broker.py" data-source="app/channels/telegram_broker.py">
-    <rect x="725" y="863" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_broker.py">
-      <title>app/channels/telegram_broker.py</title>
-      <text x="741" y="890" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_broker.py</text>
-    </a>
-    <text x="741" y="913" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Partition incoming wakes by chat, publish ID-only messages and consume them</text>
-    <text x="741" y="931" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">with acknowledgements.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_broker.py#L65">
-      <title>relay_publications · app/channels/telegram_broker.py:65</title>
-      <text x="741" y="956" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">relay_publications  /  line 65</text>
-    </a>
-    <text x="1273" y="956" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_broker.py#L125">
-      <title>consume_wakeups · app/channels/telegram_broker.py:125</title>
-      <text x="741" y="976" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">consume_wakeups  /  line 125</text>
-    </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_broker.py#L50">
-      <title>publish_wakeup · app/channels/telegram_broker.py:50</title>
-      <text x="741" y="996" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">publish_wakeup  /  line 50</text>
-    </a>
+    <text x="422" y="1364" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reserves and settles outgoing jobs.</text>
   </g>
   <g id="app-channels-telegram_repository.py" data-source="app/channels/telegram_repository.py">
-    <rect x="40" y="1049" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_repository.py">
+    <rect x="725" y="1249" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_repository.py">
       <title>app/channels/telegram_repository.py</title>
-      <text x="56" y="1076" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_repository.py</text>
+      <text x="741" y="1276" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_repository.py</text>
     </a>
-    <text x="56" y="1099" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Link a verified Telegram sender to a business customer and save sender-owned</text>
-    <text x="56" y="1117" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contact details.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_repository.py#L37">
-      <title>TelegramRepository.ensure_customer_for_sender · app/channels/telegram_repository.py:37</title>
-      <text x="56" y="1142" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramRepository.ensure_customer_for_sender  /  line 37</text>
+    <text x="741" y="1299" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Link a verified Telegram sender to a business customer and save sender-owned</text>
+    <text x="741" y="1317" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contact details.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_repository.py#L20">
+      <title>TelegramRepository.ensure_customer_for_sender · app/channels/telegram_repository.py:20</title>
+      <text x="741" y="1342" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramRepository.ensure_customer_for_sender  /  line 20</text>
     </a>
-    <text x="588" y="1142" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram_repository.py#L37">
-      <title>TelegramRepository.ensure_customer_for_sender · app/channels/telegram_repository.py:37</title>
-      <text x="56" y="1162" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramRepository.ensure_customer_for_sender</text>
+    <text x="1273" y="1342" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_repository.py#L20">
+      <title>TelegramRepository.ensure_customer_for_sender · app/channels/telegram_repository.py:20</title>
+      <text x="741" y="1362" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramRepository.ensure_customer_for_sender</text>
     </a>
-    <text x="422" y="1162" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Owns Telegram-specific identity and</text>
-    <text x="422" y="1177" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contact queries.</text>
+    <text x="1107" y="1362" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Owns Telegram-specific identity and</text>
+    <text x="1107" y="1377" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contact queries.</text>
   </g>
   <g id="app-channels-bots.py" data-source="app/channels/bots.py">
-    <rect x="725" y="1049" width="665" height="188" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/bots.py">
+    <rect x="40" y="1435" width="665" height="168" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/bots.py">
       <title>app/channels/bots.py</title>
-      <text x="741" y="1076" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/bots.py</text>
+      <text x="56" y="1462" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/bots.py</text>
     </a>
-    <text x="741" y="1099" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Map a webhook route to a business bot and manage bot registration.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/bots.py#L57">
-      <title>BotRegistry.by_route · app/channels/bots.py:57</title>
-      <text x="741" y="1124" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BotRegistry.by_route  /  line 57</text>
+    <text x="56" y="1485" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Resolve the configured bot and its credentials.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/bots.py#L40">
+      <title>configured_bot · app/channels/bots.py:40</title>
+      <text x="56" y="1510" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">configured_bot  /  line 40</text>
     </a>
-    <text x="1273" y="1124" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/bots.py#L69">
-      <title>BotRegistry.register · app/channels/bots.py:69</title>
-      <text x="741" y="1144" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BotRegistry.register  /  line 69</text>
+    <text x="588" y="1510" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/bots.py#L31">
+      <title>TelegramBot.accepts_webhook · app/channels/bots.py:31</title>
+      <text x="56" y="1530" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramBot.accepts_webhook  /  line 31</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/bots.py#L57">
-      <title>BotRegistry.by_route · app/channels/bots.py:57</title>
-      <text x="741" y="1164" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BotRegistry.by_route</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/bots.py#L31">
+      <title>TelegramBot.accepts_webhook · app/channels/bots.py:31</title>
+      <text x="56" y="1550" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBot.accepts_webhook</text>
     </a>
-    <text x="1107" y="1164" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Looks up and writes bot registrations.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/bots.py#L44">
-      <title>TelegramBot.accepts_webhook · app/channels/bots.py:44</title>
-      <text x="741" y="1184" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBot.accepts_webhook</text>
-    </a>
-    <text x="1107" y="1184" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Checks webhook credentials and builds</text>
-    <text x="1107" y="1199" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the API client.</text>
+    <text x="422" y="1550" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Checks webhook credentials and builds</text>
+    <text x="422" y="1565" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the API client.</text>
   </g>
   <g id="app-channels-telegram.py" data-source="app/channels/telegram.py">
-    <rect x="40" y="1257" width="665" height="206" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram.py">
+    <rect x="725" y="1435" width="665" height="206" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram.py">
       <title>app/channels/telegram.py</title>
-      <text x="56" y="1284" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram.py</text>
+      <text x="741" y="1462" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram.py</text>
     </a>
-    <text x="56" y="1307" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Wrap Telegram Bot API calls for registration, sending and bounded audio</text>
-    <text x="56" y="1325" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">downloads.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram.py#L36">
+    <text x="741" y="1485" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Wrap Telegram Bot API calls for registration, sending and bounded audio</text>
+    <text x="741" y="1503" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">downloads.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram.py#L36">
       <title>TelegramBotApi.call · app/channels/telegram.py:36</title>
-      <text x="56" y="1350" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramBotApi.call  /  line 36</text>
+      <text x="741" y="1528" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramBotApi.call  /  line 36</text>
     </a>
-    <text x="588" y="1350" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram.py#L36">
+    <text x="1273" y="1528" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram.py#L36">
       <title>TelegramBotApi.call · app/channels/telegram.py:36</title>
-      <text x="56" y="1370" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBotApi.call</text>
+      <text x="741" y="1548" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBotApi.call</text>
     </a>
-    <text x="422" y="1370" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Sends requests and parses Telegram</text>
-    <text x="422" y="1385" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">responses.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/telegram.py#L17">
+    <text x="1107" y="1548" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Sends requests and parses Telegram</text>
+    <text x="1107" y="1563" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">responses.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram.py#L17">
       <title>TelegramApiError.is_permanent_rejection · app/channels/telegram.py:17</title>
-      <text x="56" y="1410" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramApiError.is_permanent_rejection</text>
+      <text x="741" y="1588" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramApiError.is_permanent_rejection</text>
     </a>
-    <text x="422" y="1410" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports a typed API rejection or</text>
-    <text x="422" y="1425" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transport failure.</text>
+    <text x="1107" y="1588" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports a typed API rejection or</text>
+    <text x="1107" y="1603" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transport failure.</text>
   </g>
   <g id="app-channels-audio_chunks.py" data-source="app/channels/audio_chunks.py">
-    <rect x="725" y="1257" width="665" height="246" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/audio_chunks.py">
+    <rect x="40" y="1661" width="665" height="246" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/audio_chunks.py">
       <title>app/channels/audio_chunks.py</title>
-      <text x="741" y="1284" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/audio_chunks.py</text>
+      <text x="56" y="1688" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/audio_chunks.py</text>
     </a>
-    <text x="741" y="1307" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Decode bounded audio with FFmpeg and emit overlapping WAV chunks for</text>
-    <text x="741" y="1325" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transcription.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/audio_chunks.py#L72">
+    <text x="56" y="1711" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Decode bounded audio with FFmpeg and emit overlapping WAV chunks for</text>
+    <text x="56" y="1729" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transcription.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/audio_chunks.py#L72">
       <title>AudioChunker.chunks · app/channels/audio_chunks.py:72</title>
-      <text x="741" y="1350" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">AudioChunker.chunks  /  line 72</text>
+      <text x="56" y="1754" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">AudioChunker.chunks  /  line 72</text>
     </a>
-    <text x="1273" y="1350" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/audio_chunks.py#L72">
+    <text x="588" y="1754" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/audio_chunks.py#L72">
       <title>AudioChunker.chunks · app/channels/audio_chunks.py:72</title>
-      <text x="741" y="1370" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioChunker.chunks</text>
+      <text x="56" y="1774" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioChunker.chunks</text>
     </a>
-    <text x="1107" y="1370" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Applies decode limits and chooses chunk</text>
-    <text x="1107" y="1385" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">boundaries.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/audio_chunks.py#L33">
+    <text x="422" y="1774" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Applies decode limits and chooses chunk</text>
+    <text x="422" y="1789" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">boundaries.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/audio_chunks.py#L33">
       <title>AudioChunk · app/channels/audio_chunks.py:33</title>
-      <text x="741" y="1410" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioChunk</text>
+      <text x="56" y="1814" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioChunk</text>
     </a>
-    <text x="1107" y="1410" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries a WAV chunk and overlap</text>
-    <text x="1107" y="1425" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">metadata.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/audio_chunks.py#L28">
+    <text x="422" y="1814" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries a WAV chunk and overlap</text>
+    <text x="422" y="1829" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">metadata.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/audio_chunks.py#L28">
       <title>AudioError · app/channels/audio_chunks.py:28</title>
-      <text x="741" y="1450" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioError</text>
+      <text x="56" y="1854" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioError</text>
     </a>
-    <text x="1107" y="1450" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Signals an audio decode or processing</text>
-    <text x="1107" y="1465" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">failure.</text>
+    <text x="422" y="1854" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Signals an audio decode or processing</text>
+    <text x="422" y="1869" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">failure.</text>
   </g>
   <g id="app-channels-phone.py" data-source="app/channels/phone.py">
-    <rect x="40" y="1523" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/phone.py">
+    <rect x="725" y="1661" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/phone.py">
       <title>app/channels/phone.py</title>
-      <text x="56" y="1550" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/phone.py</text>
+      <text x="741" y="1688" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/phone.py</text>
     </a>
-    <text x="56" y="1573" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Normalize a shared contact number into the accepted stored format.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/phone.py#L6">
+    <text x="741" y="1711" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Normalize a shared contact number into the accepted stored format.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/phone.py#L6">
       <title>canonical_phone · app/channels/phone.py:6</title>
-      <text x="56" y="1598" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">canonical_phone  /  line 6</text>
+      <text x="741" y="1736" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">canonical_phone  /  line 6</text>
     </a>
-    <text x="588" y="1598" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1736" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="app-channels-__init__.py" data-source="app/channels/__init__.py">
-    <rect x="725" y="1523" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/__init__.py">
+    <rect x="40" y="1927" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/__init__.py">
       <title>app/channels/__init__.py</title>
-      <text x="741" y="1550" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/__init__.py</text>
+      <text x="56" y="1954" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/__init__.py</text>
     </a>
-    <text x="741" y="1573" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the channel adapters package.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/74ad694028cda5022582d3e426b95d6573960624/app/channels/__init__.py">
+    <text x="56" y="1977" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the channel adapters package.</text>
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/__init__.py">
       <title>app/channels/__init__.py</title>
-      <text x="741" y="1598" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+      <text x="56" y="2002" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
     </a>
-    <text x="1273" y="1598" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="2002" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
 </svg>
