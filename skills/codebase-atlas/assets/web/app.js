@@ -1,6 +1,6 @@
 "use strict";
 
-const { project, flows, catalogs, sources, sourceFiles, imports } = JSON.parse(document.querySelector("#atlas-data").textContent);
+const { project, flows, catalogs, sources, sourceFiles, imports, guides = [] } = JSON.parse(document.querySelector("#atlas-data").textContent);
 const $ = (id) => document.getElementById(id);
 const svgNamespace = "http://www.w3.org/2000/svg";
 const icons = {
@@ -82,7 +82,8 @@ const files = new Map(catalogs.flatMap((catalog) => catalog.files.map(([path, de
 const classCount = [...files.values()].reduce((sum, file) => sum + file.classes.length, 0);
 const importCenter = files.keys().next().value;
 const flowById = new Map(flows.map((flow) => [flow.id, flow]));
-const firstView = flows[0]?.id ?? "files";
+const guideById = new Map(guides.map((guide) => [guide.id, guide]));
+const firstView = flows[0]?.id ?? guides[0]?.id ?? "files";
 const allNodes = flows.flatMap((flow) => flow.lanes.flatMap((lane) => lane.nodes
   .filter(Boolean).map((node) => ({ ...node, flow }))));
 const fileResults = [...files.values()].flatMap((file) => [
@@ -95,6 +96,7 @@ const fileResults = [...files.values()].flatMap((file) => [
   })),
 ]);
 const searchIndex = [
+  ...guides.map((guide) => ({ kind: "Guide", title: guide.title, sub: guide.navGroup || "Documentation", detail: guide.searchText, route: [guide.id] })),
   ...allNodes.map((node) => ({
     kind: "Step", title: node.title, sub: flowLabel(node.flow)[0],
     detail: `${node.detail} ${node.why || ""} ${node.ref || ""} ${node.flow.transcript?.find((message) => message.node === node.id)?.text || ""}`,
@@ -113,6 +115,75 @@ let layout = null;
 let camera = { x: 0, y: 0, scale: 1 };
 let mapView = null;
 let viewportSize = null;
+const workspace = document.querySelector(".workspace");
+const sidebarResizer = $("sidebar-resizer");
+const sidebar = $("atlas-navigation");
+let preferredSidebarWidth = null;
+try {
+  const saved = Number(localStorage.getItem("codebase-atlas:sidebar-width"));
+  if (Number.isFinite(saved) && saved >= 180) preferredSidebarWidth = saved;
+} catch {}
+
+function applySidebarWidth() {
+  if (matchMedia("(max-width: 660px)").matches) {
+    for (const group of document.querySelectorAll(".nav-group")) group.open = true;
+    return;
+  }
+  const inlineInspector = !workspace.classList.contains("reading-guide") && !matchMedia("(max-width: 970px)").matches;
+  const inspectorWidth = inlineInspector ? inspector.getBoundingClientRect().width : 0;
+  const maximum = Math.max(180, Math.min(420, workspace.clientWidth - inspectorWidth - 328));
+  const fallback = Number.parseFloat(getComputedStyle(workspace).getPropertyValue("--sidebar-default"));
+  const width = Math.round(Math.max(180, Math.min(maximum, preferredSidebarWidth ?? fallback)));
+  workspace.style.setProperty("--sidebar-width", `${width}px`);
+  sidebarResizer.setAttribute("aria-valuemax", maximum);
+  sidebarResizer.setAttribute("aria-valuenow", width);
+}
+
+function rememberSidebarWidth() {
+  try {
+    if (preferredSidebarWidth === null) localStorage.removeItem("codebase-atlas:sidebar-width");
+    else localStorage.setItem("codebase-atlas:sidebar-width", String(preferredSidebarWidth));
+  } catch {}
+}
+
+sidebarResizer.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  sidebarResizer.focus();
+  const start = event.clientX;
+  const width = sidebar.getBoundingClientRect().width;
+  sidebarResizer.setPointerCapture(event.pointerId);
+  document.body.classList.add("is-resizing");
+  const move = (next) => {
+    preferredSidebarWidth = width + next.clientX - start;
+    applySidebarWidth();
+    preferredSidebarWidth = Number(sidebarResizer.getAttribute("aria-valuenow"));
+  };
+  const finish = () => {
+    document.body.classList.remove("is-resizing");
+    sidebarResizer.removeEventListener("pointermove", move);
+    sidebarResizer.removeEventListener("lostpointercapture", finish);
+    rememberSidebarWidth();
+  };
+  sidebarResizer.addEventListener("pointermove", move);
+  sidebarResizer.addEventListener("lostpointercapture", finish);
+});
+sidebarResizer.addEventListener("keydown", (event) => {
+  const width = Number(sidebarResizer.getAttribute("aria-valuenow"));
+  const next = { ArrowLeft: width - 16, ArrowRight: width + 16, Home: 180, End: Number(sidebarResizer.getAttribute("aria-valuemax")) }[event.key];
+  if (next === undefined) return;
+  event.preventDefault();
+  preferredSidebarWidth = next;
+  applySidebarWidth();
+  preferredSidebarWidth = Number(sidebarResizer.getAttribute("aria-valuenow"));
+  rememberSidebarWidth();
+});
+sidebarResizer.addEventListener("dblclick", () => {
+  preferredSidebarWidth = null;
+  applySidebarWidth();
+  rememberSidebarWidth();
+});
+window.addEventListener("resize", applySidebarWidth);
 
 function routeHash(parts) {
   return "#" + parts.filter(Boolean).map(encodeURIComponent).join("/");
@@ -138,7 +209,61 @@ function showInspector(open) {
 }
 
 function renderRoute(parts, reveal = false) {
-  const [view, id, symbol] = parts;
+  const [requested, id, symbol] = parts;
+  const view = requested || firstView;
+  const guide = guideById.get(view);
+  workspace.classList.toggle("reading-guide", Boolean(guide));
+  $("guide").hidden = !guide;
+  $("open-inspector").hidden = Boolean(guide);
+  applySidebarWidth();
+  if (guide) {
+    route = [view, id, symbol];
+    for (const item of document.querySelectorAll(".nav-item")) {
+      if (item.dataset.view === view) {
+        item.setAttribute("aria-current", "page");
+        item.closest("details").open = true;
+        if (matchMedia("(max-width: 660px)").matches) item.scrollIntoView({block:"nearest", inline:"nearest"});
+      }
+      else item.removeAttribute("aria-current");
+    }
+    $("view-title").textContent = guide.title;
+    $("view-description").textContent = guide.subtitle || "Read the project documentation, diagrams and reference tables.";
+    for (const name of ["graph", "graph-footer", "svg-link", "dependency-picker", "open-transcript", "directory"]) $(name).hidden = true;
+    const origin = element("p", "guide-origin", "From ");
+    const link = element("a", null, guide.document);
+    link.href = guide.sourceHref;
+    link.target = "_blank";
+    link.rel = "noopener";
+    origin.append(link);
+    const content = element("div", "guide-content");
+    content.innerHTML = guide.html;
+    for (const table of content.querySelectorAll("table")) {
+      const wrapper = element("div", "table-scroll");
+      wrapper.tabIndex = 0;
+      wrapper.setAttribute("role", "region");
+      wrapper.setAttribute("aria-label", "Scrollable reference table");
+      table.replaceWith(wrapper);
+      wrapper.append(table);
+    }
+    for (const image of content.querySelectorAll("img")) {
+      const wrapper = element("div", "diagram-scroll");
+      wrapper.tabIndex = 0;
+      wrapper.setAttribute("role", "region");
+      wrapper.setAttribute("aria-label", image.alt || "Scrollable diagram");
+      image.replaceWith(wrapper);
+      const toggle = button("button diagram-size", "Actual size", () => {
+        const expanded = wrapper.classList.toggle("is-expanded");
+        toggle.textContent = expanded ? "Fit diagram" : "Actual size";
+        toggle.setAttribute("aria-pressed", String(expanded));
+      });
+      toggle.setAttribute("aria-pressed", "false");
+      wrapper.append(toggle, image);
+    }
+    $("guide").replaceChildren(origin, content);
+    $("guide").scrollTop = 0;
+    if (id) [...content.querySelectorAll("[id]")].find((node) => node.id === id)?.scrollIntoView({block:"start"});
+    return;
+  }
   const focus = view === "imports" && importCenter ? files.get(id) || files.get(importCenter) : null;
   const directory = view === "files" || (view === "imports" && !focus);
   const flow = focus ? dependencyFlow(focus) : flowById.get(view) || (!directory && flows[0]);
@@ -149,6 +274,7 @@ function renderRoute(parts, reveal = false) {
   for (const item of document.querySelectorAll(".nav-item")) {
     if (item.dataset.view === viewId) {
       item.setAttribute("aria-current", "page");
+      item.closest("details").open = true;
       if (changed && matchMedia("(max-width: 660px)").matches) {
         item.scrollIntoView({ block: "nearest", inline: "nearest" });
       }
@@ -806,7 +932,7 @@ function renderSearch() {
   const result = $("search-results");
   result.replaceChildren();
   for (const entry of matches.slice(0, query ? 24 : 6)) {
-    const symbol = { File: "file", Step: "step", Class: "class", Entry: "entry" }[entry.kind];
+    const symbol = { File: "file", Step: "step", Class: "class", Entry: "entry", Guide: "book" }[entry.kind];
     const control = item(entry.title, entry.sub, symbol, () => {
       searchDialog.close();
       if (entry.route[0] === "files") {
@@ -826,7 +952,7 @@ function renderSearch() {
 
 function rank({ title, kind }, query) {
   const value = title.toLowerCase();
-  const typePriority = { Step: 0, Entry: 1, File: 2, Class: 3 };
+  const typePriority = { Step: 0, Entry: 1, File: 2, Class: 3, Guide: 4 };
   const match = value === query ? 3 : value.startsWith(query) ? 2 : value.includes(query) ? 1 : 0;
   return match * 4 + typePriority[kind];
 }
@@ -889,14 +1015,36 @@ $("project-mark").textContent = project.slice(0, 1).toUpperCase();
 $("brand").href = routeHash([firstView]);
 const referenceViews = [["files", "Files & classes", "files"]];
 if (importCenter) referenceViews.push(["imports", "File connections", "atlas"]);
-for (const [id, label, glyph] of [...flows.map((flow) => [flow.id, ...flowLabel(flow)]), ...referenceViews]) {
-  const tab = button("nav-item", label, () => {
-    showInspector(false);
-    go([id]);
-  }, glyph);
-  tab.dataset.view = id;
-  $(flowById.has(id) ? "flow-nav" : "file-nav").append(tab);
+const navigationGroups = new Map();
+for (const view of [...flows, ...guides, ...referenceViews.map(([id, title, icon]) => ({id, title, icon, navGroup:"Reference"}))]) {
+  const group = view.navGroup || (guideById.has(view.id) ? "Documentation" : "Flows");
+  if (!navigationGroups.has(group)) navigationGroups.set(group, []);
+  navigationGroups.get(group).push(view);
 }
+for (const [name, views] of navigationGroups) {
+  const group = element("details", "nav-group");
+  group.setAttribute("aria-label", name);
+  group.open = $("atlas-nav").childElementCount === 0;
+  group.append(element("summary", "nav-title", name));
+  const list = element("div", "nav-list");
+  group.append(list);
+  $("atlas-nav").append(group);
+  for (const view of views) {
+    const [label, glyph] = guideById.has(view.id) ? [view.navTitle || view.title, "book"] : flowLabel(view);
+    const tab = button("nav-item", label, () => {
+      showInspector(false);
+      go([view.id]);
+    }, glyph);
+    tab.dataset.view = view.id;
+    list.append(tab);
+  }
+}
+$("guide").addEventListener("click", (event) => {
+  const link = event.target.closest("a");
+  if (!link || !link.getAttribute("href")?.startsWith("#") || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  go(link.getAttribute("href").slice(1).split("/").map(decodeURIComponent));
+});
 for (const path of [...files.keys()].sort()) $("dependency-file").append(new Option(path, path));
 $("dependency-file").addEventListener("change", (event) => go(["imports", event.target.value]));
 $("group-filter").append(new Option("All areas", ""));

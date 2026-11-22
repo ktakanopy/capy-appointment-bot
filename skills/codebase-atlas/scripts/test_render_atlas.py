@@ -120,6 +120,32 @@ class AtlasRenderingTests(unittest.TestCase):
         self.assertIn('Missing source file inside repository', result.stderr)
         self.assertNotIn('not part of the repository', result.stdout)
 
+    def test_documentation_embeds_tables_images_and_rewrites_cross_references(self):
+        docs = self.root / 'docs'
+        (docs / 'assets').mkdir(parents=True)
+        (docs / 'assets' / 'model.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg"><text>Stored value</text></svg>')
+        (docs / 'storage.md').write_text(
+            '# Storage\n\n| Record | Purpose |\n| --- | --- |\n| Value | Normalized input |\n\n'
+            '![Records](assets/model.svg)\n\n[Entry](reading.md#entry)\n\n'
+            '[Source](../src/worker.py#L3)\n\n<script>alert(1)</script>\n'
+        )
+        (docs / 'reading.md').write_text('# Entry\n\nStart at the worker.\n')
+        self.views.extend([
+            {'id': 'guide-storage', 'title': 'Storage guide', 'navGroup': 'Data', 'document': 'docs/storage.md'},
+            {'id': 'guide-reading', 'title': 'Reading order', 'document': 'docs/reading.md'},
+        ])
+        self.render()
+        guide = self.data()['guides'][0]
+        self.assertIn('<table>', guide['html'])
+        self.assertIn('data:image/svg+xml;base64,', guide['html'])
+        self.assertIn('href="#guide-reading/entry"', guide['html'])
+        self.assertIn('https://example.com/revision/src/worker.py#L3', guide['html'])
+        self.assertNotIn('<script', guide['html'])
+        self.assertEqual(guide['navGroup'], 'Data')
+        (docs / 'storage.md').write_text('![Outside](../../private.svg)\n')
+        (Path(self.directory.name) / 'private.svg').write_text('<svg>private</svg>')
+        self.assertIn('Documentation path outside repository', self.render(success=False).stderr)
+
 
 if __name__ == '__main__':
     unittest.main()

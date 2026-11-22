@@ -22,19 +22,15 @@
   </header>
 
   <div class="workspace">
-    <nav class="sidebar" aria-label="Atlas views">
+    <nav id="atlas-navigation" class="sidebar" aria-label="Atlas views">
       <div class="project">
         <div class="project-mark" id="project-mark" aria-hidden="true"></div>
         <div><div class="project-name" id="project-name"></div><div class="project-caption">Repository explorer</div></div>
       </div>
-      <div class="nav-main">
-        <div class="nav-title">Flows</div>
-        <div id="flow-nav" class="nav-list"></div>
-        <div class="nav-title reference-title">Reference</div>
-        <div id="file-nav" class="nav-list"></div>
-      </div>
+      <div id="atlas-nav" class="nav-main"></div>
       <a class="guide-link" href="@@GUIDE_URL@@"><span data-icon="book"></span> Atlas guide</a>
     </nav>
+    <div id="sidebar-resizer" class="sidebar-resizer" role="separator" tabindex="0" aria-label="Resize navigation" aria-orientation="vertical" aria-controls="atlas-navigation" aria-valuemin="180" aria-valuemax="420" aria-valuenow="224" title="Drag to resize. Use arrow keys, or double-click to reset."></div>
 
     <main class="main">
       <header class="view-header">
@@ -54,6 +50,7 @@
           </button>
         </div>
       </header>
+      <article id="guide" class="guide" aria-label="Documentation" hidden></article>
 
       <section id="graph" class="graph" aria-label="Interactive graph">
         <div class="viewport" id="viewport" tabindex="0" role="region" aria-label="Graph canvas" aria-describedby="canvas-help">

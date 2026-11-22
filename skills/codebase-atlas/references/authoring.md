@@ -67,6 +67,10 @@ paths illustrate the format and must be replaced with inspected project code:
   label for the HTML navigation and heading; it otherwise uses `title`.
 - Optional `icon` names an icon from `assets/web/app.js`; omit it to use the
   atlas icon. Unknown icons fall back to that icon.
+- Optional `navGroup` groups flows and guides in collapsible navigation sections,
+  ordered by their first appearance in the input. Keep names short and make the
+  opening group a clear starting point. The navigation divider supports drag,
+  arrow keys, Home/End, double-click reset and a saved browser width.
 - Each lane is one diagram row. Put one node or `null` in each column; an
   optional node `column` selects a column explicitly. Node IDs must be unique
   within the flow. Every edge endpoint must name a node in that flow.
@@ -132,6 +136,37 @@ repository coverage if intentionally showing only one subsystem.
 The HTML File connections view follows direct imports among cataloged Python
 files. Import arrows point from importer to dependency and open the import
 statement. It is not a call graph or a cross-language dependency analyzer.
+
+## Include existing documentation
+
+Add a third JSON input with views such as:
+
+```json
+[
+  {
+    "id": "guide-storage",
+    "title": "Storage tables and relationships",
+    "navGroup": "Data and reliability",
+    "document": "docs/storage.md"
+  }
+]
+```
+
+Generation with document views needs `Markdown`: run the renderer through
+`uv run --no-project --with Markdown python`. Markdown tables, headings, lists,
+fenced code, local image diagrams and internal guide links become readable
+documentation pages inside the same explorer. Guides also appear in search.
+The original Markdown stays the source; do not copy its content into JSON.
+Local images are embedded, and paths outside the repository are rejected.
+External images must be saved as authorized repository assets before embedding.
+
+For Mermaid fences, first render each block to an SVG using Mermaid CLI. Set
+`mermaidImages` to a list of those image paths in fence order, relative to the
+Markdown file. The renderer substitutes these images for the Mermaid source;
+it rejects missing or extra diagram images. Rerender them after changing the
+Mermaid definition. Other SVG/PNG diagrams embed without conversion. Check
+wide tables and diagrams at desktop and mobile sizes; they scroll inside their
+frames while the page and navigation remain usable.
 
 ## Example of clearer card copy
 

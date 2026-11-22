@@ -11,8 +11,11 @@ in editable JSON. Preserve existing view and node IDs when updating an atlas.
 
 Resolve scripts, references and UI assets relative to this skill's directory.
 Pass the target repository explicitly with `--root`; the skill may be installed
-outside that repository. Python 3.11+ and its standard library are sufficient.
+outside that repository. Core flow and file diagrams need Python 3.11+ and its
+standard library.
 No frontend build, application imports or server are required to view the result.
+Optional Markdown documentation views require the `Markdown` Python package;
+use `uv run --no-project --with Markdown python` for that generation command.
 
 ## Ground the atlas in the project
 
@@ -65,6 +68,13 @@ The UI has no built-in names for a particular repository. Put the preferred
 reading entry first in each file's entry list; the first cataloged file is
 also the initial selection in File connections.
 
+Use `navGroup` to organize flows and documentation into collapsible sections
+with a clear reading order. Include useful guides from the repository's docs
+index: tables, diagrams, model contracts, operations and verification evidence.
+Select them with `document` views in a separate JSON input. The renderer embeds
+their Markdown and local images, keeps included guide links inside the atlas,
+and preserves source links. Keep current guides separate from historical plans.
+
 Write a short atlas guide beside the generated files, normally `README.md`,
 with the reading order, scope, regeneration command and any source-link limits.
 The HTML's Atlas guide link defaults to that file; use `--guide-url` when the
@@ -88,6 +98,7 @@ one SVG per view plus `index.html`. Python definitions and direct imports are
 resolved with the AST without importing the application. Other text languages
 support file references and explicit `#L12` line references; their definitions
 and imports are not inferred. Recheck explicit line numbers after source edits.
+Pass the documentation JSON as another input when including guide views.
 
 Regenerate after final source or JSON changes. Render an SVG preview or take a
 browser screenshot when a directly viewable image is useful; Mermaid alone
@@ -95,13 +106,16 @@ does not reproduce this atlas. Avoid adding a frontend stack for a preview.
 
 ## Verify and deliver
 
-Run `scripts/test_render_atlas.py` after changing the bundled renderer. Check
+Run `uv run --no-project --with Markdown python scripts/test_render_atlas.py`
+after changing the bundled renderer. Check
 that all referenced paths and symbols resolve and that existing bookmarks
 survive an update. Review the opening overview before the detailed flows.
 
 Open the generated HTML at a desktop viewport and a mobile viewport around
 390 × 844, or the user's specified size. Exercise search, node selection,
 inspector, full source reader, file/class navigation, pan/zoom and Open SVG.
+Check navigation resizing by pointer and keyboard, saved width after reload,
+collapsible sections, guide cross-references, tables and embedded diagrams.
 Check transcripts when provided. Essential controls and inspector paragraphs
 must remain readable; detailed diagrams can use pan/zoom. Inspect the SVGs for
 clipped titles, crowded text and misleading arrow routes. Capture the actual

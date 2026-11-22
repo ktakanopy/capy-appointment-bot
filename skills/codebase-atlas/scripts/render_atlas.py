@@ -14,6 +14,8 @@ from pathlib import Path
 from urllib.parse import quote
 from xml.etree import ElementTree as ET
 
+from render_guides import build_guides
+
 
 SVG = "http://www.w3.org/2000/svg"
 ET.register_namespace("", SVG)
@@ -370,6 +372,7 @@ def build_web(views, resolver, project, guide_url):
         "sources": sources,
         "sourceFiles": {path: source_lines(resolver.root / path) for path in paths},
         "imports": local_imports(resolver.root, catalog_paths),
+        "guides": build_guides([view for view in views if "document" in view], resolver),
     }
     assets = Path(__file__).resolve().parents[1] / "assets" / "web"
     tokens = {
@@ -395,13 +398,17 @@ def main():
     args = parser.parse_args()
     sources = SourceLinks(args.root, args.out, args.source_base)
     rendered = {}
+    view_ids = set()
     views = [
         view for spec in args.spec for view in json.loads(spec.read_text(encoding="utf-8"))
     ]
     for view in views:
         view_id = view["id"]
-        if re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", view_id) is None or view_id in rendered:
+        if re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", view_id) is None or view_id in view_ids:
             raise ValueError(f"Duplicate or invalid view ID: {view_id}")
+        view_ids.add(view_id)
+        if "document" in view:
+            continue
         draw = draw_graph if "lanes" in view else draw_catalog
         rendered[view_id] = draw(view, sources)
     web = build_web(views, sources, args.project or sources.root.name, args.guide_url) if args.web else None

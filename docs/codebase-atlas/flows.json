@@ -1,6 +1,8 @@
 [
   {
     "id": "architecture-overview",
+    "navTitle": "Architecture overview",
+    "navGroup": "Start here",
     "title": "CAPY architecture · Current runtime",
     "subtitle": "Save Telegram messages in PostgreSQL, process them with five workers, and send replies through one separate sender.",
     "columns": 3,
@@ -36,6 +38,7 @@
   },
   {
     "id": "walkthrough",
+    "navGroup": "Booking & conversation",
     "navTitle": "Booking walkthrough",
     "icon": "booking",
     "transcriptTitle": "Example conversation",
@@ -130,6 +133,7 @@
   },
   {
     "id": "runtime",
+    "navGroup": "Telegram runtime",
     "navTitle": "Telegram runtime",
     "icon": "runtime",
     "title": "How a Telegram message moves through CAPY",
@@ -175,6 +179,7 @@
   },
   {
     "id": "conversation",
+    "navGroup": "Booking & conversation",
     "navTitle": "Conversation graph",
     "icon": "conversation",
     "title": "Inside a LangGraph conversation turn",
@@ -226,6 +231,7 @@
   },
   {
     "id": "booking",
+    "navGroup": "Booking & conversation",
     "navTitle": "Booking happy path",
     "icon": "booking",
     "title": "Happy path · Create a booking in three turns",
@@ -266,6 +272,7 @@
   },
   {
     "id": "failure-paths",
+    "navGroup": "Telegram runtime",
     "navTitle": "Failure paths",
     "icon": "failure",
     "title": "Failure paths · What happens when a step stops",
@@ -356,6 +363,7 @@
   },
   {
     "id": "management",
+    "navGroup": "Booking & conversation",
     "navTitle": "Manage a booking",
     "icon": "management",
     "title": "Manage an existing booking",
@@ -386,6 +394,7 @@
   },
   {
     "id": "evaluation",
+    "navGroup": "Evaluation",
     "navTitle": "Evaluation framework",
     "icon": "class",
     "title": "Evaluate a full conversation",
@@ -417,6 +426,7 @@
   },
   {
     "id": "tests",
+    "navGroup": "Evaluation",
     "navTitle": "Test suites",
     "icon": "success",
     "title": "Verify CAPY across test layers",
@@ -459,6 +469,8 @@
   },
   {
     "id": "notification-recovery",
+    "navTitle": "Lost notifications",
+    "navGroup": "Telegram runtime",
     "title": "Lost notification · Find the saved message in PostgreSQL",
     "subtitle": "The API saved the message, but could not notify RabbitMQ. A free processor can still find and handle it.",
     "columns": 3,
@@ -493,6 +505,8 @@
   },
   {
     "id": "independent-progress",
+    "navTitle": "Concurrent processing",
+    "navGroup": "Telegram runtime",
     "title": "Independent progress · Alice waits, Bob continues, replies are sent",
     "subtitle": "A slow model response occupies Alice's processor. Another processor serves Bob, while the sender delivers a reply saved earlier.",
     "columns": 3,

@@ -4,6 +4,10 @@ Open the [interactive atlas](index.html) directly in a browser. It starts on **C
 
 Drag the canvas to pan, scroll to zoom, or click the minimap to jump. Selecting a node shows what it does, why it matters, and its highlighted source line. **View full file** opens the source in the page. Both code views use Python syntax highlighting. Use **Cmd/Ctrl+K** to find a step, file, class, or entry point.
 
+The left navigation groups flows and guides by topic. Expand a section to see its entries. Drag the divider beside it to change its width; the browser remembers your choice. Focus the divider and use the arrow keys to adjust it, Home/End for its limits, or double-click to reset. On a phone, the navigation becomes a horizontal list.
+
+Documentation guides include the original tables, code examples and diagrams from `docs/`. Cross-references between included guides stay inside the atlas. Diagrams fit the page; **Actual size** expands them for reading and **Fit diagram** restores the overview. Large diagrams and tables scroll within their own frames. Source links open the original files at the published revision.
+
 ## SVG diagrams
 
 | Flow | What to follow |
@@ -35,14 +39,23 @@ The reference covers the Python modules and top-level classes under `app/` and `
 
 ## Regenerate
 
-Edit the [flow definitions](flows.json) and [source reference](files.json). The [Codebase Atlas skill](../../skills/codebase-atlas/SKILL.md) describes the reusable workflow. Run from the repository root.
+Edit the [flow definitions](flows.json), [source reference](files.json), and [documentation selection](guides.json). The guides are generated directly from the selected Markdown files. The [Codebase Atlas skill](../../skills/codebase-atlas/SKILL.md) describes the reusable workflow. Run from the repository root.
 
 ```sh
-python3 skills/codebase-atlas/scripts/render_atlas.py --web --project CAPY \
-  --out docs/codebase-atlas docs/codebase-atlas/flows.json docs/codebase-atlas/files.json
+uv run --no-project --with Markdown python skills/codebase-atlas/scripts/render_atlas.py \
+  --web --project CAPY --out docs/codebase-atlas \
+  docs/codebase-atlas/flows.json docs/codebase-atlas/files.json docs/codebase-atlas/guides.json
 ```
 
 The HTML includes snapshots of the referenced source files. Regenerate it after source changes to refresh the code and line numbers.
+
+`docs/graph.md` keeps the editable Mermaid graph. Render its Mermaid block into `docs/assets/conversation-graph.svg` with Mermaid CLI after changing the graph, then rebuild the atlas. `mermaidImages` in the guide selection associates that SVG with the block. Other documentation SVGs are embedded directly from their existing paths.
+
+## Publish
+
+The public site uses GitHub Pages **Deploy from a branch**, with **gh-pages / (root)** as its source. Generate the hosted HTML and SVGs with `--source-base` and `--guide-url` pinned to the source commit, copy them into the existing `gh-pages` checkout, then commit and push that branch. Include the JSON inputs and architecture preview. Wait for **pages-build-deployment** to succeed and verify the public page.
+
+The former **Deploy Atlas** workflow is retired. Its [rejected run](https://github.com/ktakanopy/capy-appointment-bot/actions/runs/45048600157) attempted to deploy from `lean_portifolio`, a branch disallowed by the `github-pages` environment. Publishing the static artifact on the configured `gh-pages` branch uses the existing permitted path. Pushing an application branch alone does not update the site.
 
 Five processors are an initial deployment configuration. [Verification evidence](../verification/rabbitmq.md) separates controlled tests and simulated inference/delivery from production capacity. The physical `telegram_conversations` table stores processing coordination and checkpoint linkage, not a transcript. Broker acknowledgments settle hints; `TelegramTurns.finish` completes inbox turns. The source reader resolves symbols and embeds fresh source snapshots on regeneration. Desktop and 390 × 844 navigation, search, inspector, source reader, transcript, retained bookmarks and Open SVG are covered by the recorded visual check.
 
