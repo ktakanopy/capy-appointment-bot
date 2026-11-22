@@ -1,0 +1,77 @@
+[
+  {
+    "id": "guide-architecture",
+    "title": "Architecture & call sequences",
+    "navGroup": "Start here",
+    "document": "docs/architecture.md"
+  },
+  {
+    "id": "guide-graph",
+    "title": "Conversation graph guide",
+    "navGroup": "Booking & conversation",
+    "document": "docs/graph.md",
+    "mermaidImages": [
+      "assets/conversation-graph.svg"
+    ]
+  },
+  {
+    "id": "guide-model-contracts",
+    "title": "Model inputs & decisions",
+    "navGroup": "Booking & conversation",
+    "document": "docs/model-contracts.md"
+  },
+  {
+    "id": "guide-telegram-worker",
+    "title": "Worker guide & examples",
+    "navGroup": "Telegram runtime",
+    "document": "docs/telegram-worker.md"
+  },
+  {
+    "id": "guide-database",
+    "title": "Database tables & diagrams",
+    "navGroup": "Data & reliability",
+    "document": "docs/database.md"
+  },
+  {
+    "id": "guide-security",
+    "title": "Ownership & data handling",
+    "navGroup": "Data & reliability",
+    "document": "docs/security.md"
+  },
+  {
+    "id": "guide-idempotency",
+    "title": "Retries & recovery",
+    "navGroup": "Data & reliability",
+    "document": "docs/idempotency.md"
+  },
+  {
+    "id": "guide-evaluation-framework",
+    "title": "Scenario evaluation guide",
+    "navGroup": "Evaluation",
+    "document": "docs/evaluation-framework.md"
+  },
+  {
+    "id": "guide-verification-rabbitmq",
+    "title": "RabbitMQ verification evidence",
+    "navGroup": "Evaluation",
+    "document": "docs/verification/rabbitmq.md"
+  },
+  {
+    "id": "guide-production",
+    "title": "Deployment & operations",
+    "navGroup": "Operations",
+    "document": "docs/production.md"
+  },
+  {
+    "id": "guide-agenda-api",
+    "title": "Private agenda API",
+    "navGroup": "Operations",
+    "document": "docs/agenda-api.md"
+  },
+  {
+    "id": "guide-source-map",
+    "title": "Source reading map",
+    "navGroup": "Reference",
+    "document": "docs/source-map.md"
+  }
+]

@@ -22,7 +22,7 @@
   <rect x="55" y="131" width="159" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Processor 1 · Alice</text>
   <g id="alice-claim" data-source="app/channels/telegram_turns.py#TelegramTurns.claim_chat">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_turns.py#L131">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/channels/telegram_turns.py#L131">
       <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:131</title>
       <rect x="56.0" y="165" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Take Alice's next message</text>
@@ -32,7 +32,7 @@
     </a>
   </g>
   <g id="alice-slow" data-source="app/telegram_worker.py#process_pending">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L105">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/telegram_worker.py#L105">
       <title>process_pending · app/telegram_worker.py:105</title>
       <rect x="508.6666666666667" y="165" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Wait for a slow model response</text>
@@ -42,7 +42,7 @@
     </a>
   </g>
   <g id="alice-heartbeat" data-source="app/telegram_worker.py#_keep_turn_claim_alive">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L266">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/telegram_worker.py#L266">
       <title>_keep_turn_claim_alive · app/telegram_worker.py:266</title>
       <rect x="961.3333333333334" y="165" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Keep Alice's processing permission</text>
@@ -54,7 +54,7 @@
   <rect x="55" y="328" width="143" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Processor 2 · Bob</text>
   <g id="bob-hint" data-source="app/channels/telegram_queue.py#TelegramQueue._receive">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_queue.py#L137">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/channels/telegram_queue.py#L137">
       <title>TelegramQueue._receive · app/channels/telegram_queue.py:137</title>
       <rect x="56.0" y="362" width="412.6666666666667" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Receive a notification for Bob</text>
@@ -64,7 +64,7 @@
     </a>
   </g>
   <g id="bob-turn" data-source="app/telegram_worker.py#process_turn">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L166">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/telegram_worker.py#L166">
       <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="508.6666666666667" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Process Bob's message</text>
@@ -74,7 +74,7 @@
     </a>
   </g>
   <g id="bob-finish" data-source="app/channels/telegram_turns.py#TelegramTurns.finish">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_turns.py#L296">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/channels/telegram_turns.py#L296">
       <title>TelegramTurns.finish · app/channels/telegram_turns.py:296</title>
       <rect x="961.3333333333334" y="362" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="973.3333333333334" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save Bob's reply</text>
@@ -86,7 +86,7 @@
   <rect x="55" y="525" width="327" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Independent sender · Already-saved reply</text>
   <g id="progress-ready" data-source="app/channels/telegram_delivery.py#TelegramOutbox.claim_next">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_delivery.py#L23">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/channels/telegram_delivery.py#L23">
       <title>TelegramOutbox.claim_next · app/channels/telegram_delivery.py:23</title>
       <rect x="56.0" y="559" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Find an already-saved reply</text>
@@ -96,7 +96,7 @@
     </a>
   </g>
   <g id="progress-lock" data-source="app/telegram_sender.py#acquire_sender_lock">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_sender.py#L23">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/telegram_sender.py#L23">
       <title>acquire_sender_lock · app/telegram_sender.py:23</title>
       <rect x="508.6666666666667" y="559" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Allow only one sender per bot</text>
@@ -106,7 +106,7 @@
     </a>
   </g>
   <g id="progress-send" data-source="app/telegram_sender.py#deliver_claimed">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_sender.py#L84">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/telegram_sender.py#L84">
       <title>deliver_claimed · app/telegram_sender.py:84</title>
       <rect x="961.3333333333334" y="559" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="973.3333333333334" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Send while processors are busy</text>

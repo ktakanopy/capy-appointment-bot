@@ -7,22 +7,22 @@
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Start with the customer adapter, availability search and transactional booking methods.</text>
   <g id="app-customer_scheduling_actions.py" data-source="app/customer_scheduling_actions.py">
     <rect x="40" y="123" width="665" height="186" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/customer_scheduling_actions.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/customer_scheduling_actions.py">
       <title>app/customer_scheduling_actions.py</title>
       <text x="56" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/customer_scheduling_actions.py</text>
     </a>
     <text x="56" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Bind graph operations to the verified business and customer and forward them</text>
     <text x="56" y="191" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">to domain services.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/customer_scheduling_actions.py#L49">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/customer_scheduling_actions.py#L49">
       <title>CustomerSchedulingActions.search · app/customer_scheduling_actions.py:49</title>
       <text x="56" y="216" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">CustomerSchedulingActions.search  /  line 49</text>
     </a>
     <text x="588" y="216" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/customer_scheduling_actions.py#L54">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/customer_scheduling_actions.py#L54">
       <title>CustomerSchedulingActions.create_booking · app/customer_scheduling_actions.py:54</title>
       <text x="56" y="236" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">CustomerSchedulingActions.create_booking  /  line 54</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/customer_scheduling_actions.py#L54">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/customer_scheduling_actions.py#L54">
       <title>CustomerSchedulingActions.create_booking · app/customer_scheduling_actions.py:54</title>
       <text x="56" y="256" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">CustomerSchedulingActions.create_booking</text>
     </a>
@@ -31,25 +31,25 @@
   </g>
   <g id="app-booking.py" data-source="app/booking.py">
     <rect x="725" y="123" width="665" height="188" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/booking.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/booking.py">
       <title>app/booking.py</title>
       <text x="741" y="150" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/booking.py</text>
     </a>
     <text x="741" y="173" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Apply booking changes and retry checks in PostgreSQL transactions.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/booking.py#L149">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/booking.py#L149">
       <title>BookingService.create · app/booking.py:149</title>
       <text x="741" y="198" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingService.create  /  line 149</text>
     </a>
     <text x="1273" y="198" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/booking.py#L285">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/booking.py#L285">
       <title>BookingService.cancel · app/booking.py:285</title>
       <text x="741" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingService.cancel  /  line 285</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/booking.py#L389">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/booking.py#L389">
       <title>BookingService.reschedule · app/booking.py:389</title>
       <text x="741" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingService.reschedule  /  line 389</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/booking.py#L149">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/booking.py#L149">
       <title>BookingService.create · app/booking.py:149</title>
       <text x="741" y="258" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">BookingService.create</text>
     </a>
@@ -58,22 +58,22 @@
   </g>
   <g id="app-scheduling.py" data-source="app/scheduling.py">
     <rect x="40" y="331" width="665" height="186" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/scheduling.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/scheduling.py">
       <title>app/scheduling.py</title>
       <text x="56" y="358" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/scheduling.py</text>
     </a>
     <text x="56" y="381" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Compute available appointments and revalidate proposed slots inside a write</text>
     <text x="56" y="399" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transaction.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/scheduling.py#L196">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/scheduling.py#L196">
       <title>AvailabilityService.search · app/scheduling.py:196</title>
       <text x="56" y="424" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">AvailabilityService.search  /  line 196</text>
     </a>
     <text x="588" y="424" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/scheduling.py#L55">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/scheduling.py#L55">
       <title>validate_slot_in_transaction · app/scheduling.py:55</title>
       <text x="56" y="444" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">validate_slot_in_transaction  /  line 55</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/scheduling.py#L196">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/scheduling.py#L196">
       <title>AvailabilityService.search · app/scheduling.py:196</title>
       <text x="56" y="464" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AvailabilityService.search</text>
     </a>
@@ -82,22 +82,22 @@
   </g>
   <g id="app-repositories.py" data-source="app/repositories.py">
     <rect x="725" y="331" width="665" height="186" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/repositories.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/repositories.py">
       <title>app/repositories.py</title>
       <text x="741" y="358" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/repositories.py</text>
     </a>
     <text x="741" y="381" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Read business, catalog, schedule and booking data and map rows to domain</text>
     <text x="741" y="399" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contracts.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/repositories.py#L67">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/repositories.py#L67">
       <title>PostgresRepository.catalog · app/repositories.py:67</title>
       <text x="741" y="424" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">PostgresRepository.catalog  /  line 67</text>
     </a>
     <text x="1273" y="424" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/repositories.py#L104">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/repositories.py#L104">
       <title>PostgresRepository.calendar · app/repositories.py:104</title>
       <text x="741" y="444" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">PostgresRepository.calendar  /  line 104</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/repositories.py#L104">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/repositories.py#L104">
       <title>PostgresRepository.calendar · app/repositories.py:104</title>
       <text x="741" y="464" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">PostgresRepository.calendar</text>
     </a>
@@ -106,29 +106,29 @@
   </g>
   <g id="app-database.py" data-source="app/database.py">
     <rect x="40" y="537" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/database.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/database.py">
       <title>app/database.py</title>
       <text x="56" y="564" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/database.py</text>
     </a>
     <text x="56" y="587" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Create pooled SQLAlchemy engines and manage session commit or rollback.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/database.py#L45">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/database.py#L45">
       <title>database_session · app/database.py:45</title>
       <text x="56" y="612" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">database_session  /  line 45</text>
     </a>
     <text x="588" y="612" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/database.py#L51">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/database.py#L51">
       <title>database_is_ready · app/database.py:51</title>
       <text x="56" y="632" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">database_is_ready  /  line 51</text>
     </a>
   </g>
   <g id="app-owner.py" data-source="app/owner.py">
     <rect x="725" y="537" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/owner.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/owner.py">
       <title>app/owner.py</title>
       <text x="741" y="564" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/owner.py</text>
     </a>
     <text x="741" y="587" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Query the studio owner's booking agenda.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/owner.py#L19">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/owner.py#L19">
       <title>owner_agenda · app/owner.py:19</title>
       <text x="741" y="612" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">owner_agenda  /  line 19</text>
     </a>
@@ -136,12 +136,12 @@
   </g>
   <g id="app-cli.py" data-source="app/cli.py">
     <rect x="40" y="685" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/cli.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/cli.py">
       <title>app/cli.py</title>
       <text x="56" y="712" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/cli.py</text>
     </a>
     <text x="56" y="735" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Print the studio owner's upcoming appointments in local time.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/cli.py#L31">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/cli.py#L31">
       <title>main · app/cli.py:31</title>
       <text x="56" y="760" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">main  /  line 31</text>
     </a>
@@ -149,17 +149,17 @@
   </g>
   <g id="app-config.py" data-source="app/config.py">
     <rect x="725" y="685" width="665" height="128" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/config.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/config.py">
       <title>app/config.py</title>
       <text x="741" y="712" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/config.py</text>
     </a>
     <text x="741" y="735" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Read and validate environment-backed application configuration.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/config.py#L69">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/config.py#L69">
       <title>load_settings · app/config.py:69</title>
       <text x="741" y="760" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">load_settings  /  line 69</text>
     </a>
     <text x="1273" y="760" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/config.py#L9">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/config.py#L9">
       <title>Settings · app/config.py:9</title>
       <text x="741" y="780" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">Settings</text>
     </a>
@@ -167,34 +167,34 @@
   </g>
   <g id="app-observability.py" data-source="app/observability.py">
     <rect x="40" y="833" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/observability.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/observability.py">
       <title>app/observability.py</title>
       <text x="56" y="860" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/observability.py</text>
     </a>
     <text x="56" y="883" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Emit structured events with redaction and initialize optional Langfuse</text>
     <text x="56" y="901" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">tracing.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/observability.py#L68">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/observability.py#L68">
       <title>log_event · app/observability.py:68</title>
       <text x="56" y="926" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">log_event  /  line 68</text>
     </a>
     <text x="588" y="926" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/observability.py#L82">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/observability.py#L82">
       <title>debug_event · app/observability.py:82</title>
       <text x="56" y="946" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">debug_event  /  line 82</text>
     </a>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/observability.py#L18">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/observability.py#L18">
       <title>build_tracer · app/observability.py:18</title>
       <text x="56" y="966" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">build_tracer  /  line 18</text>
     </a>
   </g>
   <g id="app-seed.py" data-source="app/seed.py">
     <rect x="725" y="833" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/seed.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/seed.py">
       <title>app/seed.py</title>
       <text x="741" y="860" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/seed.py</text>
     </a>
     <text x="741" y="883" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Insert sample businesses, services, staff and weekly availability.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/seed.py#L18">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/seed.py#L18">
       <title>seed · app/seed.py:18</title>
       <text x="741" y="908" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">seed  /  line 18</text>
     </a>
@@ -202,14 +202,14 @@
   </g>
   <g id="app-__init__.py" data-source="app/__init__.py">
     <rect x="40" y="1019" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/__init__.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/__init__.py">
       <title>app/__init__.py</title>
       <text x="56" y="1046" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/__init__.py</text>
     </a>
     <text x="56" y="1069" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the CAPY application package.</text>
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/__init__.py">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/app/__init__.py">
       <title>app/__init__.py</title>
-      <text x="56" y="1094" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+      <text x="56" y="1094" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">File start  /  line 1</text>
     </a>
     <text x="588" y="1094" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>

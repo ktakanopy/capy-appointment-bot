@@ -26,7 +26,7 @@
   <rect x="55" y="131" width="263" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">GitHub Actions runs verification</text>
   <g id="check-ci" data-source=".github/workflows/verify.yml">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/.github/workflows/verify.yml">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/.github/workflows/verify.yml">
       <title>.github/workflows/verify.yml</title>
       <rect x="508.6666666666667" y="165" width="412.6666666666667" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
       <text x="520.6666666666667" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Run the CI checks</text>
@@ -38,7 +38,7 @@
   <rect x="55" y="328" width="191" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Three kinds of evidence</text>
   <g id="check-unit" data-source="tests/unit/test_conversation_graph.py#test_unoffered_slot_does_not_write">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/tests/unit/test_conversation_graph.py#L124">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/tests/unit/test_conversation_graph.py#L124">
       <title>test_unoffered_slot_does_not_write · tests/unit/test_conversation_graph.py:124</title>
       <rect x="56.0" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Unit and API tests</text>
@@ -48,7 +48,7 @@
     </a>
   </g>
   <g id="check-evals" data-source="tests/evals/test_runner.py#test_smoke_task_dataset_passes_and_languages_are_explicit">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/tests/evals/test_runner.py#L60">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/tests/evals/test_runner.py#L60">
       <title>test_smoke_task_dataset_passes_and_languages_are_explicit · tests/evals/test_runner.py:60</title>
       <rect x="508.6666666666667" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Evaluation tests</text>
@@ -58,7 +58,7 @@
     </a>
   </g>
   <g id="check-integration" data-source="tests/integration/conftest.py#scheduling_db">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/tests/integration/conftest.py#L20">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/tests/integration/conftest.py#L20">
       <title>scheduling_db · tests/integration/conftest.py:20</title>
       <rect x="961.3333333333334" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Integration tests</text>
@@ -70,7 +70,7 @@
   <rect x="55" y="525" width="215" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Open a representative test</text>
   <g id="check-consent-example" data-source="tests/unit/test_conversation_graph.py#test_a_wrong_laya_cancel_cannot_mutate_an_existing_booking_during_new_booking_consent">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/tests/unit/test_conversation_graph.py#L190">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/tests/unit/test_conversation_graph.py#L190">
       <title>test_a_wrong_laya_cancel_cannot_mutate_an_existing_booking_during_new_booking_consent · tests/unit/test_conversation_graph.py:190</title>
       <rect x="56.0" y="559" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Guard pending consent</text>
@@ -80,7 +80,7 @@
     </a>
   </g>
   <g id="check-golden-example" data-source="tests/evals/test_scenario_framework.py#test_golden_run_captures_gemma_laya_and_requires_a_separate_consent_turn">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/tests/evals/test_scenario_framework.py#L26">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/tests/evals/test_scenario_framework.py#L26">
       <title>test_golden_run_captures_gemma_laya_and_requires_a_separate_consent_turn · tests/evals/test_scenario_framework.py:26</title>
       <rect x="508.6666666666667" y="559" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="520.6666666666667" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Verify the golden case</text>
@@ -90,7 +90,7 @@
     </a>
   </g>
   <g id="check-booking-example" data-source="tests/integration/test_workflow_booking_journey.py#test_real_workflow_booking_reschedule_cancel">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/tests/integration/test_workflow_booking_journey.py#L16">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/tests/integration/test_workflow_booking_journey.py#L16">
       <title>test_real_workflow_booking_reschedule_cancel · tests/integration/test_workflow_booking_journey.py:16</title>
       <rect x="961.3333333333334" y="559" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="973.3333333333334" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Run a booking lifecycle</text>
@@ -102,7 +102,7 @@
   <rect x="55" y="722" width="335" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="740" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Concurrent runtime and failure boundaries</text>
   <g id="test-processors" data-source="tests/integration/test_telegram_processors.py#test_five_processors_serialize_each_chat_and_sender_progresses">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/tests/integration/test_telegram_processors.py#L60">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/tests/integration/test_telegram_processors.py#L60">
       <title>test_five_processors_serialize_each_chat_and_sender_progresses · tests/integration/test_telegram_processors.py:60</title>
       <rect x="56.0" y="756" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="68.0" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Five processors, one chat owner</text>
@@ -112,7 +112,7 @@
     </a>
   </g>
   <g id="test-redelivery" data-source="tests/integration/test_telegram_processors.py#test_reconnect_during_slow_turn_preserves_slot_lease_and_idempotency">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/tests/integration/test_telegram_processors.py#L207">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/tests/integration/test_telegram_processors.py#L207">
       <title>test_reconnect_during_slow_turn_preserves_slot_lease_and_idempotency · tests/integration/test_telegram_processors.py:207</title>
       <rect x="508.6666666666667" y="756" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="520.6666666666667" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reconnect and redelivery</text>
@@ -122,7 +122,7 @@
     </a>
   </g>
   <g id="test-signals" data-source="tests/integration/test_telegram_shutdown.py#test_process_signals_drain_or_leave_an_interrupted_claim">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/tests/integration/test_telegram_shutdown.py#L19">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/06ac1ba45f31aef0fa938bf99acba657f94757c6/tests/integration/test_telegram_shutdown.py#L19">
       <title>test_process_signals_drain_or_leave_an_interrupted_claim · tests/integration/test_telegram_shutdown.py:19</title>
       <rect x="961.3333333333334" y="756" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
       <text x="973.3333333333334" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Graceful and forced shutdown</text>
