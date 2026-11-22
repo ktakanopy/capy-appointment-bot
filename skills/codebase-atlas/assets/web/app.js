@@ -34,25 +34,6 @@ const toneInfo = {
   success: ["success", "Outcome"],
   failure: ["failure", "Failure trigger"],
 };
-const flowLabels = {
-  walkthrough: ["Booking walkthrough", "booking"],
-  runtime: ["Telegram runtime", "runtime"],
-  conversation: ["Conversation graph", "conversation"],
-  booking: ["Booking happy path", "booking"],
-  "failure-paths": ["Failure paths", "failure"],
-  management: ["Manage a booking", "management"],
-  evaluation: ["Evaluation framework", "class"],
-  tests: ["Test suites", "success"],
-};
-const areas = {
-  "files-telegram": "Telegram & workers",
-  "files-conversation": "Conversation & models",
-  "files-scheduling": "Scheduling & setup",
-  "files-data": "Contracts & database",
-  "files-evaluation": "Evaluation",
-  "files-tests": "Tests & CI",
-};
-
 function element(tag, classes, value) {
   const node = document.createElement(tag);
   if (classes) node.className = classes;
@@ -70,7 +51,7 @@ function icon(name) {
   const node = element("span");
   node.dataset.icon = name;
   node.setAttribute("aria-hidden", "true");
-  node.innerHTML = `<svg class="icon" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${icons[name]}</svg>`;
+  node.innerHTML = `<svg class="icon" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${icons[name] || icons.atlas}</svg>`;
   return node;
 }
 
@@ -88,18 +69,18 @@ function fileName(path) {
 }
 
 function flowLabel(flow) {
-  return flowLabels[flow.id] || [flow.title, "atlas"];
+  return [flow.navTitle || flow.title, flow.icon || "atlas"];
 }
 
 function catalogLabel(catalog) {
-  return areas[catalog.id] || catalog.title;
+  return catalog.navTitle || catalog.title;
 }
 
 const files = new Map(catalogs.flatMap((catalog) => catalog.files.map(([path, detail, entries, classes]) => [
   path, { path, detail, entries, classes, area: catalogLabel(catalog) },
 ])));
 const classCount = [...files.values()].reduce((sum, file) => sum + file.classes.length, 0);
-const importCenter = files.has("app/runtime.py") ? "app/runtime.py" : files.keys().next().value;
+const importCenter = files.keys().next().value;
 const flowById = new Map(flows.map((flow) => [flow.id, flow]));
 const firstView = flows[0]?.id ?? "files";
 const allNodes = flows.flatMap((flow) => flow.lanes.flatMap((lane) => lane.nodes
@@ -457,7 +438,8 @@ function sourceBlock(key, preview = false) {
 
 function openTranscript() {
   const flow = layout.flow;
-  $("transcript-context").textContent = flow.transcriptContext;
+  $("transcript-title").textContent = flow.transcriptTitle || "Example walkthrough";
+  $("transcript-context").textContent = flow.transcriptContext || "";
   $("transcript-messages").replaceChildren(...flow.transcript.map((message) => {
     const control = button(`chat-message${message.speaker === "Customer" ? " customer" : ""}`, null, () => {
       transcriptDialog.close();
@@ -514,7 +496,7 @@ function renderNodeDetails(node) {
     detailPanel.append(walkthroughControls(node));
     const example = layout.flow.transcript.find((message) => message.node === node.id);
     if (example) {
-      detailPanel.append(section(`${example.speaker} message`, element("blockquote", "example-message", example.text)));
+      detailPanel.append(section(example.speaker, element("blockquote", "example-message", example.text)));
     }
   }
   if (node.why) {

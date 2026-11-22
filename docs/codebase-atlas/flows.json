@@ -36,6 +36,9 @@
   },
   {
     "id": "walkthrough",
+    "navTitle": "Booking walkthrough",
+    "icon": "booking",
+    "transcriptTitle": "Example conversation",
     "title": "Booking walkthrough · Three messages, one appointment",
     "subtitle": "Follow one example Telegram conversation from the first webhook to the committed booking and final reply.",
     "columns": 5,
@@ -127,6 +130,8 @@
   },
   {
     "id": "runtime",
+    "navTitle": "Telegram runtime",
+    "icon": "runtime",
     "title": "How a Telegram message moves through CAPY",
     "subtitle": "Follow a customer message from receipt and database storage through processing, recovery and a separately sent reply.",
     "columns": 5,
@@ -170,6 +175,8 @@
   },
   {
     "id": "conversation",
+    "navTitle": "Conversation graph",
+    "icon": "conversation",
     "title": "Inside a LangGraph conversation turn",
     "subtitle": "Gemma extracts facts, Laya proposes the next action, and Python checks the proposed route before any write.",
     "columns": 4,
@@ -219,6 +226,8 @@
   },
   {
     "id": "booking",
+    "navTitle": "Booking happy path",
+    "icon": "booking",
     "title": "Happy path · Create a booking in three turns",
     "subtitle": "Each row starts with a new customer message. The first two turns save conversation state for the next message.",
     "columns": 4,
@@ -257,6 +266,8 @@
   },
   {
     "id": "failure-paths",
+    "navTitle": "Failure paths",
+    "icon": "failure",
     "title": "Failure paths · What happens when a step stops",
     "subtitle": "Each row traces one condition to its handler and the resulting change in state or customer reply.",
     "columns": 3,
@@ -345,6 +356,8 @@
   },
   {
     "id": "management",
+    "navTitle": "Manage a booking",
+    "icon": "management",
     "title": "Manage an existing booking",
     "subtitle": "Follow cancellation and rescheduling through the customer-scoped graph and the PostgreSQL write boundary.",
     "columns": 4,
@@ -373,6 +386,8 @@
   },
   {
     "id": "evaluation",
+    "navTitle": "Evaluation framework",
+    "icon": "class",
     "title": "Evaluate a full conversation",
     "subtitle": "Follow a scenario from the CLI and YAML assertions through the real graph and its evaluation report.",
     "columns": 4,
@@ -402,6 +417,8 @@
   },
   {
     "id": "tests",
+    "navTitle": "Test suites",
+    "icon": "success",
     "title": "Verify CAPY across test layers",
     "subtitle": "See what CI exercises and open representative tests for routing, evaluation, and real scheduling services.",
     "columns": 3,

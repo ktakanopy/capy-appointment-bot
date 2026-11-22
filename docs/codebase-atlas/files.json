@@ -1,6 +1,7 @@
 [
   {
     "id":"files-telegram",
+    "navTitle":"Telegram & workers",
     "title":"Source reference · Telegram and worker processes",
     "subtitle":"Start with the webhook and service CLI. Class rows link to the defining class or its most useful method.",
     "files":[
@@ -33,6 +34,7 @@
   },
   {
     "id":"files-conversation",
+    "navTitle":"Conversation & models",
     "title":"Source reference · Conversation, models and state",
     "subtitle":"Start with runtime wiring, the workflow facade and graph steps. Provider adapters are called by the graph.",
     "files":[
@@ -74,6 +76,7 @@
   },
   {
     "id":"files-scheduling",
+    "navTitle":"Scheduling & setup",
     "title":"Source reference · Scheduling and application setup",
     "subtitle":"Start with the customer adapter, availability search and transactional booking methods.",
     "files":[
@@ -97,6 +100,7 @@
   },
   {
     "id":"files-data",
+    "navTitle":"Contracts & database",
     "title":"Source reference · Domain contracts and PostgreSQL rows",
     "subtitle":"Pydantic models carry validated application data. SQLAlchemy classes map durable rows and constraints.",
     "files":[
@@ -148,6 +152,7 @@
   },
   {
     "id":"files-evaluation",
+    "navTitle":"Evaluation",
     "title":"Source reference · Evaluation programs",
     "subtitle":"The task runner scores individual capabilities. The scenario CLI reuses the workflow to test full conversations.",
     "files":[
@@ -177,6 +182,7 @@
   },
   {
     "id":"files-tests",
+    "navTitle":"Tests & CI",
     "title":"Source reference · Verification and test suites",
     "subtitle":"Open a representative assertion or fixture to see what a test file covers.",
     "files":[

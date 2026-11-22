@@ -413,7 +413,7 @@
     <text x="56" y="2039" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the channel adapters package.</text>
     <a href="../../app/channels/__init__.py">
       <title>app/channels/__init__.py</title>
-      <text x="56" y="2064" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+      <text x="56" y="2064" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">File start  /  line 1</text>
     </a>
     <text x="588" y="2064" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>

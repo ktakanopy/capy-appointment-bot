@@ -92,9 +92,15 @@ class SourceLinks:
     def resolve(self, ref):
         file, _, symbol = ref.partition("#")
         symbols = self.symbols(file)
-        if symbol and symbol not in symbols:
+        if re.fullmatch(r"L[0-9]+", symbol):
+            line = int(symbol[1:])
+            count = len((self.root / file).read_text(encoding="utf-8").splitlines())
+            if not 1 <= line <= count:
+                raise ValueError(f"Source line outside file: {ref}")
+        elif symbol and symbol not in symbols:
             raise ValueError(f"Unknown definition: {ref}")
-        line = symbols[symbol] if symbol else None
+        else:
+            line = symbols[symbol] if symbol else None
         if self.source_base:
             relative = f"{self.source_base.rstrip('/')}/{quote(file)}"
         else:
@@ -231,7 +237,7 @@ def draw_catalog(view, sources):
             for index, symbol in enumerate(entries):
                 ref = f"{file}#{symbol}" if symbol else file
                 link, line = sources.add(group, ref)
-                label = f"{symbol or 'Module declaration'}  /  line {line or 1}"
+                label = f"{symbol or 'File start'}  /  line {line or 1}"
                 text(link, label, x + 16, at, size=14, weight=700,
                      family=MONO, color=LINK)
                 if index == 0:
