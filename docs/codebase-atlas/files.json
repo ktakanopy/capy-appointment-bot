@@ -7,18 +7,18 @@
       ["app/main.py","Serve FastAPI health probes and authenticate and persist Telegram updates.",["telegram_webhook","lifespan","health"],[
         ["HealthDependencies","Bundles settings, Redis and optional lifecycle-managed broker adapter."],["_SuppressHealthAccess","Filters routine health requests from access logs.","filter"]]],
       ["app/telegram_service.py","Start processor, sender or webhook registration roles.",["main","register"],[]],
-      ["app/telegram_worker.py","Schedule RabbitMQ hints and direct database recovery through one execution slot.",["run_worker","process_pending","process_turn","_execute","_notification_claim","TelegramWorker.handle_message"],[
+      ["app/telegram_worker.py","Run one message at a time per processor, using RabbitMQ notifications and periodic database checks.",["run_worker","process_pending","process_turn","_execute","_notification_claim","TelegramWorker.handle_message"],[
         ["TelegramWorker","Handles commands, contacts, text and voice for a turn.","handle_message"]]],
-      ["app/channels/telegram_queue.py","Manage one shared queue, bounded publication, reconnects and channel-bound delivery settlement.",["TelegramQueue.try_publish","TelegramQueue._connect_loop","TelegramQueue.acknowledge"],[
-        ["ChatReady","Carries only validated bot/chat integer IDs."],["ChatDelivery","Binds a hint to the original channel delivery."],["TelegramQueue","Owns reused asynchronous transport and a bounded local delivery buffer.","try_publish"]]],
+      ["app/channels/telegram_queue.py","Notify processors about chats and manage RabbitMQ connections, retries and acknowledgments.",["TelegramQueue.try_publish","TelegramQueue._connect_loop","TelegramQueue.acknowledge"],[
+        ["ChatReady","Carries only validated bot/chat integer IDs."],["ChatDelivery","Pairs a chat notification with the RabbitMQ delivery that received it."],["TelegramQueue","Owns reused asynchronous transport and a bounded local delivery buffer.","try_publish"]]],
       ["app/telegram_sender.py","Run independent paced delivery, sender locking, recovery and bounded maintenance.",["run_sender","send_pending","acquire_sender_lock","deliver_claimed","prune_history"],[]],
       ["app/agenda_api.py","Expose the studio catalog, available slots and bookings to an authorized caller.",["catalog","slots","create","reschedule","cancel"],[]],
-      ["app/channels/telegram_turns.py","Lease the oldest eligible chat update and commit the resulting state pointer and reply.",["TelegramTurns.claim_chat","TelegramTurns.finish","TelegramTurns.claim_next"],[
-        ["TelegramTurns","Owns the chat lease and the turn lifecycle.","claim_chat"],["TurnClaim","Binds an attempt to proof of current ownership.","assert_owned"],["ClaimLost","Signals that an attempt can no longer write."],["ChatClaimResult","Distinguishes claimed, busy, not-ready and empty chat outcomes."]]],
+      ["app/channels/telegram_turns.py","Choose pending messages, allow one processor per chat, and save each completed result.",["TelegramTurns.claim_chat","TelegramTurns.finish","TelegramTurns.claim_next"],[
+        ["TelegramTurns","Controls which processor may handle the next message in a chat.","claim_chat"],["TurnClaim","Records which attempt has temporary permission to process a chat and save changes.","assert_owned"],["ClaimLost","Stops an attempt from writing after its processing permission expires or another attempt takes over."],["ChatClaimResult","Reports whether a message can run, the chat is busy, work is delayed or nothing remains."]]],
       ["app/channels/telegram_intake.py","Identify supported private messages and save incoming updates idempotently.",["save_update","private_message"],[
-        ["IntakeResult","Reports acceptance and a validated optional post-commit notification."]]],
+        ["IntakeResult","Reports whether the update was accepted and which chat may need processing."]]],
       ["app/channels/telegram_delivery.py","Reserve and settle replies in chat order, respecting retry delays.",["TelegramOutbox.claim_next","TelegramOutbox.finish"],[
-        ["TelegramOutbox","Reserves and settles outgoing jobs.","claim_next"]]],
+        ["TelegramOutbox","Chooses saved replies for sending and records the delivery result.","claim_next"]]],
       ["app/channels/telegram_repository.py","Link a verified Telegram sender to a business customer and save sender-owned contact details.",["TelegramRepository.ensure_customer_for_sender"],[
         ["TelegramRepository","Owns Telegram-specific identity and contact queries.","ensure_customer_for_sender"]]],
       ["app/channels/bots.py","Resolve the configured bot and its credentials.",["configured_bot","TelegramBot.accepts_webhook"],[

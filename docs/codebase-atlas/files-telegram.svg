@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 2084" width="1430" height="2084" role="img" aria-label="Source reference · Telegram and worker processes">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 2146" width="1430" height="2146" role="img" aria-label="Source reference · Telegram and worker processes">
   <title>Source reference · Telegram and worker processes</title>
   <desc>Start with the webhook and service CLI. Class rows link to the defining class or its most useful method.</desc>
-  <rect x="0" y="0" width="1430" height="2084" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <rect x="0" y="0" width="1430" height="2146" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Source reference · Telegram and worker processes</text>
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Start with the webhook and service CLI. Class rows link to the defining class or its most useful method.</text>
   <g id="app-main.py" data-source="app/main.py">
@@ -61,8 +61,8 @@
       <title>app/telegram_worker.py</title>
       <text x="56" y="398" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/telegram_worker.py</text>
     </a>
-    <text x="56" y="421" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Schedule RabbitMQ hints and direct database recovery through one execution</text>
-    <text x="56" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">slot.</text>
+    <text x="56" y="421" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Run one message at a time per processor, using RabbitMQ notifications and</text>
+    <text x="56" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">periodic database checks.</text>
     <a href="../../app/telegram_worker.py#L46">
       <title>run_worker · app/telegram_worker.py:46</title>
       <text x="56" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">run_worker  /  line 46</text>
@@ -101,8 +101,8 @@
       <title>app/channels/telegram_queue.py</title>
       <text x="741" y="398" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_queue.py</text>
     </a>
-    <text x="741" y="421" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Manage one shared queue, bounded publication, reconnects and channel-bound</text>
-    <text x="741" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">delivery settlement.</text>
+    <text x="741" y="421" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Notify processors about chats and manage RabbitMQ connections, retries and</text>
+    <text x="741" y="439" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">acknowledgments.</text>
     <a href="../../app/channels/telegram_queue.py#L117">
       <title>TelegramQueue.try_publish · app/channels/telegram_queue.py:117</title>
       <text x="741" y="464" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramQueue.try_publish  /  line 117</text>
@@ -126,8 +126,8 @@
       <title>ChatDelivery · app/channels/telegram_queue.py:43</title>
       <text x="741" y="564" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ChatDelivery</text>
     </a>
-    <text x="1107" y="564" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Binds a hint to the original channel</text>
-    <text x="1107" y="579" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">delivery.</text>
+    <text x="1107" y="564" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Pairs a chat notification with the</text>
+    <text x="1107" y="579" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">RabbitMQ delivery that received it.</text>
     <a href="../../app/channels/telegram_queue.py#L117">
       <title>TelegramQueue.try_publish · app/channels/telegram_queue.py:117</title>
       <text x="741" y="604" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramQueue.try_publish</text>
@@ -196,13 +196,13 @@
     </a>
   </g>
   <g id="app-channels-telegram_turns.py" data-source="app/channels/telegram_turns.py">
-    <rect x="40" y="903" width="665" height="326" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="40" y="903" width="665" height="386" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/channels/telegram_turns.py">
       <title>app/channels/telegram_turns.py</title>
       <text x="56" y="930" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_turns.py</text>
     </a>
-    <text x="56" y="953" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Lease the oldest eligible chat update and commit the resulting state pointer</text>
-    <text x="56" y="971" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and reply.</text>
+    <text x="56" y="953" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Choose pending messages, allow one processor per chat, and save each</text>
+    <text x="56" y="971" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">completed result.</text>
     <a href="../../app/channels/telegram_turns.py#L131">
       <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:131</title>
       <text x="56" y="996" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramTurns.claim_chat  /  line 131</text>
@@ -220,26 +220,29 @@
       <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:131</title>
       <text x="56" y="1056" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramTurns.claim_chat</text>
     </a>
-    <text x="422" y="1056" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Owns the chat lease and the turn</text>
-    <text x="422" y="1071" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">lifecycle.</text>
+    <text x="422" y="1056" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Controls which processor may handle the</text>
+    <text x="422" y="1071" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">next message in a chat.</text>
     <a href="../../app/channels/telegram_turns.py#L75">
       <title>TurnClaim.assert_owned · app/channels/telegram_turns.py:75</title>
       <text x="56" y="1096" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TurnClaim.assert_owned</text>
     </a>
-    <text x="422" y="1096" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Binds an attempt to proof of current</text>
-    <text x="422" y="1111" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">ownership.</text>
+    <text x="422" y="1096" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Records which attempt has temporary</text>
+    <text x="422" y="1111" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">permission to process a chat and save</text>
+    <text x="422" y="1126" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">changes.</text>
     <a href="../../app/channels/telegram_turns.py#L35">
       <title>ClaimLost · app/channels/telegram_turns.py:35</title>
-      <text x="56" y="1136" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ClaimLost</text>
+      <text x="56" y="1156" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ClaimLost</text>
     </a>
-    <text x="422" y="1136" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Signals that an attempt can no longer</text>
-    <text x="422" y="1151" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">write.</text>
+    <text x="422" y="1156" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Stops an attempt from writing after its</text>
+    <text x="422" y="1171" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">processing permission expires or</text>
+    <text x="422" y="1186" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">another attempt takes over.</text>
     <a href="../../app/channels/telegram_turns.py#L92">
       <title>ChatClaimResult · app/channels/telegram_turns.py:92</title>
-      <text x="56" y="1176" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ChatClaimResult</text>
+      <text x="56" y="1216" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">ChatClaimResult</text>
     </a>
-    <text x="422" y="1176" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Distinguishes claimed, busy, not-ready</text>
-    <text x="422" y="1191" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and empty chat outcomes.</text>
+    <text x="422" y="1216" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports whether a message can run, the</text>
+    <text x="422" y="1231" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">chat is busy, work is delayed or</text>
+    <text x="422" y="1246" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">nothing remains.</text>
   </g>
   <g id="app-channels-telegram_intake.py" data-source="app/channels/telegram_intake.py">
     <rect x="725" y="903" width="665" height="168" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
@@ -261,156 +264,157 @@
       <title>IntakeResult · app/channels/telegram_intake.py:43</title>
       <text x="741" y="1018" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">IntakeResult</text>
     </a>
-    <text x="1107" y="1018" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports acceptance and a validated</text>
-    <text x="1107" y="1033" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">optional post-commit notification.</text>
+    <text x="1107" y="1018" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports whether the update was accepted</text>
+    <text x="1107" y="1033" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">and which chat may need processing.</text>
   </g>
   <g id="app-channels-telegram_delivery.py" data-source="app/channels/telegram_delivery.py">
-    <rect x="40" y="1249" width="665" height="148" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="40" y="1309" width="665" height="168" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/channels/telegram_delivery.py">
       <title>app/channels/telegram_delivery.py</title>
-      <text x="56" y="1276" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_delivery.py</text>
+      <text x="56" y="1336" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_delivery.py</text>
     </a>
-    <text x="56" y="1299" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reserve and settle replies in chat order, respecting retry delays.</text>
+    <text x="56" y="1359" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reserve and settle replies in chat order, respecting retry delays.</text>
     <a href="../../app/channels/telegram_delivery.py#L23">
       <title>TelegramOutbox.claim_next · app/channels/telegram_delivery.py:23</title>
-      <text x="56" y="1324" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_next  /  line 23</text>
+      <text x="56" y="1384" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_next  /  line 23</text>
     </a>
-    <text x="588" y="1324" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="1384" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
     <a href="../../app/channels/telegram_delivery.py#L73">
       <title>TelegramOutbox.finish · app/channels/telegram_delivery.py:73</title>
-      <text x="56" y="1344" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.finish  /  line 73</text>
+      <text x="56" y="1404" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.finish  /  line 73</text>
     </a>
     <a href="../../app/channels/telegram_delivery.py#L23">
       <title>TelegramOutbox.claim_next · app/channels/telegram_delivery.py:23</title>
-      <text x="56" y="1364" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_next</text>
+      <text x="56" y="1424" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramOutbox.claim_next</text>
     </a>
-    <text x="422" y="1364" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reserves and settles outgoing jobs.</text>
+    <text x="422" y="1424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Chooses saved replies for sending and</text>
+    <text x="422" y="1439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">records the delivery result.</text>
   </g>
   <g id="app-channels-telegram_repository.py" data-source="app/channels/telegram_repository.py">
-    <rect x="725" y="1249" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="725" y="1309" width="665" height="166" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/channels/telegram_repository.py">
       <title>app/channels/telegram_repository.py</title>
-      <text x="741" y="1276" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_repository.py</text>
+      <text x="741" y="1336" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram_repository.py</text>
     </a>
-    <text x="741" y="1299" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Link a verified Telegram sender to a business customer and save sender-owned</text>
-    <text x="741" y="1317" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contact details.</text>
+    <text x="741" y="1359" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Link a verified Telegram sender to a business customer and save sender-owned</text>
+    <text x="741" y="1377" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contact details.</text>
     <a href="../../app/channels/telegram_repository.py#L20">
       <title>TelegramRepository.ensure_customer_for_sender · app/channels/telegram_repository.py:20</title>
-      <text x="741" y="1342" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramRepository.ensure_customer_for_sender  /  line 20</text>
+      <text x="741" y="1402" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramRepository.ensure_customer_for_sender  /  line 20</text>
     </a>
-    <text x="1273" y="1342" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1402" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
     <a href="../../app/channels/telegram_repository.py#L20">
       <title>TelegramRepository.ensure_customer_for_sender · app/channels/telegram_repository.py:20</title>
-      <text x="741" y="1362" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramRepository.ensure_customer_for_sender</text>
+      <text x="741" y="1422" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramRepository.ensure_customer_for_sender</text>
     </a>
-    <text x="1107" y="1362" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Owns Telegram-specific identity and</text>
-    <text x="1107" y="1377" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contact queries.</text>
+    <text x="1107" y="1422" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Owns Telegram-specific identity and</text>
+    <text x="1107" y="1437" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">contact queries.</text>
   </g>
   <g id="app-channels-bots.py" data-source="app/channels/bots.py">
-    <rect x="40" y="1435" width="665" height="168" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="40" y="1497" width="665" height="168" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/channels/bots.py">
       <title>app/channels/bots.py</title>
-      <text x="56" y="1462" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/bots.py</text>
+      <text x="56" y="1524" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/bots.py</text>
     </a>
-    <text x="56" y="1485" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Resolve the configured bot and its credentials.</text>
+    <text x="56" y="1547" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Resolve the configured bot and its credentials.</text>
     <a href="../../app/channels/bots.py#L40">
       <title>configured_bot · app/channels/bots.py:40</title>
-      <text x="56" y="1510" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">configured_bot  /  line 40</text>
+      <text x="56" y="1572" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">configured_bot  /  line 40</text>
     </a>
-    <text x="588" y="1510" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="1572" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
     <a href="../../app/channels/bots.py#L31">
       <title>TelegramBot.accepts_webhook · app/channels/bots.py:31</title>
-      <text x="56" y="1530" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramBot.accepts_webhook  /  line 31</text>
+      <text x="56" y="1592" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramBot.accepts_webhook  /  line 31</text>
     </a>
     <a href="../../app/channels/bots.py#L31">
       <title>TelegramBot.accepts_webhook · app/channels/bots.py:31</title>
-      <text x="56" y="1550" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBot.accepts_webhook</text>
+      <text x="56" y="1612" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBot.accepts_webhook</text>
     </a>
-    <text x="422" y="1550" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Checks webhook credentials and builds</text>
-    <text x="422" y="1565" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the API client.</text>
+    <text x="422" y="1612" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Checks webhook credentials and builds</text>
+    <text x="422" y="1627" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">the API client.</text>
   </g>
   <g id="app-channels-telegram.py" data-source="app/channels/telegram.py">
-    <rect x="725" y="1435" width="665" height="206" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="725" y="1497" width="665" height="206" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/channels/telegram.py">
       <title>app/channels/telegram.py</title>
-      <text x="741" y="1462" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram.py</text>
+      <text x="741" y="1524" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/telegram.py</text>
     </a>
-    <text x="741" y="1485" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Wrap Telegram Bot API calls for registration, sending and bounded audio</text>
-    <text x="741" y="1503" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">downloads.</text>
+    <text x="741" y="1547" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Wrap Telegram Bot API calls for registration, sending and bounded audio</text>
+    <text x="741" y="1565" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">downloads.</text>
     <a href="../../app/channels/telegram.py#L36">
       <title>TelegramBotApi.call · app/channels/telegram.py:36</title>
-      <text x="741" y="1528" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramBotApi.call  /  line 36</text>
+      <text x="741" y="1590" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">TelegramBotApi.call  /  line 36</text>
     </a>
-    <text x="1273" y="1528" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1590" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
     <a href="../../app/channels/telegram.py#L36">
       <title>TelegramBotApi.call · app/channels/telegram.py:36</title>
-      <text x="741" y="1548" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBotApi.call</text>
+      <text x="741" y="1610" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramBotApi.call</text>
     </a>
-    <text x="1107" y="1548" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Sends requests and parses Telegram</text>
-    <text x="1107" y="1563" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">responses.</text>
+    <text x="1107" y="1610" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Sends requests and parses Telegram</text>
+    <text x="1107" y="1625" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">responses.</text>
     <a href="../../app/channels/telegram.py#L17">
       <title>TelegramApiError.is_permanent_rejection · app/channels/telegram.py:17</title>
-      <text x="741" y="1588" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramApiError.is_permanent_rejection</text>
+      <text x="741" y="1650" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">TelegramApiError.is_permanent_rejection</text>
     </a>
-    <text x="1107" y="1588" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports a typed API rejection or</text>
-    <text x="1107" y="1603" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transport failure.</text>
+    <text x="1107" y="1650" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Reports a typed API rejection or</text>
+    <text x="1107" y="1665" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transport failure.</text>
   </g>
   <g id="app-channels-audio_chunks.py" data-source="app/channels/audio_chunks.py">
-    <rect x="40" y="1661" width="665" height="246" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="40" y="1723" width="665" height="246" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/channels/audio_chunks.py">
       <title>app/channels/audio_chunks.py</title>
-      <text x="56" y="1688" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/audio_chunks.py</text>
+      <text x="56" y="1750" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/audio_chunks.py</text>
     </a>
-    <text x="56" y="1711" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Decode bounded audio with FFmpeg and emit overlapping WAV chunks for</text>
-    <text x="56" y="1729" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transcription.</text>
+    <text x="56" y="1773" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Decode bounded audio with FFmpeg and emit overlapping WAV chunks for</text>
+    <text x="56" y="1791" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">transcription.</text>
     <a href="../../app/channels/audio_chunks.py#L72">
       <title>AudioChunker.chunks · app/channels/audio_chunks.py:72</title>
-      <text x="56" y="1754" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">AudioChunker.chunks  /  line 72</text>
+      <text x="56" y="1816" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">AudioChunker.chunks  /  line 72</text>
     </a>
-    <text x="588" y="1754" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="1816" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
     <a href="../../app/channels/audio_chunks.py#L72">
       <title>AudioChunker.chunks · app/channels/audio_chunks.py:72</title>
-      <text x="56" y="1774" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioChunker.chunks</text>
+      <text x="56" y="1836" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioChunker.chunks</text>
     </a>
-    <text x="422" y="1774" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Applies decode limits and chooses chunk</text>
-    <text x="422" y="1789" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">boundaries.</text>
+    <text x="422" y="1836" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Applies decode limits and chooses chunk</text>
+    <text x="422" y="1851" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">boundaries.</text>
     <a href="../../app/channels/audio_chunks.py#L33">
       <title>AudioChunk · app/channels/audio_chunks.py:33</title>
-      <text x="56" y="1814" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioChunk</text>
+      <text x="56" y="1876" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioChunk</text>
     </a>
-    <text x="422" y="1814" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries a WAV chunk and overlap</text>
-    <text x="422" y="1829" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">metadata.</text>
+    <text x="422" y="1876" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries a WAV chunk and overlap</text>
+    <text x="422" y="1891" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">metadata.</text>
     <a href="../../app/channels/audio_chunks.py#L28">
       <title>AudioError · app/channels/audio_chunks.py:28</title>
-      <text x="56" y="1854" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioError</text>
+      <text x="56" y="1916" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">AudioError</text>
     </a>
-    <text x="422" y="1854" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Signals an audio decode or processing</text>
-    <text x="422" y="1869" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">failure.</text>
+    <text x="422" y="1916" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Signals an audio decode or processing</text>
+    <text x="422" y="1931" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">failure.</text>
   </g>
   <g id="app-channels-phone.py" data-source="app/channels/phone.py">
-    <rect x="725" y="1661" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="725" y="1723" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/channels/phone.py">
       <title>app/channels/phone.py</title>
-      <text x="741" y="1688" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/phone.py</text>
+      <text x="741" y="1750" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/phone.py</text>
     </a>
-    <text x="741" y="1711" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Normalize a shared contact number into the accepted stored format.</text>
+    <text x="741" y="1773" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Normalize a shared contact number into the accepted stored format.</text>
     <a href="../../app/channels/phone.py#L6">
       <title>canonical_phone · app/channels/phone.py:6</title>
-      <text x="741" y="1736" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">canonical_phone  /  line 6</text>
+      <text x="741" y="1798" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">canonical_phone  /  line 6</text>
     </a>
-    <text x="1273" y="1736" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="1273" y="1798" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
   <g id="app-channels-__init__.py" data-source="app/channels/__init__.py">
-    <rect x="40" y="1927" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
+    <rect x="40" y="1989" width="665" height="108" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1" />
     <a href="../../app/channels/__init__.py">
       <title>app/channels/__init__.py</title>
-      <text x="56" y="1954" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/__init__.py</text>
+      <text x="56" y="2016" fill="#172e3b" font-size="18" font-weight="700" font-family="ui-monospace, Menlo, monospace">app/channels/__init__.py</text>
     </a>
-    <text x="56" y="1977" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the channel adapters package.</text>
+    <text x="56" y="2039" fill="#466072" font-size="15" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Defines the channel adapters package.</text>
     <a href="../../app/channels/__init__.py">
       <title>app/channels/__init__.py</title>
-      <text x="56" y="2002" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
+      <text x="56" y="2064" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">Module declaration  /  line 1</text>
     </a>
-    <text x="588" y="2002" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
+    <text x="588" y="2064" fill="#13677e" font-size="12" font-weight="700" font-family="system-ui, -apple-system, sans-serif">START HERE</text>
   </g>
 </svg>

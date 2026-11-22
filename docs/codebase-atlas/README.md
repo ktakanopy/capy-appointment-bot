@@ -45,3 +45,7 @@ python3 skills/codebase-atlas/scripts/render_atlas.py --web --project CAPY \
 The HTML includes snapshots of the referenced source files. Regenerate it after source changes to refresh the code and line numbers.
 
 Five processors are an initial deployment configuration. [Verification evidence](../verification/rabbitmq.md) separates controlled tests and simulated inference/delivery from production capacity. The physical `telegram_conversations` table stores processing coordination and checkpoint linkage, not a transcript. Broker acknowledgments settle hints; `TelegramTurns.finish` completes inbox turns. The source reader resolves symbols and embeds fresh source snapshots on regeneration. Desktop and 390 × 844 navigation, search, inspector, source reader, transcript, retained bookmarks and Open SVG are covered by the recorded visual check.
+
+## Writing card descriptions
+
+Name the action in the title. In the description, say who acts and what happens to the message. Use the rationale to explain the outcome or the specific failure it prevents. Define terms such as a lease (temporary processing permission) when they are needed. Keep implementation names in the source links.
