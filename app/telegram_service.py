@@ -1,4 +1,4 @@
-"""Run the single Telegram worker or configure its webhook."""
+"""Process Telegram turns, send saved replies, or configure the webhook."""
 
 import argparse
 import os
@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 from app.channels.bots import configured_bot
 from app.config import load_settings
 from app.observability import get_logger, log_event
+from app.telegram_sender import run_sender
 from app.telegram_worker import run_worker
 
 
@@ -45,7 +46,7 @@ def register(settings, args) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("role", choices=("process", "register"))
+    parser.add_argument("role", choices=("process", "send", "register"))
     parser.add_argument("--webhook-base-url")
     args = parser.parse_args()
     settings = load_settings()
@@ -56,7 +57,8 @@ def main() -> None:
     stopping = Event()
     for name in (signal.SIGINT, signal.SIGTERM):
         signal.signal(name, lambda *_: stopping.set())
-    run_worker(settings, stopping, get_logger())
+    runner = run_worker if args.role == "process" else run_sender
+    runner(settings, stopping, get_logger())
 
 
 if __name__ == "__main__":

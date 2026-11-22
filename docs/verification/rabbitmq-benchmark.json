@@ -1,0 +1,74 @@
+{
+  "simulated_inference_and_telegram": true,
+  "real_postgres_rabbitmq_and_role_entry_points": true,
+  "configuration": {
+    "processors": [
+      1,
+      5
+    ],
+    "rate": 4.0,
+    "seconds": 3.0,
+    "chats": 20,
+    "distribution": "uniform",
+    "processing_ms": 500.0,
+    "delivery_ms": 5.0,
+    "drain_seconds": 15.0,
+    "output": "docs/verification/rabbitmq-benchmark.json"
+  },
+  "runs": [
+    {
+      "processors": 1,
+      "sender_count": 1,
+      "sender_interval_seconds": 1,
+      "offered_turns": 12,
+      "completed_turns": 12,
+      "active_turn_maximum": 1,
+      "per_processor_active_maximum": 1,
+      "residual_inbox": 0,
+      "residual_outbox": 0,
+      "elapsed_seconds": 12.74,
+      "inbox_wait_ms": {
+        "samples": 12,
+        "median_ms": 2053.34,
+        "p95_ms": 3798.15
+      },
+      "processing_ms": {
+        "samples": 12,
+        "median_ms": 527.74,
+        "p95_ms": 544.94
+      },
+      "outbox_wait_ms": {
+        "samples": 12,
+        "median_ms": 2818.52,
+        "p95_ms": 5585.65
+      }
+    },
+    {
+      "processors": 5,
+      "sender_count": 1,
+      "sender_interval_seconds": 1,
+      "offered_turns": 12,
+      "completed_turns": 12,
+      "active_turn_maximum": 3,
+      "per_processor_active_maximum": 1,
+      "residual_inbox": 0,
+      "residual_outbox": 0,
+      "elapsed_seconds": 12.91,
+      "inbox_wait_ms": {
+        "samples": 12,
+        "median_ms": 334.13,
+        "p95_ms": 340.2
+      },
+      "processing_ms": {
+        "samples": 12,
+        "median_ms": 521.99,
+        "p95_ms": 530.76
+      },
+      "outbox_wait_ms": {
+        "samples": 12,
+        "median_ms": 4736.28,
+        "p95_ms": 9132.42
+      }
+    }
+  ]
+}

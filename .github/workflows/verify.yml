@@ -4,6 +4,14 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     services:
+      rabbitmq:
+        image: rabbitmq:4.2-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: capy_test
+          RABBITMQ_DEFAULT_PASS: capy_test
+          RABBITMQ_DEFAULT_VHOST: capy_test
+        ports: [5672:5672]
+        options: --health-cmd 'rabbitmq-diagnostics -q ping' --health-interval 2s --health-timeout 5s --health-retries 30
       postgres:
         image: postgres:17
         env:
@@ -21,6 +29,7 @@ jobs:
     env:
       TEST_DATABASE_URL: postgresql://scheduling:scheduling@localhost:5432/scheduling_test
       TEST_REDIS_URL: redis://localhost:6379/15
+      TEST_RABBITMQ_URL: amqp://capy_test:capy_test@localhost:5672/capy_test?heartbeat=2
       CAPY_REQUIRE_INTEGRATION: "1"
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +43,13 @@ jobs:
       - run: uv run python -m app.evals.runner --understanding deterministic --routing deterministic --output .eval_runs/offline.json
       - run: docker compose config --quiet
       - run: docker compose -f docker-compose.yml -f docker-compose.observability.yml config --quiet
+      - run: docker compose -f docker-compose.test.yml config --quiet
+      - run: docker compose -f docker-compose.production.yml config --quiet
+        env:
+          CAPY_IMAGE: capy:verify
+          CAPY_ENV_FILE: .env.example
+          CAPY_BOT_ENV_FILE: .env.example
+          CAPY_WEBHOOK_ENV_FILE: .env.example
       - uses: actions/upload-artifact@v4
         if: always()
         with:

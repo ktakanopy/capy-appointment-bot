@@ -4,6 +4,7 @@ from unittest.mock import Mock
 from fastapi.testclient import TestClient
 
 from app.main import app, get_health_dependencies
+from app.config import Settings
 
 
 def test_retired_customer_and_owner_surfaces_are_absent():
@@ -34,7 +35,7 @@ def test_health_reports_storage_failure_as_unready(monkeypatch):
 
 
 def test_health_startup_uses_storage_without_constructing_ai_runtime(monkeypatch):
-    settings = SimpleNamespace(chat_redis_url="redis://unused", database_url="unused")
+    settings = Settings(chat_redis_url="redis://unused", database_url="unused", telegram_bot_id=None)
     redis = Mock()
     monkeypatch.setattr("app.main.load_settings", lambda: settings)
     monkeypatch.setattr("app.main.Redis.from_url", Mock(return_value=redis))

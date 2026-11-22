@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     demo_business_id: str = "demo-studio"
     session_ttl_minutes: int = Field(default=60, ge=1)
     chat_redis_url: str = "redis://localhost:6380/0"
+    rabbitmq_url: SecretStr = SecretStr("amqp://guest:guest@localhost:5672/?heartbeat=30")
+    telegram_recovery_interval_seconds: float = Field(default=1, gt=0, le=60, allow_inf_nan=False)
+    telegram_notification_timeout_seconds: float = Field(default=1, gt=0, le=5, allow_inf_nan=False)
     tracing_enabled: bool | None = None
     langfuse_public_key: str | None = None
     langfuse_secret_key: str | None = None

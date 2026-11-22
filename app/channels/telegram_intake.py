@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import timedelta
 
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
 
 from app.channels.bots import TelegramBot
+from app.channels.telegram_queue import ChatReady
 from app.database import database_session
 from app.db_models import TelegramChatProcessingState, TelegramUpdate
 from app.observability import debug_event
@@ -37,20 +39,26 @@ def private_message(row: dict) -> dict | None:
     return message
 
 
+@dataclass(frozen=True)
+class IntakeResult:
+    accepted: bool
+    notification: ChatReady | None = None
+
+
 def save_update(
     database_url: str, bot: TelegramBot, update: dict
-) -> bool:
+) -> IntakeResult:
     """Persist a Telegram update and schedule supported private messages for work.
 
     Use (bot_id, update_id) as the idempotency key because update IDs are scoped
     to a bot. An update with an existing key counts as accepted without another
     inbox row. Store only fields the worker uses. Other valid
-    updates get a completed receipt. Return False for an invalid update ID.
+    updates get a completed receipt. Notifications refer only to committed work.
     """
     update_id = update.get("update_id")
     if not telegram_integer(update_id):
         debug_event("telegram.inbox.ignored", reason="invalid_update_id")
-        return False
+        return IntakeResult(False)
     message = update.get("message")
     message = message if isinstance(message, dict) else {}
     chat, sender = message.get("chat"), message.get("from")
@@ -95,4 +103,6 @@ def save_update(
         source="webhook",
         is_private=bool(supported), inserted=inserted_update_id is not None,
     )
-    return True
+    return IntakeResult(
+        True, ChatReady(bot.bot_id, chat_id) if supported and inserted_update_id is not None else None,
+    )

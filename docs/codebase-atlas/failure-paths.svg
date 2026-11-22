@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 1748" width="1430" height="1748" role="img" aria-label="Failure paths · What happens when a step stops">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 2339" width="1430" height="2339" role="img" aria-label="Failure paths · What happens when a step stops">
   <title>Failure paths · What happens when a step stops</title>
   <desc>Each row traces one condition to its handler and the resulting change in state or customer reply.</desc>
-  <rect x="0" y="0" width="1430" height="1748" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
+  <rect x="0" y="0" width="1430" height="2339" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
   <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Failure paths · What happens when a step stops</text>
   <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Each row traces one condition to its handler and the resulting change in state or customer reply.</text>
   <defs>
@@ -18,6 +18,9 @@
   <rect x="40" y="1108" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
   <rect x="40" y="1305" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
   <rect x="40" y="1502" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="1699" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="1896" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
+  <rect x="40" y="2093" width="1350" height="157" rx="12" fill="#edf3f6" stroke="#c8d7df" stroke-width="1" />
   <polyline points="468.6666666666667,214.5 508.6666666666667,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="bad-request" data-to="reject" data-kind="flow" />
   <polyline points="921.3333333333334,214.5 961.3333333333334,214.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="reject" data-to="no-ack" data-kind="flow" />
   <polyline points="468.6666666666667,411.5 508.6666666666667,411.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="expired" data-to="refresh" data-kind="flow" />
@@ -34,33 +37,39 @@
   <polyline points="921.3333333333334,1396.5 961.3333333333334,1396.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="recheck" data-to="recover-slot" data-kind="flow" />
   <polyline points="468.6666666666667,1593.5 508.6666666666667,1593.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="send-error" data-to="classify" data-kind="flow" />
   <polyline points="921.3333333333334,1593.5 961.3333333333334,1593.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="classify" data-to="ambiguous" data-kind="flow" />
+  <polyline points="468.6666666666667,1790.5 508.6666666666667,1790.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="hint-failed" data-to="hint-recover" data-kind="flow" />
+  <polyline points="921.3333333333334,1790.5 961.3333333333334,1790.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="hint-recover" data-to="hint-safe" data-kind="flow" />
+  <polyline points="468.6666666666667,1987.5 508.6666666666667,1987.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="hint-early" data-to="hint-wait" data-kind="flow" />
+  <polyline points="921.3333333333334,1987.5 961.3333333333334,1987.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="hint-wait" data-to="hint-ack" data-kind="flow" />
+  <polyline points="468.6666666666667,2184.5 508.6666666666667,2184.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="hint-disconnect" data-to="hint-drain" data-kind="flow" />
+  <polyline points="921.3333333333334,2184.5 961.3333333333334,2184.5" stroke="#557383" stroke-width="2" fill="none" marker-end="url(#arrow)" data-from="hint-drain" data-to="hint-fenced" data-kind="flow" />
   <rect x="55" y="131" width="207" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Intake · Request rejected</text>
   <g id="bad-request" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L93">
-      <title>telegram_webhook · app/main.py:93</title>
+    <a href="../../app/main.py#L101">
+      <title>telegram_webhook · app/main.py:101</title>
       <rect x="56.0" y="165" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Bad secret, body or intake outage</text>
-      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:93</text>
+      <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:101</text>
       <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The webhook cannot accept the update.</text>
     </a>
   </g>
   <g id="reject" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L93">
-      <title>telegram_webhook · app/main.py:93</title>
+    <a href="../../app/main.py#L101">
+      <title>telegram_webhook · app/main.py:101</title>
       <rect x="508.6666666666667" y="165" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reject the webhook</text>
-      <text x="520.6666666666667" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:93</text>
+      <text x="520.6666666666667" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:101</text>
       <text x="520.6666666666667" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Return 403 for authentication, 413 for size, 400 for</text>
       <text x="520.6666666666667" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">invalid updates or 503 for database errors.</text>
     </a>
   </g>
   <g id="no-ack" data-source="app/main.py#telegram_webhook">
-    <a href="../../app/main.py#L93">
-      <title>telegram_webhook · app/main.py:93</title>
+    <a href="../../app/main.py#L101">
+      <title>telegram_webhook · app/main.py:101</title>
       <rect x="961.3333333333334" y="165" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">No HTTP 204</text>
-      <text x="973.3333333333334" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:93</text>
+      <text x="973.3333333333334" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">main.py:101</text>
       <text x="973.3333333333334" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Telegram can retry failed intake. Accepted duplicate</text>
       <text x="973.3333333333334" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">update IDs produce one durable receipt.</text>
     </a>
@@ -78,21 +87,21 @@
     </a>
   </g>
   <g id="refresh" data-source="app/telegram_worker.py#_restore_turn_checkpoint">
-    <a href="../../app/telegram_worker.py#L193">
-      <title>_restore_turn_checkpoint · app/telegram_worker.py:193</title>
+    <a href="../../app/telegram_worker.py#L240">
+      <title>_restore_turn_checkpoint · app/telegram_worker.py:240</title>
       <rect x="508.6666666666667" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Stop before graph execution</text>
-      <text x="520.6666666666667" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:193</text>
+      <text x="520.6666666666667" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:240</text>
       <text x="520.6666666666667" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Complete the turn with a prompt for fresh times and</text>
       <text x="520.6666666666667" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">clear the checkpoint reference.</text>
     </a>
   </g>
   <g id="new-offer" data-source="app/telegram_worker.py#_restore_turn_checkpoint">
-    <a href="../../app/telegram_worker.py#L193">
-      <title>_restore_turn_checkpoint · app/telegram_worker.py:193</title>
+    <a href="../../app/telegram_worker.py#L240">
+      <title>_restore_turn_checkpoint · app/telegram_worker.py:240</title>
       <rect x="961.3333333333334" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Customer can start a fresh search</text>
-      <text x="973.3333333333334" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:193</text>
+      <text x="973.3333333333334" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:240</text>
       <text x="973.3333333333334" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The expired option number is never applied to a</text>
       <text x="973.3333333333334" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">different offer.</text>
     </a>
@@ -100,29 +109,29 @@
   <rect x="55" y="525" width="359" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Processing · Dependency unavailable at setup</text>
   <g id="setup" data-source="app/telegram_worker.py#_prepare_turn_worker">
-    <a href="../../app/telegram_worker.py#L155">
-      <title>_prepare_turn_worker · app/telegram_worker.py:155</title>
+    <a href="../../app/telegram_worker.py#L202">
+      <title>_prepare_turn_worker · app/telegram_worker.py:202</title>
       <rect x="56.0" y="559" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Redis unavailable or bot credentials unusable</text>
-      <text x="68.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:155</text>
+      <text x="68.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:202</text>
       <text x="68.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The worker cannot prepare the turn.</text>
     </a>
   </g>
   <g id="defer" data-source="app/channels/telegram_turns.py#TelegramTurns.defer_before_execution">
-    <a href="../../app/channels/telegram_turns.py#L252">
-      <title>TelegramTurns.defer_before_execution · app/channels/telegram_turns.py:252</title>
+    <a href="../../app/channels/telegram_turns.py#L264">
+      <title>TelegramTurns.defer_before_execution · app/channels/telegram_turns.py:264</title>
       <rect x="508.6666666666667" y="559" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Defer before execution</text>
-      <text x="520.6666666666667" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:252</text>
+      <text x="520.6666666666667" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:264</text>
       <text x="520.6666666666667" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Release the claim and schedule a retry.</text>
     </a>
   </g>
   <g id="retry" data-source="app/channels/telegram_turns.py#TelegramTurns.defer_before_execution">
-    <a href="../../app/channels/telegram_turns.py#L252">
-      <title>TelegramTurns.defer_before_execution · app/channels/telegram_turns.py:252</title>
+    <a href="../../app/channels/telegram_turns.py#L264">
+      <title>TelegramTurns.defer_before_execution · app/channels/telegram_turns.py:264</title>
       <rect x="961.3333333333334" y="559" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Retry after the delay</text>
-      <text x="973.3333333333334" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:252</text>
+      <text x="973.3333333333334" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:264</text>
       <text x="973.3333333333334" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The worker has made no customer or booking changes for</text>
       <text x="973.3333333333334" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">this attempt.</text>
     </a>
@@ -130,31 +139,31 @@
   <rect x="55" y="722" width="327" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="740" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Processing · Interrupted or out of order</text>
   <g id="interruption" data-source="app/telegram_worker.py#process_turn">
-    <a href="../../app/telegram_worker.py#L122">
-      <title>process_turn · app/telegram_worker.py:122</title>
+    <a href="../../app/telegram_worker.py#L166">
+      <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="56.0" y="756" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Interrupted attempt or late update</text>
-      <text x="68.0" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:122</text>
+      <text x="68.0" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:166</text>
       <text x="68.0" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The previous attempt may have committed, or the message</text>
       <text x="68.0" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">may refer to an older offer.</text>
     </a>
   </g>
   <g id="skip" data-source="app/telegram_worker.py#process_turn">
-    <a href="../../app/telegram_worker.py#L122">
-      <title>process_turn · app/telegram_worker.py:122</title>
+    <a href="../../app/telegram_worker.py#L166">
+      <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="508.6666666666667" y="756" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Skip normal turn processing</text>
-      <text x="520.6666666666667" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:122</text>
+      <text x="520.6666666666667" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:166</text>
       <text x="520.6666666666667" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">On interruption, clear the checkpoint reference. For a</text>
       <text x="520.6666666666667" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">late update, retain it.</text>
     </a>
   </g>
   <g id="verify" data-source="app/telegram_worker.py#process_turn">
-    <a href="../../app/telegram_worker.py#L122">
-      <title>process_turn · app/telegram_worker.py:122</title>
+    <a href="../../app/telegram_worker.py#L166">
+      <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="961.3333333333334" y="756" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Ask the customer to verify or refresh</text>
-      <text x="973.3333333333334" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:122</text>
+      <text x="973.3333333333334" y="799" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:166</text>
       <text x="973.3333333333334" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">After interruption, check existing appointments. For</text>
       <text x="973.3333333333334" y="833" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">late input, request a fresh offer.</text>
     </a>
@@ -172,20 +181,20 @@
     </a>
   </g>
   <g id="recover-model" data-source="app/telegram_worker.py#TelegramWorker.handle_message">
-    <a href="../../app/telegram_worker.py#L276">
-      <title>TelegramWorker.handle_message · app/telegram_worker.py:276</title>
+    <a href="../../app/telegram_worker.py#L323">
+      <title>TelegramWorker.handle_message · app/telegram_worker.py:323</title>
       <rect x="508.6666666666667" y="953" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Return a language service reply</text>
-      <text x="520.6666666666667" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:276</text>
+      <text x="520.6666666666667" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:323</text>
       <text x="520.6666666666667" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Ask the customer to retry or send a shorter message.</text>
     </a>
   </g>
   <g id="safe-model" data-source="app/telegram_worker.py#process_turn">
-    <a href="../../app/telegram_worker.py#L122">
-      <title>process_turn · app/telegram_worker.py:122</title>
+    <a href="../../app/telegram_worker.py#L166">
+      <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="961.3333333333334" y="953" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Preserve the previous checkpoint</text>
-      <text x="973.3333333333334" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:122</text>
+      <text x="973.3333333333334" y="996" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:166</text>
       <text x="973.3333333333334" y="1015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The failed attempt publishes no new draft and makes no</text>
       <text x="973.3333333333334" y="1030" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">booking change.</text>
     </a>
@@ -257,21 +266,21 @@
   <rect x="55" y="1510" width="415" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="1528" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Delivery · Throttle, rejection or uncertain outcome</text>
   <g id="send-error" data-source="app/telegram_sender.py#deliver_claimed">
-    <a href="../../app/telegram_sender.py#L15">
-      <title>deliver_claimed · app/telegram_sender.py:15</title>
+    <a href="../../app/telegram_sender.py#L84">
+      <title>deliver_claimed · app/telegram_sender.py:84</title>
       <rect x="56.0" y="1544" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="1568" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Telegram send fails or dispatch expires</text>
-      <text x="68.0" y="1587" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_sender.py:15</text>
+      <text x="68.0" y="1587" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_sender.py:84</text>
       <text x="68.0" y="1606" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The provider may have accepted the message before a</text>
       <text x="68.0" y="1621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">response was lost.</text>
     </a>
   </g>
   <g id="classify" data-source="app/telegram_sender.py#deliver_claimed">
-    <a href="../../app/telegram_sender.py#L15">
-      <title>deliver_claimed · app/telegram_sender.py:15</title>
+    <a href="../../app/telegram_sender.py#L84">
+      <title>deliver_claimed · app/telegram_sender.py:84</title>
       <rect x="508.6666666666667" y="1544" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="1568" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Classify and record the outcome</text>
-      <text x="520.6666666666667" y="1587" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_sender.py:15</text>
+      <text x="520.6666666666667" y="1587" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_sender.py:84</text>
       <text x="520.6666666666667" y="1606" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Retry transient rejection such as 429. Mark permanent</text>
       <text x="520.6666666666667" y="1621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">rejection or exhausted retries as failed.</text>
     </a>
@@ -286,5 +295,102 @@
       <text x="973.3333333333334" y="1621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">becomes ambiguous.</text>
     </a>
   </g>
-  <text x="42" y="1720" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Coral marks the trigger. Links open the relevant definition in the repository.</text>
+  <rect x="55" y="1707" width="367" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="1725" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Transport · Missing or malformed notification</text>
+  <g id="hint-failed" data-source="app/channels/telegram_queue.py#TelegramQueue.try_publish">
+    <a href="../../app/channels/telegram_queue.py#L117">
+      <title>TelegramQueue.try_publish · app/channels/telegram_queue.py:117</title>
+      <rect x="56.0" y="1741" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
+      <text x="68.0" y="1765" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Saved message, failed notification</text>
+      <text x="68.0" y="1784" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_queue.py:117</text>
+      <text x="68.0" y="1803" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The message is in PostgreSQL, but the API cannot</text>
+      <text x="68.0" y="1818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">confirm its RabbitMQ notification.</text>
+    </a>
+  </g>
+  <g id="hint-recover" data-source="app/telegram_worker.py#process_pending">
+    <a href="../../app/telegram_worker.py#L105">
+      <title>process_pending · app/telegram_worker.py:105</title>
+      <rect x="508.6666666666667" y="1741" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="520.6666666666667" y="1765" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Find the message in PostgreSQL</text>
+      <text x="520.6666666666667" y="1784" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:105</text>
+      <text x="520.6666666666667" y="1803" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A free processor checks the database and takes the</text>
+      <text x="520.6666666666667" y="1818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">pending message.</text>
+    </a>
+  </g>
+  <g id="hint-safe" data-source="app/channels/telegram_queue.py#TelegramQueue._receive">
+    <a href="../../app/channels/telegram_queue.py#L137">
+      <title>TelegramQueue._receive · app/channels/telegram_queue.py:137</title>
+      <rect x="961.3333333333334" y="1741" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="973.3333333333334" y="1765" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Keep accepted work available</text>
+      <text x="973.3333333333334" y="1784" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_queue.py:137</text>
+      <text x="973.3333333333334" y="1803" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The API still returns HTTP 204. Invalid or wrong-bot</text>
+      <text x="973.3333333333334" y="1818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">notifications are discarded.</text>
+    </a>
+  </g>
+  <rect x="55" y="1904" width="335" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="1922" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Transport · Early, duplicate or busy hint</text>
+  <g id="hint-early" data-source="app/channels/telegram_turns.py#ChatClaimResult">
+    <a href="../../app/channels/telegram_turns.py#L92">
+      <title>ChatClaimResult · app/channels/telegram_turns.py:92</title>
+      <rect x="56.0" y="1938" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
+      <text x="68.0" y="1962" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Message cannot run yet</text>
+      <text x="68.0" y="1981" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:92</text>
+      <text x="68.0" y="2000" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">PostgreSQL reports that the message is not ready, the</text>
+      <text x="68.0" y="2015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">chat is busy or there is no pending work.</text>
+    </a>
+  </g>
+  <g id="hint-wait" data-source="app/telegram_worker.py#_notification_claim">
+    <a href="../../app/telegram_worker.py#L95">
+      <title>_notification_claim · app/telegram_worker.py:95</title>
+      <rect x="508.6666666666667" y="1938" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="520.6666666666667" y="1962" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Wait briefly, then check again</text>
+      <text x="520.6666666666667" y="1981" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:95</text>
+      <text x="520.6666666666667" y="2000" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">For the initial readiness delay, wait once for at most</text>
+      <text x="520.6666666666667" y="2015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">half a second without holding a database lock.</text>
+    </a>
+  </g>
+  <g id="hint-ack" data-source="app/channels/telegram_queue.py#TelegramQueue.acknowledge">
+    <a href="../../app/channels/telegram_queue.py#L160">
+      <title>TelegramQueue.acknowledge · app/channels/telegram_queue.py:160</title>
+      <rect x="961.3333333333334" y="1938" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="973.3333333333334" y="1962" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Finish handling the notification</text>
+      <text x="973.3333333333334" y="1981" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_queue.py:160</text>
+      <text x="973.3333333333334" y="2000" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Acknowledge the notification while leaving any</text>
+      <text x="973.3333333333334" y="2015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">unfinished message saved in PostgreSQL.</text>
+    </a>
+  </g>
+  <rect x="55" y="2101" width="367" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
+  <text x="56" y="2119" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Ownership · Broker reconnect or stale attempt</text>
+  <g id="hint-disconnect" data-source="app/channels/telegram_queue.py#TelegramQueue._connect_loop">
+    <a href="../../app/channels/telegram_queue.py#L76">
+      <title>TelegramQueue._connect_loop · app/channels/telegram_queue.py:76</title>
+      <rect x="56.0" y="2135" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
+      <text x="68.0" y="2159" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">RabbitMQ disconnects</text>
+      <text x="68.0" y="2178" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_queue.py:76</text>
+      <text x="68.0" y="2197" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The connection closes while a processor is working, so</text>
+      <text x="68.0" y="2212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">its old delivery handle can no longer be acknowledged.</text>
+    </a>
+  </g>
+  <g id="hint-drain" data-source="app/telegram_worker.py#_execute">
+    <a href="../../app/telegram_worker.py#L71">
+      <title>_execute · app/telegram_worker.py:71</title>
+      <rect x="508.6666666666667" y="2135" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
+      <text x="520.6666666666667" y="2159" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Let active processing finish</text>
+      <text x="520.6666666666667" y="2178" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:71</text>
+      <text x="520.6666666666667" y="2197" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Keep the processing thread and permission renewal</text>
+      <text x="520.6666666666667" y="2212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">running until the active message finishes.</text>
+    </a>
+  </g>
+  <g id="hint-fenced" data-source="app/channels/telegram_turns.py#TurnClaim.assert_owned">
+    <a href="../../app/channels/telegram_turns.py#L75">
+      <title>TurnClaim.assert_owned · app/channels/telegram_turns.py:75</title>
+      <rect x="961.3333333333334" y="2135" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
+      <text x="973.3333333333334" y="2159" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reject writes from a stale attempt</text>
+      <text x="973.3333333333334" y="2178" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:75</text>
+      <text x="973.3333333333334" y="2197" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check that the processor still holds the current,</text>
+      <text x="973.3333333333334" y="2212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">unexpired chat permission before saving protected</text>
+      <text x="973.3333333333334" y="2227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">changes.</text>
+    </a>
+  </g>
+  <text x="42" y="2311" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Coral marks the trigger. Links open the relevant definition in the repository.</text>
 </svg>

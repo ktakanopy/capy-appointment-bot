@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codebase Atlas"
+  short_description: "Build an interactive, source-linked codebase atlas"
+  default_prompt: "Use $codebase-atlas to map this repository into an interactive atlas with a clear architecture overview, readable descriptions, source navigation, and SVG diagrams."

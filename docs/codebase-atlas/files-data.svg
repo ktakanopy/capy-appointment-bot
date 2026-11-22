@@ -21,9 +21,9 @@
       <title>BookingCreateRequest · app/models.py:140</title>
       <text x="56" y="218" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">BookingCreateRequest  /  line 140</text>
     </a>
-    <a href="../../app/models.py#L187">
-      <title>DomainError · app/models.py:187</title>
-      <text x="56" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">DomainError  /  line 187</text>
+    <a href="../../app/models.py#L188">
+      <title>DomainError · app/models.py:188</title>
+      <text x="56" y="238" fill="#13677e" font-size="14" font-weight="700" font-family="ui-monospace, Menlo, monospace">DomainError  /  line 188</text>
     </a>
     <a href="../../app/models.py#L10">
       <title>Contract · app/models.py:10</title>
@@ -122,8 +122,8 @@
       <text x="56" y="818" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">HealthResponse</text>
     </a>
     <text x="422" y="818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Describes API and dependency readiness.</text>
-    <a href="../../app/models.py#L187">
-      <title>DomainError · app/models.py:187</title>
+    <a href="../../app/models.py#L188">
+      <title>DomainError · app/models.py:188</title>
       <text x="56" y="838" fill="#172e3b" font-size="13" font-weight="650" font-family="ui-monospace, Menlo, monospace">DomainError</text>
     </a>
     <text x="422" y="838" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Carries a handled business rule</text>

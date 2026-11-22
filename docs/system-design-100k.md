@@ -1,34 +1,16 @@
 # CAPY scale study: 100,000 monthly active customers
 
-> Architecture exercise based on the former RabbitMQ deployment. The [current deployment](production.md) uses a single PostgreSQL worker.
-
-> **Status:** Planning exercise only. The traffic figures below are assumptions. The repository has not been tested with 100,000 monthly active customers, and no hosted availability or latency objective has been verified.
-
-This document separates the current code path from a hypothetical workload estimate. It is not a deployment runbook. See the [production guide](production.md) for the current worker commands and the short, local queue benchmarks.
+> **Status:** Planning exercise only. The workload figures are assumptions. No hosted availability, latency objective or 100,000-customer capacity has been established.
 
 ## Current runtime in the repository
 
-The code receives Telegram updates through an authenticated webhook. For supported private messages, PostgreSQL records the update and its publication in one transaction; unsupported events receive a completed receipt without a worker notification. A relay publishes identifier-only wake-ups to RabbitMQ. Partitioned workers claim chats from PostgreSQL, run the conversation, and save replies to the PostgreSQL outbox. The relay and a separate sender deliver replies.
+The authenticated webhook commits updates to PostgreSQL and attempts a bounded, post-commit publication to one RabbitMQ queue, `telegram.chat_ready`. Notifications contain only bot/chat IDs. Five initial processing instances claim chats in PostgreSQL; each runs one turn across notification handling and direct database recovery. One independent sender reads the existing PostgreSQL outbox, retaining conservative pacing of about one send per second. Redis holds attempt-specific conversation checkpoints.
 
-```mermaid
-flowchart LR
-    TG[Telegram] --> API[FastAPI webhook]
-    API -->|update receipt and publication| PG[(PostgreSQL)]
-    PG -->|chat publication| Relay[Publication relay]
-    Relay -->|bot and chat IDs| Incoming[RabbitMQ incoming partitions]
-    Incoming --> Worker[Conversation worker]
-    Worker <--> Redis[(Redis checkpoints)]
-    Worker <--> Models[Gemma understanding and Laya routing]
-    Worker -->|booking and reply outbox| PG
-    PG -->|outbox publication| Relay
-    Relay -->|outgoing record ID| Outgoing[RabbitMQ outgoing queue]
-    Outgoing --> Sender[Telegram sender]
-    Sender --> TG
-```
+![Current runtime](codebase-atlas/architecture-overview.svg)
 
-PostgreSQL owns booking and delivery state. RabbitMQ signals that work may be ready; it does not contain message bodies or replace the database records. Redis stores temporary conversation checkpoints. A database lease serializes turns for one chat. Independent chats can run in parallel when they use different partition workers and capacity is available. See the [architecture guide](architecture.md), [Telegram worker walkthrough](telegram-worker.md), and [idempotency and recovery notes](idempotency.md) for details.
+See the [interactive atlas](codebase-atlas/index.html#architecture-overview), [recovery flow](codebase-atlas/index.html#notification-recovery), and [production guide](production.md). The previous partitioned queues, publication relay, outgoing broker queue and bot registry are historical implementations. They are absent from this runtime; the current notification adapter adds no database tables.
 
-The repository contains the runtime components, but that does not prove they are deployed as a highly available hosted service. The production guide is an operational reference, not evidence of a live 100k-customer deployment.
+Five processors are a deployment choice. Concurrency and independent delivery improve progress across chats, while RabbitMQ adds notification distribution and an operational dependency. These facts do not establish hosted throughput or a highly available deployment.
 
 ## Workload estimate
 
@@ -60,7 +42,7 @@ This is a workload estimate, not a worker count. Per-chat ordering, per-business
 ## Constraints that shape scaling
 
 - **Conversation order:** A voice turn can hold its chat until transcription and processing finish. More workers help other chats, but they cannot safely process later messages in the same chat at the same time.
-- **Partitions:** RabbitMQ routes each chat to a partition. Add capacity only after measuring queue age and processing time. Plan a drain before changing the partition count.
+- **One shared queue:** Available consumers receive hints; PostgreSQL claims serialize each chat. Queue depth counts notifications, which can be duplicated or absent, rather than exact unfinished turns. Measure database backlog and oldest age.
 - **Model throughput:** Adding workers can make the inference queue longer if Gemma or Laya is already saturated. Measure both model wait time and execution time.
 - **Database connections and locks:** Worker replicas share PostgreSQL. Budget each process's connection pool and watch lock waits on booking and claim transactions.
 - **Telegram delivery:** More sender processes do not increase a bot's allowed send rate. Account for replies, retries, and rate-limit responses.
@@ -68,7 +50,7 @@ This is a workload estimate, not a worker count. Per-chat ordering, per-business
 
 ## What the current evidence shows
 
-The [production guide](production.md#local-verification) reports a local transport benchmark with stubbed inference and delivery. It ran short workloads at 20 messages per second and 100 messages per second. Those results help compare queue paths; they do not measure hosted Gemma/Laya throughput or establish 100k-customer capacity.
+The [controlled benchmark](production.md#local-verification) exercises the current processor/sender entry points with real PostgreSQL and RabbitMQ and simulated inference and delivery. Its one-versus-five comparison separates turn concurrency from the paced sender bottleneck. Earlier partition/relay benchmark figures do not describe this runtime.
 
 The [scenario evaluation framework](evaluation-framework.md) checks multi-turn behavior with isolated scheduling fixtures. Database and broker integration tests check persistence and recovery. These checks demonstrate behavior and correctness, not sustained production throughput.
 
@@ -79,8 +61,8 @@ The evidence in this repository does not establish a 100k monthly active user de
 1. Measure actual conversation size, burst shape, audio share and duration, and replies per completed journey. Keep synthetic and production data separate.
 2. Define the text and voice response targets, availability window, and what counts as a successful customer journey.
 3. Run increasing and sustained loads against PostgreSQL, Redis, RabbitMQ, and representative Gemma/Laya endpoints. Include a hot chat, a hot business, slow audio, provider failures, Telegram rate limits, and broker or worker restarts.
-4. Record end-to-end latency percentiles, queue age per partition, model wait and execution time, database connections and lock waits, delivery failures, retries, and operating cost.
-5. Choose worker counts, partition count, pool sizes, and hosted redundancy from those results. Retest the failure and recovery behavior after each deployment change.
+4. Record end-to-end latency percentiles, PostgreSQL backlog age, notification queue depth, model wait and execution time, database connections and lock waits, delivery failures, retries, and operating cost.
+5. Choose worker counts, pool sizes, and hosted redundancy from those results. Retest the failure and recovery behavior after each deployment change.
 
 Do not add a deployment platform or autoscaling layer solely because the estimate says 100,000 monthly active customers. First identify the measured bottleneck and confirm that the application, model provider, and Telegram limits can support the target workload.
 

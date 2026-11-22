@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import event, text
 from sqlalchemy.exc import DBAPIError
 
-from app.channels.telegram_repository import TelegramRepository
+from app.telegram_sender import acquire_sender_lock
 from app.database import _engine, database_session
 
 
@@ -19,16 +19,15 @@ def test_session_hides_bound_values_and_recovers_after_rollback(scheduling_db, m
     assert scheduling_db["repository"].service("demo-studio", "service-demo").active
 
 
-def test_registration_lock_releases_when_closed(scheduling_db, monkeypatch):
+def test_sender_lock_releases_when_closed(scheduling_db, monkeypatch):
     monkeypatch.setenv("CAPY_DB_POOL_MAX", "1")
-    repository = TelegramRepository(scheduling_db["url"])
-    lock = repository.acquire_worker_lock(55)
+    lock = acquire_sender_lock(scheduling_db["url"], 55)
     assert lock is not None
     try:
-        assert repository.acquire_worker_lock(55) is None
+        assert acquire_sender_lock(scheduling_db["url"], 55) is None
     finally:
         lock.close()
-    lock = repository.acquire_worker_lock(55)
+    lock = acquire_sender_lock(scheduling_db["url"], 55)
     assert lock is not None
     lock.close()
 

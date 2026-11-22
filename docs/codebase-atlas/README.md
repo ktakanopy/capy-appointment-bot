@@ -1,6 +1,6 @@
 # CAPY codebase atlas
 
-Open the [interactive atlas](index.html) directly in a browser. Start with **Booking walkthrough** and use **Next step** to follow one Telegram conversation across three turns. Open **Transcript** to read the customer messages and CAPY replies, or select a message to jump to its node.
+Open the [interactive atlas](index.html) directly in a browser. It starts on **CAPY architecture · Current runtime**: durable PostgreSQL inbox, one RabbitMQ notification queue, five initial processors with database ownership, and one independent sender. Use **Lost notification** for direct recovery and transaction boundaries, or **Independent progress** for Alice, Bob and a saved reply. Then open **Booking walkthrough** and use **Next step** across three turns. Open **Transcript** to read the customer messages and CAPY replies, or select a message to jump to its node.
 
 Drag the canvas to pan, scroll to zoom, or click the minimap to jump. Selecting a node shows what it does, why it matters, and its highlighted source line. **View full file** opens the source in the page. Both code views use Python syntax highlighting. Use **Cmd/Ctrl+K** to find a step, file, class, or entry point.
 
@@ -8,8 +8,11 @@ Drag the canvas to pan, scroll to zoom, or click the minimap to jump. Selecting 
 
 | Flow | What to follow |
 | --- | --- |
+| [Architecture overview](architecture-overview.svg) | Current runtime; [PNG preview](architecture-overview.png) for direct review |
+| [Lost notification](notification-recovery.svg) | Post-commit publication failure, accepted intake and direct database recovery |
+| [Independent progress](independent-progress.svg) | Slow Alice turn, concurrent Bob turn and an independent sender |
 | [Booking walkthrough](walkthrough.svg) | One conversation from incoming Telegram updates through the committed appointment and final reply |
-| [Telegram runtime](runtime.svg) | Webhook intake, PostgreSQL queue, chat ownership, processing and reply delivery |
+| [Telegram runtime](runtime.svg) | Post-commit RabbitMQ notifications, direct PostgreSQL recovery, chat ownership and independent delivery |
 | [Conversation turn](conversation.svg) | LangGraph entry, model interpretation and routing, scheduling actions, and state |
 | [Create a booking](booking.svg) | Search, select, then commit after a separate approval |
 | [Failure paths](failure-paths.svg) | Intake rejection, expired state, retries, interrupted turns, model errors, consent, slot conflicts, and delivery outcomes |
@@ -40,3 +43,9 @@ python3 skills/codebase-atlas/scripts/render_atlas.py --web --project CAPY \
 ```
 
 The HTML includes snapshots of the referenced source files. Regenerate it after source changes to refresh the code and line numbers.
+
+Five processors are an initial deployment configuration. [Verification evidence](../verification/rabbitmq.md) separates controlled tests and simulated inference/delivery from production capacity. `telegram_chat_processing_state` stores chat leases, ordering and the Redis checkpoint reference. RabbitMQ acknowledgments settle notifications. `TelegramTurns.finish` completes inbox turns. The source reader resolves symbols and embeds fresh source snapshots on regeneration. Desktop and 390 × 844 navigation, search, inspector, source reader, transcript, retained bookmarks and Open SVG are covered by the recorded visual check.
+
+## Writing card descriptions
+
+Name the action in the title. In the description, say who acts and what happens to the message. Use the rationale to explain the outcome or the specific failure it prevents. Define terms such as a lease (temporary processing permission) when they are needed. Keep implementation names in the source links.

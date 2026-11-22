@@ -1,6 +1,6 @@
 # Architecture
 
-Telegram is the customer interface. The API receives updates. One worker reads and processes pending messages, then delivers saved replies. PostgreSQL keeps the work and business records. Redis holds the conversation state used by the graph.
+Telegram is the customer interface. The API receives updates. RabbitMQ carries bot/chat notifications after durable intake. Five initial processors run one claimed turn each, with direct PostgreSQL recovery for missed hints. One independent sender delivers saved replies. PostgreSQL keeps the work and business records. Redis holds the conversation state used by the graph.
 
 The graph's `understand_input` node waits for a complete transcript so a correction at the end of a recording can affect the next action. The audio chunker splits decoded speech near pauses and enforces size and time limits. The node redacts recognizable sensitive data from text and transcripts, then asks Gemma for a plain-language interpretation and booking facts. Laya receives the interpreted message and the draft context. It proposes an action, which Python checks against required facts, valid references and booking authorization. A new booking uses three turns: search, select and request consent, then approve and create. Selecting alone never writes a booking. The app loads Gemma and Laya through the same constructors used by evaluations. [Runtime](../app/runtime.py#L33) · [Graph flow](graph.md) · [Model contracts](model-contracts.md)
 
@@ -14,7 +14,7 @@ The YAML scenario evaluations run sequential turns inside each conversation and 
 
 ## How the Telegram worker works
 
-Follow one message through the webhook, the PostgreSQL queue and the Telegram worker. [Telegram worker guide](telegram-worker.md)
+Start with the [architecture overview](codebase-atlas/index.html#architecture-overview) and [recovery example](codebase-atlas/index.html#notification-recovery). Follow one message through committed intake, a RabbitMQ hint, PostgreSQL ownership, turn completion and independent delivery. [Telegram worker guide](telegram-worker.md)
 
 ## How to read the code
 
@@ -43,7 +43,7 @@ Follow “Book Shiatsu 60 min tomorrow,” then “1.” Read the arrows from to
 | Call | What happens and why | Source |
 | --- | --- | --- |
 | **C01** | The customer asks for times in a private Telegram chat. Telegram sends the message to the bot’s configured webhook. | [Webhook](../app/main.py#L77) |
-| **C02** | CAPY records the incoming update. The conversation worker uses the Telegram user ID to find the customer's account. | [Worker guide](telegram-worker.md#start-reading-the-code) |
+| **C02** | CAPY commits the incoming update and publishes a bot/chat hint. A processor claims the earliest stored eligible update; the conversation worker uses the Telegram user ID to find the customer's account. | [Worker guide](telegram-worker.md#start-reading-the-code) |
 | **C03** | The graph uses the customer's text or complete transcript. It redacts the text, asks Gemma to interpret it and gives Laya the interpreted message and draft. Python checks the details required to proceed. | [`understand_input()`](../app/graph/steps.py#L111) · [`route_turn()`](../app/graph/steps.py#L266) |
 | **C04** | The workflow requests slots for the selected service and date, applying any staff or earliest-time preference. This narrows the search to choices that address the customer’s request. | [`search()`](../app/graph/steps.py#L698) · [`CustomerSchedulingActions.search()`](../app/customer_scheduling_actions.py#L49) |
 | **C05** | The availability service reads working hours, blocked periods and active bookings for the massagista. These records supply the current schedule for conflict checks. | [`calendar()`](../app/repositories.py) |
@@ -57,7 +57,7 @@ Follow “Book Shiatsu 60 min tomorrow,” then “1.” Read the arrows from to
 | Call | What happens and why | Source |
 | --- | --- | --- |
 | **C10** | The customer chooses one of the numbered time options. This is a selection only; it does not authorize a booking. | [Webhook](../app/main.py#L77) |
-| **C11** | CAPY records the new update and claims the chat turn. The worker resumes the checkpoint created by the search turn. | [Worker guide](telegram-worker.md#start-reading-the-code) |
+| **C11** | CAPY commits the new update, publishes a RabbitMQ hint and claims the chat turn. The worker resumes the checkpoint created by the search turn. | [Worker guide](telegram-worker.md#start-reading-the-code) |
 | **C12** | `select` matches the number to the saved offered-slot list. The selected slot ID is carried into create preparation so the next message refers to this exact offer. | [Workflow](../app/graph/workflow.py) · [Selection](../app/graph/steps.py#L733) |
 | **C13** | `_prepare_create` stores the selected slot as pending consent and returns the service, professional, date, time and timezone question. It does not call the booking service. | [`_prepare_create()`](../app/graph/steps.py#L858) · [Question formatter](../app/graph/booking_messages.py#L44) |
 | **C14** | The worker saves the consent question as its reply to this Telegram update. The selected offer remains in checkpoint state for the next turn. | [Finish the turn](../app/channels/telegram_turns.py#L304) |
@@ -68,7 +68,7 @@ Follow “Book Shiatsu 60 min tomorrow,” then “1.” Read the arrows from to
 | Call | What happens and why | Source |
 | --- | --- | --- |
 | **C16** | The customer explicitly approves the appointment shown by CAPY. This input arrives after the consent question. | [Webhook](../app/main.py#L77) |
-| **C17** | CAPY records and claims the approval update. The worker resumes the same conversation checkpoint so Python can compare the reply with the pending slot ID. | [Worker guide](telegram-worker.md#start-reading-the-code) |
+| **C17** | CAPY commits the approval update, publishes a RabbitMQ hint and claims it in PostgreSQL. The worker resumes the same conversation checkpoint so Python can compare the reply with the pending slot ID. | [Worker guide](telegram-worker.md#start-reading-the-code) |
 | **C18** | The graph interprets the latest message and asks Laya for a route. `route_turn` handles pending consent before allowing another booking operation to change the draft. | [`route_turn()`](../app/graph/steps.py#L266) |
 | **C19** | Python checks the exact consent phrase, Laya's `BOOK` proposal, confidence and pending slot. A clear matching approval can proceed; an unclear reply or changed time makes no booking mutation. | [`_route_booking_consent()`](../app/graph/steps.py#L341) · [Consent phrases](../app/graph/consent.py#L49) |
 | **C20** | The booking service locks the business and checks the stable update key against the request hash. A matching retry can return the prior result after a committed write; a different request reusing the key is rejected. | [Update key](../app/telegram_worker.py#L135) · [`_hash_booking_request()`](../app/booking.py#L35) · [`_lock_business_and_check_retry()`](../app/booking.py#L87) |
