@@ -261,7 +261,7 @@ function renderRoute(parts, reveal = false) {
     }
     $("guide").replaceChildren(origin, content);
     $("guide").scrollTop = 0;
-    if (id) [...content.querySelectorAll("[id]")].find((node) => node.id === id)?.scrollIntoView({block:"start"});
+    if (id) [...content.querySelectorAll("[id]")].find((node) => node.id === `${view}--${id}`)?.scrollIntoView({block:"start"});
     return;
   }
   const focus = view === "imports" && importCenter ? files.get(id) || files.get(importCenter) : null;

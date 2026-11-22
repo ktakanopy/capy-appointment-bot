@@ -49,7 +49,9 @@ class GuideHTML(HTMLParser):
             return
         safe = []
         for key, value in attrs:
-            if key in ('id', 'class', 'title', 'alt'):
+            if key == 'id':
+                safe.append((key, self.view['id'] + '--' + (value or '')))
+            elif key in ('class', 'title', 'alt'):
                 safe.append((key, value or ''))
             elif tag == 'a' and key == 'href':
                 safe.append((key, self.url(value or '')))

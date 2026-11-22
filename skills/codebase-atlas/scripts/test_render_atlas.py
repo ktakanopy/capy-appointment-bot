@@ -125,7 +125,7 @@ class AtlasRenderingTests(unittest.TestCase):
         (docs / 'assets').mkdir(parents=True)
         (docs / 'assets' / 'model.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg"><text>Stored value</text></svg>')
         (docs / 'storage.md').write_text(
-            '# Storage\n\n| Record | Purpose |\n| --- | --- |\n| Value | Normalized input |\n\n'
+            '# Graph\n\n| Record | Purpose |\n| --- | --- |\n| Value | Normalized input |\n\n'
             '![Records](assets/model.svg)\n\n[Entry](reading.md#entry)\n\n'
             '[Source](../src/worker.py#L3)\n\n<script>alert(1)</script>\n'
         )
@@ -141,6 +141,8 @@ class AtlasRenderingTests(unittest.TestCase):
         self.assertIn('href="#guide-reading/entry"', guide['html'])
         self.assertIn('https://example.com/revision/src/worker.py#L3', guide['html'])
         self.assertNotIn('<script', guide['html'])
+        self.assertIn('id="guide-storage--graph"', guide['html'])
+        self.assertNotIn('id="graph"', guide['html'])
         self.assertEqual(guide['navGroup'], 'Data')
         (docs / 'storage.md').write_text('![Outside](../../private.svg)\n')
         (Path(self.directory.name) / 'private.svg').write_text('<svg>private</svg>')
