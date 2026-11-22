@@ -46,7 +46,7 @@
   <rect x="55" y="131" width="207" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Intake · Request rejected</text>
   <g id="bad-request" data-source="app/main.py#telegram_webhook">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/main.py#L101">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/main.py#L101">
       <title>telegram_webhook · app/main.py:101</title>
       <rect x="56.0" y="165" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Bad secret, body or intake outage</text>
@@ -55,7 +55,7 @@
     </a>
   </g>
   <g id="reject" data-source="app/main.py#telegram_webhook">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/main.py#L101">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/main.py#L101">
       <title>telegram_webhook · app/main.py:101</title>
       <rect x="508.6666666666667" y="165" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reject the webhook</text>
@@ -65,7 +65,7 @@
     </a>
   </g>
   <g id="no-ack" data-source="app/main.py#telegram_webhook">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/main.py#L101">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/main.py#L101">
       <title>telegram_webhook · app/main.py:101</title>
       <rect x="961.3333333333334" y="165" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">No HTTP 204</text>
@@ -77,7 +77,7 @@
   <rect x="55" y="328" width="287" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Processing · Previous offer expired</text>
   <g id="expired" data-source="app/graph/redis_checkpoint.py#RedisCheckpointSaver.fork_completed">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/graph/redis_checkpoint.py#L44">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/graph/redis_checkpoint.py#L44">
       <title>RedisCheckpointSaver.fork_completed · app/graph/redis_checkpoint.py:44</title>
       <rect x="56.0" y="362" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Redis draft has expired</text>
@@ -87,7 +87,7 @@
     </a>
   </g>
   <g id="refresh" data-source="app/telegram_worker.py#_restore_turn_checkpoint">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L240">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L240">
       <title>_restore_turn_checkpoint · app/telegram_worker.py:240</title>
       <rect x="508.6666666666667" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Stop before graph execution</text>
@@ -97,7 +97,7 @@
     </a>
   </g>
   <g id="new-offer" data-source="app/telegram_worker.py#_restore_turn_checkpoint">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L240">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L240">
       <title>_restore_turn_checkpoint · app/telegram_worker.py:240</title>
       <rect x="961.3333333333334" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Customer can start a fresh search</text>
@@ -109,7 +109,7 @@
   <rect x="55" y="525" width="359" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Processing · Dependency unavailable at setup</text>
   <g id="setup" data-source="app/telegram_worker.py#_prepare_turn_worker">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L202">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L202">
       <title>_prepare_turn_worker · app/telegram_worker.py:202</title>
       <rect x="56.0" y="559" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Redis unavailable or bot credentials unusable</text>
@@ -118,7 +118,7 @@
     </a>
   </g>
   <g id="defer" data-source="app/channels/telegram_turns.py#TelegramTurns.defer_before_execution">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L264">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_turns.py#L264">
       <title>TelegramTurns.defer_before_execution · app/channels/telegram_turns.py:264</title>
       <rect x="508.6666666666667" y="559" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Defer before execution</text>
@@ -127,7 +127,7 @@
     </a>
   </g>
   <g id="retry" data-source="app/channels/telegram_turns.py#TelegramTurns.defer_before_execution">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L264">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_turns.py#L264">
       <title>TelegramTurns.defer_before_execution · app/channels/telegram_turns.py:264</title>
       <rect x="961.3333333333334" y="559" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Retry after the delay</text>
@@ -139,7 +139,7 @@
   <rect x="55" y="722" width="327" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="740" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Processing · Interrupted or out of order</text>
   <g id="interruption" data-source="app/telegram_worker.py#process_turn">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L166">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L166">
       <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="56.0" y="756" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Interrupted attempt or late update</text>
@@ -149,7 +149,7 @@
     </a>
   </g>
   <g id="skip" data-source="app/telegram_worker.py#process_turn">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L166">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L166">
       <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="508.6666666666667" y="756" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Skip normal turn processing</text>
@@ -159,7 +159,7 @@
     </a>
   </g>
   <g id="verify" data-source="app/telegram_worker.py#process_turn">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L166">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L166">
       <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="961.3333333333334" y="756" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="780" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Ask the customer to verify or refresh</text>
@@ -171,7 +171,7 @@
   <rect x="55" y="919" width="183" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="937" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Workflow · Model error</text>
   <g id="model-error" data-source="app/graph/steps.py#understand_input">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/graph/steps.py#L111">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/graph/steps.py#L111">
       <title>understand_input · app/graph/steps.py:111</title>
       <rect x="56.0" y="953" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Transcription or model call fails</text>
@@ -181,7 +181,7 @@
     </a>
   </g>
   <g id="recover-model" data-source="app/telegram_worker.py#TelegramWorker.handle_message">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L323">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L323">
       <title>TelegramWorker.handle_message · app/telegram_worker.py:323</title>
       <rect x="508.6666666666667" y="953" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Return a language service reply</text>
@@ -190,7 +190,7 @@
     </a>
   </g>
   <g id="safe-model" data-source="app/telegram_worker.py#process_turn">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L166">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L166">
       <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="961.3333333333334" y="953" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="977" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Preserve the previous checkpoint</text>
@@ -202,7 +202,7 @@
   <rect x="55" y="1116" width="303" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="1134" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Workflow · Consent missing or changed</text>
   <g id="consent" data-source="app/graph/consent.py#classify_booking_consent">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/graph/consent.py#L49">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/graph/consent.py#L49">
       <title>classify_booking_consent · app/graph/consent.py:49</title>
       <rect x="56.0" y="1150" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">“No,” a new time, or unclear approval</text>
@@ -212,7 +212,7 @@
     </a>
   </g>
   <g id="check-consent" data-source="app/graph/steps.py#_route_booking_consent">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/graph/steps.py#L341">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/graph/steps.py#L341">
       <title>_route_booking_consent · app/graph/steps.py:341</title>
       <rect x="508.6666666666667" y="1150" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Resolve the consent guard</text>
@@ -223,7 +223,7 @@
     </a>
   </g>
   <g id="no-write" data-source="app/graph/steps.py#_route_booking_consent">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/graph/steps.py#L341">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/graph/steps.py#L341">
       <title>_route_booking_consent · app/graph/steps.py:341</title>
       <rect x="961.3333333333334" y="1150" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="1174" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Return a reply without creating a booking</text>
@@ -235,7 +235,7 @@
   <rect x="55" y="1313" width="351" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="1331" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Booking · A competing request wins the slot</text>
   <g id="taken" data-source="app/scheduling.py#validate_slot_in_transaction">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/scheduling.py#L55">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/scheduling.py#L55">
       <title>validate_slot_in_transaction · app/scheduling.py:55</title>
       <rect x="56.0" y="1347" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="1371" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">The slot is no longer bookable</text>
@@ -244,7 +244,7 @@
     </a>
   </g>
   <g id="recheck" data-source="app/booking.py#BookingService.create">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/booking.py#L149">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/booking.py#L149">
       <title>BookingService.create · app/booking.py:149</title>
       <rect x="508.6666666666667" y="1347" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="1371" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Revalidate during the transaction</text>
@@ -254,7 +254,7 @@
     </a>
   </g>
   <g id="recover-slot" data-source="app/graph/steps.py#_slot_no_longer_bookable_reply">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/graph/steps.py#L1105">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/graph/steps.py#L1105">
       <title>_slot_no_longer_bookable_reply · app/graph/steps.py:1105</title>
       <rect x="961.3333333333334" y="1347" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="1371" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Ask for new available times</text>
@@ -266,7 +266,7 @@
   <rect x="55" y="1510" width="415" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="1528" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Delivery · Throttle, rejection or uncertain outcome</text>
   <g id="send-error" data-source="app/telegram_sender.py#deliver_claimed">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_sender.py#L84">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_sender.py#L84">
       <title>deliver_claimed · app/telegram_sender.py:84</title>
       <rect x="56.0" y="1544" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
       <text x="68.0" y="1568" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Telegram send fails or dispatch expires</text>
@@ -276,7 +276,7 @@
     </a>
   </g>
   <g id="classify" data-source="app/telegram_sender.py#deliver_claimed">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_sender.py#L84">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_sender.py#L84">
       <title>deliver_claimed · app/telegram_sender.py:84</title>
       <rect x="508.6666666666667" y="1544" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="520.6666666666667" y="1568" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Classify and record the outcome</text>
@@ -286,7 +286,7 @@
     </a>
   </g>
   <g id="ambiguous" data-source="app/channels/telegram_delivery.py#TelegramOutbox.recover_expired">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_delivery.py#L91">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_delivery.py#L91">
       <title>TelegramOutbox.recover_expired · app/channels/telegram_delivery.py:91</title>
       <rect x="961.3333333333334" y="1544" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
       <text x="973.3333333333334" y="1568" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Stop automatic resend if ambiguous</text>
@@ -298,91 +298,98 @@
   <rect x="55" y="1707" width="367" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="1725" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Transport · Missing or malformed notification</text>
   <g id="hint-failed" data-source="app/channels/telegram_queue.py#TelegramQueue.try_publish">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L117">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_queue.py#L117">
       <title>TelegramQueue.try_publish · app/channels/telegram_queue.py:117</title>
       <rect x="56.0" y="1741" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
-      <text x="68.0" y="1765" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Commit succeeds; hint fails</text>
+      <text x="68.0" y="1765" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Saved message, failed notification</text>
       <text x="68.0" y="1784" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_queue.py:117</text>
-      <text x="68.0" y="1803" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A broker outage prevents confirmation.</text>
+      <text x="68.0" y="1803" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The message is in PostgreSQL, but the API cannot</text>
+      <text x="68.0" y="1818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">confirm its RabbitMQ notification.</text>
     </a>
   </g>
   <g id="hint-recover" data-source="app/telegram_worker.py#process_pending">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L105">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L105">
       <title>process_pending · app/telegram_worker.py:105</title>
       <rect x="508.6666666666667" y="1741" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
-      <text x="520.6666666666667" y="1765" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Recover directly from PostgreSQL</text>
+      <text x="520.6666666666667" y="1765" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Find the message in PostgreSQL</text>
       <text x="520.6666666666667" y="1784" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:105</text>
-      <text x="520.6666666666667" y="1803" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A free slot claims an eligible database row.</text>
+      <text x="520.6666666666667" y="1803" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A free processor checks the database and takes the</text>
+      <text x="520.6666666666667" y="1818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">pending message.</text>
     </a>
   </g>
   <g id="hint-safe" data-source="app/channels/telegram_queue.py#TelegramQueue._receive">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L137">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_queue.py#L137">
       <title>TelegramQueue._receive · app/channels/telegram_queue.py:137</title>
       <rect x="961.3333333333334" y="1741" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
-      <text x="973.3333333333334" y="1765" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">HTTP 204 remains valid</text>
+      <text x="973.3333333333334" y="1765" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Keep accepted work available</text>
       <text x="973.3333333333334" y="1784" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_queue.py:137</text>
-      <text x="973.3333333333334" y="1803" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Malformed or out-of-scope hints are rejected without</text>
-      <text x="973.3333333333334" y="1818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">requeue.</text>
+      <text x="973.3333333333334" y="1803" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The API still returns HTTP 204. Invalid or wrong-bot</text>
+      <text x="973.3333333333334" y="1818" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">notifications are discarded.</text>
     </a>
   </g>
   <rect x="55" y="1904" width="335" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="1922" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Transport · Early, duplicate or busy hint</text>
   <g id="hint-early" data-source="app/channels/telegram_turns.py#ChatClaimResult">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L92">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_turns.py#L92">
       <title>ChatClaimResult · app/channels/telegram_turns.py:92</title>
       <rect x="56.0" y="1938" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
-      <text x="68.0" y="1962" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Not ready, busy or empty</text>
+      <text x="68.0" y="1962" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Message cannot run yet</text>
       <text x="68.0" y="1981" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:92</text>
-      <text x="68.0" y="2000" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">PostgreSQL returns an explicit claim result.</text>
+      <text x="68.0" y="2000" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">PostgreSQL reports that the message is not ready, the</text>
+      <text x="68.0" y="2015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">chat is busy or there is no pending work.</text>
     </a>
   </g>
   <g id="hint-wait" data-source="app/telegram_worker.py#_notification_claim">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L95">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L95">
       <title>_notification_claim · app/telegram_worker.py:95</title>
       <rect x="508.6666666666667" y="1938" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
-      <text x="520.6666666666667" y="1962" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">One bounded readiness wait</text>
+      <text x="520.6666666666667" y="1962" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Wait briefly, then check again</text>
       <text x="520.6666666666667" y="1981" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:95</text>
-      <text x="520.6666666666667" y="2000" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Wait once for at most 0.5 seconds, without a database</text>
-      <text x="520.6666666666667" y="2015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">lock.</text>
+      <text x="520.6666666666667" y="2000" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">For the initial readiness delay, wait once for at most</text>
+      <text x="520.6666666666667" y="2015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">half a second without holding a database lock.</text>
     </a>
   </g>
   <g id="hint-ack" data-source="app/channels/telegram_queue.py#TelegramQueue.acknowledge">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L160">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_queue.py#L160">
       <title>TelegramQueue.acknowledge · app/channels/telegram_queue.py:160</title>
       <rect x="961.3333333333334" y="1938" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
-      <text x="973.3333333333334" y="1962" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Acknowledge the hint</text>
+      <text x="973.3333333333334" y="1962" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Finish handling the notification</text>
       <text x="973.3333333333334" y="1981" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_queue.py:160</text>
-      <text x="973.3333333333334" y="2000" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Leave unfinished work durable for recovery.</text>
+      <text x="973.3333333333334" y="2000" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Acknowledge the notification while leaving any</text>
+      <text x="973.3333333333334" y="2015" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">unfinished message saved in PostgreSQL.</text>
     </a>
   </g>
   <rect x="55" y="2101" width="367" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="2119" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Ownership · Broker reconnect or stale attempt</text>
   <g id="hint-disconnect" data-source="app/channels/telegram_queue.py#TelegramQueue._connect_loop">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L76">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_queue.py#L76">
       <title>TelegramQueue._connect_loop · app/channels/telegram_queue.py:76</title>
       <rect x="56.0" y="2135" width="412.6666666666667" height="99" rx="12" fill="#fff0eb" stroke="#bd6959" stroke-width="1.4" />
-      <text x="68.0" y="2159" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Connection closes during inference</text>
+      <text x="68.0" y="2159" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">RabbitMQ disconnects</text>
       <text x="68.0" y="2178" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_queue.py:76</text>
-      <text x="68.0" y="2197" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The original delivery handle becomes invalid.</text>
+      <text x="68.0" y="2197" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The connection closes while a processor is working, so</text>
+      <text x="68.0" y="2212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">its old delivery handle can no longer be acknowledged.</text>
     </a>
   </g>
   <g id="hint-drain" data-source="app/telegram_worker.py#_execute">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L71">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L71">
       <title>_execute · app/telegram_worker.py:71</title>
       <rect x="508.6666666666667" y="2135" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
-      <text x="520.6666666666667" y="2159" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Keep the active slot and renew</text>
+      <text x="520.6666666666667" y="2159" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Let active processing finish</text>
       <text x="520.6666666666667" y="2178" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:71</text>
-      <text x="520.6666666666667" y="2197" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Synchronous processing drains before cancellation</text>
-      <text x="520.6666666666667" y="2212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">returns.</text>
+      <text x="520.6666666666667" y="2197" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Keep the processing thread and permission renewal</text>
+      <text x="520.6666666666667" y="2212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">running until the active message finishes.</text>
     </a>
   </g>
   <g id="hint-fenced" data-source="app/channels/telegram_turns.py#TurnClaim.assert_owned">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L75">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_turns.py#L75">
       <title>TurnClaim.assert_owned · app/channels/telegram_turns.py:75</title>
       <rect x="961.3333333333334" y="2135" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
-      <text x="973.3333333333334" y="2159" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Fence all protected writes</text>
+      <text x="973.3333333333334" y="2159" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Reject writes from a stale attempt</text>
       <text x="973.3333333333334" y="2178" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:75</text>
-      <text x="973.3333333333334" y="2197" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check the database lease and generation.</text>
+      <text x="973.3333333333334" y="2197" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Check that the processor still holds the current,</text>
+      <text x="973.3333333333334" y="2212" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">unexpired chat permission before saving protected</text>
+      <text x="973.3333333333334" y="2227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">changes.</text>
     </a>
   </g>
   <text x="42" y="2311" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Coral marks the trigger. Links open the relevant definition in the repository.</text>

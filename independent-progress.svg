@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 763" width="1430" height="763" role="img" aria-label="Independent progress · Alice, Bob and an already-ready reply">
-  <title>Independent progress · Alice, Bob and an already-ready reply</title>
-  <desc>Example concurrency, verified with controlled inference and delivery; no production throughput claim.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1430 763" width="1430" height="763" role="img" aria-label="Independent progress · Alice waits, Bob continues, replies are sent">
+  <title>Independent progress · Alice waits, Bob continues, replies are sent</title>
+  <desc>A slow model response occupies Alice's processor. Another processor serves Bob, while the sender delivers a reply saved earlier.</desc>
   <rect x="0" y="0" width="1430" height="763" rx="0" fill="#f5f8fa" stroke="none" stroke-width="1" />
-  <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Independent progress · Alice, Bob and an already-ready reply</text>
-  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Example concurrency, verified with controlled inference and delivery; no production throughput claim.</text>
+  <text x="40" y="56" fill="#172e3b" font-size="35" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Independent progress · Alice waits, Bob continues, replies are sent</text>
+  <text x="42" y="89" fill="#466072" font-size="16" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A slow model response occupies Alice's processor. Another processor serves Bob, while the sender delivers a reply saved earlier.</text>
   <defs>
     <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
       <path d="M0 0L8 4L0 8Z" fill="#557383" />
@@ -22,90 +22,98 @@
   <rect x="55" y="131" width="159" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="149" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Processor 1 · Alice</text>
   <g id="alice-claim" data-source="app/channels/telegram_turns.py#TelegramTurns.claim_chat">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L131">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_turns.py#L131">
       <title>TelegramTurns.claim_chat · app/channels/telegram_turns.py:131</title>
       <rect x="56.0" y="165" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
-      <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Claim Alice’s chat</text>
+      <text x="68.0" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Take Alice's next message</text>
       <text x="68.0" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:131</text>
-      <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">PostgreSQL grants one owned turn.</text>
+      <text x="68.0" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">PostgreSQL gives one processor temporary permission to</text>
+      <text x="68.0" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">handle Alice's chat.</text>
     </a>
   </g>
   <g id="alice-slow" data-source="app/telegram_worker.py#process_pending">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L105">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L105">
       <title>process_pending · app/telegram_worker.py:105</title>
       <rect x="508.6666666666667" y="165" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
-      <text x="520.6666666666667" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Slow synchronous turn</text>
+      <text x="520.6666666666667" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Wait for a slow model response</text>
       <text x="520.6666666666667" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:105</text>
-      <text x="520.6666666666667" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Inference runs on the processor’s one executor thread.</text>
+      <text x="520.6666666666667" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Alice's processor waits for inference on its dedicated</text>
+      <text x="520.6666666666667" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">processing thread.</text>
     </a>
   </g>
   <g id="alice-heartbeat" data-source="app/telegram_worker.py#_keep_turn_claim_alive">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L266">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L266">
       <title>_keep_turn_claim_alive · app/telegram_worker.py:266</title>
       <rect x="961.3333333333334" y="165" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
-      <text x="973.3333333333334" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Renew the database lease</text>
+      <text x="973.3333333333334" y="189" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Keep Alice's processing permission</text>
       <text x="973.3333333333334" y="208" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:266</text>
-      <text x="973.3333333333334" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The heartbeat continues while Alice’s turn drains.</text>
+      <text x="973.3333333333334" y="227" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A background heartbeat extends the database deadline</text>
+      <text x="973.3333333333334" y="242" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">while Alice's message is being processed.</text>
     </a>
   </g>
   <rect x="55" y="328" width="143" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="346" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Processor 2 · Bob</text>
   <g id="bob-hint" data-source="app/channels/telegram_queue.py#TelegramQueue._receive">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_queue.py#L137">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_queue.py#L137">
       <title>TelegramQueue._receive · app/channels/telegram_queue.py:137</title>
       <rect x="56.0" y="362" width="412.6666666666667" height="99" rx="12" fill="#e5f3fc" stroke="#397a9e" stroke-width="1.4" />
-      <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Receive Bob’s notification</text>
+      <text x="68.0" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Receive a notification for Bob</text>
       <text x="68.0" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_queue.py:137</text>
-      <text x="68.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">RabbitMQ distributes one bot/chat hint.</text>
+      <text x="68.0" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">RabbitMQ tells an available processor that Bob's chat</text>
+      <text x="68.0" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">may have a pending message.</text>
     </a>
   </g>
   <g id="bob-turn" data-source="app/telegram_worker.py#process_turn">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_worker.py#L166">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_worker.py#L166">
       <title>process_turn · app/telegram_worker.py:166</title>
       <rect x="508.6666666666667" y="362" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
-      <text x="520.6666666666667" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Claim and run Bob’s turn</text>
+      <text x="520.6666666666667" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Process Bob's message</text>
       <text x="520.6666666666667" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_worker.py:166</text>
-      <text x="520.6666666666667" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Use the same ownership and processing functions.</text>
+      <text x="520.6666666666667" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Another processor obtains permission for Bob's chat and</text>
+      <text x="520.6666666666667" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">runs his message through the conversation workflow.</text>
     </a>
   </g>
   <g id="bob-finish" data-source="app/channels/telegram_turns.py#TelegramTurns.finish">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_turns.py#L296">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_turns.py#L296">
       <title>TelegramTurns.finish · app/channels/telegram_turns.py:296</title>
       <rect x="961.3333333333334" y="362" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
-      <text x="973.3333333333334" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save Bob’s reply</text>
+      <text x="973.3333333333334" y="386" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Save Bob's reply</text>
       <text x="973.3333333333334" y="405" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_turns.py:296</text>
-      <text x="973.3333333333334" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Complete the inbox turn and promote its checkpoint</text>
-      <text x="973.3333333333334" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reference.</text>
+      <text x="973.3333333333334" y="424" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Mark Bob's message complete, save any reply and the</text>
+      <text x="973.3333333333334" y="439" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">reference to his updated conversation state.</text>
     </a>
   </g>
   <rect x="55" y="525" width="327" height="25" rx="2" fill="#edf3f6" stroke="none" stroke-width="1" />
   <text x="56" y="543" fill="#13677e" font-size="14" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Independent sender · Already-saved reply</text>
   <g id="progress-ready" data-source="app/channels/telegram_delivery.py#TelegramOutbox.claim_next">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/channels/telegram_delivery.py#L23">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/channels/telegram_delivery.py#L23">
       <title>TelegramOutbox.claim_next · app/channels/telegram_delivery.py:23</title>
       <rect x="56.0" y="559" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
-      <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Ready PostgreSQL reply</text>
+      <text x="68.0" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Find an already-saved reply</text>
       <text x="68.0" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_delivery.py:23</text>
-      <text x="68.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The sender finds a reply committed earlier.</text>
+      <text x="68.0" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">The sender finds a reply waiting in PostgreSQL from a</text>
+      <text x="68.0" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">message processed earlier.</text>
     </a>
   </g>
   <g id="progress-lock" data-source="app/telegram_sender.py#acquire_sender_lock">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_sender.py#L23">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_sender.py#L23">
       <title>acquire_sender_lock · app/telegram_sender.py:23</title>
       <rect x="508.6666666666667" y="559" width="412.6666666666667" height="99" rx="12" fill="#ffffff" stroke="#c8d7df" stroke-width="1.4" />
-      <text x="520.6666666666667" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Hold the bot sender lock</text>
+      <text x="520.6666666666667" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Allow only one sender per bot</text>
       <text x="520.6666666666667" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_sender.py:23</text>
-      <text x="520.6666666666667" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Only one sender enters the delivery loop.</text>
+      <text x="520.6666666666667" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">A PostgreSQL session lock permits only one sender to</text>
+      <text x="520.6666666666667" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">run for this bot.</text>
     </a>
   </g>
   <g id="progress-send" data-source="app/telegram_sender.py#deliver_claimed">
-    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/1f73cb30e5aa5ff7eb3d2b427a343b7728bed9fc/app/telegram_sender.py#L84">
+    <a href="https://github.com/ktakanopy/capy-appointment-bot/blob/ad6e0020adb08f58f4018acc1444a552c439a0b6/app/telegram_sender.py#L84">
       <title>deliver_claimed · app/telegram_sender.py:84</title>
       <rect x="961.3333333333334" y="559" width="412.6666666666667" height="99" rx="12" fill="#e7f3f2" stroke="#548887" stroke-width="1.4" />
-      <text x="973.3333333333334" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Deliver while turns are busy</text>
+      <text x="973.3333333333334" y="583" fill="#172e3b" font-size="16" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Send while processors are busy</text>
       <text x="973.3333333333334" y="602" fill="#13677e" font-size="12" font-weight="400" font-family="ui-monospace, Menlo, monospace">telegram_sender.py:84</text>
-      <text x="973.3333333333334" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Call Telegram and save the classified result.</text>
+      <text x="973.3333333333334" y="621" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Call Telegram and save whether the reply was accepted,</text>
+      <text x="973.3333333333334" y="636" fill="#466072" font-size="13" font-weight="400" font-family="system-ui, -apple-system, sans-serif">rejected or left uncertain.</text>
     </a>
   </g>
-  <text x="42" y="735" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Five processor replicas initially, one slot each. One sender retains roughly one send per second. See the concurrent runtime integration tests for controlled evidence.</text>
+  <text x="42" y="735" fill="#466072" font-size="14" font-weight="400" font-family="system-ui, -apple-system, sans-serif">Five processors, one message each. One separate sender keeps roughly one send per second. Tests use controlled model and delivery responses.</text>
 </svg>
